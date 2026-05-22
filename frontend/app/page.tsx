@@ -1,3 +1,4 @@
+import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
 import { DashboardCard } from "../components/dashboard-card";
 import { PageHeader } from "../components/page-header";
@@ -47,81 +48,83 @@ const workflow = [
 
 export default function HomePage() {
   return (
-    <AppShell>
-      <PageHeader
-        eyebrow="Phase 02 — ClickUp-style Workspace"
-        title="داشبورد انتشار روبیکا"
-        description="این نسخه، پایه طراحی ClickUp-like را برای مدیریت پست‌ها، برد وضعیت، تقویم انتشار و گزارش‌ها آماده می‌کند. داده‌ها فعلاً نمونه هستند."
-        actionLabel="ایجاد پست جدید"
-      />
+    <AuthGate>
+      <AppShell>
+        <PageHeader
+          eyebrow="Phase 03 — Admin Authentication"
+          title="داشبورد انتشار روبیکا"
+          description="داشبورد اکنون پشت صفحه ورود قرار دارد. فازهای بعدی داده واقعی فروشگاه، اتصال روبیکا، پست‌ها و زمان‌بندی را اضافه می‌کنند."
+          actionLabel="ایجاد پست جدید"
+        />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <DashboardCard key={stat.label} label={stat.label} value={stat.value} hint={stat.hint} />
-        ))}
-      </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {stats.map((stat) => (
+            <DashboardCard key={stat.label} label={stat.label} value={stat.value} hint={stat.hint} />
+          ))}
+        </div>
 
-      <section className="mt-6 rounded-2xl border border-app-border bg-app-surface p-5 shadow-soft">
-        <ViewTabs />
-        <div className="grid gap-4 xl:grid-cols-3">
-          <div className="xl:col-span-2">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold">پست‌های اخیر</h2>
-              <span className="text-xs text-app-muted">List View</span>
+        <section className="mt-6 rounded-2xl border border-app-border bg-app-surface p-5 shadow-soft">
+          <ViewTabs />
+          <div className="grid gap-4 xl:grid-cols-3">
+            <div className="xl:col-span-2">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold">پست‌های اخیر</h2>
+                <span className="text-xs text-app-muted">List View</span>
+              </div>
+              <div className="grid gap-3">
+                {posts.map((post) => (
+                  <PostCard key={post.title} {...post} />
+                ))}
+              </div>
             </div>
-            <div className="grid gap-3">
-              {posts.map((post) => (
-                <PostCard key={post.title} {...post} />
-              ))}
-            </div>
-          </div>
 
-          <aside className="rounded-2xl border border-app-border bg-slate-50 p-4">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold">برد وضعیت</h2>
-              <span className="text-xs text-app-muted">Board</span>
-            </div>
-            <div className="space-y-3">
-              {workflow.map((item) => (
-                <div key={item.status} className="flex items-center justify-between rounded-xl bg-white p-3 ring-1 ring-app-border">
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={item.status} />
+            <aside className="rounded-2xl border border-app-border bg-slate-50 p-4">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold">برد وضعیت</h2>
+                <span className="text-xs text-app-muted">Board</span>
+              </div>
+              <div className="space-y-3">
+                {workflow.map((item) => (
+                  <div key={item.status} className="flex items-center justify-between rounded-xl bg-white p-3 ring-1 ring-app-border">
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={item.status} />
+                    </div>
+                    <span className="text-sm font-bold text-app-text">{item.count}</span>
                   </div>
-                  <span className="text-sm font-bold text-app-text">{item.count}</span>
+                ))}
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section className="mt-6 grid gap-4 lg:grid-cols-3">
+          <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-sm lg:col-span-2">
+            <h2 className="text-lg font-bold">تقویم انتشار</h2>
+            <p className="mt-2 text-sm leading-7 text-app-muted">
+              در فازهای بعدی این بخش به نمای تقویم واقعی تبدیل می‌شود و پست‌ها بر اساس زمان انتشار نمایش داده می‌شوند.
+            </p>
+            <div className="mt-5 grid grid-cols-7 gap-2 text-center text-xs text-app-muted">
+              {["ش", "ی", "د", "س", "چ", "پ", "ج"].map((day) => (
+                <div key={day} className="rounded-lg bg-slate-50 py-2 font-semibold">{day}</div>
+              ))}
+              {Array.from({ length: 14 }).map((_, index) => (
+                <div key={index} className="min-h-16 rounded-lg border border-dashed border-app-border bg-white p-2 text-right">
+                  {index + 1}
                 </div>
               ))}
             </div>
-          </aside>
-        </div>
-      </section>
-
-      <section className="mt-6 grid gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-sm lg:col-span-2">
-          <h2 className="text-lg font-bold">تقویم انتشار</h2>
-          <p className="mt-2 text-sm leading-7 text-app-muted">
-            در فازهای بعدی این بخش به نمای تقویم واقعی تبدیل می‌شود و پست‌ها بر اساس زمان انتشار نمایش داده می‌شوند.
-          </p>
-          <div className="mt-5 grid grid-cols-7 gap-2 text-center text-xs text-app-muted">
-            {["ش", "ی", "د", "س", "چ", "پ", "ج"].map((day) => (
-              <div key={day} className="rounded-lg bg-slate-50 py-2 font-semibold">{day}</div>
-            ))}
-            {Array.from({ length: 14 }).map((_, index) => (
-              <div key={index} className="min-h-16 rounded-lg border border-dashed border-app-border bg-white p-2 text-right">
-                {index + 1}
-              </div>
-            ))}
           </div>
-        </div>
 
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-sm">
-          <h2 className="text-lg font-bold">وضعیت سیستم</h2>
-          <div className="mt-4 space-y-3 text-sm text-app-muted">
-            <div className="rounded-xl bg-slate-50 p-3">Frontend: آماده</div>
-            <div className="rounded-xl bg-slate-50 p-3">Backend: /health</div>
-            <div className="rounded-xl bg-slate-50 p-3">Worker: Celery آماده</div>
+          <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-sm">
+            <h2 className="text-lg font-bold">وضعیت سیستم</h2>
+            <div className="mt-4 space-y-3 text-sm text-app-muted">
+              <div className="rounded-xl bg-slate-50 p-3">Frontend: آماده</div>
+              <div className="rounded-xl bg-slate-50 p-3">Backend: /health</div>
+              <div className="rounded-xl bg-slate-50 p-3">Worker: Celery آماده</div>
+            </div>
           </div>
-        </div>
-      </section>
-    </AppShell>
+        </section>
+      </AppShell>
+    </AuthGate>
   );
 }
