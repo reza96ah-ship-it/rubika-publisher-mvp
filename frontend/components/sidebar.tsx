@@ -1,15 +1,28 @@
 const navGroups = [
   {
     title: "فضای کاری",
-    items: ["داشبورد", "پست‌ها", "برد وضعیت", "تقویم انتشار"]
+    items: [
+      { label: "داشبورد", href: "/" },
+      { label: "پست‌ها", href: "/posts" },
+      { label: "برد وضعیت", href: "/board" },
+      { label: "تقویم انتشار", href: "/calendar" }
+    ]
   },
   {
     title: "انتشار",
-    items: ["صف انتشار", "رسانه‌ها", "اتصال روبیکا", "گزارش انتشار"]
+    items: [
+      { label: "صف انتشار", href: "/queue" },
+      { label: "رسانه‌ها", href: "/media" },
+      { label: "اتصال روبیکا", href: "/rubika" },
+      { label: "گزارش انتشار", href: "/logs" }
+    ]
   },
   {
     title: "سیستم",
-    items: ["تنظیمات"]
+    items: [
+      { label: "پروفایل فروشگاه", href: "/store" },
+      { label: "تنظیمات", href: "/settings" }
+    ]
   }
 ];
 
@@ -29,22 +42,20 @@ export function Sidebar() {
           <div key={group.title}>
             <p className="mb-2 px-3 text-xs font-semibold text-app-muted">{group.title}</p>
             <div className="space-y-1">
-              {group.items.map((item, index) => {
-                const active = item === "داشبورد";
+              {group.items.map((item) => {
+                const active = item.href === "/";
                 return (
-                  <div
-                    key={item}
-                    className={`flex cursor-default items-center justify-between rounded-xl px-3 py-2.5 text-sm transition ${
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition ${
                       active
                         ? "bg-violet-50 font-semibold text-app-primary ring-1 ring-violet-100"
                         : "text-slate-600 hover:bg-slate-50 hover:text-app-text"
                     }`}
                   >
-                    <span>{item}</span>
-                    {index === 0 && group.title === "انتشار" ? (
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-app-muted">۰</span>
-                    ) : null}
-                  </div>
+                    <span>{item.label}</span>
+                  </a>
                 );
               })}
             </div>
