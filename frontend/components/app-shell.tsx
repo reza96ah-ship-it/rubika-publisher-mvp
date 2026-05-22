@@ -1,6 +1,16 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import { Sidebar } from "./sidebar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+
+  function logout() {
+    window.localStorage.removeItem("rubika_publisher_access");
+    router.replace("/login");
+  }
+
   return (
     <main className="min-h-screen bg-app-background text-app-text">
       <div className="flex min-h-screen">
@@ -14,6 +24,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
               <div className="flex items-center gap-3">
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">Local MVP</span>
+                <button
+                  onClick={logout}
+                  className="rounded-xl border border-app-border bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                >
+                  خروج
+                </button>
                 <div className="h-9 w-9 rounded-full bg-violet-100 ring-1 ring-violet-200" />
               </div>
             </div>
