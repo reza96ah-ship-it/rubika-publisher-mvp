@@ -37,3 +37,25 @@ class StoreResponse(BaseModel):
     caption_footer: str
     timezone: str
     is_active: bool
+
+
+class RubikaSettingsRequest(BaseModel):
+    bot_token: str
+    chat_id: str
+
+
+class RubikaAccountResponse(BaseModel):
+    id: int
+    chat_id: str
+    bot_token_masked: str
+    bot_name: str
+    status: str
+    last_error: str
+    is_active: bool
+
+
+class RubikaTestResponse(BaseModel):
+    ok: bool
+    status: str
+    bot_name: str = ""
+    error: str = ""
