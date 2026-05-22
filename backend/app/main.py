@@ -2,7 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.database import check_database
+from app.database import Base, SessionLocal, check_database, engine
+from app.routes.auth import router as auth_router
+from app.seed import seed_admin_user
 
 settings = get_settings()
 
@@ -15,6 +17,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth_router)
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    Base.metadata.create_all(bind=engine)
+    with SessionLocal() as db:
+        seed_admin_user(db)
 
 
 @app.get("/health", tags=["system"])
