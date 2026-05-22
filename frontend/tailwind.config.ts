@@ -9,14 +9,17 @@ const config: Config = {
       },
       colors: {
         app: {
-          background: "#F6F8FA",
+          background: "#F7F8FA",
           surface: "#FFFFFF",
           border: "#E5E7EB",
-          primary: "#03A9E6",
-          primaryHover: "#0284C7",
-          text: "#111827",
+          primary: "#7B68EE",
+          primaryHover: "#6C5CE7",
+          text: "#1F2937",
           muted: "#6B7280"
         }
+      },
+      boxShadow: {
+        soft: "0 10px 30px rgba(15, 23, 42, 0.06)"
       }
     }
   },
