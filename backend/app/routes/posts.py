@@ -78,12 +78,7 @@ def post_stats(current_user: User = Depends(get_current_user), db: Session = Dep
 
 
 @router.get("")
-def list_posts(
-    status: str | None = Query(default=None),
-    search: str | None = Query(default=None),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
+def list_posts(status: str | None = Query(default=None), search: str | None = Query(default=None), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     store = active_store(db)
     statement = select(Post).where(Post.store_id == store.id)
     if status and status != "all":
