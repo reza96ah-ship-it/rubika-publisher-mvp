@@ -45,7 +45,8 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
     title: "تنظیمات",
     items: [
       { label: "پروفایل فروشگاه", href: "/store" },
-      { label: "تنظیمات سیستم", href: "/settings" }
+      { label: "تنظیمات سیستم", href: "/settings" },
+      { label: "سیستم طراحی", href: "/design-system" }
     ]
   }
 ];
