@@ -7,6 +7,7 @@ type NavItem = {
   label: string;
   href: string;
   badge?: string;
+  disabled?: boolean;
 };
 
 const navGroups: Array<{ title: string; items: NavItem[] }> = [
@@ -15,32 +16,30 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
     items: [
       { label: "داشبورد", href: "/" },
       { label: "فضای محتوا", href: "/content" },
-      { label: "تقویم انتشار", href: "/calendar" }
+      { label: "تقویم انتشار", href: "/calendar" },
+      { label: "صف انتشار", href: "/queue" }
     ]
   },
   {
     title: "تولید محتوا",
     items: [
       { label: "ایجاد پست", href: "/compose" },
-      { label: "مدیریت پست‌ها", href: "/posts" },
       { label: "کتابخانه رسانه", href: "/media" }
     ]
   },
   {
     title: "انتشار",
     items: [
-      { label: "صف انتشار", href: "/queue" },
       { label: "اتصال روبیکا", href: "/rubika" },
-      { label: "لاگ انتشار", href: "/logs" }
+      { label: "لاگ انتشار", href: "/logs", badge: "بعدی", disabled: true }
     ]
   },
   {
-    title: "تعاملات",
-    items: [{ label: "صندوق پیام‌ها", href: "/inbox", badge: "به‌زودی" }]
-  },
-  {
-    title: "گزارش‌ها",
-    items: [{ label: "تحلیل عملکرد", href: "/analytics", badge: "به‌زودی" }]
+    title: "گزارش‌ها و تعاملات",
+    items: [
+      { label: "صندوق پیام‌ها", href: "/inbox", badge: "بعدی", disabled: true },
+      { label: "تحلیل عملکرد", href: "/analytics", badge: "بعدی", disabled: true }
+    ]
   },
   {
     title: "تنظیمات",
@@ -66,7 +65,7 @@ export function Sidebar() {
         <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-sky-50 p-4 ring-1 ring-violet-100">
           <p className="text-xs font-semibold text-app-primary">Rubika Workspace</p>
           <h2 className="mt-1 text-lg font-bold text-app-text">انتشار روبیکا</h2>
-          <p className="mt-2 text-xs leading-6 text-app-muted">تولید، برنامه‌ریزی، انتشار و تحلیل محتوا</p>
+          <p className="mt-2 text-xs leading-6 text-app-muted">تولید، برنامه‌ریزی، انتشار و پیگیری محتوا</p>
         </div>
       </div>
 
@@ -77,22 +76,32 @@ export function Sidebar() {
             <div className="space-y-1">
               {group.items.map((item) => {
                 const active = isActiveRoute(pathname, item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition ${
-                      active
-                        ? "bg-violet-50 font-semibold text-app-primary ring-1 ring-violet-100"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-app-text"
-                    }`}
-                  >
+                const className = `flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition ${
+                  item.disabled
+                    ? "pointer-events-none text-slate-400"
+                    : active
+                      ? "bg-violet-50 font-semibold text-app-primary ring-1 ring-violet-100"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-app-text"
+                }`;
+
+                const content = (
+                  <>
                     <span>{item.label}</span>
                     {item.badge ? (
                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
                         {item.badge}
                       </span>
                     ) : null}
+                  </>
+                );
+
+                if (item.disabled) {
+                  return <div key={item.href} className={className}>{content}</div>;
+                }
+
+                return (
+                  <Link key={item.href} href={item.href} className={className}>
+                    {content}
                   </Link>
                 );
               })}
