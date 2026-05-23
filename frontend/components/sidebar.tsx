@@ -21,7 +21,8 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
   {
     title: "تولید محتوا",
     items: [
-      { label: "ایجاد پست", href: "/posts" },
+      { label: "ایجاد پست", href: "/compose" },
+      { label: "مدیریت پست‌ها", href: "/posts" },
       { label: "کتابخانه رسانه", href: "/media" }
     ]
   },
