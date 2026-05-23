@@ -24,17 +24,18 @@ type ComposerSchedulePanelProps = {
 };
 
 export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: ComposerSchedulePanelProps) {
-  const [draft, setDraft] = useState<JalaliPickerParts>(() => getJalaliPickerParts(scheduledAt));
+  const scheduleTimezone = timezone || "Asia/Tehran";
+  const [draft, setDraft] = useState<JalaliPickerParts>(() => getJalaliPickerParts(scheduledAt, scheduleTimezone));
   const hasSchedule = Boolean(scheduledAt);
-  const selectedParts = hasSchedule ? getJalaliPickerParts(scheduledAt) : null;
-  const todayParts = getJalaliPickerParts(null);
+  const selectedParts = hasSchedule ? getJalaliPickerParts(scheduledAt, scheduleTimezone) : null;
+  const todayParts = getJalaliPickerParts(null, scheduleTimezone);
   const monthLength = getJalaliMonthLength(draft.year, draft.month);
   const startOffset = getJalaliMonthStartOffset(draft.year, draft.month);
   const dayCells = useMemo(() => [...Array.from({ length: startOffset }, () => null), ...Array.from({ length: monthLength }, (_, index) => index + 1)], [monthLength, startOffset]);
 
   function emit(next: JalaliPickerParts) {
     setDraft(next);
-    const iso = jalaliPickerPartsToIso(next);
+    const iso = jalaliPickerPartsToIso(next, scheduleTimezone);
     if (iso) onChange(iso);
   }
 
@@ -53,7 +54,7 @@ export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: Compo
 
   function clearSchedule() {
     onChange(null);
-    setDraft(getJalaliPickerParts(null));
+    setDraft(getJalaliPickerParts(null, scheduleTimezone));
   }
 
   return (
@@ -63,7 +64,7 @@ export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: Compo
           <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)}>ماه قبل</Button>
           <div className="text-center">
             <p className="text-base font-black text-app-text">{jalaliMonthNames[draft.month - 1]} {draft.year}</p>
-            <p className="mt-1 text-xs text-app-muted">تقویم شمسی · {timezone}</p>
+            <p className="mt-1 text-xs text-app-muted">تقویم شمسی · {scheduleTimezone}</p>
           </div>
           <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(1)}>ماه بعد</Button>
           <Button type="button" variant="secondary" size="sm" onClick={() => emit(todayParts)}>امروز</Button>
