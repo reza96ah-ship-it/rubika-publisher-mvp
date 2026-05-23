@@ -61,6 +61,22 @@ services:
         condition: service_healthy
     command: celery -A app.worker.celery_app worker --loglevel=info
 
+  beat:
+    build:
+      context: ./backend
+    container_name: rubika_publisher_beat
+    env_file:
+      - .env
+    volumes:
+      - ./storage:/app/storage
+      - ./backend/app:/app/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.worker.celery_app beat --loglevel=info
+
   frontend:
     build:
       context: ./frontend
