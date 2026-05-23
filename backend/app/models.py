@@ -57,7 +57,17 @@ class Post(Base):
     caption: Mapped[str] = mapped_column(Text, nullable=False, default="")
     hashtags: Mapped[str] = mapped_column(Text, nullable=False, default="")
     platform: Mapped[str] = mapped_column(String(64), nullable=False, default="rubika")
-    status: Mapped[str] = mapped_column(String(64), nullable=False, default="draft")
+    status: Mapped[str] = mapped_column(String(64), nullable=False, default="draft", index=True)
+    timezone: Mapped[str] = mapped_column(String(64), nullable=False, default="Asia/Tehran")
+    campaign: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    internal_note: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    scheduled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    ready_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    failed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    rubika_message_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    last_error: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
@@ -73,4 +83,19 @@ class MediaAsset(Base):
     file_path: Mapped[str] = mapped_column(Text, nullable=False)
     content_type: Mapped[str] = mapped_column(String(128), nullable=False, default="")
     size_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+class PublishAttempt(Base):
+    __tablename__ = "publish_attempts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"), nullable=False, index=True)
+    action: Mapped[str] = mapped_column(String(64), nullable=False, default="manual")
+    status: Mapped[str] = mapped_column(String(64), nullable=False, default="created", index=True)
+    request_payload: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    response_payload: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    error: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
