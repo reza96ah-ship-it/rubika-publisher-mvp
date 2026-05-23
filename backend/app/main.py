@@ -4,8 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import Base, SessionLocal, check_database, engine
 from app.routes.auth import router as auth_router
-from app.routes.stores import router as stores_router
+from app.routes.posts import router as posts_router
 from app.routes.rubika import router as rubika_router
+from app.routes.stores import router as stores_router
 from app.seed import seed_admin_user
 
 settings = get_settings()
@@ -22,6 +23,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(stores_router)
 app.include_router(rubika_router)
+app.include_router(posts_router)
 
 
 @app.on_event("startup")
