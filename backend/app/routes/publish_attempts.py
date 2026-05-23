@@ -1,13 +1,20 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
 from app.database import get_db
-from app.models import Post, PublishAttempt, User
+from app.models import Post, PublishAttempt, Store, User
 from app.schemas import PublishAttemptResponse
 
 router = APIRouter(prefix="/publish-attempts", tags=["publish-attempts"])
+
+
+def active_store(db: Session) -> Store:
+    store = db.scalar(select(Store).where(Store.is_active.is_(True)).order_by(Store.id.asc()))
+    if store is None:
+        raise HTTPException(status_code=400, detail="Create store profile first")
+    return store
 
 
 def attempt_response(attempt: PublishAttempt, post_title: str) -> PublishAttemptResponse:
@@ -33,7 +40,8 @@ def list_publish_attempts(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[PublishAttemptResponse]:
-    statement = select(PublishAttempt, Post.title).join(Post, Post.id == PublishAttempt.post_id)
+    store = active_store(db)
+    statement = select(PublishAttempt, Post.title).join(Post, Post.id == PublishAttempt.post_id).where(Post.store_id == store.id)
     if post_id is not None:
         statement = statement.where(PublishAttempt.post_id == post_id)
     if status and status != "all":
