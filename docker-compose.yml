@@ -30,12 +30,14 @@ services:
   backend:
     build:
       context: ./backend
+      args:
+        INSTALL_DEV: "true"
     container_name: rubika_publisher_backend
     env_file:
       - .env
     volumes:
       - ./storage:/app/storage
-      - ./backend/app:/app/app
+      - ./backend:/app
     ports:
       - "8000:8000"
     depends_on:
@@ -48,12 +50,14 @@ services:
   worker:
     build:
       context: ./backend
+      args:
+        INSTALL_DEV: "true"
     container_name: rubika_publisher_worker
     env_file:
       - .env
     volumes:
       - ./storage:/app/storage
-      - ./backend/app:/app/app
+      - ./backend:/app
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,12 +68,14 @@ services:
   beat:
     build:
       context: ./backend
+      args:
+        INSTALL_DEV: "true"
     container_name: rubika_publisher_beat
     env_file:
       - .env
     volumes:
       - ./storage:/app/storage
-      - ./backend/app:/app/app
+      - ./backend:/app
     depends_on:
       postgres:
         condition: service_healthy

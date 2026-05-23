@@ -22,6 +22,8 @@ coverage/
 # Docker / local data
 postgres_data/
 redis_data/
+backend/celerybeat-schedule
+backend/celerybeat-schedule.*
 
 # Storage: keep folder, ignore uploaded files
 storage/media/*
