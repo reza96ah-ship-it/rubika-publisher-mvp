@@ -15,8 +15,15 @@ type MediaAsset = {
   size_bytes: number;
 };
 
+type PostOption = {
+  id: number;
+  title: string;
+  status: string;
+};
+
 export default function MediaPage() {
   const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [posts, setPosts] = useState<PostOption[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -27,17 +34,18 @@ export default function MediaPage() {
     return window.localStorage.getItem("rubika_publisher_access") ?? "";
   }
 
-  async function loadMedia() {
+  async function loadData() {
     setLoading(true);
-    const response = await fetch(`${apiUrl}/media`, {
-      headers: { Authorization: `Bearer ${token()}` }
-    });
-    if (response.ok) setAssets(await response.json());
+    const headers = { Authorization: `Bearer ${token()}` };
+    const mediaResponse = await fetch(`${apiUrl}/media`, { headers });
+    const postsResponse = await fetch(`${apiUrl}/posts`, { headers });
+    if (mediaResponse.ok) setAssets(await mediaResponse.json());
+    if (postsResponse.ok) setPosts(await postsResponse.json());
     setLoading(false);
   }
 
   useEffect(() => {
-    loadMedia().catch(() => {
+    loadData().catch(() => {
       setError("خطا در دریافت رسانه‌ها");
       setLoading(false);
     });
@@ -61,12 +69,34 @@ export default function MediaPage() {
       if (!response.ok) throw new Error("آپلود تصویر ناموفق بود");
       setFile(null);
       setMessage("تصویر آپلود شد");
-      await loadMedia();
+      await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطای آپلود تصویر");
     } finally {
       setUploading(false);
     }
+  }
+
+  async function attachToPost(assetId: number, value: string) {
+    setMessage("");
+    setError("");
+    const postId = value ? Number(value) : null;
+    const response = await fetch(`${apiUrl}/media/${assetId}/attach`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token()}`
+      },
+      body: JSON.stringify({ post_id: postId })
+    });
+
+    if (!response.ok) {
+      setError("اتصال تصویر به پست ناموفق بود");
+      return;
+    }
+
+    setMessage("اتصال تصویر به پست ذخیره شد");
+    await loadData();
   }
 
   function formatSize(size: number) {
@@ -80,7 +110,7 @@ export default function MediaPage() {
         <PageHeader
           eyebrow="Phase 07 — Media Library"
           title="رسانه‌ها"
-          description="تصاویر محصول را آپلود و برای اتصال به پست‌های بعدی آماده کنید."
+          description="تصاویر محصول را آپلود کنید و هر تصویر را به یکی از پست‌های پیش‌نویس وصل کنید."
         />
 
         <section className="grid gap-5 xl:grid-cols-4">
@@ -115,14 +145,25 @@ export default function MediaPage() {
 
             <div className="space-y-3">
               {assets.map((asset) => (
-                <div key={asset.id} className="flex items-center justify-between rounded-xl border border-app-border bg-white p-4">
-                  <div>
+                <div key={asset.id} className="grid gap-4 rounded-xl border border-app-border bg-white p-4 lg:grid-cols-3 lg:items-center">
+                  <div className="lg:col-span-2">
                     <p className="font-bold">{asset.original_filename}</p>
                     <p className="mt-1 text-xs text-app-muted">{asset.content_type} · {formatSize(asset.size_bytes)}</p>
+                    <p className="mt-1 text-xs text-app-muted">{asset.post_id ? `متصل به پست ${asset.post_id}` : "بدون اتصال"}</p>
                   </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-app-muted">
-                    {asset.post_id ? `پست ${asset.post_id}` : "بدون اتصال"}
-                  </span>
+                  <label className="block text-xs font-semibold text-app-muted">
+                    اتصال به پست
+                    <select
+                      value={asset.post_id ?? ""}
+                      onChange={(event) => attachToPost(asset.id, event.target.value)}
+                      className="mt-2 w-full rounded-xl border border-app-border bg-white px-3 py-2 text-sm text-app-text"
+                    >
+                      <option value="">بدون اتصال</option>
+                      {posts.map((post) => (
+                        <option key={post.id} value={post.id}>{post.title}</option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
               ))}
             </div>
