@@ -40,6 +40,8 @@ const emptyForm = {
 export default function PostsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
+  const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
+  const [selectedFilePreviewUrl, setSelectedFilePreviewUrl] = useState("");
   const [store, setStore] = useState<Store | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [selectedMediaId, setSelectedMediaId] = useState("");
@@ -51,9 +53,12 @@ export default function PostsPage() {
   const [error, setError] = useState("");
 
   const attachedMedia = useMemo(() => {
-    if (!editingId) return selectedMediaId ? mediaAssets.find((asset) => String(asset.id) === selectedMediaId) : null;
-    return mediaAssets.find((asset) => asset.post_id === editingId) ?? null;
+    if (selectedMediaId) return mediaAssets.find((asset) => String(asset.id) === selectedMediaId) ?? null;
+    if (editingId) return mediaAssets.find((asset) => asset.post_id === editingId) ?? null;
+    return null;
   }, [editingId, mediaAssets, selectedMediaId]);
+
+  const previewImageUrl = selectedFilePreviewUrl || (attachedMedia ? mediaPreviewUrls[attachedMedia.id] : "");
 
   const finalPreview = useMemo(() => {
     return [form.caption, form.caption ? store?.caption_footer : "", form.hashtags]
@@ -86,6 +91,59 @@ export default function PostsPage() {
       setLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    if (!selectedFile) {
+      setSelectedFilePreviewUrl("");
+      return;
+    }
+
+    const url = URL.createObjectURL(selectedFile);
+    setSelectedFilePreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [selectedFile]);
+
+  useEffect(() => {
+    if (mediaAssets.length === 0) {
+      setMediaPreviewUrls({});
+      return;
+    }
+
+    let cancelled = false;
+    const createdUrls: string[] = [];
+
+    async function loadPreviews() {
+      const entries = await Promise.all(
+        mediaAssets.map(async (asset) => {
+          try {
+            const response = await fetch(`${apiUrl}/media/${asset.id}/file`, {
+              headers: { Authorization: `Bearer ${token()}` }
+            });
+            if (!response.ok) return null;
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            createdUrls.push(url);
+            return [asset.id, url] as const;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setMediaPreviewUrls(Object.fromEntries(entries.filter(Boolean) as Array<[number, string]>));
+      } else {
+        createdUrls.forEach((url) => URL.revokeObjectURL(url));
+      }
+    }
+
+    loadPreviews();
+
+    return () => {
+      cancelled = true;
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [mediaAssets]);
 
   function updateField(field: keyof typeof emptyForm, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -128,6 +186,12 @@ export default function PostsPage() {
     if (!response.ok) throw new Error("اتصال تصویر به پست ناموفق بود");
   }
 
+  async function replacePostMedia(postId: number, assetId: number) {
+    const currentAssets = mediaAssets.filter((asset) => asset.post_id === postId && asset.id !== assetId);
+    await Promise.all(currentAssets.map((asset) => attachMedia(asset.id, null)));
+    await attachMedia(assetId, postId);
+  }
+
   async function uploadSelectedFile() {
     if (!selectedFile) return null;
 
@@ -164,9 +228,9 @@ export default function PostsPage() {
 
       const uploadedAsset = await uploadSelectedFile();
       if (uploadedAsset) {
-        await attachMedia(uploadedAsset.id, savedPost.id);
+        await replacePostMedia(savedPost.id, uploadedAsset.id);
       } else if (selectedMediaId) {
-        await attachMedia(Number(selectedMediaId), savedPost.id);
+        await replacePostMedia(savedPost.id, Number(selectedMediaId));
       }
 
       setMessage(editingId ? "پست ویرایش شد" : "پست پیش‌نویس ایجاد شد");
@@ -292,9 +356,13 @@ export default function PostsPage() {
             <div className="rounded-2xl border border-app-border bg-app-surface p-6 shadow-sm">
               <h2 className="text-lg font-bold">پیش‌نمایش روبیکا</h2>
               <div className="mt-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-app-border">
-                <div className="mb-3 rounded-xl border border-dashed border-app-border bg-white p-4 text-sm text-app-muted">
-                  {selectedFile ? selectedFile.name : attachedMedia ? attachedMedia.original_filename : "تصویری انتخاب نشده است"}
-                </div>
+                {previewImageUrl ? (
+                  <img src={previewImageUrl} alt="پیش‌نمایش تصویر پست" className="mb-4 aspect-video w-full rounded-xl object-cover ring-1 ring-app-border" />
+                ) : (
+                  <div className="mb-3 rounded-xl border border-dashed border-app-border bg-white p-4 text-sm text-app-muted">
+                    تصویری انتخاب نشده است
+                  </div>
+                )}
                 <div className="min-h-40 whitespace-pre-wrap text-sm leading-7 text-slate-700">
                   {finalPreview || "متن نهایی پست اینجا نمایش داده می‌شود."}
                 </div>
@@ -308,13 +376,17 @@ export default function PostsPage() {
                 {!loading && posts.length === 0 ? <p className="text-sm text-app-muted">هنوز پستی ایجاد نشده است.</p> : null}
                 {posts.map((post) => {
                   const media = mediaAssets.find((asset) => asset.post_id === post.id);
+                  const thumbUrl = media ? mediaPreviewUrls[media.id] : "";
                   return (
                     <div key={post.id} className="rounded-xl border border-app-border bg-white p-4">
                       <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-bold">{post.title}</p>
-                          <p className="mt-1 line-clamp-2 text-xs leading-6 text-app-muted">{post.caption || "بدون کپشن"}</p>
-                          <p className="mt-1 text-xs text-app-muted">{media ? `تصویر: ${media.original_filename}` : "بدون تصویر"}</p>
+                        <div className="flex min-w-0 gap-3">
+                          {thumbUrl ? <img src={thumbUrl} alt={media?.original_filename ?? "تصویر پست"} className="h-16 w-16 shrink-0 rounded-xl object-cover ring-1 ring-app-border" /> : null}
+                          <div className="min-w-0">
+                            <p className="truncate font-bold">{post.title}</p>
+                            <p className="mt-1 line-clamp-2 text-xs leading-6 text-app-muted">{post.caption || "بدون کپشن"}</p>
+                            <p className="mt-1 text-xs text-app-muted">{media ? `تصویر: ${media.original_filename}` : "بدون تصویر"}</p>
+                          </div>
                         </div>
                         <StatusBadge status={post.status} />
                       </div>
