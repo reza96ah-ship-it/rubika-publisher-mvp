@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
@@ -29,6 +29,22 @@ def get_store_post(db: Session, store: Store, post_id: int) -> Post:
     return post
 
 
+def utc_naive(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def utc_response(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
 def post_response(post: Post) -> PostResponse:
     return PostResponse(
         id=post.id,
@@ -41,15 +57,15 @@ def post_response(post: Post) -> PostResponse:
         timezone=post.timezone,
         campaign=post.campaign,
         internal_note=post.internal_note,
-        scheduled_at=post.scheduled_at,
-        ready_at=post.ready_at,
-        published_at=post.published_at,
-        failed_at=post.failed_at,
+        scheduled_at=utc_response(post.scheduled_at),
+        ready_at=utc_response(post.ready_at),
+        published_at=utc_response(post.published_at),
+        failed_at=utc_response(post.failed_at),
         rubika_message_id=post.rubika_message_id,
         last_error=post.last_error,
         attempt_count=post.attempt_count,
-        created_at=post.created_at,
-        updated_at=post.updated_at,
+        created_at=utc_response(post.created_at),
+        updated_at=utc_response(post.updated_at),
     )
 
 
@@ -61,16 +77,14 @@ def apply_payload(post: Post, payload: PostRequest) -> None:
     post.timezone = payload.timezone.strip() or "Asia/Tehran"
     post.campaign = payload.campaign.strip()
     post.internal_note = payload.internal_note.strip()
-    post.scheduled_at = payload.scheduled_at
+    post.scheduled_at = utc_naive(payload.scheduled_at)
     post.updated_at = datetime.utcnow()
 
 
 @router.get("/stats", response_model=PostStatsResponse)
 def post_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PostStatsResponse:
     store = active_store(db)
-    rows = db.execute(
-        select(Post.status, func.count(Post.id)).where(Post.store_id == store.id).group_by(Post.status)
-    ).all()
+    rows = db.execute(select(Post.status, func.count(Post.id)).where(Post.store_id == store.id).group_by(Post.status)).all()
     counts = {status: 0 for status in WORKFLOW_STATUSES}
     for status, count in rows:
         counts[status] = count
@@ -141,7 +155,7 @@ def schedule_post(post_id: int, payload: PostScheduleRequest, current_user: User
     if post.status not in {"draft", "ready", "scheduled", "failed"}:
         raise HTTPException(status_code=400, detail="Post cannot be scheduled in its current status")
     post.status = "scheduled"
-    post.scheduled_at = payload.scheduled_at
+    post.scheduled_at = utc_naive(payload.scheduled_at)
     post.timezone = payload.timezone.strip() or "Asia/Tehran"
     post.ready_at = post.ready_at or datetime.utcnow()
     post.last_error = ""
