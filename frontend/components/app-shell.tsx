@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <Link
-                  href="/posts"
+                  href="/compose"
                   className="rounded-xl bg-app-primary px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-app-primaryHover"
                 >
                   ایجاد پست جدید

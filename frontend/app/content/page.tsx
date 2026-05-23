@@ -10,11 +10,11 @@ export default function ContentWorkspacePage() {
     <AuthGate>
       <AppShell>
         <PageHeader
-          eyebrow="Phase 1 — Product IA"
+          eyebrow="Phase 3 — Composer-Centric Creation"
           title="فضای محتوا"
           description="نمای مرکزی برای مدیریت همه پست‌ها. در فازهای بعدی این بخش به لیست، برد، تقویم و گرید محتوایی متصل می‌شود."
           actionLabel="ایجاد پست جدید"
-          actionHref="/posts"
+          actionHref="/compose"
         />
 
         <section className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-soft">
@@ -27,9 +27,9 @@ export default function ContentWorkspacePage() {
           </div>
           <WorkspaceEmptyState
             title="هنوز فضای محتوایی کامل فعال نشده است"
-            description="این صفحه جایگزین پراکندگی بین پست‌ها، برد و تقویم می‌شود. فعلاً برای ساخت و ویرایش پست از صفحه ایجاد پست استفاده کنید."
-            actionLabel="رفتن به ایجاد پست"
-            actionHref="/posts"
+            description="این صفحه جایگزین پراکندگی بین پست‌ها، برد و تقویم می‌شود. فعلاً برای ساخت پست از composer جدید استفاده کنید."
+            actionLabel="رفتن به composer"
+            actionHref="/compose"
           />
         </section>
       </AppShell>

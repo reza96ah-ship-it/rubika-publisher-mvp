@@ -59,11 +59,11 @@ export default function HomePage() {
     <AuthGate>
       <AppShell>
         <PageHeader
-          eyebrow="Phase 1 — Product IA Refactor"
+          eyebrow="Phase 3 — Composer-Centric Creation"
           title="داشبورد فضای کاری انتشار روبیکا"
           description="این صفحه نقطه شروع فضای کاری است: ساخت محتوا، مدیریت رسانه، زمان‌بندی، انتشار و بررسی وضعیت از یک ساختار منسجم انجام می‌شود."
           actionLabel="ایجاد پست جدید"
-          actionHref="/posts"
+          actionHref="/compose"
         />
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
