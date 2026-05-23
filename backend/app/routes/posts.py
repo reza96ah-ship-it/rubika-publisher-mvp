@@ -151,6 +151,24 @@ def schedule_post(post_id: int, payload: PostScheduleRequest, current_user: User
     return post_response(post)
 
 
+@router.post("/{post_id}/retry", response_model=PostResponse)
+def retry_failed_post(post_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PostResponse:
+    store = active_store(db)
+    post = get_store_post(db, store, post_id)
+    if post.status != "failed":
+        raise HTTPException(status_code=400, detail="Only failed posts can be retried")
+    now = datetime.utcnow()
+    post.status = "scheduled"
+    post.scheduled_at = now
+    post.ready_at = post.ready_at or now
+    post.failed_at = None
+    post.last_error = ""
+    post.updated_at = now
+    db.commit()
+    db.refresh(post)
+    return post_response(post)
+
+
 @router.post("/{post_id}/status", response_model=PostResponse)
 def change_status(post_id: int, payload: PostStatusRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PostResponse:
     if payload.status not in WORKFLOW_STATUSES:

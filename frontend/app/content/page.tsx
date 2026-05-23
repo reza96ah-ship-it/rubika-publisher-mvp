@@ -52,6 +52,21 @@ export default function ContentWorkspacePage() {
     await loadPosts(activeStatus, search);
   }
 
+  async function retryPost(post: Post) {
+    setMessage("");
+    setError("");
+    const response = await fetch(`${apiUrl}/posts/${post.id}/retry`, {
+      method: "POST",
+      headers: authHeaders()
+    });
+    if (!response.ok) {
+      setError("تلاش مجدد انتشار ناموفق بود");
+      return;
+    }
+    setMessage("پست برای تلاش مجدد وارد صف انتشار شد");
+    await loadPosts(activeStatus, search);
+  }
+
   async function applyFilters(nextStatus = activeStatus) {
     setActiveStatus(nextStatus);
     setMessage("");
@@ -127,6 +142,9 @@ export default function ContentWorkspacePage() {
                     <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">ویرایش</Button>
                     {post.status === "draft" || post.status === "failed" || post.status === "cancelled" ? (
                       <Button type="button" variant="secondary" size="sm" onClick={() => changeStatus(post, "ready")}>آماده</Button>
+                    ) : null}
+                    {post.status === "failed" ? (
+                      <Button type="button" size="sm" onClick={() => retryPost(post)}>تلاش مجدد</Button>
                     ) : null}
                     {post.status !== "cancelled" && post.status !== "published" ? (
                       <Button type="button" variant="ghost" size="sm" onClick={() => changeStatus(post, "cancelled")}>لغو</Button>
