@@ -80,12 +80,24 @@ def finish_failure(db: Session, post: Post, attempt: PublishAttempt, error: str)
     db.commit()
 
 
-def reserve_post(db: Session, post: Post) -> None:
-    post.status = "publishing"
-    post.last_error = ""
-    post.updated_at = datetime.utcnow()
+def reserve_due_posts(db: Session, now: datetime, limit: int) -> list[Post]:
+    posts = db.scalars(
+        select(Post)
+        .where(Post.status == "scheduled", Post.scheduled_at.is_not(None), Post.scheduled_at <= now)
+        .order_by(Post.scheduled_at.asc(), Post.id.asc())
+        .limit(limit)
+        .with_for_update(skip_locked=True)
+    ).all()
+
+    for post in posts:
+        post.status = "publishing"
+        post.last_error = ""
+        post.updated_at = now
+
     db.commit()
-    db.refresh(post)
+    for post in posts:
+        db.refresh(post)
+    return list(posts)
 
 
 def publish_text_post(db: Session, post: Post, action: str = "scheduled") -> dict:

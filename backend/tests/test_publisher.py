@@ -1,4 +1,12 @@
+from datetime import datetime, timedelta
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from app.database import Base
+from app.models import Post
 from app.services.publisher import build_post_text, extract_message_id, json_text
+from app.services.publisher import reserve_due_posts
 
 
 class PostStub:
@@ -34,3 +42,26 @@ def test_extract_message_id_checks_nested_and_top_level_fields() -> None:
 
 def test_json_text_keeps_persian_text_readable() -> None:
     assert json_text({"text": "سلام"}) == '{"text": "سلام"}'
+
+
+def test_reserve_due_posts_claims_only_due_scheduled_posts() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime(2026, 1, 1, 12, 0, 0)
+
+    with session_factory() as db:
+        due_post = Post(store_id=1, title="Due", status="scheduled", scheduled_at=now - timedelta(minutes=1), created_at=now, updated_at=now)
+        future_post = Post(store_id=1, title="Future", status="scheduled", scheduled_at=now + timedelta(minutes=1), created_at=now, updated_at=now)
+        draft_post = Post(store_id=1, title="Draft", status="draft", scheduled_at=now - timedelta(minutes=1), created_at=now, updated_at=now)
+        db.add_all([due_post, future_post, draft_post])
+        db.commit()
+
+        reserved = reserve_due_posts(db, now, limit=10)
+
+        assert [post.id for post in reserved] == [due_post.id]
+        assert due_post.status == "publishing"
+        assert future_post.status == "scheduled"
+        assert draft_post.status == "draft"
+
+        assert reserve_due_posts(db, now, limit=10) == []

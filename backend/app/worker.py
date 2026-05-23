@@ -1,12 +1,10 @@
 from datetime import datetime
 
 from celery import Celery
-from sqlalchemy import select
 
 from app.config import get_settings
 from app.database import SessionLocal
-from app.models import Post
-from app.services.publisher import publish_text_post, reserve_post
+from app.services.publisher import publish_text_post, reserve_due_posts
 
 settings = get_settings()
 
@@ -40,16 +38,10 @@ def publish_due_posts(limit: int = 10) -> dict:
     results: list[dict] = []
 
     with SessionLocal() as db:
-        posts = db.scalars(
-            select(Post)
-            .where(Post.status == "scheduled", Post.scheduled_at.is_not(None), Post.scheduled_at <= now)
-            .order_by(Post.scheduled_at.asc(), Post.id.asc())
-            .limit(limit)
-        ).all()
+        posts = reserve_due_posts(db, now, limit)
 
         for post in posts:
             try:
-                reserve_post(db, post)
                 results.append(publish_text_post(db, post, action="scheduled"))
             except Exception as exc:
                 post.status = "failed"
