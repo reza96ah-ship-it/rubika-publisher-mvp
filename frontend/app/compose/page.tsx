@@ -142,6 +142,7 @@ export default function ComposePage() {
 
   function updateField(field: keyof typeof emptyForm, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
+    if (message) setMessage("");
   }
 
   function useDefaults() {
@@ -149,14 +150,18 @@ export default function ComposePage() {
       ...current,
       hashtags: store?.default_hashtags || current.hashtags
     }));
+    if (message) setMessage("");
   }
 
-  function resetComposer() {
+  function resetComposer(options: { clearStatus?: boolean } = { clearStatus: true }) {
     setForm(emptyForm);
     setSelectedMediaId("");
     setSelectedFile(null);
-    setMessage("");
-    setError("");
+
+    if (options.clearStatus) {
+      setMessage("");
+      setError("");
+    }
   }
 
   async function uploadSelectedFile() {
@@ -213,8 +218,8 @@ export default function ComposePage() {
         await attachMedia(Number(selectedMediaId), savedPost.id);
       }
 
+      resetComposer({ clearStatus: false });
       setMessage("پست به عنوان پیش‌نویس ذخیره شد");
-      resetComposer();
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطای ذخیره پیش‌نویس");
@@ -246,6 +251,7 @@ export default function ComposePage() {
                     onChange={(event) => {
                       setSelectedFile(event.target.files?.[0] ?? null);
                       if (event.target.files?.[0]) setSelectedMediaId("");
+                      if (message) setMessage("");
                     }}
                     className="w-full text-sm text-app-muted"
                   />
@@ -261,6 +267,7 @@ export default function ComposePage() {
                       onChange={(event) => {
                         setSelectedMediaId(event.target.value);
                         if (event.target.value) setSelectedFile(null);
+                        if (message) setMessage("");
                       }}
                     >
                       <option value="">بدون تصویر</option>
