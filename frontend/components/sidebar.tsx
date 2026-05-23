@@ -31,7 +31,7 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
     title: "انتشار",
     items: [
       { label: "اتصال روبیکا", href: "/rubika" },
-      { label: "لاگ انتشار", href: "/logs", badge: "بعدی", disabled: true }
+      { label: "لاگ انتشار", href: "/logs" }
     ]
   },
   {
