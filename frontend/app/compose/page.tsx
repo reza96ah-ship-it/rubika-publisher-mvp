@@ -8,6 +8,7 @@ import { ComposerActionFooter } from "../../components/composer-action-footer";
 import { PageHeader } from "../../components/page-header";
 import { RubikaPostPreview } from "../../components/rubika-post-preview";
 import { MediaGalleryPicker } from "../../components/media-gallery-picker";
+import { ComposerSchedulePanel } from "../../components/composer-schedule-panel";
 import { Button } from "../../components/ui/button";
 import { SectionCard } from "../../components/ui/card";
 import { Field, Input, Textarea } from "../../components/ui/form";
@@ -18,6 +19,7 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 type Store = {
   default_hashtags: string;
   caption_footer: string;
+  timezone?: string;
 };
 
 type MediaAsset = {
@@ -85,6 +87,8 @@ function ComposePageContent() {
 
   const captionLength = form.caption.length;
   const hashtagCount = form.hashtags.split(/\s+/).filter((item) => item.startsWith("#")).length;
+  const timezone = form.timezone || store?.timezone || "Asia/Tehran";
+  const hasSchedule = Boolean(form.scheduled_at);
 
   function token() {
     return window.localStorage.getItem("rubika_publisher_access") ?? "";
@@ -202,7 +206,7 @@ function ComposePageContent() {
     };
   }, [mediaAssets]);
 
-  function updateField(field: keyof typeof emptyForm, value: string) {
+  function updateField(field: keyof typeof emptyForm, value: string | null) {
     setForm((current) => ({ ...current, [field]: value }));
     if (message) setMessage("");
   }
@@ -289,6 +293,20 @@ function ComposePageContent() {
     await Promise.all(attachedAssets.map((asset) => attachMedia(asset.id, null)));
   }
 
+  async function schedulePost(postId: number, scheduledAt: string) {
+    const response = await fetch(`${apiUrl}/posts/${postId}/schedule`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token()}`
+      },
+      body: JSON.stringify({ scheduled_at: scheduledAt, timezone })
+    });
+
+    if (!response.ok) throw new Error("زمان‌بندی پست ناموفق بود");
+    return response.json() as Promise<Post>;
+  }
+
   async function saveDraft(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
@@ -311,11 +329,15 @@ function ComposePageContent() {
 
       await syncSelectedMedia(savedPost.id);
 
+      if (form.scheduled_at) {
+        await schedulePost(savedPost.id, form.scheduled_at);
+      }
+
       if (!isEditing) {
         resetComposer({ clearStatus: false });
       }
 
-      setMessage(isEditing ? "پست به‌روزرسانی شد" : "پست به عنوان پیش‌نویس ذخیره شد");
+      setMessage(form.scheduled_at ? "پست ذخیره و زمان‌بندی شد" : isEditing ? "پست به‌روزرسانی شد" : "پست به عنوان پیش‌نویس ذخیره شد");
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطای ذخیره پیش‌نویس");
@@ -408,8 +430,17 @@ function ComposePageContent() {
                   <Tag tone={previewImageUrl ? "success" : "warning"}>{previewImageUrl ? "تصویر انتخاب شده" : "بدون تصویر"}</Tag>
                   <Tag tone={form.caption ? "success" : "neutral"}>{form.caption ? "کپشن آماده" : "کپشن خالی"}</Tag>
                   {isEditing ? <Tag tone="neutral">ویرایش پست موجود</Tag> : null}
+                  {hasSchedule ? <Tag tone="success">زمان‌بندی شده</Tag> : null}
                 </div>
               </div>
+            </SectionCard>
+
+            <SectionCard title="زمان‌بندی انتشار" description="در صورت انتخاب زمان، پست بعد از ذخیره وارد وضعیت زمان‌بندی‌شده می‌شود.">
+              <ComposerSchedulePanel
+                scheduledAt={form.scheduled_at}
+                timezone={timezone}
+                onChange={(value) => updateField("scheduled_at", value)}
+              />
             </SectionCard>
 
             {message ? <div className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
@@ -418,6 +449,7 @@ function ComposePageContent() {
             <ComposerActionFooter
               saving={saving}
               disabled={!form.title.trim()}
+              hasSchedule={hasSchedule}
               onUseDefaults={useDefaults}
               onCancel={resetComposer}
             />
@@ -433,8 +465,8 @@ function ComposePageContent() {
                 <div className="space-y-3 text-sm leading-7 text-app-muted">
                   <p>۱. تصویر را آپلود یا از کتابخانه انتخاب کنید.</p>
                   <p>۲. کپشن و هشتگ‌ها را کامل کنید.</p>
-                  <p>۳. پیش‌نمایش را بررسی کنید.</p>
-                  <p>{isEditing ? "۴. تغییرات را روی همان پست ذخیره کنید." : "۴. فعلاً پست را به عنوان پیش‌نویس ذخیره کنید."}</p>
+                  <p>۳. در صورت نیاز، زمان انتشار را انتخاب کنید.</p>
+                  <p>{isEditing ? "۴. تغییرات را روی همان پست ذخیره کنید." : "۴. پست را به عنوان پیش‌نویس یا زمان‌بندی‌شده ذخیره کنید."}</p>
                 </div>
                 <Button href="/media" variant="secondary" className="mt-4 w-full">رفتن به کتابخانه رسانه</Button>
               </SectionCard>
