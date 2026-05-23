@@ -59,3 +59,20 @@ class RubikaTestResponse(BaseModel):
     status: str
     bot_name: str = ""
     error: str = ""
+
+
+class PostRequest(BaseModel):
+    title: str
+    caption: str = ""
+    hashtags: str = ""
+    platform: str = "rubika"
+
+
+class PostResponse(BaseModel):
+    id: int
+    store_id: int
+    title: str
+    caption: str
+    hashtags: str
+    platform: str
+    status: str
