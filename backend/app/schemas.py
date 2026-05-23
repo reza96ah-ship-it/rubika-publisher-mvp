@@ -116,6 +116,20 @@ class PostStatsResponse(BaseModel):
     cancelled: int
 
 
+class PublishAttemptResponse(BaseModel):
+    id: int
+    post_id: int
+    post_title: str
+    action: str
+    status: str
+    request_payload: str
+    response_payload: str
+    error: str
+    started_at: datetime | None
+    finished_at: datetime | None
+    created_at: datetime
+
+
 class MediaResponse(BaseModel):
     id: int
     store_id: int
