@@ -15,6 +15,7 @@ import { Field, Input, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const scheduleTimezone = "Asia/Tehran";
 
 type Store = {
   default_hashtags: string;
@@ -48,7 +49,7 @@ const emptyForm = {
   caption: "",
   hashtags: "",
   platform: "rubika",
-  timezone: "Asia/Tehran",
+  timezone: scheduleTimezone,
   campaign: "",
   internal_note: "",
   scheduled_at: null as string | null
@@ -87,7 +88,7 @@ function ComposePageContent() {
 
   const captionLength = form.caption.length;
   const hashtagCount = form.hashtags.split(/\s+/).filter((item) => item.startsWith("#")).length;
-  const timezone = form.timezone || store?.timezone || "Asia/Tehran";
+  const timezone = scheduleTimezone;
   const hasSchedule = Boolean(form.scheduled_at);
 
   function token() {
@@ -128,7 +129,7 @@ function ComposePageContent() {
         caption: post.caption,
         hashtags: post.hashtags,
         platform: post.platform || "rubika",
-        timezone: post.timezone || "Asia/Tehran",
+        timezone: scheduleTimezone,
         campaign: post.campaign || "",
         internal_note: post.internal_note || "",
         scheduled_at: post.scheduled_at
@@ -214,7 +215,8 @@ function ComposePageContent() {
   function useDefaults() {
     setForm((current) => ({
       ...current,
-      hashtags: store?.default_hashtags || current.hashtags
+      hashtags: store?.default_hashtags || current.hashtags,
+      timezone: scheduleTimezone
     }));
     if (message) setMessage("");
   }
@@ -226,7 +228,7 @@ function ComposePageContent() {
         caption: editingPost.caption,
         hashtags: editingPost.hashtags,
         platform: editingPost.platform || "rubika",
-        timezone: editingPost.timezone || "Asia/Tehran",
+        timezone: scheduleTimezone,
         campaign: editingPost.campaign || "",
         internal_note: editingPost.internal_note || "",
         scheduled_at: editingPost.scheduled_at
@@ -300,7 +302,7 @@ function ComposePageContent() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token()}`
       },
-      body: JSON.stringify({ scheduled_at: scheduledAt, timezone })
+      body: JSON.stringify({ scheduled_at: scheduledAt, timezone: scheduleTimezone })
     });
 
     if (!response.ok) throw new Error("زمان‌بندی پست ناموفق بود");
@@ -321,7 +323,7 @@ function ComposePageContent() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token()}`
         },
-        body: JSON.stringify(form)
+        body: JSON.stringify({ ...form, timezone: scheduleTimezone })
       });
 
       if (!response.ok) throw new Error(isEditing ? "به‌روزرسانی پست ناموفق بود" : "ذخیره پیش‌نویس ناموفق بود");
