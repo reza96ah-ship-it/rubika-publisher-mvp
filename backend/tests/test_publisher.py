@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from app.database import Base
 from app.models import Post
 from app.services.publisher import build_post_text, extract_message_id, json_text
-from app.services.publisher import reserve_due_posts
+from app.services.publisher import recover_stale_publishing_posts, reserve_due_posts
 
 
 class PostStub:
@@ -65,3 +65,24 @@ def test_reserve_due_posts_claims_only_due_scheduled_posts() -> None:
         assert draft_post.status == "draft"
 
         assert reserve_due_posts(db, now, limit=10) == []
+
+
+def test_recover_stale_publishing_posts_marks_only_old_claims_failed() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime(2026, 1, 1, 12, 0, 0)
+
+    with session_factory() as db:
+        stale_post = Post(store_id=1, title="Stale", status="publishing", scheduled_at=now, created_at=now, updated_at=now - timedelta(minutes=30))
+        fresh_post = Post(store_id=1, title="Fresh", status="publishing", scheduled_at=now, created_at=now, updated_at=now - timedelta(minutes=2))
+        db.add_all([stale_post, fresh_post])
+        db.commit()
+
+        recovered_count = recover_stale_publishing_posts(db, now, stale_after_minutes=15)
+
+        assert recovered_count == 1
+        assert stale_post.status == "failed"
+        assert stale_post.failed_at == now
+        assert stale_post.last_error == "Publishing timed out before worker completed"
+        assert fresh_post.status == "publishing"

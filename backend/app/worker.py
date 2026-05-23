@@ -4,7 +4,7 @@ from celery import Celery
 
 from app.config import get_settings
 from app.database import SessionLocal
-from app.services.publisher import publish_text_post, reserve_due_posts
+from app.services.publisher import publish_text_post, recover_stale_publishing_posts, reserve_due_posts
 
 settings = get_settings()
 
@@ -38,6 +38,7 @@ def publish_due_posts(limit: int = 10) -> dict:
     results: list[dict] = []
 
     with SessionLocal() as db:
+        recovered_count = recover_stale_publishing_posts(db, now)
         posts = reserve_due_posts(db, now, limit)
 
         for post in posts:
@@ -51,4 +52,4 @@ def publish_due_posts(limit: int = 10) -> dict:
                 db.commit()
                 results.append({"ok": False, "post_id": post.id, "error": str(exc)})
 
-    return {"checked_at": now.isoformat(), "count": len(results), "results": results}
+    return {"checked_at": now.isoformat(), "recovered": recovered_count, "count": len(results), "results": results}

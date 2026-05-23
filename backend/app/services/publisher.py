@@ -1,6 +1,6 @@
 import asyncio
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy import select
@@ -98,6 +98,25 @@ def reserve_due_posts(db: Session, now: datetime, limit: int) -> list[Post]:
     for post in posts:
         db.refresh(post)
     return list(posts)
+
+
+def recover_stale_publishing_posts(db: Session, now: datetime, stale_after_minutes: int = 15) -> int:
+    cutoff = now - timedelta(minutes=stale_after_minutes)
+    posts = db.scalars(
+        select(Post)
+        .where(Post.status == "publishing", Post.updated_at <= cutoff)
+        .order_by(Post.updated_at.asc(), Post.id.asc())
+        .with_for_update(skip_locked=True)
+    ).all()
+
+    for post in posts:
+        post.status = "failed"
+        post.failed_at = now
+        post.last_error = "Publishing timed out before worker completed"
+        post.updated_at = now
+
+    db.commit()
+    return len(posts)
 
 
 def publish_text_post(db: Session, post: Post, action: str = "scheduled") -> dict:
