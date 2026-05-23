@@ -1,40 +1,38 @@
-const statusMap: Record<string, { label: string; className: string }> = {
+import { Tag } from "./ui/tag";
+
+const statusMap: Record<string, { label: string; tone: "neutral" | "primary" | "success" | "warning" | "alert" | "info" }> = {
   draft: {
     label: "پیش‌نویس",
-    className: "bg-slate-100 text-slate-700 ring-slate-200"
+    tone: "neutral"
   },
   ready: {
     label: "آماده زمان‌بندی",
-    className: "bg-violet-50 text-violet-700 ring-violet-200"
+    tone: "primary"
   },
   scheduled: {
     label: "زمان‌بندی‌شده",
-    className: "bg-amber-50 text-amber-700 ring-amber-200"
+    tone: "warning"
   },
   publishing: {
     label: "در حال انتشار",
-    className: "bg-sky-50 text-sky-700 ring-sky-200"
+    tone: "info"
   },
   published: {
     label: "منتشرشده",
-    className: "bg-emerald-50 text-emerald-700 ring-emerald-200"
+    tone: "success"
   },
   failed: {
     label: "ناموفق",
-    className: "bg-rose-50 text-rose-700 ring-rose-200"
+    tone: "alert"
   },
   cancelled: {
     label: "لغوشده",
-    className: "bg-zinc-100 text-zinc-700 ring-zinc-200"
+    tone: "neutral"
   }
 };
 
 export function StatusBadge({ status }: { status: string }) {
   const config = statusMap[status] ?? statusMap.draft;
 
-  return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${config.className}`}>
-      {config.label}
-    </span>
-  );
+  return <Tag tone={config.tone}>{config.label}</Tag>;
 }
