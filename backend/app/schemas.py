@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -66,6 +68,19 @@ class PostRequest(BaseModel):
     caption: str = ""
     hashtags: str = ""
     platform: str = "rubika"
+    timezone: str = "Asia/Tehran"
+    campaign: str = ""
+    internal_note: str = ""
+    scheduled_at: datetime | None = None
+
+
+class PostScheduleRequest(BaseModel):
+    scheduled_at: datetime
+    timezone: str = "Asia/Tehran"
+
+
+class PostStatusRequest(BaseModel):
+    status: str
 
 
 class PostResponse(BaseModel):
@@ -76,6 +91,29 @@ class PostResponse(BaseModel):
     hashtags: str
     platform: str
     status: str
+    timezone: str
+    campaign: str
+    internal_note: str
+    scheduled_at: datetime | None
+    ready_at: datetime | None
+    published_at: datetime | None
+    failed_at: datetime | None
+    rubika_message_id: str
+    last_error: str
+    attempt_count: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class PostStatsResponse(BaseModel):
+    total: int
+    draft: int
+    ready: int
+    scheduled: int
+    publishing: int
+    published: int
+    failed: int
+    cancelled: int
 
 
 class MediaResponse(BaseModel):
