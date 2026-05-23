@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ComposerActionFooter } from "../../components/composer-action-footer";
@@ -27,18 +28,40 @@ type MediaAsset = {
   size_bytes: number;
 };
 
+type Post = {
+  id: number;
+  title: string;
+  caption: string;
+  hashtags: string;
+  platform: string;
+  status: string;
+  timezone: string;
+  campaign: string;
+  internal_note: string;
+  scheduled_at: string | null;
+};
+
 const emptyForm = {
   title: "",
   caption: "",
   hashtags: "",
-  platform: "rubika"
+  platform: "rubika",
+  timezone: "Asia/Tehran",
+  campaign: "",
+  internal_note: "",
+  scheduled_at: null as string | null
 };
 
-export default function ComposePage() {
+function ComposePageContent() {
+  const searchParams = useSearchParams();
+  const editingPostId = searchParams.get("postId");
+  const isEditing = Boolean(editingPostId);
+
   const [store, setStore] = useState<Store | null>(null);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [form, setForm] = useState(emptyForm);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [selectedMediaId, setSelectedMediaId] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFilePreviewUrl, setSelectedFilePreviewUrl] = useState("");
@@ -70,22 +93,60 @@ export default function ComposePage() {
   async function loadData() {
     setLoading(true);
     const headers = { Authorization: `Bearer ${token()}` };
-    const [storeResponse, mediaResponse] = await Promise.all([
+    const requests = [
       fetch(`${apiUrl}/stores/active`, { headers }),
       fetch(`${apiUrl}/media`, { headers })
-    ]);
+    ];
+
+    if (editingPostId) {
+      requests.push(fetch(`${apiUrl}/posts/${editingPostId}`, { headers }));
+    }
+
+    const [storeResponse, mediaResponse, postResponse] = await Promise.all(requests);
 
     if (storeResponse.ok) setStore(await storeResponse.json());
-    if (mediaResponse.ok) setMediaAssets(await mediaResponse.json());
+
+    let loadedMediaAssets: MediaAsset[] = [];
+    if (mediaResponse.ok) {
+      loadedMediaAssets = await mediaResponse.json();
+      setMediaAssets(loadedMediaAssets);
+    }
+
+    if (editingPostId) {
+      if (!postResponse?.ok) {
+        throw new Error("دریافت پست برای ویرایش ناموفق بود");
+      }
+
+      const post = (await postResponse.json()) as Post;
+      setEditingPost(post);
+      setForm({
+        title: post.title,
+        caption: post.caption,
+        hashtags: post.hashtags,
+        platform: post.platform || "rubika",
+        timezone: post.timezone || "Asia/Tehran",
+        campaign: post.campaign || "",
+        internal_note: post.internal_note || "",
+        scheduled_at: post.scheduled_at
+      });
+
+      const attachedAsset = loadedMediaAssets.find((asset) => asset.post_id === post.id);
+      setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
+    } else {
+      setEditingPost(null);
+      setForm(emptyForm);
+      setSelectedMediaId("");
+    }
+
     setLoading(false);
   }
 
   useEffect(() => {
-    loadData().catch(() => {
-      setError("خطا در دریافت اطلاعات اولیه composer");
+    loadData().catch((err) => {
+      setError(err instanceof Error ? err.message : isEditing ? "خطا در دریافت اطلاعات پست برای ویرایش" : "خطا در دریافت اطلاعات اولیه composer");
       setLoading(false);
     });
-  }, []);
+  }, [editingPostId]);
 
   useEffect(() => {
     if (!selectedFile) {
@@ -155,8 +216,24 @@ export default function ComposePage() {
   }
 
   function resetComposer(options: { clearStatus?: boolean } = { clearStatus: true }) {
-    setForm(emptyForm);
-    setSelectedMediaId("");
+    if (editingPost) {
+      setForm({
+        title: editingPost.title,
+        caption: editingPost.caption,
+        hashtags: editingPost.hashtags,
+        platform: editingPost.platform || "rubika",
+        timezone: editingPost.timezone || "Asia/Tehran",
+        campaign: editingPost.campaign || "",
+        internal_note: editingPost.internal_note || "",
+        scheduled_at: editingPost.scheduled_at
+      });
+      const attachedAsset = mediaAssets.find((asset) => asset.post_id === editingPost.id);
+      setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
+    } else {
+      setForm(emptyForm);
+      setSelectedMediaId("");
+    }
+
     setSelectedFile(null);
 
     if (options.clearStatus) {
@@ -193,6 +270,25 @@ export default function ComposePage() {
     if (!response.ok) throw new Error("اتصال تصویر به پست ناموفق بود");
   }
 
+  async function syncSelectedMedia(postId: number) {
+    const attachedAssets = mediaAssets.filter((asset) => asset.post_id === postId);
+    const uploadedAsset = await uploadSelectedFile();
+
+    if (uploadedAsset) {
+      await Promise.all(attachedAssets.map((asset) => attachMedia(asset.id, null)));
+      await attachMedia(uploadedAsset.id, postId);
+      return;
+    }
+
+    if (selectedMediaId) {
+      await Promise.all(attachedAssets.filter((asset) => String(asset.id) !== selectedMediaId).map((asset) => attachMedia(asset.id, null)));
+      await attachMedia(Number(selectedMediaId), postId);
+      return;
+    }
+
+    await Promise.all(attachedAssets.map((asset) => attachMedia(asset.id, null)));
+  }
+
   async function saveDraft(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
@@ -200,8 +296,9 @@ export default function ComposePage() {
     setError("");
 
     try {
-      const response = await fetch(`${apiUrl}/posts`, {
-        method: "POST",
+      const endpoint = isEditing ? `${apiUrl}/posts/${editingPostId}` : `${apiUrl}/posts`;
+      const response = await fetch(endpoint, {
+        method: isEditing ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token()}`
@@ -209,18 +306,16 @@ export default function ComposePage() {
         body: JSON.stringify(form)
       });
 
-      if (!response.ok) throw new Error("ذخیره پیش‌نویس ناموفق بود");
+      if (!response.ok) throw new Error(isEditing ? "به‌روزرسانی پست ناموفق بود" : "ذخیره پیش‌نویس ناموفق بود");
       const savedPost = await response.json();
 
-      const uploadedAsset = await uploadSelectedFile();
-      if (uploadedAsset) {
-        await attachMedia(uploadedAsset.id, savedPost.id);
-      } else if (selectedMediaId) {
-        await attachMedia(Number(selectedMediaId), savedPost.id);
+      await syncSelectedMedia(savedPost.id);
+
+      if (!isEditing) {
+        resetComposer({ clearStatus: false });
       }
 
-      resetComposer({ clearStatus: false });
-      setMessage("پست به عنوان پیش‌نویس ذخیره شد");
+      setMessage(isEditing ? "پست به‌روزرسانی شد" : "پست به عنوان پیش‌نویس ذخیره شد");
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطای ذخیره پیش‌نویس");
@@ -233,11 +328,11 @@ export default function ComposePage() {
     <AuthGate>
       <AppShell>
         <PageHeader
-          eyebrow="Phase 3 — Composer-Centric Creation"
-          title="ایجاد پست روبیکا"
-          description="پست را از یک محیط متمرکز بسازید: تصویر، کپشن، هشتگ، پیش‌نمایش و ذخیره پیش‌نویس در یک جریان واحد."
-          actionLabel="مدیریت پست‌ها"
-          actionHref="/posts"
+          eyebrow={isEditing ? "ویرایش محتوا" : "ایجاد محتوا"}
+          title={isEditing ? "ویرایش پست روبیکا" : "ایجاد پست روبیکا"}
+          description={isEditing ? "اطلاعات پست موجود را ویرایش کنید و تغییرات را روی همان پست ذخیره کنید." : "پست را از یک محیط متمرکز بسازید: تصویر، کپشن، هشتگ، پیش‌نمایش و ذخیره پیش‌نویس در یک جریان واحد."}
+          actionLabel="فضای محتوا"
+          actionHref="/content"
         />
 
         <form onSubmit={saveDraft} className="grid gap-5 xl:grid-cols-5">
@@ -312,6 +407,7 @@ export default function ComposePage() {
                   <Tag tone="primary">مقصد: روبیکا</Tag>
                   <Tag tone={previewImageUrl ? "success" : "warning"}>{previewImageUrl ? "تصویر انتخاب شده" : "بدون تصویر"}</Tag>
                   <Tag tone={form.caption ? "success" : "neutral"}>{form.caption ? "کپشن آماده" : "کپشن خالی"}</Tag>
+                  {isEditing ? <Tag tone="neutral">ویرایش پست موجود</Tag> : null}
                 </div>
               </div>
             </SectionCard>
@@ -338,7 +434,7 @@ export default function ComposePage() {
                   <p>۱. تصویر را آپلود یا از کتابخانه انتخاب کنید.</p>
                   <p>۲. کپشن و هشتگ‌ها را کامل کنید.</p>
                   <p>۳. پیش‌نمایش را بررسی کنید.</p>
-                  <p>۴. فعلاً پست را به عنوان پیش‌نویس ذخیره کنید.</p>
+                  <p>{isEditing ? "۴. تغییرات را روی همان پست ذخیره کنید." : "۴. فعلاً پست را به عنوان پیش‌نویس ذخیره کنید."}</p>
                 </div>
                 <Button href="/media" variant="secondary" className="mt-4 w-full">رفتن به کتابخانه رسانه</Button>
               </SectionCard>
@@ -347,5 +443,13 @@ export default function ComposePage() {
         </form>
       </AppShell>
     </AuthGate>
+  );
+}
+
+export default function ComposePage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-app-muted">در حال آماده‌سازی composer...</div>}>
+      <ComposePageContent />
+    </Suspense>
   );
 }
