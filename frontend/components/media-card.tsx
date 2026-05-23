@@ -1,4 +1,5 @@
 import { Tag } from "./ui/tag";
+import type { ReactNode as Node } from "react";
 
 type MediaCardProps = {
   filename: string;
@@ -6,7 +7,7 @@ type MediaCardProps = {
   sizeLabel: string;
   previewUrl?: string;
   linkedLabel?: string;
-  action?: React.ReactNode;
+  action?: Node;
 };
 
 export function MediaCard({ filename, contentType, sizeLabel, previewUrl, linkedLabel = "بدون اتصال", action }: MediaCardProps) {
