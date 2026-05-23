@@ -25,6 +25,8 @@ export default function MediaPage() {
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [posts, setPosts] = useState<PostOption[]>([]);
   const [file, setFile] = useState<File | null>(null);
+  const [selectedFilePreviewUrl, setSelectedFilePreviewUrl] = useState("");
+  const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
@@ -50,6 +52,60 @@ export default function MediaPage() {
       setLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    if (!file) {
+      setSelectedFilePreviewUrl("");
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    setSelectedFilePreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  useEffect(() => {
+    if (assets.length === 0) {
+      setMediaPreviewUrls({});
+      return;
+    }
+
+    let cancelled = false;
+    const createdUrls: string[] = [];
+
+    async function loadPreviews() {
+      const imageAssets = assets.filter((asset) => asset.content_type.startsWith("image/"));
+      const entries = await Promise.all(
+        imageAssets.map(async (asset) => {
+          try {
+            const response = await fetch(`${apiUrl}/media/${asset.id}/file`, {
+              headers: { Authorization: `Bearer ${token()}` }
+            });
+            if (!response.ok) return null;
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            createdUrls.push(url);
+            return [asset.id, url] as const;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setMediaPreviewUrls(Object.fromEntries(entries.filter(Boolean) as Array<[number, string]>));
+      } else {
+        createdUrls.forEach((url) => URL.revokeObjectURL(url));
+      }
+    }
+
+    loadPreviews();
+
+    return () => {
+      cancelled = true;
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [assets]);
 
   async function upload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -109,8 +165,8 @@ export default function MediaPage() {
       <AppShell>
         <PageHeader
           eyebrow="Phase 07 — Media Library"
-          title="رسانه‌ها"
-          description="تصاویر محصول را آپلود کنید و هر تصویر را به یکی از پست‌های پیش‌نویس وصل کنید."
+          title="کتابخانه رسانه"
+          description="تصاویر محصول را آپلود، پیش‌نمایش و به پست‌های پیش‌نویس وصل کنید."
         />
 
         <section className="grid gap-5 xl:grid-cols-4">
@@ -123,6 +179,13 @@ export default function MediaPage() {
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
               className="mt-5 w-full rounded-xl border border-dashed border-app-border bg-slate-50 p-4 text-sm"
             />
+            {selectedFilePreviewUrl ? (
+              <img
+                src={selectedFilePreviewUrl}
+                alt="پیش‌نمایش تصویر انتخاب‌شده"
+                className="mt-4 aspect-video w-full rounded-xl object-cover ring-1 ring-app-border"
+              />
+            ) : null}
             <button
               type="submit"
               disabled={!file || uploading}
@@ -143,29 +206,43 @@ export default function MediaPage() {
             {loading ? <p className="text-sm text-app-muted">در حال دریافت...</p> : null}
             {!loading && assets.length === 0 ? <p className="text-sm text-app-muted">هنوز تصویری آپلود نشده است.</p> : null}
 
-            <div className="space-y-3">
-              {assets.map((asset) => (
-                <div key={asset.id} className="grid gap-4 rounded-xl border border-app-border bg-white p-4 lg:grid-cols-3 lg:items-center">
-                  <div className="lg:col-span-2">
-                    <p className="font-bold">{asset.original_filename}</p>
-                    <p className="mt-1 text-xs text-app-muted">{asset.content_type} · {formatSize(asset.size_bytes)}</p>
-                    <p className="mt-1 text-xs text-app-muted">{asset.post_id ? `متصل به پست ${asset.post_id}` : "بدون اتصال"}</p>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {assets.map((asset) => {
+                const previewUrl = mediaPreviewUrls[asset.id];
+                return (
+                  <div key={asset.id} className="overflow-hidden rounded-2xl border border-app-border bg-white shadow-sm">
+                    {previewUrl ? (
+                      <img
+                        src={previewUrl}
+                        alt={asset.original_filename}
+                        className="aspect-video w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex aspect-video w-full items-center justify-center bg-slate-50 text-xs text-app-muted">
+                        پیش‌نمایش در دسترس نیست
+                      </div>
+                    )}
+                    <div className="p-4">
+                      <p className="truncate font-bold" title={asset.original_filename}>{asset.original_filename}</p>
+                      <p className="mt-1 text-xs text-app-muted">{asset.content_type} · {formatSize(asset.size_bytes)}</p>
+                      <p className="mt-1 text-xs text-app-muted">{asset.post_id ? `متصل به پست ${asset.post_id}` : "بدون اتصال"}</p>
+                      <label className="mt-4 block text-xs font-semibold text-app-muted">
+                        اتصال به پست
+                        <select
+                          value={asset.post_id ?? ""}
+                          onChange={(event) => attachToPost(asset.id, event.target.value)}
+                          className="mt-2 w-full rounded-xl border border-app-border bg-white px-3 py-2 text-sm text-app-text"
+                        >
+                          <option value="">بدون اتصال</option>
+                          {posts.map((post) => (
+                            <option key={post.id} value={post.id}>{post.title}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
                   </div>
-                  <label className="block text-xs font-semibold text-app-muted">
-                    اتصال به پست
-                    <select
-                      value={asset.post_id ?? ""}
-                      onChange={(event) => attachToPost(asset.id, event.target.value)}
-                      className="mt-2 w-full rounded-xl border border-app-border bg-white px-3 py-2 text-sm text-app-text"
-                    >
-                      <option value="">بدون اتصال</option>
-                      {posts.map((post) => (
-                        <option key={post.id} value={post.id}>{post.title}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
