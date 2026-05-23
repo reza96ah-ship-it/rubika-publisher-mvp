@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
+import { CountdownBadge } from "../../components/countdown-badge";
 import { PageHeader } from "../../components/page-header";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
@@ -52,6 +53,7 @@ export default function QueuePage() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <StatusBadge status={post.status} />
+                      <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
                       <span className="text-xs text-app-muted">زمان‌بندی: {formatDateTime(post.scheduled_at)}</span>
                     </div>
                     <h2 className="mt-3 truncate font-bold text-app-text">{post.title}</h2>
