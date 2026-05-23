@@ -1,15 +1,26 @@
 import Link from "next/link";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type SharedButtonProps = {
   variant?: ButtonVariant;
   size?: ButtonSize;
-  href?: string;
   children: ReactNode;
+  className?: string;
 };
+
+type ButtonAsButtonProps = SharedButtonProps & ButtonHTMLAttributes<HTMLButtonElement> & {
+  href?: never;
+};
+
+type ButtonAsLinkProps = SharedButtonProps & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {
+  href: string;
+  disabled?: boolean;
+};
+
+type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary: "bg-app-primary text-white shadow-sm hover:bg-app-primaryHover",
@@ -24,7 +35,8 @@ const sizeClasses: Record<ButtonSize, string> = {
   lg: "px-5 py-3 text-sm"
 };
 
-export function Button({ variant = "primary", size = "md", href, className = "", children, ...props }: ButtonProps) {
+export function Button(props: ButtonProps) {
+  const { variant = "primary", size = "md", className = "", children } = props;
   const classes = [
     "inline-flex items-center justify-center rounded-xl font-semibold transition disabled:pointer-events-none disabled:opacity-60",
     variantClasses[variant],
@@ -32,16 +44,26 @@ export function Button({ variant = "primary", size = "md", href, className = "",
     className
   ].join(" ");
 
-  if (href) {
+  if ("href" in props && props.href) {
+    const { href, disabled, variant: _variant, size: _size, className: _className, children: _children, ...linkProps } = props;
+
     return (
-      <Link href={href} className={classes}>
+      <Link
+        href={href}
+        className={classes}
+        aria-disabled={disabled || linkProps["aria-disabled"]}
+        tabIndex={disabled ? -1 : linkProps.tabIndex}
+        {...linkProps}
+      >
         {children}
       </Link>
     );
   }
 
+  const { variant: _variant, size: _size, className: _className, children: _children, type = "button", ...buttonProps } = props;
+
   return (
-    <button className={classes} {...props}>
+    <button type={type} className={classes} {...buttonProps}>
       {children}
     </button>
   );
