@@ -57,10 +57,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
       - name: Compile
         run: python -m compileall app
 
       - name: Import app
         run: python -c "from app.main import app; print(app.title)"
+
+      - name: Test
+        run: pytest
