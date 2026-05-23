@@ -36,6 +36,41 @@ def extract_message_id(payload: dict) -> str:
     return ""
 
 
+def rubika_response_error(payload: dict) -> str:
+    if not isinstance(payload, dict):
+        return "Rubika returned an invalid response"
+
+    for key in ["error", "error_message"]:
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+
+    ok = payload.get("ok")
+    if ok is False:
+        for key in ["description", "message"]:
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return "Rubika returned ok=false"
+
+    status = payload.get("status")
+    if isinstance(status, str) and status.strip().lower() not in {"ok", "success"}:
+        for key in ["description", "message"]:
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return f"Rubika returned status={status.strip()}"
+
+    data = payload.get("data")
+    if isinstance(data, dict):
+        for key in ["error", "error_message"]:
+            value = data.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+
+    return ""
+
+
 def start_attempt(db: Session, post: Post, request_payload: dict, action: str) -> PublishAttempt:
     now = datetime.utcnow()
     attempt = PublishAttempt(
@@ -133,6 +168,10 @@ def publish_text_post(db: Session, post: Post, action: str = "scheduled") -> dic
     try:
         client = RubikaClient(account.bot_token)
         response_payload = asyncio.run(client.send_message(account.chat_id, text))
+        response_error = rubika_response_error(response_payload)
+        if response_error:
+            finish_failure(db, post, attempt, response_error)
+            return {"ok": False, "post_id": post.id, "error": response_error}
         finish_success(db, post, attempt, response_payload)
         return {"ok": True, "post_id": post.id, "message_id": post.rubika_message_id}
     except Exception as exc:

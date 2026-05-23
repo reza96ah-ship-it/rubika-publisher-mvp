@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from app.database import Base
 from app.models import Post
 from app.services.publisher import build_post_text, extract_message_id, json_text
-from app.services.publisher import recover_stale_publishing_posts, reserve_due_posts
+from app.services.publisher import recover_stale_publishing_posts, reserve_due_posts, rubika_response_error
 
 
 class PostStub:
@@ -38,6 +38,20 @@ def test_extract_message_id_checks_nested_and_top_level_fields() -> None:
     assert extract_message_id({"data": {"message_id": 123}}) == "123"
     assert extract_message_id({"messageId": "abc"}) == "abc"
     assert extract_message_id({"data": {"id": "nested-id"}}) == "nested-id"
+
+
+def test_rubika_response_error_accepts_success_shapes() -> None:
+    assert rubika_response_error({"status": "OK", "data": {"message_id": 123}}) == ""
+    assert rubika_response_error({"ok": True, "result": {"id": "abc"}}) == ""
+    assert rubika_response_error({"ok": True, "message": "Sent"}) == ""
+    assert rubika_response_error({"data": {"id": "nested-id"}}) == ""
+
+
+def test_rubika_response_error_rejects_error_shapes() -> None:
+    assert rubika_response_error({"ok": False}) == "Rubika returned ok=false"
+    assert rubika_response_error({"status": "ERROR", "description": "Invalid chat"}) == "Invalid chat"
+    assert rubika_response_error({"error_message": "Invalid token"}) == "Invalid token"
+    assert rubika_response_error({"data": {"error": "Chat not found"}}) == "Chat not found"
 
 
 def test_json_text_keeps_persian_text_readable() -> None:
