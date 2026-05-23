@@ -6,9 +6,10 @@ import { AppShell } from "../../components/app-shell";
 import { ComposerActionFooter } from "../../components/composer-action-footer";
 import { PageHeader } from "../../components/page-header";
 import { RubikaPostPreview } from "../../components/rubika-post-preview";
+import { MediaGalleryPicker } from "../../components/media-gallery-picker";
 import { Button } from "../../components/ui/button";
 import { SectionCard } from "../../components/ui/card";
-import { Field, Input, Select, Textarea } from "../../components/ui/form";
+import { Field, Input, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -261,33 +262,19 @@ export default function ComposePage() {
                 </div>
 
                 <div className="rounded-2xl border border-app-border bg-white p-4">
-                  <Field label="انتخاب از کتابخانه">
-                    <Select
-                      value={selectedMediaId}
-                      onChange={(event) => {
-                        setSelectedMediaId(event.target.value);
-                        if (event.target.value) setSelectedFile(null);
-                        if (message) setMessage("");
-                      }}
-                    >
-                      <option value="">بدون تصویر</option>
-                      {mediaAssets.map((asset) => (
-                        <option key={asset.id} value={asset.id}>{asset.original_filename}</option>
-                      ))}
-                    </Select>
-                  </Field>
-                  {loading ? <p className="mt-3 text-xs text-app-muted">در حال دریافت رسانه‌ها...</p> : null}
-                  {selectedMedia ? (
-                    <div className="mt-4 flex items-center gap-3 rounded-xl bg-slate-50 p-3">
-                      {mediaPreviewUrls[selectedMedia.id] ? (
-                        <img src={mediaPreviewUrls[selectedMedia.id]} alt={selectedMedia.original_filename} className="h-14 w-14 rounded-xl object-cover ring-1 ring-app-border" />
-                      ) : null}
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-app-text">{selectedMedia.original_filename}</p>
-                        <p className="text-xs text-app-muted">از کتابخانه رسانه</p>
-                      </div>
-                    </div>
-                  ) : null}
+                  <p className="text-sm font-semibold text-app-text">انتخاب از کتابخانه</p>
+                  <p className="mt-1 text-xs leading-6 text-app-muted">به‌جای لیست متنی، تصویر را مستقیم از گالری انتخاب کنید.</p>
+                  <MediaGalleryPicker
+                    assets={mediaAssets}
+                    previewUrls={mediaPreviewUrls}
+                    selectedMediaId={selectedMediaId}
+                    loading={loading}
+                    onSelect={(assetId) => {
+                      setSelectedMediaId(assetId);
+                      if (assetId) setSelectedFile(null);
+                      if (message) setMessage("");
+                    }}
+                  />
                 </div>
               </div>
             </SectionCard>
