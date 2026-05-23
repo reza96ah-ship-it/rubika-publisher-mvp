@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { PageHeader } from "../../components/page-header";
@@ -36,7 +36,7 @@ export default function MediaPage() {
     return window.localStorage.getItem("rubika_publisher_access") ?? "";
   }
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const headers = { Authorization: `Bearer ${token()}` };
     const mediaResponse = await fetch(`${apiUrl}/media`, { headers });
@@ -44,14 +44,14 @@ export default function MediaPage() {
     if (mediaResponse.ok) setAssets(await mediaResponse.json());
     if (postsResponse.ok) setPosts(await postsResponse.json());
     setLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
     loadData().catch(() => {
       setError("خطا در دریافت رسانه‌ها");
       setLoading(false);
     });
-  }, []);
+  }, [loadData]);
 
   useEffect(() => {
     if (!file) {

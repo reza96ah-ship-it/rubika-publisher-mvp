@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { PageHeader } from "../../components/page-header";
@@ -41,7 +41,7 @@ export default function LogsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  async function loadAttempts(nextStatus = status) {
+  const loadAttempts = useCallback(async (nextStatus: string) => {
     setLoading(true);
     setError("");
     const params = new URLSearchParams();
@@ -50,14 +50,14 @@ export default function LogsPage() {
     if (!response.ok) throw new Error("دریافت لاگ انتشار ناموفق بود");
     setAttempts(await response.json());
     setLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
-    loadAttempts().catch((err) => {
+    loadAttempts("all").catch((err) => {
       setError(err instanceof Error ? err.message : "خطا در دریافت لاگ انتشار");
       setLoading(false);
     });
-  }, []);
+  }, [loadAttempts]);
 
   async function applyStatus(nextStatus: string) {
     setStatus(nextStatus);

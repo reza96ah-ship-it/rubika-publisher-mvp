@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
@@ -94,7 +94,7 @@ function ComposePageContent() {
     return window.localStorage.getItem("rubika_publisher_access") ?? "";
   }
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const headers = { Authorization: `Bearer ${token()}` };
     const requests = [
@@ -143,14 +143,14 @@ function ComposePageContent() {
     }
 
     setLoading(false);
-  }
+  }, [editingPostId]);
 
   useEffect(() => {
     loadData().catch((err) => {
       setError(err instanceof Error ? err.message : isEditing ? "خطا در دریافت اطلاعات پست برای ویرایش" : "خطا در دریافت اطلاعات اولیه composer");
       setLoading(false);
     });
-  }, [editingPostId]);
+  }, [isEditing, loadData]);
 
   useEffect(() => {
     if (!selectedFile) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { CountdownBadge } from "../../components/countdown-badge";
@@ -18,7 +18,7 @@ export default function ContentWorkspacePage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  async function loadPosts(status = activeStatus, query = search) {
+  const loadPosts = useCallback(async (status: string, query: string) => {
     setLoading(true);
     const params = new URLSearchParams();
     if (status !== "all") params.set("status", status);
@@ -27,14 +27,14 @@ export default function ContentWorkspacePage() {
     if (!response.ok) throw new Error("دریافت پست‌ها ناموفق بود");
     setPosts(await response.json());
     setLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
-    loadPosts().catch((err) => {
+    loadPosts("all", "").catch((err) => {
       setError(err instanceof Error ? err.message : "خطا در دریافت فضای محتوا");
       setLoading(false);
     });
-  }, []);
+  }, [loadPosts]);
 
   async function changeStatus(post: Post, status: string) {
     setMessage("");
@@ -49,7 +49,7 @@ export default function ContentWorkspacePage() {
       return;
     }
     setMessage("وضعیت پست به‌روزرسانی شد");
-    await loadPosts();
+    await loadPosts(activeStatus, search);
   }
 
   async function applyFilters(nextStatus = activeStatus) {
