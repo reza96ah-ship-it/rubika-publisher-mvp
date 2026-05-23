@@ -30,7 +30,7 @@ export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: Compo
   const todayParts = getJalaliPickerParts(null);
   const monthLength = getJalaliMonthLength(draft.year, draft.month);
   const startOffset = getJalaliMonthStartOffset(draft.year, draft.month);
-  const dayCells = useMemo(() => [...Array.from({ length: startOffset }, (_, index) => null), ...Array.from({ length: monthLength }, (_, index) => index + 1)], [monthLength, startOffset]);
+  const dayCells = useMemo(() => [...Array.from({ length: startOffset }, () => null), ...Array.from({ length: monthLength }, (_, index) => index + 1)], [monthLength, startOffset]);
 
   function emit(next: JalaliPickerParts) {
     setDraft(next);

@@ -34,3 +34,4 @@ Thumbs.db
 .idea/
 
 frontend/next-env.d.ts
+frontend/tsconfig.tsbuildinfo

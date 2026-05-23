@@ -21,6 +21,7 @@ type ButtonAsLinkProps = SharedButtonProps & Omit<AnchorHTMLAttributes<HTMLAncho
 };
 
 type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
+type NativeButtonType = NonNullable<ButtonHTMLAttributes<HTMLButtonElement>["type"]>;
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary: "bg-app-primary text-white shadow-sm hover:bg-app-primaryHover",
@@ -60,7 +61,8 @@ export function Button(props: ButtonProps) {
     );
   }
 
-  const { variant: _variant, size: _size, className: _className, children: _children, type = "button", ...buttonProps } = props;
+  const { variant: _variant, size: _size, className: _className, children: _children, type: buttonType, ...buttonProps } = props as ButtonAsButtonProps;
+  const type: NativeButtonType = buttonType ?? "button";
 
   return (
     <button type={type} className={classes} {...buttonProps}>
