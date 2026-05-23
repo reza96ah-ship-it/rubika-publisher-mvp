@@ -6,6 +6,7 @@ from app.database import Base, SessionLocal, check_database, engine, ensure_phas
 from app.routes.auth import router as auth_router
 from app.routes.media import router as media_router
 from app.routes.posts import router as posts_router
+from app.routes.publish_attempts import router as publish_attempts_router
 from app.routes.rubika import router as rubika_router
 from app.routes.stores import router as stores_router
 from app.seed import seed_admin_user
@@ -15,7 +16,7 @@ app = FastAPI(title=settings.app_name, version="0.1.0")
 
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origin_list, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-for router in [auth_router, stores_router, rubika_router, posts_router, media_router]:
+for router in [auth_router, stores_router, rubika_router, posts_router, media_router, publish_attempts_router]:
     app.include_router(router)
 
 
