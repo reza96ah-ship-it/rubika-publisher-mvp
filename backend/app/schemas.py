@@ -76,3 +76,18 @@ class PostResponse(BaseModel):
     hashtags: str
     platform: str
     status: str
+
+
+class MediaResponse(BaseModel):
+    id: int
+    store_id: int
+    post_id: int | None
+    original_filename: str
+    stored_filename: str
+    content_type: str
+    size_bytes: int
+    url: str
+
+
+class AttachMediaRequest(BaseModel):
+    post_id: int | None = None
