@@ -1,12 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { PageHeader } from "../../components/page-header";
 import { StatusBadge } from "../../components/status-badge";
+import { Button } from "../../components/ui/button";
 import { SectionCard } from "../../components/ui/card";
-import { apiUrl, authHeaders, formatDateTime, Post } from "../../lib/posts";
+import { apiUrl, authHeaders, Post } from "../../lib/posts";
+import {
+  formatJalaliDate,
+  formatJalaliDateTime,
+  formatJalaliDayNumber,
+  formatJalaliMonth,
+  formatJalaliTime,
+  formatJalaliWeekday,
+  jalaliDateKey,
+  sortByScheduleAsc
+} from "../../lib/jalali";
+
+type CalendarGroup = {
+  key: string;
+  sampleDate: string;
+  posts: Post[];
+};
 
 export default function CalendarPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -27,34 +45,106 @@ export default function CalendarPage() {
     });
   }, []);
 
+  const sortedPosts = useMemo(() => sortByScheduleAsc(posts), [posts]);
+
+  const groups = useMemo(() => {
+    const byDate = new Map<string, CalendarGroup>();
+
+    for (const post of sortedPosts) {
+      if (!post.scheduled_at) continue;
+      const key = jalaliDateKey(post.scheduled_at);
+      const current = byDate.get(key);
+      if (current) {
+        current.posts.push(post);
+      } else {
+        byDate.set(key, { key, sampleDate: post.scheduled_at, posts: [post] });
+      }
+    }
+
+    return Array.from(byDate.values());
+  }, [sortedPosts]);
+
+  const monthLabel = groups.length > 0 ? formatJalaliMonth(groups[0].sampleDate) : formatJalaliMonth(new Date().toISOString());
+  const nextPost = sortedPosts[0];
+
   return (
     <AuthGate>
       <AppShell>
         <PageHeader
-          eyebrow="تقویم محتوا"
+          eyebrow="تقویم جلالی محتوا"
           title="تقویم انتشار"
-          description="نمای تاریخ‌محور پست‌هایی که وارد وضعیت زمان‌بندی‌شده شده‌اند. انتشار خودکار در Phase 4B فعال می‌شود."
+          description="نمای راست‌به‌چپ و شمسی برای کنترل پست‌های زمان‌بندی‌شده روبیکا. انتشار خودکار در Phase 4B فعال می‌شود."
           actionLabel="ایجاد پست جدید"
           actionHref="/compose"
         />
 
         {error ? <div className="mb-5 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
 
-        <SectionCard title="پست‌های زمان‌بندی‌شده" description="فعلاً این نما یک تقویم عملیاتی ساده است و فقط پست‌های دارای زمان انتشار را نشان می‌دهد.">
+        <section className="mb-5 grid gap-4 lg:grid-cols-3">
+          <SectionCard title="ماه فعال" description="بر اساس نزدیک‌ترین پست زمان‌بندی‌شده.">
+            <p className="text-2xl font-black text-app-text">{monthLabel}</p>
+            <p className="mt-2 text-sm text-app-muted">تعداد روزهای دارای برنامه: {groups.length}</p>
+          </SectionCard>
+
+          <SectionCard title="پست بعدی" description="نزدیک‌ترین انتشار زمان‌بندی‌شده.">
+            {nextPost ? (
+              <div>
+                <p className="font-bold text-app-text">{nextPost.title}</p>
+                <p className="mt-2 text-sm text-app-muted">{formatJalaliDateTime(nextPost.scheduled_at)}</p>
+              </div>
+            ) : (
+              <p className="text-sm text-app-muted">هنوز پستی زمان‌بندی نشده است.</p>
+            )}
+          </SectionCard>
+
+          <SectionCard title="وضعیت تقویم" description="خلاصه عملیاتی صف زمان‌بندی.">
+            <p className="text-2xl font-black text-app-text">{sortedPosts.length}</p>
+            <p className="mt-2 text-sm text-app-muted">پست زمان‌بندی‌شده در تقویم شمسی</p>
+          </SectionCard>
+        </section>
+
+        <SectionCard title="نمای روزهای شمسی" description="پست‌ها بر اساس روز جلالی گروه‌بندی شده‌اند. هر کارت یک روز کاری تقویم انتشار است.">
           {loading ? <p className="text-sm text-app-muted">در حال دریافت...</p> : null}
-          {!loading && posts.length === 0 ? <p className="text-sm text-app-muted">هنوز پستی زمان‌بندی نشده است.</p> : null}
-          <div className="grid gap-3">
-            {posts.map((post) => (
-              <article key={post.id} className="rounded-2xl border border-app-border bg-white p-4 shadow-sm">
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <StatusBadge status={post.status} />
-                      <span className="text-xs text-app-muted">{formatDateTime(post.scheduled_at)}</span>
-                    </div>
-                    <h2 className="mt-3 font-bold text-app-text">{post.title}</h2>
-                    <p className="mt-2 line-clamp-2 text-sm leading-7 text-app-muted">{post.caption || "بدون کپشن"}</p>
+          {!loading && groups.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-app-border bg-slate-50 p-8 text-center">
+              <p className="font-bold text-app-text">هنوز پستی زمان‌بندی نشده است.</p>
+              <p className="mt-2 text-sm text-app-muted">از composer برای انتخاب زمان انتشار استفاده کنید.</p>
+              <Button href="/compose" className="mt-4">ایجاد پست زمان‌بندی‌شده</Button>
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            {groups.map((group) => (
+              <article key={group.key} className="overflow-hidden rounded-2xl border border-app-border bg-white shadow-sm">
+                <header className="flex items-center gap-4 border-b border-app-border bg-slate-50 p-4">
+                  <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-white ring-1 ring-app-border">
+                    <span className="text-xs font-semibold text-app-muted">{formatJalaliWeekday(group.sampleDate)}</span>
+                    <span className="text-2xl font-black text-app-primary">{formatJalaliDayNumber(group.sampleDate)}</span>
                   </div>
+                  <div>
+                    <h2 className="font-black text-app-text">{formatJalaliDate(group.sampleDate)}</h2>
+                    <p className="mt-1 text-xs text-app-muted">{group.posts.length} پست در این روز</p>
+                  </div>
+                </header>
+
+                <div className="space-y-3 p-4">
+                  {group.posts.map((post) => (
+                    <Link key={post.id} href={`/compose?postId=${post.id}`} className="block rounded-xl border border-app-border bg-white p-4 transition hover:bg-slate-50">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <StatusBadge status={post.status} />
+                            <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-app-primary">
+                              {formatJalaliTime(post.scheduled_at)}
+                            </span>
+                          </div>
+                          <h3 className="mt-3 truncate font-bold text-app-text">{post.title}</h3>
+                          <p className="mt-2 line-clamp-2 text-sm leading-7 text-app-muted">{post.caption || "بدون کپشن"}</p>
+                        </div>
+                        <span className="text-xs text-app-muted">ویرایش</span>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               </article>
             ))}
