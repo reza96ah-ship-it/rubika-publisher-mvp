@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
+import { CountdownBadge } from "../../components/countdown-badge";
 import { PageHeader } from "../../components/page-header";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
@@ -91,6 +92,7 @@ export default function CalendarPage() {
               <div>
                 <p className="font-bold text-app-text">{nextPost.title}</p>
                 <p className="mt-2 text-sm text-app-muted">{formatJalaliDateTime(nextPost.scheduled_at)}</p>
+                <CountdownBadge status={nextPost.status} scheduledAt={nextPost.scheduled_at} className="mt-3" />
               </div>
             ) : (
               <p className="text-sm text-app-muted">هنوز پستی زمان‌بندی نشده است.</p>
@@ -134,6 +136,7 @@ export default function CalendarPage() {
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge status={post.status} />
+                            <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
                             <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-app-primary">
                               {formatJalaliTime(post.scheduled_at)}
                             </span>
