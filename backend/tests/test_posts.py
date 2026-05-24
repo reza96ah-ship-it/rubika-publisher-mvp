@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
-from app.models import Post, Store, User
+from app.models import Post, Store
 from app.routes.posts import apply_payload, post_response, schedule_post
 from app.schemas import PostRequest, PostScheduleRequest
 
@@ -69,7 +69,7 @@ def test_schedule_post_normalizes_tehran_time_and_returns_utc_response() -> None
         response = schedule_post(
             post.id,
             PostScheduleRequest(scheduled_at=datetime(2026, 1, 10, 9, 15, tzinfo=tehran), timezone="Asia/Tehran"),
-            current_user=User(email="admin@example.com", password_hash="hash", full_name="Admin"),
+            store=store,
             db=db,
         )
         db.refresh(post)

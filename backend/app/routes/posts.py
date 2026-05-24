@@ -4,29 +4,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.auth import get_current_user
 from app.database import get_db
-from app.models import Post, Store, User
+from app.dependencies import get_active_store
+from app.models import Post, Store
 from app.schemas import PostRequest, PostResponse, PostScheduleRequest, PostStatsResponse, PostStatusRequest
+from app.store_scope import get_store_post
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 WORKFLOW_STATUSES = {"draft", "ready", "scheduled", "publishing", "published", "failed", "cancelled"}
 EDITABLE_STATUSES = {"draft", "ready", "scheduled", "failed"}
-
-
-def active_store(db: Session) -> Store:
-    store = db.scalar(select(Store).where(Store.is_active.is_(True)).order_by(Store.id.asc()))
-    if store is None:
-        raise HTTPException(status_code=400, detail="Create store profile first")
-    return store
-
-
-def get_store_post(db: Session, store: Store, post_id: int) -> Post:
-    post = db.scalar(select(Post).where(Post.id == post_id, Post.store_id == store.id))
-    if post is None:
-        raise HTTPException(status_code=404, detail="Post not found")
-    return post
 
 
 def utc_naive(value: datetime | None) -> datetime | None:
@@ -82,8 +69,7 @@ def apply_payload(post: Post, payload: PostRequest) -> None:
 
 
 @router.get("/stats", response_model=PostStatsResponse)
-def post_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PostStatsResponse:
-    store = active_store(db)
+def post_stats(store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostStatsResponse:
     rows = db.execute(select(Post.status, func.count(Post.id)).where(Post.store_id == store.id).group_by(Post.status)).all()
     counts = {status: 0 for status in WORKFLOW_STATUSES}
     for status, count in rows:
@@ -92,8 +78,12 @@ def post_stats(current_user: User = Depends(get_current_user), db: Session = Dep
 
 
 @router.get("")
-def list_posts(status: str | None = Query(default=None), search: str | None = Query(default=None), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    store = active_store(db)
+def list_posts(
+    status: str | None = Query(default=None),
+    search: str | None = Query(default=None),
+    store: Store = Depends(get_active_store),
+    db: Session = Depends(get_db),
+):
     statement = select(Post).where(Post.store_id == store.id)
     if status and status != "all":
         statement = statement.where(Post.status == status)
@@ -105,14 +95,12 @@ def list_posts(status: str | None = Query(default=None), search: str | None = Qu
 
 
 @router.get("/{post_id}", response_model=PostResponse)
-def read_post(post_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PostResponse:
-    store = active_store(db)
+def read_post(post_id: int, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostResponse:
     return post_response(get_store_post(db, store, post_id))
 
 
 @router.post("", response_model=PostResponse)
-def create_post(payload: PostRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PostResponse:
-    store = active_store(db)
+def create_post(payload: PostRequest, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostResponse:
     post = Post(store_id=store.id, status="draft")
     apply_payload(post, payload)
     db.add(post)
@@ -122,8 +110,7 @@ def create_post(payload: PostRequest, current_user: User = Depends(get_current_u
 
 
 @router.put("/{post_id}", response_model=PostResponse)
-def update_post(post_id: int, payload: PostRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PostResponse:
-    store = active_store(db)
+def update_post(post_id: int, payload: PostRequest, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostResponse:
     post = get_store_post(db, store, post_id)
     if post.status not in EDITABLE_STATUSES:
         raise HTTPException(status_code=400, detail="Post cannot be edited in its current status")
@@ -134,8 +121,7 @@ def update_post(post_id: int, payload: PostRequest, current_user: User = Depends
 
 
 @router.post("/{post_id}/ready", response_model=PostResponse)
-def mark_ready(post_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PostResponse:
-    store = active_store(db)
+def mark_ready(post_id: int, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostResponse:
     post = get_store_post(db, store, post_id)
     if post.status not in {"draft", "failed", "cancelled"}:
         raise HTTPException(status_code=400, detail="Only draft, failed, or cancelled posts can be marked ready")
@@ -149,8 +135,7 @@ def mark_ready(post_id: int, current_user: User = Depends(get_current_user), db:
 
 
 @router.post("/{post_id}/schedule", response_model=PostResponse)
-def schedule_post(post_id: int, payload: PostScheduleRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PostResponse:
-    store = active_store(db)
+def schedule_post(post_id: int, payload: PostScheduleRequest, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostResponse:
     post = get_store_post(db, store, post_id)
     if post.status not in {"draft", "ready", "scheduled", "failed"}:
         raise HTTPException(status_code=400, detail="Post cannot be scheduled in its current status")
@@ -166,8 +151,7 @@ def schedule_post(post_id: int, payload: PostScheduleRequest, current_user: User
 
 
 @router.post("/{post_id}/retry", response_model=PostResponse)
-def retry_failed_post(post_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PostResponse:
-    store = active_store(db)
+def retry_failed_post(post_id: int, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostResponse:
     post = get_store_post(db, store, post_id)
     if post.status != "failed":
         raise HTTPException(status_code=400, detail="Only failed posts can be retried")
@@ -184,10 +168,9 @@ def retry_failed_post(post_id: int, current_user: User = Depends(get_current_use
 
 
 @router.post("/{post_id}/status", response_model=PostResponse)
-def change_status(post_id: int, payload: PostStatusRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> PostResponse:
+def change_status(post_id: int, payload: PostStatusRequest, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostResponse:
     if payload.status not in WORKFLOW_STATUSES:
         raise HTTPException(status_code=400, detail="Invalid post status")
-    store = active_store(db)
     post = get_store_post(db, store, post_id)
     post.status = payload.status
     post.updated_at = datetime.utcnow()

@@ -1,13 +1,13 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
 from app.database import get_db
 from app.models import Store, User
 from app.schemas import StoreResponse, StoreUpsertRequest
+from app.store_scope import find_active_store
 
 router = APIRouter(prefix="/stores", tags=["stores"])
 
@@ -27,16 +27,16 @@ def make_response(store: Store) -> StoreResponse:
 
 
 @router.get("/active")
-def get_active_store(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    store = db.scalar(select(Store).where(Store.is_active.is_(True)).order_by(Store.id.asc()))
+def read_active_store(_current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    store = find_active_store(db)
     if store is None:
         return None
     return make_response(store)
 
 
 @router.put("/active")
-def save_active_store(payload: StoreUpsertRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    store = db.scalar(select(Store).where(Store.is_active.is_(True)).order_by(Store.id.asc()))
+def save_active_store(payload: StoreUpsertRequest, _current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    store = find_active_store(db)
     if store is None:
         store = Store(name=payload.name.strip() or "فروشگاه من")
         db.add(store)

@@ -6,24 +6,18 @@ from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth import get_current_user
 from app.config import get_settings
 from app.database import get_db
-from app.models import MediaAsset, Post, Store, User
+from app.dependencies import get_active_store
+from app.models import MediaAsset, Store
 from app.schemas import AttachMediaRequest, MediaResponse
+from app.store_scope import get_store_media_asset, get_store_post
 
 router = APIRouter(prefix="/media", tags=["media"])
 settings = get_settings()
 
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_SIZE = 8 * 1024 * 1024
-
-
-def active_store(db: Session) -> Store:
-    store = db.scalar(select(Store).where(Store.is_active.is_(True)).order_by(Store.id.asc()))
-    if store is None:
-        raise HTTPException(status_code=400, detail="Create store profile first")
-    return store
 
 
 def media_response(asset: MediaAsset) -> MediaResponse:
@@ -40,15 +34,13 @@ def media_response(asset: MediaAsset) -> MediaResponse:
 
 
 @router.get("")
-def list_media(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    store = active_store(db)
+def list_media(store: Store = Depends(get_active_store), db: Session = Depends(get_db)):
     assets = db.scalars(select(MediaAsset).where(MediaAsset.store_id == store.id).order_by(MediaAsset.id.desc())).all()
     return [media_response(asset) for asset in assets]
 
 
 @router.post("")
-async def upload_media(file: UploadFile = File(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    store = active_store(db)
+async def upload_media(file: UploadFile = File(...), store: Store = Depends(get_active_store), db: Session = Depends(get_db)):
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(status_code=400, detail="Only JPG, PNG and WEBP images are allowed")
 
@@ -79,25 +71,17 @@ async def upload_media(file: UploadFile = File(...), current_user: User = Depend
 
 
 @router.get("/{asset_id}/file")
-def read_media_file(asset_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    store = active_store(db)
-    asset = db.scalar(select(MediaAsset).where(MediaAsset.id == asset_id, MediaAsset.store_id == store.id))
-    if asset is None:
-        raise HTTPException(status_code=404, detail="Media not found")
+def read_media_file(asset_id: int, store: Store = Depends(get_active_store), db: Session = Depends(get_db)):
+    asset = get_store_media_asset(db, store, asset_id)
     return FileResponse(asset.file_path, media_type=asset.content_type, filename=asset.original_filename)
 
 
 @router.put("/{asset_id}/attach")
-def attach_media(asset_id: int, payload: AttachMediaRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    store = active_store(db)
-    asset = db.scalar(select(MediaAsset).where(MediaAsset.id == asset_id, MediaAsset.store_id == store.id))
-    if asset is None:
-        raise HTTPException(status_code=404, detail="Media not found")
+def attach_media(asset_id: int, payload: AttachMediaRequest, store: Store = Depends(get_active_store), db: Session = Depends(get_db)):
+    asset = get_store_media_asset(db, store, asset_id)
 
     if payload.post_id is not None:
-        post = db.scalar(select(Post).where(Post.id == payload.post_id, Post.store_id == store.id))
-        if post is None:
-            raise HTTPException(status_code=404, detail="Post not found")
+        get_store_post(db, store, payload.post_id)
 
     asset.post_id = payload.post_id
     db.commit()
