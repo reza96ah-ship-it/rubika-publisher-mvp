@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.database import Base, SessionLocal, check_database, engine, ensure_phase4a_schema
+from app.database import SessionLocal, check_database
+from app.migrations import run_migrations
 from app.routes.auth import router as auth_router
 from app.routes.media import router as media_router
 from app.routes.posts import router as posts_router
@@ -22,8 +23,7 @@ for router in [auth_router, stores_router, rubika_router, posts_router, media_ro
 
 @app.on_event("startup")
 def on_startup() -> None:
-    Base.metadata.create_all(bind=engine)
-    ensure_phase4a_schema()
+    run_migrations()
     with SessionLocal() as db:
         seed_admin_user(db)
 

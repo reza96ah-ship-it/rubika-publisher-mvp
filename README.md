@@ -49,6 +49,13 @@ Database health:
 http://localhost:8000/health/db
 ```
 
+Database migrations:
+
+```bash
+docker compose exec backend alembic current
+docker compose exec backend alembic upgrade head
+```
+
 ## فاز فعلی
 
 Phase 3 — Composer-Centric Creation and Post Management
