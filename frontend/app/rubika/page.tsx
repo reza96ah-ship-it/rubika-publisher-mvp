@@ -109,9 +109,9 @@ export default function RubikaPage() {
     <AuthGate>
       <AppShell>
         <PageHeader
-          eyebrow="Phase 05 — Rubika Connection"
+          eyebrow="کانال انتشار"
           title="اتصال روبیکا"
-          description="توکن ربات و شناسه مقصد را وارد کنید، سپس اتصال را تست کنید. در فاز انتشار، همین اتصال برای ارسال خودکار پست استفاده می‌شود."
+          description="توکن ربات و شناسه مقصد را مدیریت کنید. پس از تست موفق، صف زمان‌بندی می‌تواند پست‌ها را خودکار ارسال کند."
         />
 
         <section className="grid gap-5 lg:grid-cols-3">

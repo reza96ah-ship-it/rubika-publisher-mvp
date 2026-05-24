@@ -164,9 +164,9 @@ export default function MediaPage() {
     <AuthGate>
       <AppShell>
         <PageHeader
-          eyebrow="Phase 07 — Media Library"
+          eyebrow="دارایی‌های محتوا"
           title="کتابخانه رسانه"
-          description="تصاویر محصول را آپلود، پیش‌نمایش و به پست‌های پیش‌نویس وصل کنید."
+          description="تصاویر محصول را آپلود، پیش‌نمایش و به پست‌های آماده انتشار وصل کنید."
         />
 
         <section className="grid gap-5 xl:grid-cols-4">

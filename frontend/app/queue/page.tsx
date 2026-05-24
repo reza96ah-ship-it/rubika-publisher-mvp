@@ -53,7 +53,7 @@ export default function QueuePage() {
         <PageHeader
           eyebrow="صف عملیاتی انتشار"
           title="صف انتشار"
-          description="نمای پست‌هایی که آماده زمان‌بندی، زمان‌بندی‌شده، در حال انتشار یا نیازمند بررسی هستند. اتصال worker در Phase 4B انجام می‌شود."
+          description="پست‌های آماده، زمان‌بندی‌شده، در حال انتشار یا ناموفق را از همین نما کنترل و بازیابی کنید."
           actionLabel="ایجاد پست جدید"
           actionHref="/compose"
         />
@@ -61,7 +61,7 @@ export default function QueuePage() {
         {error ? <div className="mb-5 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {message ? <div className="mb-5 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
 
-        <SectionCard title="پست‌های داخل صف" description="این نما برای کنترل آماده‌سازی و زمان‌بندی قبل از فعال شدن انتشار خودکار استفاده می‌شود.">
+        <SectionCard title="پست‌های داخل صف" description="نمای عملیاتی برای بررسی زمان‌بندی، خطاها و تلاش مجدد انتشار.">
           {loading ? <p className="text-sm text-app-muted">در حال دریافت...</p> : null}
           {!loading && posts.length === 0 ? <p className="text-sm text-app-muted">فعلاً پستی در صف انتشار نیست.</p> : null}
           <div className="grid gap-3">

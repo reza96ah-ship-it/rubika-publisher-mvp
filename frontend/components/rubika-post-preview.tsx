@@ -16,7 +16,7 @@ export function RubikaPostPreview({
       <div className="overflow-hidden rounded-[1.5rem] bg-white ring-1 ring-app-border">
         <div className="flex items-center justify-between border-b border-app-border px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-violet-100 ring-1 ring-violet-200" />
+            <div className="h-10 w-10 rounded-full bg-blue-100 ring-1 ring-blue-200" />
             <div>
               <p className="text-sm font-bold text-app-text">{destination}</p>
               <p className="text-xs text-app-muted">پیش‌نمایش انتشار</p>

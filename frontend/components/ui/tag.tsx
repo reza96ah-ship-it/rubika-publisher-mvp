@@ -10,7 +10,7 @@ type TagProps = {
 
 const toneClasses: Record<TagTone, string> = {
   neutral: "bg-slate-100 text-slate-700 ring-slate-200",
-  primary: "bg-violet-50 text-violet-700 ring-violet-200",
+  primary: "bg-blue-50 text-blue-700 ring-blue-200",
   success: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   warning: "bg-amber-50 text-amber-700 ring-amber-200",
   alert: "bg-rose-50 text-rose-700 ring-rose-200",

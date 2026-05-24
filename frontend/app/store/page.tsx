@@ -104,9 +104,9 @@ export default function StorePage() {
     <AuthGate>
       <AppShell>
         <PageHeader
-          eyebrow="Phase 04 — Store Profile"
+          eyebrow="هویت فروشگاه"
           title="پروفایل فروشگاه"
-          description="اطلاعات پایه فروشگاه برای کپشن، هشتگ‌های پیش‌فرض و اتصال‌های انتشار استفاده می‌شود."
+          description="اطلاعات پایه‌ای که در کپشن، هشتگ‌های پیش‌فرض و آماده‌سازی محتوا استفاده می‌شود."
         />
 
         <section className="rounded-2xl border border-app-border bg-app-surface p-6 shadow-soft">

@@ -12,8 +12,8 @@ const config: Config = {
           background: "#F7F8FA",
           surface: "#FFFFFF",
           border: "#E5E7EB",
-          primary: "#7B68EE",
-          primaryHover: "#6C5CE7",
+          primary: "#2563EB",
+          primaryHover: "#1D4ED8",
           text: "#1F2937",
           muted: "#6B7280"
         }

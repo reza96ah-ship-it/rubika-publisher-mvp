@@ -17,7 +17,7 @@ export default function DesignSystemPage() {
     <AuthGate>
       <AppShell>
         <PageHeader
-          eyebrow="Phase 2 — Professional Design System"
+          eyebrow="مرجع داخلی محصول"
           title="پیش‌نمایش سیستم طراحی"
           description="مرجع داخلی برای بررسی کامپوننت‌های پایه، کارت‌ها، فرم‌ها، وضعیت‌ها و اجزای تکرارشونده فضای کاری."
         />

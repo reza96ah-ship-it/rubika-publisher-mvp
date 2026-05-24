@@ -39,7 +39,7 @@ export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loadi
       <button
         type="button"
         onClick={() => onSelect("")}
-        className={`rounded-2xl border p-3 text-right transition ${!selectedMediaId ? "border-app-primary bg-violet-50 ring-2 ring-violet-100" : "border-app-border bg-white hover:bg-slate-50"}`}
+        className={`rounded-2xl border p-3 text-right transition ${!selectedMediaId ? "border-app-primary bg-blue-50 ring-2 ring-blue-100" : "border-app-border bg-white hover:bg-slate-50"}`}
       >
         <div className="flex aspect-video items-center justify-center rounded-xl bg-slate-100 text-xs text-app-muted">
           بدون تصویر
@@ -57,7 +57,7 @@ export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loadi
             key={asset.id}
             type="button"
             onClick={() => onSelect(String(asset.id))}
-            className={`overflow-hidden rounded-2xl border text-right transition ${selected ? "border-app-primary bg-violet-50 ring-2 ring-violet-100" : "border-app-border bg-white hover:bg-slate-50"}`}
+              className={`overflow-hidden rounded-2xl border text-right transition ${selected ? "border-app-primary bg-blue-50 ring-2 ring-blue-100" : "border-app-border bg-white hover:bg-slate-50"}`}
           >
             {previewUrl ? (
               <img src={previewUrl} alt={asset.original_filename} className="aspect-video w-full object-cover" />

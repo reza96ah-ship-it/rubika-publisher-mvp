@@ -6,10 +6,12 @@ import { AppShell } from "../components/app-shell";
 import { CountdownBadge } from "../components/countdown-badge";
 import { DashboardCard } from "../components/dashboard-card";
 import { PageHeader } from "../components/page-header";
+import { ReadinessJourney } from "../components/readiness-journey";
 import { StatusBadge } from "../components/status-badge";
 import { Button } from "../components/ui/button";
 import { SectionCard } from "../components/ui/card";
 import { apiUrl, authHeaders, formatDateTime, Post } from "../lib/posts";
+import { loadWorkspaceOverview, RubikaSettings, StoreProfile } from "../lib/workspace";
 
 function statusCount(posts: Post[], status: string) {
   return posts.filter((post) => post.status === status).length;
@@ -17,14 +19,21 @@ function statusCount(posts: Post[], status: string) {
 
 export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [store, setStore] = useState<StoreProfile | null>(null);
+  const [rubika, setRubika] = useState<RubikaSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     async function loadDashboard() {
-      const response = await fetch(`${apiUrl}/posts`, { headers: authHeaders() });
+      const [response, overview] = await Promise.all([
+        fetch(`${apiUrl}/posts`, { headers: authHeaders() }),
+        loadWorkspaceOverview()
+      ]);
       if (!response.ok) throw new Error("دریافت داشبورد ناموفق بود");
       setPosts(await response.json());
+      setStore(overview.store);
+      setRubika(overview.rubika);
       setLoading(false);
     }
 
@@ -47,15 +56,17 @@ export default function HomePage() {
     <AuthGate>
       <AppShell>
         <PageHeader
-          eyebrow="نمای عملیاتی انتشار"
-          title="داشبورد فضای کاری انتشار روبیکا"
-          description="خلاصه زنده از وضعیت محتوا، پست بعدی و شمارش معکوس انتشار."
+          eyebrow="مرکز کنترل انتشار"
+          title="داشبورد انتشار روبیکا"
+          description="وضعیت آماده‌سازی، صف انتشار، پست بعدی و خطاهای مهم را در یک نمای عملیاتی ببینید."
           actionLabel="ایجاد پست جدید"
           actionHref="/compose"
         />
 
         {error ? <div className="mb-5 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {loading ? <p className="mb-5 text-sm text-app-muted">در حال دریافت داشبورد...</p> : null}
+
+        <ReadinessJourney store={store} rubika={rubika} posts={posts} loading={loading} />
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <DashboardCard label="پیش‌نویس" value={String(statusCount(posts, "draft"))} hint="نیازمند تکمیل یا آماده‌سازی" />
@@ -86,7 +97,7 @@ export default function HomePage() {
             )}
           </SectionCard>
 
-          <SectionCard title="مسیرهای سریع" description="دسترسی سریع به بخش‌های عملیاتی.">
+          <SectionCard title="مسیرهای سریع" description="بخش‌های پرکاربرد برای ادامه کار روزانه.">
             <div className="grid gap-3">
               <Button href="/content" variant="secondary">فضای محتوا</Button>
               <Button href="/queue" variant="secondary">صف انتشار</Button>

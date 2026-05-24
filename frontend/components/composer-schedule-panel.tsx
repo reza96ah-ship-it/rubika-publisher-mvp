@@ -77,7 +77,7 @@ export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: Compo
             if (!day) return <div key={`empty-${index}`} className="h-12" />;
             const selected = sameDay(selectedParts, draft.year, draft.month, day);
             const today = sameDay(todayParts, draft.year, draft.month, day);
-            const classes = selected ? "bg-app-primary text-white shadow-sm" : today ? "bg-emerald-50 text-emerald-700 ring-2 ring-emerald-200" : "bg-slate-50 text-slate-700 hover:bg-violet-50 hover:text-app-primary";
+  const classes = selected ? "bg-app-primary text-white shadow-sm" : today ? "bg-emerald-50 text-emerald-700 ring-2 ring-emerald-200" : "bg-slate-50 text-slate-700 hover:bg-blue-50 hover:text-app-primary";
             return (
               <button key={day} type="button" onClick={() => emit({ ...draft, day })} className={`relative h-12 rounded-xl text-sm font-semibold transition ${classes}`}>
                 <span>{day}</span>

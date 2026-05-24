@@ -74,7 +74,7 @@ export default function CalendarPage() {
         <PageHeader
           eyebrow="تقویم جلالی محتوا"
           title="تقویم انتشار"
-          description="نمای راست‌به‌چپ و شمسی برای کنترل پست‌های زمان‌بندی‌شده روبیکا. انتشار خودکار در Phase 4B فعال می‌شود."
+          description="نمای راست‌به‌چپ و شمسی برای کنترل پست‌های زمان‌بندی‌شده، پیدا کردن شکاف‌های تقویم و باز کردن سریع هر پست."
           actionLabel="ایجاد پست جدید"
           actionHref="/compose"
         />
@@ -137,7 +137,7 @@ export default function CalendarPage() {
                           <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge status={post.status} />
                             <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
-                            <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-app-primary">
+                            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-app-primary">
                               {formatJalaliTime(post.scheduled_at)}
                             </span>
                           </div>
