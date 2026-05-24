@@ -1,11 +1,14 @@
+import json
 from datetime import datetime, timedelta
 
-from sqlalchemy import create_engine
+import pytest
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
-from app.models import Post
-from app.services.publisher import build_post_text, extract_message_id, json_text
+from app.models import MediaAsset, Post, PublishAttempt, RubikaAccount
+from app.services.publisher import build_post_text, extract_file_id, extract_message_id, extract_upload_url, json_text
+from app.services.publisher import publish_post
 from app.services.publisher import recover_stale_publishing_posts, reserve_due_posts, rubika_response_error
 
 
@@ -38,6 +41,14 @@ def test_extract_message_id_checks_nested_and_top_level_fields() -> None:
     assert extract_message_id({"data": {"message_id": 123}}) == "123"
     assert extract_message_id({"messageId": "abc"}) == "abc"
     assert extract_message_id({"data": {"id": "nested-id"}}) == "nested-id"
+    assert extract_message_id({"send": {"data": {"message_id": "sent-media"}}}) == "sent-media"
+
+
+def test_extract_upload_metadata_checks_nested_and_top_level_fields() -> None:
+    assert extract_upload_url({"data": {"upload_url": "https://upload.example/file"}}) == "https://upload.example/file"
+    assert extract_upload_url({"result": {"uploadUrl": "https://upload.example/camel"}}) == "https://upload.example/camel"
+    assert extract_file_id({"data": {"file_id": "file-123"}}) == "file-123"
+    assert extract_file_id({"file": {"fileId": "file-456"}}) == "file-456"
 
 
 def test_rubika_response_error_accepts_success_shapes() -> None:
@@ -100,3 +111,131 @@ def test_recover_stale_publishing_posts_marks_only_old_claims_failed() -> None:
         assert stale_post.failed_at == now
         assert stale_post.last_error == "Publishing timed out before worker completed"
         assert fresh_post.status == "publishing"
+
+
+def test_publish_post_sends_attached_media(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime(2026, 1, 1, 12, 0, 0)
+    media_path = tmp_path / "photo.jpg"
+    media_path.write_bytes(b"fake-image")
+    calls: list[tuple] = []
+
+    class FakeRubikaClient:
+        def __init__(self, token: str) -> None:
+            calls.append(("init", token))
+
+        async def request_send_file(self, file_type: str) -> dict:
+            calls.append(("request_send_file", file_type))
+            return {"status": "OK", "data": {"upload_url": "https://upload.example/file"}}
+
+        async def upload_file(self, upload_url: str, file_path: str, content_type: str, filename: str) -> dict:
+            calls.append(("upload_file", upload_url, file_path, content_type, filename))
+            return {"status": "OK", "data": {"file_id": "file-123"}}
+
+        async def send_file(self, chat_id: str, file_id: str, text: str = "") -> dict:
+            calls.append(("send_file", chat_id, file_id, text))
+            return {"status": "OK", "data": {"message_id": "msg-123"}}
+
+    monkeypatch.setattr("app.services.publisher.RubikaClient", FakeRubikaClient)
+
+    with session_factory() as db:
+        db.add(RubikaAccount(bot_token="token-123", chat_id="chat-123"))
+        post = Post(store_id=1, title="Launch", caption="Caption", hashtags="#tag", status="publishing", created_at=now, updated_at=now)
+        db.add(post)
+        db.flush()
+        asset = MediaAsset(
+            store_id=1,
+            post_id=post.id,
+            original_filename="photo.jpg",
+            stored_filename="photo.jpg",
+            file_path=str(media_path),
+            content_type="image/jpeg",
+            size_bytes=media_path.stat().st_size,
+            created_at=now,
+        )
+        db.add(asset)
+        db.commit()
+
+        result = publish_post(db, post, action="scheduled")
+        attempt = db.scalar(select(PublishAttempt).where(PublishAttempt.post_id == post.id))
+
+        assert result == {"ok": True, "post_id": post.id, "message_id": "msg-123", "media_asset_id": asset.id}
+        assert post.status == "published"
+        assert post.rubika_message_id == "msg-123"
+        assert calls == [
+            ("init", "token-123"),
+            ("request_send_file", "Image"),
+            ("upload_file", "https://upload.example/file", str(media_path), "image/jpeg", "photo.jpg"),
+            ("send_file", "chat-123", "file-123", "Caption\n\n#tag"),
+        ]
+        assert attempt is not None
+        assert json.loads(attempt.request_payload)["mode"] == "media"
+        assert json.loads(attempt.response_payload)["file_id"] == "file-123"
+
+
+def test_publish_post_falls_back_to_text_without_media(monkeypatch: pytest.MonkeyPatch) -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime(2026, 1, 1, 12, 0, 0)
+    calls: list[tuple] = []
+
+    class FakeRubikaClient:
+        def __init__(self, token: str) -> None:
+            calls.append(("init", token))
+
+        async def send_message(self, chat_id: str, text: str) -> dict:
+            calls.append(("send_message", chat_id, text))
+            return {"status": "OK", "data": {"message_id": "msg-text"}}
+
+    monkeypatch.setattr("app.services.publisher.RubikaClient", FakeRubikaClient)
+
+    with session_factory() as db:
+        db.add(RubikaAccount(bot_token="token-123", chat_id="chat-123"))
+        post = Post(store_id=1, title="Text only", caption="Caption", hashtags="", status="publishing", created_at=now, updated_at=now)
+        db.add(post)
+        db.commit()
+
+        result = publish_post(db, post, action="scheduled")
+
+        assert result == {"ok": True, "post_id": post.id, "message_id": "msg-text"}
+        assert post.status == "published"
+        assert post.rubika_message_id == "msg-text"
+        assert calls == [("init", "token-123"), ("send_message", "chat-123", "Caption")]
+
+
+def test_publish_post_fails_when_attached_media_file_is_missing() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime(2026, 1, 1, 12, 0, 0)
+
+    with session_factory() as db:
+        db.add(RubikaAccount(bot_token="token-123", chat_id="chat-123"))
+        post = Post(store_id=1, title="Missing media", status="publishing", created_at=now, updated_at=now)
+        db.add(post)
+        db.flush()
+        db.add(
+            MediaAsset(
+                store_id=1,
+                post_id=post.id,
+                original_filename="missing.jpg",
+                stored_filename="missing.jpg",
+                file_path="/tmp/does-not-exist.jpg",
+                content_type="image/jpeg",
+                size_bytes=10,
+                created_at=now,
+            )
+        )
+        db.commit()
+
+        result = publish_post(db, post, action="scheduled")
+        attempt = db.scalar(select(PublishAttempt).where(PublishAttempt.post_id == post.id))
+
+        assert result == {"ok": False, "post_id": post.id, "error": "Attached media file is missing"}
+        assert post.status == "failed"
+        assert post.last_error == "Attached media file is missing"
+        assert attempt is not None
+        assert json.loads(attempt.request_payload)["mode"] == "media"
