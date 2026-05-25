@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, ChevronLeft, LogOut, Monitor, Plus, Search } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronLeft, LogOut, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -53,10 +53,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-app-background text-app-text">
       <div className="flex min-h-screen">
-        <Sidebar />
+        <Sidebar storeName={overview.store?.name || "پروفایل فروشگاه"} readinessPercent={readinessPercent} ready={shellReady} />
         <section className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 border-b border-app-border bg-white/95 backdrop-blur-xl">
-            <div className="px-4 py-3 lg:px-6">
+            <div className="px-4 py-2.5 lg:px-6">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-app-primary text-xs font-black text-white lg:hidden">
@@ -68,11 +68,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
                       <span className="text-app-primary">{activeNav.item.label}</span>
                     </div>
-                    <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
-                      <p className="truncate text-sm font-black text-app-text lg:text-base">{storeName}</p>
+                    <div className="mt-1 flex min-w-0 items-center gap-2">
+                      <p className="truncate text-base font-black text-app-text">{activeNav.item.label}</p>
+                      <span className="hidden h-1 w-1 rounded-full bg-slate-300 sm:block" />
+                      <p className="hidden truncate text-xs font-bold text-app-muted sm:block">{storeName}</p>
                       <StatusToken tone={shellReady ? "success" : "warning"} className="gap-1">
                         {shellReady ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />}
-                        {shellReady ? "آماده انتشار" : "نیازمند آماده‌سازی"}
+                        {shellReady ? "آماده" : "نیازمند آماده‌سازی"}
                       </StatusToken>
                     </div>
                   </div>
@@ -81,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center xl:max-w-4xl xl:flex-1 xl:justify-end">
                   <Link
                     href="/content"
-                    className="hidden h-10 min-w-0 items-center gap-2 rounded-md border border-app-border bg-slate-50 px-3 text-sm text-app-muted transition hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary xl:flex xl:w-[340px]"
+                    className="hidden h-10 min-w-0 items-center gap-2 rounded-md border border-app-border bg-slate-50 px-3 text-sm text-app-muted transition hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary lg:flex lg:w-64 2xl:w-[360px]"
                   >
                     <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <span className="truncate">جست‌وجوی محتوا، کمپین و کپشن</span>
@@ -90,26 +92,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </span>
                   </Link>
 
-                  <div className="hidden w-40 shrink-0 xl:block">
-                    <div className="mb-1 flex items-center justify-between text-[11px] font-black text-app-muted">
-                      <span>آمادگی</span>
-                      <span>{readinessPercent}%</span>
+                  <div className="hidden shrink-0 items-center gap-3 rounded-md border border-app-border bg-slate-50 px-3 py-2 xl:flex">
+                    <div className="min-w-28">
+                      <div className="flex items-center justify-between text-[11px] font-black text-app-muted">
+                        <span>آمادگی</span>
+                        <span>{readinessPercent}%</span>
+                      </div>
+                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white">
+                        <div
+                          className={`h-full rounded-full ${shellReady ? "bg-emerald-500" : "bg-amber-500"}`}
+                          style={{ width: `${readinessPercent}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className={`h-full rounded-full ${shellReady ? "bg-emerald-500" : "bg-amber-500"}`}
-                        style={{ width: `${readinessPercent}%` }}
-                      />
-                    </div>
+                    <span className="h-5 w-px bg-app-border" />
+                    <StatusToken tone={rubikaTone}>{rubikaLabel}</StatusToken>
                   </div>
 
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <StatusToken tone={rubikaTone}>{rubikaLabel}</StatusToken>
-                    <StatusToken tone={storeTone}>{storeLabel}</StatusToken>
-                    <StatusToken tone="neutral" className="gap-1">
-                      <Monitor className="h-3.5 w-3.5" aria-hidden="true" />
-                      محلی
-                    </StatusToken>
+                    <span className="hidden xl:inline-flex">
+                      <StatusToken tone={storeTone}>{storeLabel}</StatusToken>
+                    </span>
                     <Link
                       href={setupHref}
                       className="inline-flex items-center gap-2 rounded-md border border-app-primary bg-app-primary px-3 py-2 text-xs font-bold text-white transition hover:border-app-primaryHover hover:bg-app-primaryHover"
@@ -119,7 +122,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </Link>
                     <button
                       onClick={logout}
-                      className="inline-flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                      className="inline-flex h-9 items-center gap-2 rounded-md border border-app-border bg-white px-3 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary"
+                      aria-label="خروج"
                     >
                       <LogOut className="h-4 w-4" aria-hidden="true" />
                       خروج

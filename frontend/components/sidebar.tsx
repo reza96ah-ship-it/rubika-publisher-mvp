@@ -29,6 +29,12 @@ export type NavGroup = {
   items: NavItem[];
 };
 
+type SidebarProps = {
+  storeName?: string;
+  readinessPercent?: number;
+  ready?: boolean;
+};
+
 export const navGroups: NavGroup[] = [
   {
     title: "برنامه‌ریزی و انتشار",
@@ -109,11 +115,11 @@ function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ storeName = "فضای کاری", readinessPercent = 0, ready = false }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-[244px] shrink-0 border-l border-app-border bg-white lg:flex lg:min-h-screen lg:flex-col">
+    <aside className="hidden w-[260px] shrink-0 border-l border-app-border bg-white lg:flex lg:min-h-screen lg:flex-col">
       <div className="border-b border-app-border px-4 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-app-primary text-xs font-black text-white">
@@ -124,9 +130,23 @@ export function Sidebar() {
             <h2 className="truncate text-base font-black text-app-text">انتشار روبیکا</h2>
           </div>
         </div>
+        <Link href="/store" className="mt-4 block rounded-md border border-blue-100 bg-blue-50/70 p-3 transition hover:border-blue-200 hover:bg-blue-50">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-black text-app-primary">فضای کاری</p>
+              <p className="mt-1 truncate text-sm font-black text-app-text">{storeName}</p>
+            </div>
+            <span className={`rounded px-2 py-1 text-[10px] font-black ${ready ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100" : "bg-amber-50 text-amber-700 ring-1 ring-amber-100"}`}>
+              {readinessPercent}%
+            </span>
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white">
+            <div className={`h-full rounded-full ${ready ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${readinessPercent}%` }} />
+          </div>
+        </Link>
       </div>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4" aria-label="ناوبری اصلی">
         {navGroups.map((group) => (
           <div key={group.title}>
             <div className="mb-2 px-2">
@@ -144,10 +164,10 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-app-border px-3 py-3">
-        <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[11px] font-black text-app-text">وضعیت محیط</p>
-          <p className="mt-1 text-xs leading-5 text-app-muted">نسخه محلی برای تست و آماده‌سازی انتشار.</p>
-        </div>
+        <Link href="/logs" className="block rounded-md border border-app-border bg-slate-50 p-3 transition hover:border-blue-200 hover:bg-blue-50">
+          <p className="text-[11px] font-black text-app-text">سلامت انتشار</p>
+          <p className="mt-1 text-xs leading-5 text-app-muted">اتصال، تلاش‌ها و خطاهای انتشار.</p>
+        </Link>
       </div>
     </aside>
   );
