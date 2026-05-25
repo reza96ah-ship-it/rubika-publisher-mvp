@@ -53,7 +53,7 @@ export function FilterChip({ active, children, count, onClick }: FilterChipProps
       type="button"
       onClick={onClick}
       className={`rounded px-3 py-1.5 text-xs font-bold transition ${
-        active ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+        active ? "bg-app-primary text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"
       }`}
     >
       {children}

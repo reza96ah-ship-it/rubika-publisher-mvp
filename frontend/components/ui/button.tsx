@@ -24,9 +24,9 @@ type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
 type NativeButtonType = NonNullable<ButtonHTMLAttributes<HTMLButtonElement>["type"]>;
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "border border-slate-950 bg-slate-950 text-white hover:border-app-primary hover:bg-app-primary",
-  secondary: "border border-app-border bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50",
-  ghost: "border border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-app-text",
+  primary: "border border-app-primary bg-app-primary text-white hover:border-app-primaryHover hover:bg-app-primaryHover",
+  secondary: "border border-app-border bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary",
+  ghost: "border border-transparent bg-transparent text-slate-600 hover:bg-blue-50 hover:text-app-primary",
   danger: "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
 };
 

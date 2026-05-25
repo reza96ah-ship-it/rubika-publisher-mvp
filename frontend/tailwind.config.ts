@@ -9,17 +9,21 @@ const config: Config = {
       },
       colors: {
         app: {
-          background: "#F8FAFC",
+          background: "#F6F8FB",
           surface: "#FFFFFF",
-          border: "#E2E8F0",
-          primary: "#1D4ED8",
-          primaryHover: "#1E40AF",
-          text: "#111827",
-          muted: "#64748B"
+          border: "#DDE7F0",
+          primary: "#2563EB",
+          primaryHover: "#1D4ED8",
+          text: "#172033",
+          muted: "#667085",
+          soft: "#EEF6FF",
+          success: "#059669",
+          warning: "#D97706",
+          alert: "#E11D48"
         }
       },
       boxShadow: {
-        soft: "0 1px 2px rgba(15, 23, 42, 0.04)"
+        soft: "0 10px 24px rgba(37, 99, 235, 0.06)"
       }
     }
   },

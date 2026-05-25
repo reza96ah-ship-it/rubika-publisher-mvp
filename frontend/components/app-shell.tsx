@@ -59,7 +59,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="px-4 py-3 lg:px-6">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-slate-950 text-xs font-black text-white lg:hidden">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-app-primary text-xs font-black text-white lg:hidden">
                     RP
                   </div>
                   <div className="min-w-0">
@@ -81,11 +81,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center xl:max-w-4xl xl:flex-1 xl:justify-end">
                   <Link
                     href="/content"
-                    className="hidden h-10 min-w-0 items-center gap-2 rounded-md border border-app-border bg-slate-50 px-3 text-sm text-app-muted transition hover:border-slate-300 hover:bg-white xl:flex xl:w-[340px]"
+                    className="hidden h-10 min-w-0 items-center gap-2 rounded-md border border-app-border bg-slate-50 px-3 text-sm text-app-muted transition hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary xl:flex xl:w-[340px]"
                   >
                     <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    <span className="truncate">فرماندهی محتوا: جست‌وجو، فیلتر و بازبینی</span>
-                    <span className="mr-auto rounded bg-white px-2 py-0.5 text-[10px] font-bold text-slate-500 ring-1 ring-app-border">
+                    <span className="truncate">جست‌وجوی محتوا، کمپین و کپشن</span>
+                    <span className="mr-auto rounded bg-white px-2 py-0.5 text-[10px] font-bold text-app-primary ring-1 ring-blue-100">
                       Content
                     </span>
                   </Link>
@@ -112,7 +112,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </StatusToken>
                     <Link
                       href={setupHref}
-                      className="inline-flex items-center gap-2 rounded-md border border-slate-950 bg-slate-950 px-3 py-2 text-xs font-bold text-white transition hover:border-app-primary hover:bg-app-primary"
+                      className="inline-flex items-center gap-2 rounded-md border border-app-primary bg-app-primary px-3 py-2 text-xs font-bold text-white transition hover:border-app-primaryHover hover:bg-app-primaryHover"
                     >
                       <Plus className="h-4 w-4" aria-hidden="true" />
                       {setupLabel}

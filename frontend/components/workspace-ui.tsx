@@ -49,7 +49,7 @@ type StatusTokenProps = {
 
 const metricToneClasses: Record<NonNullable<MetricTileProps["tone"]>, string> = {
   neutral: "text-slate-700",
-  primary: "text-blue-700",
+  primary: "text-app-primary",
   success: "text-emerald-700",
   warning: "text-amber-700",
   alert: "text-rose-700",
@@ -58,12 +58,12 @@ const metricToneClasses: Record<NonNullable<MetricTileProps["tone"]>, string> = 
 
 const tokenToneClasses: Record<StatusTokenTone, string> = {
   neutral: "border-slate-200 bg-slate-50 text-slate-700",
-  primary: "border-blue-200 bg-blue-50 text-blue-700",
+  primary: "border-blue-200 bg-blue-50 text-app-primary",
   success: "border-emerald-200 bg-emerald-50 text-emerald-700",
   warning: "border-amber-200 bg-amber-50 text-amber-700",
   alert: "border-rose-200 bg-rose-50 text-rose-700",
   info: "border-sky-200 bg-sky-50 text-sky-700",
-  dark: "border-slate-900 bg-slate-950 text-white"
+  dark: "border-blue-500 bg-app-primary text-white"
 };
 
 export function WorkspacePage({ children, className = "" }: WorkspacePageProps) {
@@ -135,7 +135,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
             type="button"
             onClick={() => onChange(option.value)}
             className={`inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-bold transition ${
-              active ? "bg-white text-app-primary shadow-sm ring-1 ring-app-border" : "text-slate-600 hover:text-app-text"
+              active ? "bg-white text-app-primary shadow-sm ring-1 ring-blue-200" : "text-slate-600 hover:text-app-primary"
             }`}
           >
             {option.label}

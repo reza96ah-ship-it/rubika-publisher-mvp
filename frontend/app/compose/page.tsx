@@ -548,25 +548,27 @@ function ComposePageContent() {
               </div>
             </section>
 
-            <aside className="rounded-md border border-slate-900 bg-slate-950 p-4 text-white">
+            <aside className="rounded-md border border-blue-200 bg-blue-50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-black text-slate-400">QUALITY GATE</p>
-                  <h2 className="mt-2 text-lg font-black">کنترل قبل از صف</h2>
+                  <p className="text-[11px] font-black text-app-primary">کنترل کیفیت انتشار</p>
+                  <h2 className="mt-2 text-lg font-black text-app-text">کنترل قبل از صف</h2>
                 </div>
-                <ShieldCheck className="h-5 w-5 text-emerald-300" aria-hidden="true" />
+                <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
+                  <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+                </span>
               </div>
-              <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
-                <div className={`h-full rounded-full ${canSchedule ? "bg-emerald-400" : "bg-amber-400"}`} style={{ width: `${readinessScore}%` }} />
+              <div className="mt-5 h-2 overflow-hidden rounded-full bg-white">
+                <div className={`h-full rounded-full ${canSchedule ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${readinessScore}%` }} />
               </div>
               <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded border border-white/10 bg-white/5 p-3">
-                  <p className="font-black text-white">{readinessDoneCount}/{readinessItems.length}</p>
-                  <p className="mt-1 text-slate-400">چک آماده</p>
+                <div className="rounded border border-blue-100 bg-white p-3">
+                  <p className="font-black text-app-text">{readinessDoneCount}/{readinessItems.length}</p>
+                  <p className="mt-1 text-app-muted">چک آماده</p>
                 </div>
-                <div className="rounded border border-white/10 bg-white/5 p-3">
-                  <p className="font-black text-white">{rubikaReady ? "متصل" : "نیازمند اتصال"}</p>
-                  <p className="mt-1 text-slate-400">روبیکا</p>
+                <div className="rounded border border-blue-100 bg-white p-3">
+                  <p className="font-black text-app-text">{rubikaReady ? "متصل" : "نیازمند اتصال"}</p>
+                  <p className="mt-1 text-app-muted">روبیکا</p>
                 </div>
               </div>
             </aside>

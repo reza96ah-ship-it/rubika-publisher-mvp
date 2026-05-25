@@ -31,28 +31,28 @@ export type NavGroup = {
 
 export const navGroups: NavGroup[] = [
   {
-    title: "عملیات انتشار",
-    caption: "برنامه، تولید و کنترل",
+    title: "برنامه‌ریزی و انتشار",
+    caption: "تولید، زمان‌بندی و صف",
     items: [
-      { label: "داشبورد", href: "/", icon: LayoutDashboard },
-      { label: "ایجاد پست", href: "/compose", icon: PenLine },
-      { label: "فضای محتوا", href: "/content", icon: FileText },
-      { label: "تقویم انتشار", href: "/calendar", icon: CalendarDays },
+      { label: "مرکز عملیات", href: "/", icon: LayoutDashboard },
+      { label: "استودیو تولید", href: "/compose", icon: PenLine },
+      { label: "کتابخانه محتوا", href: "/content", icon: FileText },
+      { label: "پلنر انتشار", href: "/calendar", icon: CalendarDays },
       { label: "صف انتشار", href: "/queue", icon: ListChecks }
     ]
   },
   {
-    title: "دارایی و اتصال",
-    caption: "رسانه، روبیکا و خروجی",
+    title: "دارایی و سلامت",
+    caption: "رسانه، اتصال و گزارش",
     items: [
       { label: "کتابخانه رسانه", href: "/media", icon: GalleryHorizontalEnd },
       { label: "اتصال روبیکا", href: "/rubika", icon: Plug },
-      { label: "لاگ انتشار", href: "/logs", icon: ScrollText }
+      { label: "سلامت انتشار", href: "/logs", icon: ScrollText }
     ]
   },
   {
-    title: "تنظیمات",
-    caption: "اطلاعات برند",
+    title: "برند و تنظیمات",
+    caption: "هویت فروشگاه",
     items: [
       { label: "پروفایل فروشگاه", href: "/store", icon: Store }
     ]
@@ -78,20 +78,20 @@ function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
     item.disabled
       ? "pointer-events-none border-transparent text-slate-400"
       : active
-        ? "border-slate-200 bg-slate-950 font-bold text-white shadow-soft"
-        : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-app-text"
+        ? "border-blue-200 bg-blue-50 font-black text-app-primary shadow-soft"
+        : "border-transparent text-slate-600 hover:border-blue-100 hover:bg-blue-50 hover:text-app-primary"
   }`;
 
   const content = (
     <>
       <span className="flex min-w-0 items-center gap-2">
-        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${active ? "bg-white/10" : "bg-slate-100 text-slate-500 group-hover:text-app-text"}`}>
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${active ? "bg-white text-app-primary ring-1 ring-blue-100" : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-app-primary"}`}>
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
         <span className="truncate">{item.label}</span>
       </span>
       {item.badge ? (
-        <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${active ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"}`}>
+        <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${active ? "bg-white text-app-primary ring-1 ring-blue-100" : "bg-slate-100 text-slate-500"}`}>
           {item.badge}
         </span>
       ) : null}
@@ -116,7 +116,7 @@ export function Sidebar() {
     <aside className="hidden w-[244px] shrink-0 border-l border-app-border bg-white lg:flex lg:min-h-screen lg:flex-col">
       <div className="border-b border-app-border px-4 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-950 text-xs font-black text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-app-primary text-xs font-black text-white">
             RP
           </div>
           <div className="min-w-0">
@@ -167,7 +167,7 @@ export function MobileNav() {
             key={item.href}
             href={item.href}
             className={`inline-flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-xs font-bold ${
-              active ? "border-slate-950 bg-slate-950 text-white" : "border-app-border bg-white text-slate-600"
+              active ? "border-blue-200 bg-blue-50 text-app-primary" : "border-app-border bg-white text-slate-600"
             }`}
           >
             <Icon className="h-3.5 w-3.5" aria-hidden="true" />
