@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { StatusToken } from "../workspace-ui";
 
 type TagTone = "neutral" | "primary" | "success" | "warning" | "alert" | "info";
 
@@ -8,19 +9,10 @@ type TagProps = {
   className?: string;
 };
 
-const toneClasses: Record<TagTone, string> = {
-  neutral: "bg-slate-50 text-slate-700 ring-slate-200",
-  primary: "bg-blue-50 text-blue-700 ring-blue-200",
-  success: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  warning: "bg-amber-50 text-amber-700 ring-amber-200",
-  alert: "bg-rose-50 text-rose-700 ring-rose-200",
-  info: "bg-sky-50 text-sky-700 ring-sky-200"
-};
-
 export function Tag({ tone = "neutral", children, className = "" }: TagProps) {
   return (
-    <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-none ring-1 ${toneClasses[tone]} ${className}`}>
+    <StatusToken tone={tone} className={className}>
       {children}
-    </span>
+    </StatusToken>
   );
 }

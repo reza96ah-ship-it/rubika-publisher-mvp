@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { WorkspaceHeader } from "./workspace-ui";
 
 type PageHeaderProps = {
   eyebrow?: string;
@@ -9,25 +10,22 @@ type PageHeaderProps = {
 };
 
 export function PageHeader({ eyebrow, title, description, actionLabel, actionHref }: PageHeaderProps) {
+  const action = actionLabel && actionHref ? (
+    <Link
+      href={actionHref}
+      className="inline-flex w-full items-center justify-center rounded-md border border-slate-950 bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:border-app-primary hover:bg-app-primary lg:w-auto"
+    >
+      {actionLabel}
+    </Link>
+  ) : actionLabel ? (
+    <button className="w-full rounded-md border border-slate-950 bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:border-app-primary hover:bg-app-primary lg:w-auto">
+      {actionLabel}
+    </button>
+  ) : null;
+
   return (
-    <header className="mb-5 flex flex-col justify-between gap-4 border-b border-app-border pb-5 lg:flex-row lg:items-center">
-      <div>
-        {eyebrow ? <p className="text-xs font-bold uppercase tracking-[0.08em] text-app-primary">{eyebrow}</p> : null}
-        <h1 className="mt-1 text-2xl font-black tracking-tight text-app-text">{title}</h1>
-        {description ? <p className="mt-1.5 max-w-3xl text-sm leading-6 text-app-muted">{description}</p> : null}
-      </div>
-      {actionLabel && actionHref ? (
-        <Link
-          href={actionHref}
-          className="inline-flex w-full items-center justify-center rounded-lg border border-app-primary bg-app-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:border-app-primaryHover hover:bg-app-primaryHover lg:w-auto"
-        >
-          {actionLabel}
-        </Link>
-      ) : actionLabel ? (
-        <button className="w-full rounded-lg border border-app-primary bg-app-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:border-app-primaryHover hover:bg-app-primaryHover lg:w-auto">
-          {actionLabel}
-        </button>
-      ) : null}
-    </header>
+    <div className="mb-5">
+      <WorkspaceHeader eyebrow={eyebrow} title={title} description={description} action={action} />
+    </div>
   );
 }

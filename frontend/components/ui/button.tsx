@@ -24,8 +24,8 @@ type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
 type NativeButtonType = NonNullable<ButtonHTMLAttributes<HTMLButtonElement>["type"]>;
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "border border-app-primary bg-app-primary text-white hover:border-app-primaryHover hover:bg-app-primaryHover",
-  secondary: "border border-app-border bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+  primary: "border border-slate-950 bg-slate-950 text-white hover:border-app-primary hover:bg-app-primary",
+  secondary: "border border-app-border bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50",
   ghost: "border border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-app-text",
   danger: "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
 };
@@ -39,7 +39,7 @@ const sizeClasses: Record<ButtonSize, string> = {
 export function Button(props: ButtonProps) {
   const { variant = "primary", size = "md", className = "", children } = props;
   const classes = [
-    "inline-flex items-center justify-center rounded-lg font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 disabled:pointer-events-none disabled:opacity-60",
+    "inline-flex items-center justify-center rounded-md font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 disabled:pointer-events-none disabled:opacity-60",
     variantClasses[variant],
     sizeClasses[size],
     className
