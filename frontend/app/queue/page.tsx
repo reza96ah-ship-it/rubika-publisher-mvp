@@ -1,14 +1,14 @@
 "use client";
 
+import { AlertTriangle, CalendarClock, CheckCircle2, ListChecks, RotateCcw, Send, TimerReset, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { CountdownBadge } from "../../components/countdown-badge";
 import { DataRow, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
-import { PageHeader } from "../../components/page-header";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
-import { SectionCard } from "../../components/ui/card";
+import { DetailGrid, EmptyState, MetricTile, NoticeBanner, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
 
 type QueueFilter = "all" | "ready" | "scheduled" | "publishing" | "failed";
@@ -130,161 +130,216 @@ export default function QueuePage() {
   return (
     <AuthGate>
       <AppShell>
-        <PageHeader
-          eyebrow="صف عملیاتی انتشار"
-          title="صف انتشار"
-          description="پست‌های آماده، زمان‌بندی‌شده، در حال انتشار یا ناموفق را از همین نما کنترل و بازیابی کنید."
-          actionLabel="ایجاد پست جدید"
-          actionHref="/compose"
-        />
-
-        {error ? <div className="mb-5 rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-        {message ? <div className="mb-5 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
-
-        <section className="mb-5 grid gap-4 lg:grid-cols-4">
-          <SectionCard title="آماده" description="منتظر انتخاب زمان.">
-            <p className="text-2xl font-black text-app-text">{counts.ready}</p>
-            <p className="mt-2 text-sm text-app-muted">پست آماده زمان‌بندی</p>
-          </SectionCard>
-          <SectionCard title="زمان‌بندی‌شده" description="در انتظار worker.">
-            <p className="text-2xl font-black text-app-text">{counts.scheduled}</p>
-            <p className="mt-2 text-sm text-app-muted">پست داخل برنامه انتشار</p>
-          </SectionCard>
-          <SectionCard title="در حال انتشار" description="رزرو شده برای ارسال.">
-            <p className="text-2xl font-black text-app-text">{counts.publishing}</p>
-            <p className="mt-2 text-sm text-app-muted">پست در مسیر ارسال</p>
-          </SectionCard>
-          <SectionCard title="ناموفق" description="نیازمند بازیابی.">
-            <p className={`text-2xl font-black ${counts.failed > 0 ? "text-rose-700" : "text-app-text"}`}>{counts.failed}</p>
-            <p className="mt-2 text-sm text-app-muted">پست دارای خطا</p>
-          </SectionCard>
-        </section>
-
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-          <SectionCard title="پست‌های داخل صف" description="نمای عملیاتی برای بررسی زمان‌بندی، خطاها، لغو و تلاش مجدد انتشار.">
-            <DataToolbar
-              meta={(
-                <>
-                  <span>{filteredPosts.length} نتیجه</span>
-                  <span>{posts.length} کل صف</span>
-                </>
-              )}
-            >
-              <div className="flex flex-wrap gap-2">
-                {queueFilters.map((filter) => (
-                  <FilterChip
-                    key={filter.value}
-                    active={statusFilter === filter.value}
-                    count={filterCount(filter.value)}
-                    onClick={() => setStatusFilter(filter.value)}
-                  >
-                    {filter.label}
-                  </FilterChip>
-                ))}
+        <WorkspacePage className="space-y-4">
+          <WorkspaceHero
+            eyebrow="Publishing Queue"
+            title="صف انتشار"
+            description="کنترل آماده‌سازی، زمان‌بندی، انتشار و بازیابی خطاها در یک نمای عملیاتی."
+            actions={(
+              <>
+                <Button href="/compose">
+                  <Send className="ml-2 h-4 w-4" aria-hidden="true" />
+                  ایجاد پست جدید
+                </Button>
+                <Button href="/calendar" variant="secondary">
+                  <CalendarClock className="ml-2 h-4 w-4" aria-hidden="true" />
+                  پلنر انتشار
+                </Button>
+              </>
+            )}
+            meta={(
+              <>
+                <StatusToken tone="primary">{posts.length} پست در صف</StatusToken>
+                <StatusToken tone={counts.failed ? "alert" : "success"}>{counts.failed ? `${counts.failed} خطای فعال` : "بدون خطای فعال"}</StatusToken>
+                {nextScheduled ? <CountdownBadge status={nextScheduled.status} scheduledAt={nextScheduled.scheduled_at} /> : null}
+              </>
+            )}
+            aside={(
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-black text-app-primary">سلامت صف</p>
+                    <p className="mt-2 text-lg font-black text-app-text">{counts.failed ? "نیازمند رسیدگی" : "پایدار"}</p>
+                  </div>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
+                    <ListChecks className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded border border-blue-100 bg-white p-3">
+                    <p className="font-black text-app-text">{counts.ready + counts.scheduled}</p>
+                    <p className="mt-1 text-app-muted">قابل برنامه‌ریزی</p>
+                  </div>
+                  <div className="rounded border border-blue-100 bg-white p-3">
+                    <p className={`font-black ${counts.failed ? "text-rose-700" : "text-app-text"}`}>{counts.failed}</p>
+                    <p className="mt-1 text-app-muted">نیازمند بازیابی</p>
+                  </div>
+                </div>
               </div>
-            </DataToolbar>
+            )}
+          />
 
-            <DataTable
-              columns={["محتوا", "وضعیت", "زمان", "عملیات"]}
-              gridClassName={queueHeaderGrid}
-              loading={loading}
-              empty={filteredPosts.length === 0 ? (
-              <div className="p-8 text-center">
-                <p className="font-bold text-app-text">برای این فیلتر پستی در صف نیست.</p>
-                <p className="mt-2 text-sm text-app-muted">از composer یک پست آماده یا زمان‌بندی‌شده بسازید.</p>
-                <Button href="/compose" className="mt-4">ایجاد پست جدید</Button>
-              </div>
-            ) : null}
+          {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
+          {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
+
+          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <MetricTile label="آماده" value={counts.ready} hint="منتظر انتخاب زمان انتشار" tone="primary" icon={<CheckCircle2 className="h-4 w-4" />} />
+            <MetricTile label="زمان‌بندی‌شده" value={counts.scheduled} hint="داخل برنامه انتشار" tone="warning" icon={<CalendarClock className="h-4 w-4" />} />
+            <MetricTile label="در حال انتشار" value={counts.publishing} hint="رزرو شده برای ارسال" tone="info" icon={<TimerReset className="h-4 w-4" />} />
+            <MetricTile label="ناموفق" value={counts.failed} hint="نیازمند تلاش مجدد یا اصلاح" tone={counts.failed ? "alert" : "neutral"} icon={<AlertTriangle className="h-4 w-4" />} />
+          </section>
+
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+            <WorkspacePanel
+              title="پست‌های داخل صف"
+              description="اسکن سریع وضعیت، زمان انتشار، خطا و عملیات‌های ضروری."
+              bodyClassName="p-4"
+              action={<Button href="/logs" variant="secondary" size="sm">سلامت انتشار</Button>}
             >
-              {filteredPosts.map((post) => (
-                <DataRow key={post.id} gridClassName={queueRowGrid} selected={selectedPost?.id === post.id}>
-                  <div className="min-w-0">
-                    <h2 className="truncate font-bold text-app-text">{post.title}</h2>
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-app-muted">{post.caption || "بدون کپشن"}</p>
-                    {post.last_error ? <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-xs leading-6 text-rose-700">{post.last_error}</p> : null}
+              <DataToolbar
+                meta={(
+                  <>
+                    <span>{filteredPosts.length} نتیجه</span>
+                    <span>{posts.length} کل صف</span>
+                  </>
+                )}
+              >
+                <div className="flex flex-wrap gap-2">
+                  {queueFilters.map((filter) => (
+                    <FilterChip
+                      key={filter.value}
+                      active={statusFilter === filter.value}
+                      count={filterCount(filter.value)}
+                      onClick={() => setStatusFilter(filter.value)}
+                    >
+                      {filter.label}
+                    </FilterChip>
+                  ))}
+                </div>
+              </DataToolbar>
+
+              <DataTable
+                columns={["محتوا", "وضعیت", "زمان", "عملیات"]}
+                gridClassName={queueHeaderGrid}
+                loading={loading}
+                empty={filteredPosts.length === 0 ? (
+                  <div className="p-4">
+                    <EmptyState
+                      icon={<ListChecks className="h-5 w-5" aria-hidden="true" />}
+                      title="برای این فیلتر پستی در صف نیست."
+                      description="از استودیو تولید یک پست آماده یا زمان‌بندی‌شده بسازید."
+                      action={<Button href="/compose">ایجاد پست جدید</Button>}
+                    />
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
-                    <StatusBadge status={post.status} />
-                    <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
-                  </div>
-                  <div className="space-y-2 text-xs leading-6 text-app-muted">
-                    <p>زمان‌بندی: {formatDateTime(post.scheduled_at)}</p>
-                    <p>تلاش: {post.attempt_count}</p>
-                  </div>
-                  <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
+                ) : null}
+              >
+                {filteredPosts.map((post) => (
+                  <DataRow key={post.id} gridClassName={queueRowGrid} selected={selectedPost?.id === post.id}>
+                    <div className="min-w-0">
+                      <h2 className="truncate font-black text-app-text">{post.title}</h2>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-app-muted">{post.caption || "بدون کپشن"}</p>
+                      {post.last_error ? <p className="mt-2 rounded-md border border-rose-100 bg-rose-50 px-3 py-2 text-xs leading-6 text-rose-700">{post.last_error}</p> : null}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
+                      <StatusBadge status={post.status} />
+                      <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
+                    </div>
+                    <div className="space-y-2 text-xs leading-6 text-app-muted">
+                      <p>زمان‌بندی: {formatDateTime(post.scheduled_at)}</p>
+                      <p>تلاش انتشار: {post.attempt_count}</p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
                       <Button type="button" variant={selectedPost?.id === post.id ? "primary" : "secondary"} size="sm" onClick={() => setSelectedPostId(post.id)}>جزئیات</Button>
                       <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن</Button>
                       {post.status === "failed" ? (
-                        <Button type="button" size="sm" onClick={() => retryPost(post)}>تلاش مجدد</Button>
+                        <Button type="button" size="sm" onClick={() => retryPost(post)}>
+                          <RotateCcw className="ml-1 h-3.5 w-3.5" aria-hidden="true" />
+                          تلاش مجدد
+                        </Button>
                       ) : null}
                       {["ready", "scheduled"].includes(post.status) ? (
                         <Button type="button" variant="ghost" size="sm" onClick={() => cancelPost(post)}>لغو</Button>
                       ) : null}
-                  </div>
-                </DataRow>
-              ))}
-            </DataTable>
-          </SectionCard>
-
-          <div className="space-y-5">
-            <SectionCard title="بازبین صف" description="جزئیات پست انتخاب‌شده و مسیرهای سریع.">
-              {selectedPost ? (
-                <div className="rounded-lg border border-app-border bg-white p-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge status={selectedPost.status} />
-                    <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
-                  </div>
-                  <h2 className="mt-3 font-black text-app-text">{selectedPost.title}</h2>
-                  <p className="mt-2 text-sm leading-7 text-app-muted">{selectedPost.caption || "بدون کپشن"}</p>
-                  <div className="mt-4 grid gap-3 text-xs text-app-muted">
-                    <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-app-border">
-                      <p className="font-bold text-app-text">زمان‌بندی</p>
-                      <p className="mt-1">{formatDateTime(selectedPost.scheduled_at)}</p>
                     </div>
-                    <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-app-border">
-                      <p className="font-bold text-app-text">تلاش انتشار</p>
-                      <p className="mt-1">{selectedPost.attempt_count}</p>
-                    </div>
-                  </div>
-                  <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary" className="mt-4 w-full">باز کردن پست</Button>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed border-app-border bg-slate-50 p-5 text-center">
-                  <p className="font-bold text-app-text">پستی برای نمایش انتخاب نشده است.</p>
-                  <Button href="/compose" className="mt-4">زمان‌بندی پست</Button>
-                </div>
-              )}
-            </SectionCard>
-
-            {nextScheduled ? (
-              <SectionCard title="انتشار بعدی" description="نزدیک‌ترین پست زمان‌بندی‌شده در صف.">
-                <p className="font-black text-app-text">{nextScheduled.title}</p>
-                <p className="mt-2 text-sm leading-7 text-app-muted">{formatDateTime(nextScheduled.scheduled_at)}</p>
-                <CountdownBadge status={nextScheduled.status} scheduledAt={nextScheduled.scheduled_at} className="mt-3" />
-              </SectionCard>
-            ) : null}
-
-            <SectionCard title="خطاهای فعال" description="آخرین پست‌های ناموفق برای بازیابی سریع.">
-              {failedPosts.length === 0 ? <p className="text-sm text-app-muted">فعلاً خطای فعال وجود ندارد.</p> : null}
-              <div className="space-y-3">
-                {failedPosts.map((post) => (
-                  <article key={post.id} className="rounded-lg border border-app-border bg-white p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <StatusBadge status={post.status} />
-                      <span className="text-xs text-app-muted">تلاش: {post.attempt_count}</span>
-                    </div>
-                    <h3 className="mt-3 truncate font-bold text-app-text">{post.title}</h3>
-                    {post.last_error ? <p className="mt-2 line-clamp-2 text-xs leading-6 text-rose-600">{post.last_error}</p> : null}
-                    <div className="mt-3 flex gap-2">
-                      <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن</Button>
-                      <Button type="button" size="sm" onClick={() => retryPost(post)}>تلاش مجدد</Button>
-                    </div>
-                  </article>
+                  </DataRow>
                 ))}
+              </DataTable>
+            </WorkspacePanel>
+
+            <aside className="space-y-4">
+              <div className="sticky top-24 space-y-4">
+                <WorkspacePanel title="بازبین صف" description="جزئیات و اقدام‌های پست انتخاب‌شده." bodyClassName="p-4">
+                  {selectedPost ? (
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusBadge status={selectedPost.status} />
+                        <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
+                      </div>
+                      <h2 className="mt-3 font-black text-app-text">{selectedPost.title}</h2>
+                      <p className="mt-2 text-sm leading-7 text-app-muted">{selectedPost.caption || "بدون کپشن"}</p>
+                      <div className="mt-4">
+                        <DetailGrid
+                          items={[
+                            { label: "زمان‌بندی", value: formatDateTime(selectedPost.scheduled_at) },
+                            { label: "تلاش انتشار", value: selectedPost.attempt_count },
+                            { label: "آخرین تغییر", value: formatDateTime(selectedPost.updated_at) },
+                            { label: "شناسه پست", value: `#${selectedPost.id}` }
+                          ]}
+                        />
+                      </div>
+                      {selectedPost.last_error ? (
+                        <NoticeBanner tone="alert" title="آخرین خطا">
+                          {selectedPost.last_error}
+                        </NoticeBanner>
+                      ) : null}
+                      <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary" className="mt-4 w-full">باز کردن پست</Button>
+                    </div>
+                  ) : (
+                    <EmptyState
+                      icon={<XCircle className="h-5 w-5" aria-hidden="true" />}
+                      title="پستی برای نمایش انتخاب نشده است."
+                      action={<Button href="/compose">زمان‌بندی پست</Button>}
+                    />
+                  )}
+                </WorkspacePanel>
+
+                {nextScheduled ? (
+                  <WorkspacePanel title="انتشار بعدی" description="نزدیک‌ترین پست زمان‌بندی‌شده در صف." bodyClassName="p-4">
+                    <p className="font-black text-app-text">{nextScheduled.title}</p>
+                    <p className="mt-2 text-sm leading-7 text-app-muted">{formatDateTime(nextScheduled.scheduled_at)}</p>
+                    <CountdownBadge status={nextScheduled.status} scheduledAt={nextScheduled.scheduled_at} className="mt-3" />
+                  </WorkspacePanel>
+                ) : null}
+
+                <WorkspacePanel title="خطاهای فعال" description="پست‌های ناموفق برای بازیابی سریع." bodyClassName="p-4">
+                  {failedPosts.length === 0 ? (
+                    <EmptyState
+                      icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
+                      title="فعلاً خطای فعال وجود ندارد."
+                      description="صف انتشار در وضعیت پایدار است."
+                    />
+                  ) : null}
+                  <div className="space-y-3">
+                    {failedPosts.map((post) => (
+                      <article key={post.id} className="rounded-md border border-app-border bg-white p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <StatusBadge status={post.status} />
+                          <span className="text-xs text-app-muted">تلاش: {post.attempt_count}</span>
+                        </div>
+                        <h3 className="mt-3 truncate font-bold text-app-text">{post.title}</h3>
+                        {post.last_error ? <p className="mt-2 line-clamp-2 text-xs leading-6 text-rose-600">{post.last_error}</p> : null}
+                        <div className="mt-3 flex gap-2">
+                          <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن</Button>
+                          <Button type="button" size="sm" onClick={() => retryPost(post)}>تلاش مجدد</Button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </WorkspacePanel>
               </div>
-            </SectionCard>
-          </div>
-        </section>
+            </aside>
+          </section>
+        </WorkspacePage>
       </AppShell>
     </AuthGate>
   );
