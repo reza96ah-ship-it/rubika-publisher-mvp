@@ -5,6 +5,7 @@ import { AlertTriangle, CalendarClock, CheckCircle2, ClipboardList, FileText, Pe
 import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
 import { CountdownBadge } from "../components/countdown-badge";
+import { ReadinessJourney } from "../components/readiness-journey";
 import { StatusBadge } from "../components/status-badge";
 import { Button } from "../components/ui/button";
 import { MetricTile, StatusToken, WorkspacePage } from "../components/workspace-ui";
@@ -140,6 +141,8 @@ export default function HomePage() {
 
           {error ? <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{error}</div> : null}
           {loading ? <p className="text-sm text-app-muted">در حال دریافت داشبورد...</p> : null}
+
+          <ReadinessJourney store={store} rubika={rubika} posts={posts} loading={loading} />
 
           <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <MetricTile label="پیش‌نویس" value={draftCount} hint="برای تکمیل و آماده‌سازی" tone="neutral" icon={<FileText className="h-4 w-4" />} />

@@ -12,11 +12,10 @@ import {
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
-import { PageHeader } from "../../components/page-header";
 import { Button } from "../../components/ui/button";
-import { SectionCard, SurfaceCard } from "../../components/ui/card";
 import { Field, Input, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
+import { MetricTile, NoticeBanner, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders } from "../../lib/posts";
 
 const emptyStore = {
@@ -192,146 +191,132 @@ export default function StorePage() {
   return (
     <AuthGate>
       <AppShell>
-        <PageHeader
-          eyebrow="هویت فروشگاه"
-          title="پروفایل فروشگاه"
-          description="مرکز آماده‌سازی هویت فروشگاه، متن‌های ثابت و تنظیمات پیش‌فرض برای انتشار منظم در روبیکا."
-          actionLabel="ادامه به اتصال روبیکا"
-          actionHref="/rubika"
-        />
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <SurfaceCard>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-app-muted">آمادگی پروفایل</p>
-                <p className="mt-3 text-3xl font-black text-app-text">{score}%</p>
-              </div>
-              <div className="rounded-xl bg-blue-50 p-3 text-blue-700 ring-1 ring-blue-100">
-                <StoreIcon className="h-5 w-5" aria-hidden="true" />
-              </div>
-            </div>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
-              <div className="h-full rounded-full bg-app-primary" style={{ width: `${score}%` }} />
-            </div>
-          </SurfaceCard>
-
-          <SurfaceCard>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-app-muted">تنظیمات متن</p>
-                <p className="mt-3 text-3xl font-black text-app-text">{defaultCount(form)}/3</p>
-              </div>
-              <div className="rounded-xl bg-emerald-50 p-3 text-emerald-700 ring-1 ring-emerald-100">
-                <MessageSquareText className="h-5 w-5" aria-hidden="true" />
-              </div>
-            </div>
-            <p className="mt-4 text-xs leading-6 text-app-muted">توضیح، هشتگ و CTA برای کپشن‌های سریع.</p>
-          </SurfaceCard>
-
-          <SurfaceCard>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-app-muted">وضعیت راه‌اندازی</p>
-                <p className="mt-3 text-xl font-black text-app-text">{requiredReady ? "قابل استفاده" : "نیازمند تکمیل"}</p>
-              </div>
-              <div className={`rounded-xl p-3 ring-1 ${requiredReady ? "bg-emerald-50 text-emerald-700 ring-emerald-100" : "bg-amber-50 text-amber-700 ring-amber-100"}`}>
-                <BadgeCheck className="h-5 w-5" aria-hidden="true" />
-              </div>
-            </div>
-            <p className="mt-4 text-xs leading-6 text-app-muted">حداقل نام فروشگاه و منطقه زمانی باید آماده باشد.</p>
-          </SurfaceCard>
-        </div>
-
-        {message ? <div className="mt-5 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
-        {error ? <div className="mt-5 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-
-        <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <SectionCard title="اطلاعات و متن‌های پایه" description="این داده‌ها در composer، کپشن‌ها و آماده‌سازی پست‌ها استفاده می‌شوند.">
-            {loading ? (
-              <p className="text-sm text-app-muted">در حال دریافت اطلاعات...</p>
-            ) : (
-              <form onSubmit={saveStore} className="grid gap-5 lg:grid-cols-2">
-                <Field label="نام فروشگاه" required>
-                  <Input value={form.name} onChange={(event) => updateField("name", event.target.value)} required />
-                </Field>
-
-                <Field label="دسته‌بندی فعالیت" hint="مثلاً پوشاک، کافه، آرایشی یا خدمات محلی.">
-                  <Input value={form.category} onChange={(event) => updateField("category", event.target.value)} placeholder="مثلاً پوشاک، کافه، آرایشی" />
-                </Field>
-
-                <Field label="شماره تماس">
-                  <Input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} className="text-left" dir="ltr" />
-                </Field>
-
-                <Field label="منطقه زمانی" required hint="برای ایران همین مقدار مناسب است.">
-                  <Input value={form.timezone} onChange={(event) => updateField("timezone", event.target.value)} className="text-left" dir="ltr" required />
-                </Field>
-
-                <Field label="توضیحات کوتاه فروشگاه" hint="یک توضیح کوتاه که شخصیت برند و پیشنهاد اصلی را مشخص کند.">
-                  <Textarea value={form.description} onChange={(event) => updateField("description", event.target.value)} />
-                </Field>
-
-                <Field label="هشتگ‌های پیش‌فرض" hint="در هر خط یا با فاصله بنویسید.">
-                  <Textarea value={form.default_hashtags} onChange={(event) => updateField("default_hashtags", event.target.value)} placeholder="#فروشگاه #خرید_آنلاین" />
-                </Field>
-
-                <Field label="متن پایانی کپشن" hint="دعوت به اقدام ثابت مثل سفارش، تماس یا مراجعه حضوری." >
-                  <Textarea value={form.caption_footer} onChange={(event) => updateField("caption_footer", event.target.value)} placeholder="برای سفارش پیام بدهید." />
-                </Field>
-
-                <div className="rounded-xl bg-slate-50 p-4 text-sm leading-7 text-app-muted ring-1 ring-app-border">
-                  <p className="font-bold text-app-text">نکته عملیاتی</p>
-                  <p className="mt-1">بعد از ذخیره، composer از همین اطلاعات برای شروع سریع‌تر پست‌ها استفاده می‌کند.</p>
-                </div>
-
-                <div className="lg:col-span-2">
-                  <Button type="submit" disabled={saving}>
-                    {saving ? "در حال ذخیره..." : "ذخیره پروفایل فروشگاه"}
-                  </Button>
-                </div>
-              </form>
+        <WorkspacePage className="space-y-4">
+          <WorkspaceHero
+            eyebrow="Brand Setup"
+            title="پروفایل فروشگاه"
+            description="هویت فروشگاه، متن‌های ثابت و تنظیمات پیش‌فرض را برای تولید محتوای سریع و منظم آماده کنید."
+            actions={<Button href="/rubika">ادامه به اتصال روبیکا</Button>}
+            meta={(
+              <>
+                <StatusToken tone={requiredReady ? "success" : "warning"}>{requiredReady ? "حداقل آماده" : "نیازمند تکمیل"}</StatusToken>
+                <StatusToken tone="primary">{score}% آمادگی</StatusToken>
+                <StatusToken tone={defaultCount(form) >= 2 ? "success" : "neutral"}>{defaultCount(form)}/3 تنظیم متن</StatusToken>
+              </>
             )}
-          </SectionCard>
-
-          <aside className="space-y-5">
-            <SectionCard title="چک‌لیست آماده‌سازی" description="برای یک workspace قابل اتکا، این موارد را کامل نگه دارید.">
-              <div className="space-y-0">
-                {readinessItems.map((item) => <ReadinessRow key={item.label} item={item} />)}
-              </div>
-            </SectionCard>
-
-            <SectionCard title="پیش‌نمایش کپشن پایه" description="خروجی پایه‌ای که در کپشن‌ها تکرار می‌شود.">
-              <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-app-border">
-                <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-app-muted">
-                  <Building2 className="h-4 w-4" aria-hidden="true" />
-                  <span>{form.name || "نام فروشگاه"}</span>
-                  {form.category ? (
-                    <>
-                      <span>·</span>
-                      <span>{form.category}</span>
-                    </>
-                  ) : null}
+            aside={(
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-black text-app-primary">آمادگی پروفایل</p>
+                    <p className="mt-2 text-lg font-black text-app-text">{score}% آماده</p>
+                  </div>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
+                    <StoreIcon className="h-5 w-5" aria-hidden="true" />
+                  </span>
                 </div>
-                <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">{previewCaption(form)}</p>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-white">
+                  <div className={`h-full rounded-full ${requiredReady ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${score}%` }} />
+                </div>
               </div>
-              <div className="mt-4 grid gap-3 text-xs text-app-muted">
-                <p className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" aria-hidden="true" />
-                  {form.phone || "شماره تماس ثبت نشده"}
-                </p>
-                <p className="flex items-center gap-2">
-                  <Hash className="h-4 w-4" aria-hidden="true" />
-                  {form.default_hashtags ? "هشتگ پیش‌فرض آماده است" : "هشتگ پیش‌فرض هنوز خالی است"}
-                </p>
-              </div>
-            </SectionCard>
+            )}
+          />
 
-            <SectionCard title="مرحله بعدی" description="بعد از هویت فروشگاه، اتصال روبیکا را تست کنید.">
-              <Button href="/rubika" className="w-full">باز کردن اتصال روبیکا</Button>
-            </SectionCard>
-          </aside>
-        </div>
+          <section className="grid gap-3 md:grid-cols-3">
+            <MetricTile label="آمادگی پروفایل" value={`${score}%`} hint="نام و منطقه زمانی پایه‌های ضروری‌اند" tone={requiredReady ? "success" : "warning"} icon={<StoreIcon className="h-4 w-4" />} />
+            <MetricTile label="تنظیمات متن" value={`${defaultCount(form)}/3`} hint="توضیح، هشتگ و CTA برای کپشن‌های سریع" tone="primary" icon={<MessageSquareText className="h-4 w-4" />} />
+            <MetricTile label="وضعیت راه‌اندازی" value={requiredReady ? "قابل استفاده" : "ناقص"} hint="برای ادامه به اتصال روبیکا آماده می‌شود" tone={requiredReady ? "success" : "warning"} icon={<BadgeCheck className="h-4 w-4" />} />
+          </section>
+
+          {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
+          {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
+
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+            <WorkspacePanel title="اطلاعات و متن‌های پایه" description="این داده‌ها در composer، کپشن‌ها و آماده‌سازی پست‌ها استفاده می‌شوند.">
+              {loading ? (
+                <p className="text-sm text-app-muted">در حال دریافت اطلاعات...</p>
+              ) : (
+                <form onSubmit={saveStore} className="grid gap-5 lg:grid-cols-2">
+                  <Field label="نام فروشگاه" required>
+                    <Input value={form.name} onChange={(event) => updateField("name", event.target.value)} required />
+                  </Field>
+
+                  <Field label="دسته‌بندی فعالیت" hint="مثلاً پوشاک، کافه، آرایشی یا خدمات محلی.">
+                    <Input value={form.category} onChange={(event) => updateField("category", event.target.value)} placeholder="مثلاً پوشاک، کافه، آرایشی" />
+                  </Field>
+
+                  <Field label="شماره تماس">
+                    <Input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} className="text-left" dir="ltr" />
+                  </Field>
+
+                  <Field label="منطقه زمانی" required hint="برای ایران همین مقدار مناسب است.">
+                    <Input value={form.timezone} onChange={(event) => updateField("timezone", event.target.value)} className="text-left" dir="ltr" required />
+                  </Field>
+
+                  <Field label="توضیحات کوتاه فروشگاه" hint="یک توضیح کوتاه که شخصیت برند و پیشنهاد اصلی را مشخص کند.">
+                    <Textarea value={form.description} onChange={(event) => updateField("description", event.target.value)} />
+                  </Field>
+
+                  <Field label="هشتگ‌های پیش‌فرض" hint="در هر خط یا با فاصله بنویسید.">
+                    <Textarea value={form.default_hashtags} onChange={(event) => updateField("default_hashtags", event.target.value)} placeholder="#فروشگاه #خرید_آنلاین" />
+                  </Field>
+
+                  <Field label="متن پایانی کپشن" hint="دعوت به اقدام ثابت مثل سفارش، تماس یا مراجعه حضوری.">
+                    <Textarea value={form.caption_footer} onChange={(event) => updateField("caption_footer", event.target.value)} placeholder="برای سفارش پیام بدهید." />
+                  </Field>
+
+                  <NoticeBanner>
+                    بعد از ذخیره، composer از همین اطلاعات برای شروع سریع‌تر پست‌ها استفاده می‌کند.
+                  </NoticeBanner>
+
+                  <div className="lg:col-span-2">
+                    <Button type="submit" disabled={saving}>
+                      {saving ? "در حال ذخیره..." : "ذخیره پروفایل فروشگاه"}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </WorkspacePanel>
+
+            <aside className="space-y-4">
+              <WorkspacePanel title="چک‌لیست آماده‌سازی" description="برای یک workspace قابل اتکا، این موارد را کامل نگه دارید.">
+                <div className="space-y-0">
+                  {readinessItems.map((item) => <ReadinessRow key={item.label} item={item} />)}
+                </div>
+              </WorkspacePanel>
+
+              <WorkspacePanel title="پیش‌نمایش کپشن پایه" description="خروجی پایه‌ای که در کپشن‌ها تکرار می‌شود.">
+                <div className="rounded-md border border-app-border bg-slate-50 p-4">
+                  <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-app-muted">
+                    <Building2 className="h-4 w-4" aria-hidden="true" />
+                    <span>{form.name || "نام فروشگاه"}</span>
+                    {form.category ? (
+                      <>
+                        <span>·</span>
+                        <span>{form.category}</span>
+                      </>
+                    ) : null}
+                  </div>
+                  <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">{previewCaption(form)}</p>
+                </div>
+                <div className="mt-4 grid gap-3 text-xs text-app-muted">
+                  <p className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" aria-hidden="true" />
+                    {form.phone || "شماره تماس ثبت نشده"}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Hash className="h-4 w-4" aria-hidden="true" />
+                    {form.default_hashtags ? "هشتگ پیش‌فرض آماده است" : "هشتگ پیش‌فرض هنوز خالی است"}
+                  </p>
+                </div>
+              </WorkspacePanel>
+
+              <WorkspacePanel title="مرحله بعدی" description="بعد از هویت فروشگاه، اتصال روبیکا را تست کنید.">
+                <Button href="/rubika" className="w-full">باز کردن اتصال روبیکا</Button>
+              </WorkspacePanel>
+            </aside>
+          </div>
+        </WorkspacePage>
       </AppShell>
     </AuthGate>
   );
