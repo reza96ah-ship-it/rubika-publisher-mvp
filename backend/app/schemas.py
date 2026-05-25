@@ -42,7 +42,7 @@ class StoreResponse(BaseModel):
 
 
 class RubikaSettingsRequest(BaseModel):
-    bot_token: str
+    bot_token: str = ""
     chat_id: str
 
 

@@ -45,7 +45,9 @@ def save_settings(payload: RubikaSettingsRequest, current_user: User = Depends(g
         account = RubikaAccount()
         db.add(account)
 
-    account.bot_token = payload.bot_token.strip()
+    next_token = payload.bot_token.strip()
+    if next_token:
+        account.bot_token = next_token
     account.chat_id = payload.chat_id.strip()
     account.status = "not_tested"
     account.last_error = ""
