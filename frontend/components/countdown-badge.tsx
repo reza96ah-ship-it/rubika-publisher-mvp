@@ -18,7 +18,7 @@ export function CountdownBadge({ status, scheduledAt, className = "" }: Countdow
   if (!countdown) return null;
 
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${toneClasses[countdown.tone]} ${className}`}>
+    <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-none ring-1 ${toneClasses[countdown.tone]} ${className}`}>
       {countdown.label}
     </span>
   );

@@ -6,11 +6,11 @@ const statusMap: Record<string, { label: string; tone: "neutral" | "primary" | "
     tone: "neutral"
   },
   ready: {
-    label: "آماده زمان‌بندی",
+    label: "آماده",
     tone: "primary"
   },
   scheduled: {
-    label: "زمان‌بندی‌شده",
+    label: "زمان‌بندی",
     tone: "warning"
   },
   publishing: {
@@ -18,7 +18,7 @@ const statusMap: Record<string, { label: string; tone: "neutral" | "primary" | "
     tone: "info"
   },
   published: {
-    label: "منتشرشده",
+    label: "منتشر",
     tone: "success"
   },
   failed: {

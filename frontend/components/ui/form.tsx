@@ -10,12 +10,12 @@ type FieldProps = {
 
 export function Field({ label, hint, error, required, children }: FieldProps) {
   return (
-    <label className="block text-sm font-medium text-app-text">
+    <label className="block text-sm font-semibold text-app-text">
       <span className="flex items-center gap-1">
         {label}
         {required ? <span className="text-rose-600">*</span> : null}
       </span>
-      {hint ? <span className="mt-1 block text-xs leading-6 text-app-muted">{hint}</span> : null}
+      {hint ? <span className="mt-1 block text-xs leading-5 text-app-muted">{hint}</span> : null}
       <div className="mt-2">{children}</div>
       {error ? <span className="mt-2 block text-xs font-medium text-rose-600">{error}</span> : null}
     </label>
@@ -23,7 +23,7 @@ export function Field({ label, hint, error, required, children }: FieldProps) {
 }
 
 const controlClassName =
-  "w-full rounded-xl border border-app-border bg-white px-4 py-3 text-sm text-app-text outline-none transition placeholder:text-slate-400 focus:border-app-primary focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400";
+  "w-full rounded-lg border border-app-border bg-white px-3.5 py-2.5 text-sm text-app-text outline-none transition placeholder:text-slate-400 focus:border-app-primary focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400";
 
 export function Input({ className = "", ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={`${controlClassName} ${className}`} {...props} />;
