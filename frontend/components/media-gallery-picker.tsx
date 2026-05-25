@@ -28,23 +28,23 @@ export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loadi
 
   if (imageAssets.length === 0) {
     return (
-      <div className="mt-3 rounded-xl border border-dashed border-app-border bg-slate-50 p-4 text-center text-sm text-app-muted">
+      <div className="mt-3 rounded-md border border-dashed border-app-border bg-slate-50 p-4 text-center text-sm text-app-muted">
         هنوز تصویری در کتابخانه رسانه وجود ندارد.
       </div>
     );
   }
 
   return (
-    <div className="mt-3 grid max-h-[360px] gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
+    <div className="mt-3 grid max-h-[420px] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
       <button
         type="button"
         onClick={() => onSelect("")}
-        className={`rounded-2xl border p-3 text-right transition ${!selectedMediaId ? "border-app-primary bg-blue-50 ring-2 ring-blue-100" : "border-app-border bg-white hover:bg-slate-50"}`}
+        className={`rounded-md border p-2.5 text-right transition ${!selectedMediaId ? "border-slate-950 bg-slate-50 ring-2 ring-slate-200" : "border-app-border bg-white hover:bg-slate-50"}`}
       >
-        <div className="flex aspect-video items-center justify-center rounded-xl bg-slate-100 text-xs text-app-muted">
+        <div className="flex aspect-video items-center justify-center rounded bg-slate-100 text-xs text-app-muted">
           بدون تصویر
         </div>
-        <p className="mt-3 text-sm font-bold text-app-text">بدون انتخاب رسانه</p>
+        <p className="mt-2 text-sm font-bold text-app-text">بدون انتخاب رسانه</p>
         <p className="mt-1 text-xs text-app-muted">پست فقط با متن ذخیره می‌شود.</p>
       </button>
 
@@ -57,7 +57,7 @@ export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loadi
             key={asset.id}
             type="button"
             onClick={() => onSelect(String(asset.id))}
-              className={`overflow-hidden rounded-2xl border text-right transition ${selected ? "border-app-primary bg-blue-50 ring-2 ring-blue-100" : "border-app-border bg-white hover:bg-slate-50"}`}
+            className={`overflow-hidden rounded-md border text-right transition ${selected ? "border-slate-950 bg-slate-50 ring-2 ring-slate-200" : "border-app-border bg-white hover:bg-slate-50"}`}
           >
             {previewUrl ? (
               <img src={previewUrl} alt={asset.original_filename} className="aspect-video w-full object-cover" />
@@ -66,7 +66,7 @@ export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loadi
                 پیش‌نمایش در دسترس نیست
               </div>
             )}
-            <div className="p-3">
+            <div className="p-2.5">
               <p className="truncate text-sm font-bold text-app-text" title={asset.original_filename}>{asset.original_filename}</p>
               <p className="mt-1 text-xs text-app-muted">{asset.content_type} · {formatSize(asset.size_bytes)}</p>
               {asset.post_id ? <p className="mt-1 text-xs text-amber-700">متصل به پست {asset.post_id}</p> : null}

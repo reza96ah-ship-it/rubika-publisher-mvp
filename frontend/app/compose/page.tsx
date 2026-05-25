@@ -2,21 +2,32 @@
 
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CalendarClock, ClipboardCheck, ImagePlus, MessageSquareText } from "lucide-react";
+import {
+  CalendarClock,
+  CheckCircle2,
+  ClipboardCheck,
+  GalleryHorizontalEnd,
+  Hash,
+  ImagePlus,
+  MessageSquareText,
+  NotebookPen,
+  PanelRight,
+  Send,
+  ShieldCheck
+} from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ComposerActionFooter } from "../../components/composer-action-footer";
 import { ComposerReadinessChecks } from "../../components/composer-readiness-checks";
 import { ComposerStepRail, type ComposerStep } from "../../components/composer-step-rail";
-import { PageHeader } from "../../components/page-header";
 import { RubikaPostPreview } from "../../components/rubika-post-preview";
 import { MediaGalleryPicker } from "../../components/media-gallery-picker";
 import { ComposerSchedulePanel } from "../../components/composer-schedule-panel";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
-import { SectionCard } from "../../components/ui/card";
 import { Field, Input, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
+import { StatusToken, WorkspacePage } from "../../components/workspace-ui";
 import { isRubikaConnected, loadWorkspaceOverview, type RubikaSettings, type StoreProfile } from "../../lib/workspace";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -55,6 +66,20 @@ const emptyForm = {
   internal_note: "",
   scheduled_at: null as string | null
 };
+
+function formatScheduledAt(value: string | null) {
+  if (!value) return "زمان انتشار انتخاب نشده";
+
+  try {
+    return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: scheduleTimezone
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
 
 function ComposePageContent() {
   const searchParams = useSearchParams();
@@ -151,6 +176,12 @@ function ComposePageContent() {
       done: hasSchedule
     }
   ];
+  const readinessDoneCount = readinessItems.filter((item) => item.done).length;
+  const readinessScore = Math.round((readinessDoneCount / readinessItems.length) * 100);
+  const publishTone = canSchedule ? "success" : canMarkReady ? "primary" : "warning";
+  const publishStateLabel = canSchedule ? "آماده زمان‌بندی" : canMarkReady ? "آماده بازبینی" : "در حال تولید";
+  const selectedAssetLabel = selectedFile?.name || selectedMedia?.original_filename || "بدون رسانه";
+  const scheduleLabel = formatScheduledAt(form.scheduled_at);
 
   function token() {
     return window.localStorage.getItem("rubika_publisher_access") ?? "";
@@ -461,40 +492,121 @@ function ComposePageContent() {
   return (
     <AuthGate>
       <AppShell>
-        <PageHeader
-          eyebrow={isEditing ? "ویرایش محتوا" : "ایجاد محتوا"}
-          title={isEditing ? "ویرایش پست روبیکا" : "ایجاد پست روبیکا"}
-          description={isEditing ? "محتوای پست، رسانه، زمان انتشار و وضعیت بعدی را در یک مسیر مشخص به‌روزرسانی کنید." : "پست را مرحله‌به‌مرحله بسازید، وضعیت آماده‌سازی را ببینید و آن را به پیش‌نویس، آماده یا زمان‌بندی‌شده تبدیل کنید."}
-          actionLabel="فضای محتوا"
-          actionHref="/content"
-        />
-
-        <ComposerStepRail steps={workflowSteps} />
-
-        <form onSubmit={saveDraft} className="grid gap-5 xl:grid-cols-5">
-          <section className="space-y-5 xl:col-span-3">
-            <SectionCard title="۱. رسانه پست" description="تصویر جدید آپلود کنید یا از کتابخانه رسانه انتخاب کنید.">
-              <div className="grid gap-4 lg:grid-cols-2">
-                <div className="rounded-2xl border border-dashed border-app-border bg-slate-50 p-4">
-                  <p className="mb-2 text-sm font-semibold text-app-text">آپلود تصویر جدید</p>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={(event) => {
-                      setSelectedFile(event.target.files?.[0] ?? null);
-                      if (event.target.files?.[0]) setSelectedMediaId("");
-                      if (message) setMessage("");
-                    }}
-                    className="w-full text-sm text-app-muted"
-                  />
-                  {selectedFilePreviewUrl ? (
-                    <img src={selectedFilePreviewUrl} alt="پیش‌نمایش فایل انتخاب‌شده" className="mt-4 aspect-video w-full rounded-xl object-cover ring-1 ring-app-border" />
-                  ) : null}
+        <WorkspacePage className="space-y-4">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <section className="rounded-md border border-app-border bg-white">
+              <div className="grid gap-4 border-b border-app-border px-4 py-4 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusToken tone={publishTone} className="gap-1">
+                      <Send className="h-3.5 w-3.5" aria-hidden="true" />
+                      {publishStateLabel}
+                    </StatusToken>
+                    {isEditing ? <StatusToken tone="neutral">ویرایش پست #{editingPostId}</StatusToken> : <StatusToken tone="neutral">پست جدید</StatusToken>}
+                    {editingPost?.status ? <StatusBadge status={editingPost.status} /> : null}
+                  </div>
+                  <h1 className="mt-3 text-2xl font-black tracking-tight text-app-text">
+                    {isEditing ? "استودیوی ویرایش پست" : "استودیوی تولید پست روبیکا"}
+                  </h1>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-app-muted">
+                    متن، رسانه، زمان انتشار و بررسی نهایی در یک صفحه عملیاتی کنترل می‌شوند.
+                  </p>
                 </div>
+                <div className="grid grid-cols-3 overflow-hidden rounded-md border border-app-border bg-slate-50 text-center">
+                  <div className="border-l border-app-border px-4 py-3">
+                    <p className="text-[11px] font-black text-app-muted">آمادگی</p>
+                    <p className="mt-1 text-lg font-black text-app-text">{readinessScore}%</p>
+                  </div>
+                  <div className="border-l border-app-border px-4 py-3">
+                    <p className="text-[11px] font-black text-app-muted">رسانه</p>
+                    <p className="mt-1 max-w-28 truncate text-sm font-black text-app-text" title={selectedAssetLabel}>{selectedAssetLabel}</p>
+                  </div>
+                  <div className="px-4 py-3">
+                    <p className="text-[11px] font-black text-app-muted">زمان</p>
+                    <p className="mt-1 max-w-32 truncate text-sm font-black text-app-text" title={scheduleLabel}>{hasSchedule ? "انتخاب شده" : "نامشخص"}</p>
+                  </div>
+                </div>
+              </div>
 
-                <div className="rounded-2xl border border-app-border bg-white p-4">
-                  <p className="text-sm font-semibold text-app-text">انتخاب از کتابخانه</p>
-                  <p className="mt-1 text-xs leading-6 text-app-muted">به‌جای لیست متنی، تصویر را مستقیم از گالری انتخاب کنید.</p>
+              <div className="grid gap-0 divide-y divide-app-border lg:grid-cols-4 lg:divide-x lg:divide-x-reverse lg:divide-y-0">
+                <div className="px-4 py-3">
+                  <p className="text-[11px] font-black text-app-muted">مقصد</p>
+                  <p className="mt-1 text-sm font-black text-app-text">{store?.name || "کانال روبیکا"}</p>
+                </div>
+                <div className="px-4 py-3">
+                  <p className="text-[11px] font-black text-app-muted">کپشن</p>
+                  <p className="mt-1 text-sm font-black text-app-text">{captionLength} کاراکتر</p>
+                </div>
+                <div className="px-4 py-3">
+                  <p className="text-[11px] font-black text-app-muted">هشتگ</p>
+                  <p className="mt-1 text-sm font-black text-app-text">{hashtagCount} مورد</p>
+                </div>
+                <div className="px-4 py-3">
+                  <p className="text-[11px] font-black text-app-muted">انتشار</p>
+                  <p className="mt-1 truncate text-sm font-black text-app-text" title={scheduleLabel}>{scheduleLabel}</p>
+                </div>
+              </div>
+            </section>
+
+            <aside className="rounded-md border border-slate-900 bg-slate-950 p-4 text-white">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-black text-slate-400">QUALITY GATE</p>
+                  <h2 className="mt-2 text-lg font-black">کنترل قبل از صف</h2>
+                </div>
+                <ShieldCheck className="h-5 w-5 text-emerald-300" aria-hidden="true" />
+              </div>
+              <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
+                <div className={`h-full rounded-full ${canSchedule ? "bg-emerald-400" : "bg-amber-400"}`} style={{ width: `${readinessScore}%` }} />
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded border border-white/10 bg-white/5 p-3">
+                  <p className="font-black text-white">{readinessDoneCount}/{readinessItems.length}</p>
+                  <p className="mt-1 text-slate-400">چک آماده</p>
+                </div>
+                <div className="rounded border border-white/10 bg-white/5 p-3">
+                  <p className="font-black text-white">{rubikaReady ? "متصل" : "نیازمند اتصال"}</p>
+                  <p className="mt-1 text-slate-400">روبیکا</p>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <form onSubmit={saveDraft} className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)_390px]">
+            <aside className="space-y-4">
+              <ComposerStepRail steps={workflowSteps} />
+
+              <section className="rounded-md border border-app-border bg-white">
+                <div className="flex items-center justify-between border-b border-app-border px-3 py-3">
+                  <div className="flex items-center gap-2">
+                    <GalleryHorizontalEnd className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                    <h2 className="text-sm font-black text-app-text">رسانه</h2>
+                  </div>
+                  <Tag tone={previewImageUrl ? "success" : "warning"}>{previewImageUrl ? "انتخاب شده" : "خالی"}</Tag>
+                </div>
+                <div className="space-y-3 p-3">
+                  <label className="block cursor-pointer rounded-md border border-dashed border-app-border bg-slate-50 p-3 transition hover:border-slate-400">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) => {
+                        setSelectedFile(event.target.files?.[0] ?? null);
+                        if (event.target.files?.[0]) setSelectedMediaId("");
+                        if (message) setMessage("");
+                      }}
+                      className="sr-only"
+                    />
+                    <span className="flex items-center gap-2 text-sm font-black text-app-text">
+                      <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                      آپلود تصویر
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-app-muted">JPEG، PNG یا WEBP</span>
+                  </label>
+
+                  {selectedFilePreviewUrl ? (
+                    <img src={selectedFilePreviewUrl} alt="پیش‌نمایش فایل انتخاب‌شده" className="aspect-video w-full rounded-md object-cover ring-1 ring-app-border" />
+                  ) : null}
+
                   <MediaGalleryPicker
                     assets={mediaAssets}
                     previewUrls={mediaPreviewUrls}
@@ -507,88 +619,161 @@ function ComposePageContent() {
                     }}
                   />
                 </div>
-              </div>
-            </SectionCard>
+              </section>
+            </aside>
 
-            <SectionCard title="۲. متن پست" description="عنوان داخلی، کپشن عمومی و هشتگ‌ها را تنظیم کنید.">
-              <div className="grid gap-5">
-                <Field label="عنوان داخلی پست" required hint="این عنوان برای مدیریت داخلی استفاده می‌شود و در روبیکا نمایش داده نمی‌شود.">
-                  <Input
-                    value={form.title}
-                    onChange={(event) => updateField("title", event.target.value)}
-                    placeholder="مثلاً معرفی محصول جدید"
-                    required
-                  />
-                </Field>
-
-                <Field label="کپشن" hint={`${captionLength} کاراکتر`}>
-                  <Textarea
-                    value={form.caption}
-                    onChange={(event) => updateField("caption", event.target.value)}
-                    className="min-h-44"
-                    placeholder="متن پست روبیکا را وارد کنید..."
-                  />
-                </Field>
-
-                <Field label="هشتگ‌ها" hint={`${hashtagCount} هشتگ شناسایی شد`}>
-                  <Textarea
-                    value={form.hashtags}
-                    onChange={(event) => updateField("hashtags", event.target.value)}
-                    className="min-h-24"
-                    placeholder="#روبیکا #فروشگاه #محصول"
-                  />
-                </Field>
-
-                <div className="flex flex-wrap gap-2">
-                  <Tag tone="primary">مقصد: روبیکا</Tag>
-                  <Tag tone={previewImageUrl ? "success" : "warning"}>{previewImageUrl ? "تصویر انتخاب شده" : "بدون تصویر"}</Tag>
-                  <Tag tone={form.caption ? "success" : "neutral"}>{form.caption ? "کپشن آماده" : "کپشن خالی"}</Tag>
-                  {isEditing ? <Tag tone="neutral">ویرایش پست موجود</Tag> : null}
-                  {editingPost?.status ? <StatusBadge status={editingPost.status} /> : null}
-                  {hasSchedule ? <Tag tone="success">زمان‌بندی شده</Tag> : null}
+            <section className="min-w-0 space-y-4">
+              <section className="rounded-md border border-app-border bg-white">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-border px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <NotebookPen className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                    <h2 className="text-sm font-black text-app-text">بوم تولید محتوا</h2>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Tag tone="primary">روبیکا</Tag>
+                    <Tag tone={form.caption ? "success" : "neutral"}>{form.caption ? "کپشن آماده" : "کپشن خالی"}</Tag>
+                    {hasSchedule ? <Tag tone="success">زمان‌بندی شده</Tag> : null}
+                  </div>
                 </div>
+
+                <div className="grid gap-5 p-4">
+                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+                    <Field label="عنوان داخلی پست" required hint="برای مدیریت محتوا، لاگ و صف انتشار.">
+                      <Input
+                        value={form.title}
+                        onChange={(event) => updateField("title", event.target.value)}
+                        placeholder="مثلاً معرفی محصول جدید"
+                        required
+                      />
+                    </Field>
+
+                    <Field label="کمپین">
+                      <Input
+                        value={form.campaign}
+                        onChange={(event) => updateField("campaign", event.target.value)}
+                        placeholder="مثلاً لانچ خرداد"
+                      />
+                    </Field>
+                  </div>
+
+                  <Field label="کپشن" hint={`${captionLength} کاراکتر`}>
+                    <Textarea
+                      value={form.caption}
+                      onChange={(event) => updateField("caption", event.target.value)}
+                      className="min-h-[260px] resize-y text-[15px] leading-8"
+                      placeholder="متن پست روبیکا را وارد کنید..."
+                    />
+                  </Field>
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <Field label="هشتگ‌ها" hint={`${hashtagCount} هشتگ شناسایی شد`}>
+                      <Textarea
+                        value={form.hashtags}
+                        onChange={(event) => updateField("hashtags", event.target.value)}
+                        className="min-h-28"
+                        placeholder="#روبیکا #فروشگاه #محصول"
+                      />
+                    </Field>
+
+                    <Field label="یادداشت داخلی">
+                      <Textarea
+                        value={form.internal_note}
+                        onChange={(event) => updateField("internal_note", event.target.value)}
+                        className="min-h-28"
+                        placeholder="نکته برای تیم، تایید مدیر یا دلیل زمان‌بندی..."
+                      />
+                    </Field>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-md border border-app-border bg-white">
+                <div className="flex items-center gap-2 border-b border-app-border px-4 py-3">
+                  <Hash className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                  <h2 className="text-sm font-black text-app-text">استاندارد محتوا</h2>
+                </div>
+                <div className="grid gap-3 p-4 md:grid-cols-3">
+                  <div className="rounded-md border border-app-border bg-slate-50 p-3">
+                    <p className="text-xs font-black text-app-muted">عنوان</p>
+                    <p className="mt-2 text-sm font-black text-app-text">{hasTitle ? "ثبت شده" : "لازم است"}</p>
+                  </div>
+                  <div className="rounded-md border border-app-border bg-slate-50 p-3">
+                    <p className="text-xs font-black text-app-muted">بدنه پست</p>
+                    <p className="mt-2 text-sm font-black text-app-text">{hasPostBody ? "قابل انتشار" : "ناقص"}</p>
+                  </div>
+                  <div className="rounded-md border border-app-border bg-slate-50 p-3">
+                    <p className="text-xs font-black text-app-muted">فوتر فروشگاه</p>
+                    <p className="mt-2 truncate text-sm font-black text-app-text">{store?.caption_footer ? "فعال" : "تعریف نشده"}</p>
+                  </div>
+                </div>
+              </section>
+
+              {message ? <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">{message}</div> : null}
+              {error ? <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{error}</div> : null}
+            </section>
+
+            <aside className="min-w-0 space-y-4">
+              <div className="sticky top-24 space-y-4">
+                <section className="rounded-md border border-app-border bg-white">
+                  <div className="flex items-center justify-between border-b border-app-border px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <PanelRight className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <h2 className="text-sm font-black text-app-text">پیش‌نمایش خروجی</h2>
+                    </div>
+                    <StatusToken tone="neutral">Rubika</StatusToken>
+                  </div>
+                  <div className="p-3">
+                    <RubikaPostPreview imageUrl={previewImageUrl} caption={finalPreview} destination={store?.name || "کانال روبیکا"} />
+                  </div>
+                </section>
+
+                <section className="rounded-md border border-app-border bg-white">
+                  <div className="flex items-center gap-2 border-b border-app-border px-4 py-3">
+                    <CalendarClock className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                    <h2 className="text-sm font-black text-app-text">زمان انتشار</h2>
+                  </div>
+                  <div className="p-3">
+                    <ComposerSchedulePanel
+                      scheduledAt={form.scheduled_at}
+                      timezone={timezone}
+                      onChange={(value) => updateField("scheduled_at", value)}
+                    />
+                  </div>
+                </section>
+
+                <section className="rounded-md border border-app-border bg-white">
+                  <div className="flex items-center justify-between border-b border-app-border px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <h2 className="text-sm font-black text-app-text">بررسی نهایی</h2>
+                    </div>
+                    <StatusToken tone={canSchedule ? "success" : "warning"}>{readinessScore}%</StatusToken>
+                  </div>
+                  <div className="p-4">
+                    <ComposerReadinessChecks items={readinessItems} />
+                    <Button href="/media" variant="secondary" className="mt-4 w-full">کتابخانه رسانه</Button>
+                  </div>
+                </section>
               </div>
-            </SectionCard>
+            </aside>
 
-            <SectionCard title="۳. زمان‌بندی انتشار" description="با انتخاب زمان، دکمه زمان‌بندی پست فعال می‌شود.">
-              <ComposerSchedulePanel
-                scheduledAt={form.scheduled_at}
-                timezone={timezone}
-                onChange={(value) => updateField("scheduled_at", value)}
+            <div className="xl:col-span-3">
+              <ComposerActionFooter
+                savingAction={savingAction}
+                canSaveDraft={canSaveDraft}
+                canMarkReady={canMarkReady}
+                canSchedule={canSchedule}
+                hasSchedule={hasSchedule}
+                isEditing={isEditing}
+                onUseDefaults={useDefaults}
+                onCancel={resetComposer}
+                onSaveDraft={() => persistPost("draft")}
+                onMarkReady={() => persistPost("ready")}
+                onSchedule={() => persistPost("schedule")}
               />
-            </SectionCard>
-
-            {message ? <div className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
-            {error ? <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-
-            <ComposerActionFooter
-              savingAction={savingAction}
-              canSaveDraft={canSaveDraft}
-              canMarkReady={canMarkReady}
-              canSchedule={canSchedule}
-              hasSchedule={hasSchedule}
-              isEditing={isEditing}
-              onUseDefaults={useDefaults}
-              onCancel={resetComposer}
-              onSaveDraft={() => persistPost("draft")}
-              onMarkReady={() => persistPost("ready")}
-              onSchedule={() => persistPost("schedule")}
-            />
-          </section>
-
-          <aside className="xl:col-span-2">
-            <div className="sticky top-24 space-y-5">
-              <SectionCard title="۴. پیش‌نمایش روبیکا" description="خروجی نهایی تصویر، کپشن، فوتر فروشگاه و هشتگ‌ها.">
-                <RubikaPostPreview imageUrl={previewImageUrl} caption={finalPreview} destination={store?.name || "کانال روبیکا"} />
-              </SectionCard>
-
-              <SectionCard title="بررسی نهایی" description="وضعیت‌های لازم برای ذخیره، آماده‌سازی و زمان‌بندی.">
-                <ComposerReadinessChecks items={readinessItems} />
-                <Button href="/media" variant="secondary" className="mt-4 w-full">رفتن به کتابخانه رسانه</Button>
-              </SectionCard>
             </div>
-          </aside>
-        </form>
+          </form>
+        </WorkspacePage>
       </AppShell>
     </AuthGate>
   );

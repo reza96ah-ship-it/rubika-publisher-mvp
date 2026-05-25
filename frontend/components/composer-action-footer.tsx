@@ -31,32 +31,32 @@ export function ComposerActionFooter({
   const saving = Boolean(savingAction);
 
   return (
-    <div className="sticky bottom-0 z-10 mt-6 rounded-2xl border border-app-border bg-app-surface/95 p-4 shadow-soft backdrop-blur">
-      <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
-        <div>
-          <p className="text-sm font-bold text-app-text">اقدام‌های پست</p>
+    <div className="sticky bottom-4 z-10 mt-5 rounded-md border border-app-border bg-white/95 p-3 shadow-soft backdrop-blur">
+      <div className="flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
+        <div className="min-w-0">
+          <p className="text-sm font-black text-app-text">اقدام‌های پست</p>
           <p className="mt-1 text-xs leading-6 text-app-muted">
             {hasSchedule ? "زمان انتشار انتخاب شده؛ می‌توانید پست را مستقیم وارد صف زمان‌بندی کنید." : "برای انتشار خودکار، ابتدا زمان انتشار را انتخاب کنید."}
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Button type="button" variant="secondary" onClick={onUseDefaults} disabled={saving}>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="secondary" size="sm" onClick={onUseDefaults} disabled={saving}>
             <Sparkles className="ml-2 h-4 w-4" aria-hidden="true" />
             پیش‌فرض فروشگاه
           </Button>
-          <Button type="button" variant="ghost" onClick={onCancel} disabled={saving}>
+          <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={saving}>
             <RotateCcw className="ml-2 h-4 w-4" aria-hidden="true" />
             بازنشانی
           </Button>
-          <Button type="button" variant="secondary" onClick={onSaveDraft} disabled={saving || !canSaveDraft}>
+          <Button type="button" variant="secondary" size="sm" onClick={onSaveDraft} disabled={saving || !canSaveDraft}>
             <Save className="ml-2 h-4 w-4" aria-hidden="true" />
             {savingAction === "draft" ? "در حال ذخیره..." : isEditing ? "ذخیره تغییرات" : "ذخیره پیش‌نویس"}
           </Button>
-          <Button type="button" variant="secondary" onClick={onMarkReady} disabled={saving || !canMarkReady}>
+          <Button type="button" variant="secondary" size="sm" onClick={onMarkReady} disabled={saving || !canMarkReady}>
             <CheckCircle2 className="ml-2 h-4 w-4" aria-hidden="true" />
             {savingAction === "ready" ? "در حال آماده‌سازی..." : "آماده برای زمان‌بندی"}
           </Button>
-          <Button type="button" onClick={onSchedule} disabled={saving || !canSchedule}>
+          <Button type="button" size="sm" onClick={onSchedule} disabled={saving || !canSchedule}>
             <CalendarCheck className="ml-2 h-4 w-4" aria-hidden="true" />
             {savingAction === "schedule" ? "در حال زمان‌بندی..." : "زمان‌بندی پست"}
           </Button>
