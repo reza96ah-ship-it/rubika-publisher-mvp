@@ -8,13 +8,13 @@ import {
   FileText,
   Pencil,
   RotateCcw,
-  Search,
   XCircle
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { CountdownBadge } from "../../components/countdown-badge";
+import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
 import { PageHeader } from "../../components/page-header";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
@@ -36,6 +36,8 @@ const searchableFields: Array<keyof Pick<Post, "title" | "caption" | "hashtags" 
   "campaign",
   "internal_note"
 ];
+const contentHeaderGrid = "grid-cols-[minmax(0,1.4fr)_140px_150px_220px]";
+const contentRowGrid = "lg:grid-cols-[minmax(0,1.4fr)_140px_150px_220px]";
 
 function statusCount(posts: Post[], status: string) {
   if (status === "all") return posts.length;
@@ -222,81 +224,61 @@ export default function ContentWorkspacePage() {
               </Button>
             }
           >
-            <div className="grid gap-3 rounded-xl border border-app-border bg-slate-50 p-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-              <label className="flex items-center gap-2 rounded-xl border border-app-border bg-white px-3 py-2 ring-app-primary focus-within:ring-2">
-                <Search className="h-4 w-4 text-app-muted" aria-hidden="true" />
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="جست‌وجوی عنوان، کپشن، هشتگ، کمپین یا یادداشت"
-                  className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                />
-              </label>
-              <div className="flex items-center justify-between gap-3 text-xs text-app-muted lg:justify-end">
-                <span>{filteredPosts.length} نتیجه</span>
-                <span>{posts.length} کل پست</span>
-              </div>
-            </div>
+            <DataToolbar
+              meta={(
+                <>
+                  <span>{filteredPosts.length} نتیجه</span>
+                  <span>{posts.length} کل پست</span>
+                </>
+              )}
+            >
+              <DataSearchField
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="جست‌وجوی عنوان، کپشن، هشتگ، کمپین یا یادداشت"
+              />
+            </DataToolbar>
 
             <div className="mt-4 flex flex-wrap gap-2">
               {workflowTabs.map((tab) => {
                 const active = activeStatus === tab.value;
                 return (
-                  <button
+                  <FilterChip
                     key={tab.value}
-                    type="button"
+                    active={active}
+                    count={statusCount(posts, tab.value)}
                     onClick={() => setActiveStatus(tab.value)}
-                    className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${
-                      active ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
                   >
                     {tab.label}
-                    <span className={`mr-2 rounded-full px-2 py-0.5 ${active ? "bg-white/20 text-white" : "bg-white text-slate-500"}`}>
-                      {statusCount(posts, tab.value)}
-                    </span>
-                  </button>
+                  </FilterChip>
                 );
               })}
             </div>
 
-            <div className="mt-5 overflow-hidden rounded-xl border border-app-border bg-white">
-              <div className="hidden grid-cols-[minmax(0,1.4fr)_140px_150px_220px] gap-4 border-b border-app-border bg-slate-50 px-4 py-3 text-xs font-bold text-app-muted lg:grid">
-                <span>محتوا</span>
-                <span>مرحله</span>
-                <span>زمان</span>
-                <span>عملیات</span>
-              </div>
-
-              {loading ? (
-                <p className="p-5 text-sm text-app-muted">در حال دریافت...</p>
-              ) : null}
-
-              {!loading && filteredPosts.length === 0 ? (
+            <DataTable
+              columns={["محتوا", "مرحله", "زمان", "عملیات"]}
+              gridClassName={contentHeaderGrid}
+              loading={loading}
+              empty={filteredPosts.length === 0 ? (
                 <div className="p-8 text-center">
                   <p className="font-bold text-app-text">هیچ پستی با این فیلتر پیدا نشد.</p>
                   <p className="mt-2 text-sm text-app-muted">جست‌وجو یا وضعیت انتخاب‌شده را تغییر دهید.</p>
                   <Button href="/compose" className="mt-4">ایجاد پست جدید</Button>
                 </div>
               ) : null}
-
-              <div className="divide-y divide-app-border">
-                {filteredPosts.map((post) => {
-                  const selected = selectedPost?.id === post.id;
-                  return (
-                    <article
-                      key={post.id}
-                      className={`grid gap-4 px-4 py-4 transition hover:bg-slate-50 lg:grid-cols-[minmax(0,1.4fr)_140px_150px_220px] lg:items-start ${
-                        selected ? "bg-blue-50/50 ring-1 ring-inset ring-blue-100" : ""
-                      }`}
-                    >
+            >
+              {filteredPosts.map((post) => {
+                const selected = selectedPost?.id === post.id;
+                return (
+                    <DataRow key={post.id} gridClassName={contentRowGrid} selected={selected}>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          {post.campaign ? <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">{post.campaign}</span> : null}
-                          {post.hashtags ? <span className="truncate rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700">{post.hashtags}</span> : null}
+                          {post.campaign ? <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs text-slate-600">{post.campaign}</span> : null}
+                          {post.hashtags ? <span className="truncate rounded-md bg-blue-50 px-2.5 py-1 text-xs text-blue-700">{post.hashtags}</span> : null}
                         </div>
                         <h2 className="mt-3 truncate text-base font-bold text-app-text">{post.title}</h2>
                         <p className="mt-2 line-clamp-2 text-sm leading-7 text-app-muted">{post.caption || "بدون کپشن"}</p>
-                        {post.last_error ? <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-xs leading-6 text-rose-700">{post.last_error}</p> : null}
+                        {post.last_error ? <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs leading-6 text-rose-700">{post.last_error}</p> : null}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
@@ -338,11 +320,10 @@ export default function ContentWorkspacePage() {
                           </Button>
                         ) : null}
                       </div>
-                    </article>
-                  );
-                })}
-              </div>
-            </div>
+                    </DataRow>
+                );
+              })}
+            </DataTable>
           </SectionCard>
 
           <aside className="space-y-5">

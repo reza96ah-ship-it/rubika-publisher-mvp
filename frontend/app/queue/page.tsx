@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { CountdownBadge } from "../../components/countdown-badge";
+import { DataRow, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
 import { PageHeader } from "../../components/page-header";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
@@ -27,6 +28,8 @@ const queuePriority: Record<string, number> = {
   scheduled: 2,
   ready: 3
 };
+const queueHeaderGrid = "grid-cols-[minmax(0,1.4fr)_140px_160px_220px]";
+const queueRowGrid = "lg:grid-cols-[minmax(0,1.4fr)_140px_160px_220px]";
 
 function scheduleTime(post: Post) {
   const date = post.scheduled_at ? new Date(post.scheduled_at) : null;
@@ -44,6 +47,7 @@ function sortQueuePosts(posts: Post[]) {
 export default function QueuePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [statusFilter, setStatusFilter] = useState<QueueFilter>("all");
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -53,7 +57,9 @@ export default function QueuePage() {
     const response = await fetch(`${apiUrl}/posts`, { headers: authHeaders() });
     if (!response.ok) throw new Error("دریافت صف انتشار ناموفق بود");
     const allPosts = (await response.json()) as Post[];
-    setPosts(sortQueuePosts(allPosts.filter((post) => queueStatuses.has(post.status))));
+    const queuePosts = sortQueuePosts(allPosts.filter((post) => queueStatuses.has(post.status)));
+    setPosts(queuePosts);
+    setSelectedPostId((current) => current ?? queuePosts[0]?.id ?? null);
     setLoading(false);
   }, []);
 
@@ -118,6 +124,8 @@ export default function QueuePage() {
   }, [posts]);
 
   const failedPosts = posts.filter((post) => post.status === "failed").slice(0, 4);
+  const selectedPost = selectedPostId ? posts.find((post) => post.id === selectedPostId) ?? filteredPosts[0] ?? null : filteredPosts[0] ?? posts[0] ?? null;
+  const filterCount = (filter: QueueFilter) => filter === "all" ? posts.length : counts[filter];
 
   return (
     <AuthGate>
@@ -130,8 +138,8 @@ export default function QueuePage() {
           actionHref="/compose"
         />
 
-        {error ? <div className="mb-5 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-        {message ? <div className="mb-5 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
+        {error ? <div className="mb-5 rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {message ? <div className="mb-5 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
 
         <section className="mb-5 grid gap-4 lg:grid-cols-4">
           <SectionCard title="آماده" description="منتظر انتخاب زمان.">
@@ -153,55 +161,58 @@ export default function QueuePage() {
         </section>
 
         <section className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-          <SectionCard
-            title="پست‌های داخل صف"
-            description="نمای عملیاتی برای بررسی زمان‌بندی، خطاها، لغو و تلاش مجدد انتشار."
-            action={(
+          <SectionCard title="پست‌های داخل صف" description="نمای عملیاتی برای بررسی زمان‌بندی، خطاها، لغو و تلاش مجدد انتشار.">
+            <DataToolbar
+              meta={(
+                <>
+                  <span>{filteredPosts.length} نتیجه</span>
+                  <span>{posts.length} کل صف</span>
+                </>
+              )}
+            >
               <div className="flex flex-wrap gap-2">
                 {queueFilters.map((filter) => (
-                  <button
+                  <FilterChip
                     key={filter.value}
-                    type="button"
+                    active={statusFilter === filter.value}
+                    count={filterCount(filter.value)}
                     onClick={() => setStatusFilter(filter.value)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                      statusFilter === filter.value ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
                   >
                     {filter.label}
-                  </button>
+                  </FilterChip>
                 ))}
               </div>
-            )}
-          >
-            {loading ? <p className="text-sm text-app-muted">در حال دریافت...</p> : null}
-            {!loading && filteredPosts.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-app-border bg-slate-50 p-8 text-center">
+            </DataToolbar>
+
+            <DataTable
+              columns={["محتوا", "وضعیت", "زمان", "عملیات"]}
+              gridClassName={queueHeaderGrid}
+              loading={loading}
+              empty={filteredPosts.length === 0 ? (
+              <div className="p-8 text-center">
                 <p className="font-bold text-app-text">برای این فیلتر پستی در صف نیست.</p>
                 <p className="mt-2 text-sm text-app-muted">از composer یک پست آماده یا زمان‌بندی‌شده بسازید.</p>
                 <Button href="/compose" className="mt-4">ایجاد پست جدید</Button>
               </div>
             ) : null}
-
-            <div className="grid gap-3">
+            >
               {filteredPosts.map((post) => (
-                <article key={post.id} className="rounded-2xl border border-app-border bg-white p-4 shadow-sm">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={post.status} />
-                        <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
-                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                          زمان‌بندی: {formatDateTime(post.scheduled_at)}
-                        </span>
-                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                          تلاش: {post.attempt_count}
-                        </span>
-                      </div>
-                      <h2 className="mt-3 truncate font-bold text-app-text">{post.title}</h2>
-                      <p className="mt-2 line-clamp-2 text-sm leading-7 text-app-muted">{post.caption || "بدون کپشن"}</p>
-                      {post.last_error ? <p className="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-xs leading-6 text-rose-700">{post.last_error}</p> : null}
-                    </div>
-                    <div className="flex shrink-0 flex-wrap gap-2">
+                <DataRow key={post.id} gridClassName={queueRowGrid} selected={selectedPost?.id === post.id}>
+                  <div className="min-w-0">
+                    <h2 className="truncate font-bold text-app-text">{post.title}</h2>
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-app-muted">{post.caption || "بدون کپشن"}</p>
+                    {post.last_error ? <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-xs leading-6 text-rose-700">{post.last_error}</p> : null}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
+                    <StatusBadge status={post.status} />
+                    <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
+                  </div>
+                  <div className="space-y-2 text-xs leading-6 text-app-muted">
+                    <p>زمان‌بندی: {formatDateTime(post.scheduled_at)}</p>
+                    <p>تلاش: {post.attempt_count}</p>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
+                      <Button type="button" variant={selectedPost?.id === post.id ? "primary" : "secondary"} size="sm" onClick={() => setSelectedPostId(post.id)}>جزئیات</Button>
                       <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن</Button>
                       {post.status === "failed" ? (
                         <Button type="button" size="sm" onClick={() => retryPost(post)}>تلاش مجدد</Button>
@@ -209,36 +220,55 @@ export default function QueuePage() {
                       {["ready", "scheduled"].includes(post.status) ? (
                         <Button type="button" variant="ghost" size="sm" onClick={() => cancelPost(post)}>لغو</Button>
                       ) : null}
-                    </div>
                   </div>
-                </article>
+                </DataRow>
               ))}
-            </div>
+            </DataTable>
           </SectionCard>
 
           <div className="space-y-5">
-            <SectionCard title="انتشار بعدی" description="نزدیک‌ترین پست زمان‌بندی‌شده در صف.">
-              {nextScheduled ? (
-                <div className="rounded-xl border border-app-border bg-white p-4">
-                  <StatusBadge status={nextScheduled.status} />
-                  <h2 className="mt-3 font-black text-app-text">{nextScheduled.title}</h2>
-                  <p className="mt-2 text-sm leading-7 text-app-muted">{formatDateTime(nextScheduled.scheduled_at)}</p>
-                  <CountdownBadge status={nextScheduled.status} scheduledAt={nextScheduled.scheduled_at} className="mt-3" />
-                  <Button href={`/compose?postId=${nextScheduled.id}`} variant="secondary" className="mt-4 w-full">باز کردن پست</Button>
+            <SectionCard title="بازبین صف" description="جزئیات پست انتخاب‌شده و مسیرهای سریع.">
+              {selectedPost ? (
+                <div className="rounded-lg border border-app-border bg-white p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge status={selectedPost.status} />
+                    <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
+                  </div>
+                  <h2 className="mt-3 font-black text-app-text">{selectedPost.title}</h2>
+                  <p className="mt-2 text-sm leading-7 text-app-muted">{selectedPost.caption || "بدون کپشن"}</p>
+                  <div className="mt-4 grid gap-3 text-xs text-app-muted">
+                    <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-app-border">
+                      <p className="font-bold text-app-text">زمان‌بندی</p>
+                      <p className="mt-1">{formatDateTime(selectedPost.scheduled_at)}</p>
+                    </div>
+                    <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-app-border">
+                      <p className="font-bold text-app-text">تلاش انتشار</p>
+                      <p className="mt-1">{selectedPost.attempt_count}</p>
+                    </div>
+                  </div>
+                  <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary" className="mt-4 w-full">باز کردن پست</Button>
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-app-border bg-slate-50 p-5 text-center">
-                  <p className="font-bold text-app-text">پست زمان‌بندی‌شده‌ای در صف نیست.</p>
+                <div className="rounded-lg border border-dashed border-app-border bg-slate-50 p-5 text-center">
+                  <p className="font-bold text-app-text">پستی برای نمایش انتخاب نشده است.</p>
                   <Button href="/compose" className="mt-4">زمان‌بندی پست</Button>
                 </div>
               )}
             </SectionCard>
 
+            {nextScheduled ? (
+              <SectionCard title="انتشار بعدی" description="نزدیک‌ترین پست زمان‌بندی‌شده در صف.">
+                <p className="font-black text-app-text">{nextScheduled.title}</p>
+                <p className="mt-2 text-sm leading-7 text-app-muted">{formatDateTime(nextScheduled.scheduled_at)}</p>
+                <CountdownBadge status={nextScheduled.status} scheduledAt={nextScheduled.scheduled_at} className="mt-3" />
+              </SectionCard>
+            ) : null}
+
             <SectionCard title="خطاهای فعال" description="آخرین پست‌های ناموفق برای بازیابی سریع.">
               {failedPosts.length === 0 ? <p className="text-sm text-app-muted">فعلاً خطای فعال وجود ندارد.</p> : null}
               <div className="space-y-3">
                 {failedPosts.map((post) => (
-                  <article key={post.id} className="rounded-xl border border-app-border bg-white p-4">
+                  <article key={post.id} className="rounded-lg border border-app-border bg-white p-4">
                     <div className="flex items-center justify-between gap-3">
                       <StatusBadge status={post.status} />
                       <span className="text-xs text-app-muted">تلاش: {post.attempt_count}</span>

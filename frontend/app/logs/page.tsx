@@ -4,6 +4,7 @@ import { CheckCircle2, Circle, CircleAlert, Clock3, FileUp, MessageSquareText, U
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
+import { DataRow, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
 import { PageHeader } from "../../components/page-header";
 import { StatusBadge } from "../../components/status-badge";
 import { SectionCard } from "../../components/ui/card";
@@ -45,6 +46,8 @@ const modeFilters: Array<{ label: string; value: LogMode }> = [
   { label: "متنی", value: "text" },
   { label: "رسانه‌ای", value: "media" }
 ];
+const logsHeaderGrid = "grid-cols-[minmax(0,1.2fr)_160px_190px_130px]";
+const logsRowGrid = "lg:grid-cols-[minmax(0,1.2fr)_160px_190px_130px]";
 
 function attemptTone(status: string) {
   if (status === "success") return "published";
@@ -275,45 +278,58 @@ export default function LogsPage() {
         </section>
 
         <SectionCard title="فیلتر لاگ‌ها" description="وضعیت یا نوع تلاش را برای بررسی سریع‌تر محدود کنید.">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <DataToolbar
+            meta={(
+              <>
+                <span>{visibleAttempts.length} نتیجه</span>
+                <span>{summary.total} کل تلاش</span>
+              </>
+            )}
+          >
             <div className="flex flex-wrap gap-2">
               {statusFilters.map(([value, label]) => (
-                <button
+                <FilterChip
                   key={value}
-                  type="button"
+                  active={status === value}
                   onClick={() => applyStatus(value)}
-                  className={`rounded-full px-4 py-2 text-xs font-semibold transition ${status === value ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
                 >
                   {label}
-                </button>
+                </FilterChip>
               ))}
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               {modeFilters.map((filter) => (
-                <button
+                <FilterChip
                   key={filter.value}
-                  type="button"
+                  active={modeFilter === filter.value}
+                  count={filter.value === "all" ? preparedAttempts.length : preparedAttempts.filter((item) => item.mode === filter.value).length}
                   onClick={() => setModeFilter(filter.value)}
-                  className={`rounded-full px-4 py-2 text-xs font-semibold transition ${modeFilter === filter.value ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
                 >
                   {filter.label}
-                </button>
+                </FilterChip>
               ))}
             </div>
-          </div>
+          </DataToolbar>
         </SectionCard>
 
-        {error ? <div className="mt-5 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {error ? <div className="mt-5 rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
 
         <SectionCard title="تلاش‌های انتشار" description="آخرین ۱۰۰ تلاش انتشار از جدیدترین به قدیمی‌ترین." className="mt-5">
-          {loading ? <p className="text-sm text-app-muted">در حال دریافت...</p> : null}
-          {!loading && visibleAttempts.length === 0 ? <p className="text-sm text-app-muted">برای این فیلتر لاگی ثبت نشده است.</p> : null}
-          <div className="grid gap-3">
+          <DataTable
+            columns={["تلاش", "وضعیت", "زمان", "Payload"]}
+            gridClassName={logsHeaderGrid}
+            loading={loading}
+            empty={visibleAttempts.length === 0 ? <p className="p-5 text-sm text-app-muted">برای این فیلتر لاگی ثبت نشده است.</p> : null}
+          >
             {visibleAttempts.map(({ attempt, requestPayload, responsePayload, mode, timeline }) => (
-              <article key={attempt.id} className="rounded-2xl border border-app-border bg-white p-4 shadow-sm">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
+              <DataRow key={attempt.id} gridClassName={logsRowGrid}>
+                <div className="min-w-0">
+                  <h2 className="truncate text-base font-bold text-app-text">{attempt.post_title}</h2>
+                  <p className="mt-1 text-xs text-app-muted">Post #{attempt.post_id}</p>
+                  {attempt.error ? <p className="mt-3 rounded-lg bg-rose-50 p-3 text-xs leading-6 text-rose-700">{attempt.error}</p> : null}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
                       <StatusBadge status={attemptTone(attempt.status)} />
                       <Tag tone={mode === "media" ? "primary" : "neutral"}>
                         {mode === "media" ? (
@@ -323,15 +339,26 @@ export default function LogsPage() {
                         )}
                         {mode === "media" ? "رسانه‌ای" : "متنی"}
                       </Tag>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{actionLabel(attempt.action)}</span>
-                    </div>
-                    <h2 className="mt-3 truncate text-base font-bold text-app-text">{attempt.post_title}</h2>
-                    <p className="mt-1 text-xs text-app-muted">Post #{attempt.post_id} · شروع: {formatDateTime(attempt.started_at)} · پایان: {formatDateTime(attempt.finished_at)}</p>
-                    {attempt.error ? <p className="mt-3 rounded-xl bg-rose-50 p-3 text-xs leading-6 text-rose-700">{attempt.error}</p> : null}
+                  <span className="inline-flex rounded-md bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">{actionLabel(attempt.action)}</span>
+                </div>
 
-                    <div className="mt-4 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+                <div className="text-xs leading-6 text-app-muted">
+                  <p>شروع: {formatDateTime(attempt.started_at || attempt.created_at)}</p>
+                  <p>پایان: {formatDateTime(attempt.finished_at)}</p>
+                </div>
+
+                <details className="rounded-lg bg-slate-50 p-3 text-xs text-app-muted ring-1 ring-app-border">
+                  <summary className="cursor-pointer font-semibold text-app-text">
+                    <UploadCloud className="ml-1.5 inline h-4 w-4 align-middle" aria-hidden="true" />
+                    Payload
+                  </summary>
+                  <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words leading-6">Request: {prettyPayload(attempt.request_payload)}{"\n\n"}Response: {prettyPayload(attempt.response_payload)}</pre>
+                </details>
+
+                <div className="lg:col-span-4">
+                    <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
                       {timeline.map((stage, index) => (
-                        <div key={`${attempt.id}-${stage.label}`} className={`rounded-xl border p-3 ${stageClasses(stage.state)}`}>
+                        <div key={`${attempt.id}-${stage.label}`} className={`rounded-lg border p-3 ${stageClasses(stage.state)}`}>
                           <div className="flex items-center gap-2">
                             <StageIcon state={stage.state} />
                             <p className="text-sm font-black">{index + 1}. {stage.label}</p>
@@ -342,7 +369,7 @@ export default function LogsPage() {
                     </div>
 
                     {mode === "media" ? (
-                      <div className="mt-4 grid gap-3 rounded-xl bg-slate-50 p-3 text-xs text-app-muted ring-1 ring-app-border md:grid-cols-3">
+                      <div className="mt-4 grid gap-3 rounded-lg bg-slate-50 p-3 text-xs text-app-muted ring-1 ring-app-border md:grid-cols-3">
                         <div>
                           <p className="font-semibold text-app-text">رسانه</p>
                           <p className="mt-1 truncate">{payloadText(requestPayload, "filename") || "—"}</p>
@@ -357,19 +384,10 @@ export default function LogsPage() {
                         </div>
                       </div>
                     ) : null}
-
-                    <details className="mt-3 rounded-xl bg-slate-50 p-3 text-xs text-app-muted ring-1 ring-app-border">
-                      <summary className="cursor-pointer font-semibold text-app-text">
-                        <UploadCloud className="ml-1.5 inline h-4 w-4 align-middle" aria-hidden="true" />
-                        Payload پیشرفته
-                      </summary>
-                      <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words leading-6">Request: {prettyPayload(attempt.request_payload)}{"\n\n"}Response: {prettyPayload(attempt.response_payload)}</pre>
-                    </details>
-                  </div>
                 </div>
-              </article>
+              </DataRow>
             ))}
-          </div>
+          </DataTable>
         </SectionCard>
       </AppShell>
     </AuthGate>
