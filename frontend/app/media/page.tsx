@@ -1,14 +1,13 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { ImageIcon, Link2, Search, UploadCloud, XCircle } from "lucide-react";
+import { FileImage, ImageIcon, Images, Link2, Search, UploadCloud, XCircle } from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
-import { PageHeader } from "../../components/page-header";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
-import { SectionCard } from "../../components/ui/card";
 import { Tag } from "../../components/ui/tag";
+import { DetailGrid, EmptyState, MetricStrip, MetricTile, NoticeBanner, SegmentedControl, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel, WorkspaceToolbar } from "../../components/workspace-ui";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -29,12 +28,6 @@ type PostOption = {
 };
 
 type MediaFilter = "all" | "attached" | "unused";
-
-const mediaFilters: Array<{ label: string; value: MediaFilter }> = [
-  { label: "همه رسانه‌ها", value: "all" },
-  { label: "متصل به پست", value: "attached" },
-  { label: "بدون اتصال", value: "unused" }
-];
 
 function formatSize(size: number) {
   if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
@@ -201,6 +194,13 @@ export default function MediaPage() {
   const selectedLinkedPost = selectedAsset?.post_id ? postById.get(selectedAsset.post_id) ?? null : null;
   const attachedCount = assets.filter((asset) => asset.post_id).length;
   const unusedCount = assets.length - attachedCount;
+  const imageAssetCount = assets.filter((asset) => asset.content_type.startsWith("image/")).length;
+  const totalSizeBytes = assets.reduce((total, asset) => total + asset.size_bytes, 0);
+  const mediaFilterOptions = [
+    { label: "همه", value: "all" as const, count: assets.length },
+    { label: "متصل", value: "attached" as const, count: attachedCount },
+    { label: "آزاد", value: "unused" as const, count: unusedCount }
+  ];
 
   const filteredAssets = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -220,103 +220,231 @@ export default function MediaPage() {
   return (
     <AuthGate>
       <AppShell>
-        <PageHeader
-          eyebrow="دارایی‌های محتوا"
-          title="کتابخانه رسانه"
-          description="تصاویر محصول را جست‌وجو، فیلتر، بررسی و به پست‌های آماده انتشار وصل کنید."
-        />
-
-        {message ? <div className="mb-5 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
-        {error ? <div className="mb-5 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-
-        <section className="mb-5 grid gap-4 lg:grid-cols-4">
-          <SectionCard title="کل رسانه‌ها" description="همه تصاویر فضای کاری.">
-            <p className="text-2xl font-black text-app-text">{assets.length}</p>
-            <p className="mt-2 text-sm text-app-muted">فایل در کتابخانه</p>
-          </SectionCard>
-          <SectionCard title="متصل" description="در یک پست استفاده شده.">
-            <p className="text-2xl font-black text-app-text">{attachedCount}</p>
-            <p className="mt-2 text-sm text-app-muted">رسانه دارای پست</p>
-          </SectionCard>
-          <SectionCard title="بدون اتصال" description="آماده استفاده در پست جدید.">
-            <p className="text-2xl font-black text-app-text">{unusedCount}</p>
-            <p className="mt-2 text-sm text-app-muted">رسانه آزاد</p>
-          </SectionCard>
-          <SectionCard title="نمایش فعلی" description="نتیجه جست‌وجو و فیلتر.">
-            <p className="text-2xl font-black text-app-text">{filteredAssets.length}</p>
-            <p className="mt-2 text-sm text-app-muted">رسانه قابل مشاهده</p>
-          </SectionCard>
-        </section>
-
-        <section className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
-          <aside className="space-y-5">
-            <SectionCard title="آپلود تصویر" description="JPG، PNG، WEBP تا ۸ مگابایت.">
-              <form onSubmit={upload}>
-                <label className="block rounded-2xl border border-dashed border-app-border bg-slate-50 p-4 text-sm text-app-muted">
-                  <span className="flex items-center gap-2 font-semibold text-app-text">
-                    <UploadCloud className="h-5 w-5 text-app-primary" aria-hidden="true" />
-                    انتخاب فایل
+        <WorkspacePage>
+          <WorkspaceHero
+            eyebrow="Asset Library"
+            title="کتابخانه رسانه"
+            description="تصاویر محصول را مثل یک کتابخانه عملیاتی مدیریت کنید: آپلود، جست‌وجو، انتخاب، بررسی اتصال و ارسال سریع به composer."
+            actions={(
+              <>
+                <Button href="/compose" variant="secondary" size="sm">ساخت پست جدید</Button>
+                <Button href="/content" variant="secondary" size="sm">کتابخانه محتوا</Button>
+              </>
+            )}
+            meta={(
+              <>
+                <StatusToken tone="primary">فضای کاری رسانه</StatusToken>
+                <StatusToken tone={unusedCount ? "success" : "neutral"}>{unusedCount} رسانه آزاد</StatusToken>
+                <StatusToken tone={attachedCount ? "info" : "neutral"}>{attachedCount} متصل به پست</StatusToken>
+              </>
+            )}
+            aside={(
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.12em] text-app-primary">Library Health</p>
+                    <h2 className="mt-2 text-lg font-black text-app-text">آماده برای تولید پست</h2>
+                    <p className="mt-1 text-xs leading-5 text-app-muted">دارایی‌های آزاد را سریع به composer منتقل کنید یا اتصال فایل‌های استفاده‌شده را کنترل کنید.</p>
+                  </div>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
+                    <Images className="h-5 w-5" aria-hidden="true" />
                   </span>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-                    className="mt-4 w-full text-sm"
-                  />
-                </label>
-                {selectedFilePreviewUrl ? (
-                  <img
-                    src={selectedFilePreviewUrl}
-                    alt="پیش‌نمایش تصویر انتخاب‌شده"
-                    className="mt-4 aspect-video w-full rounded-xl object-cover ring-1 ring-app-border"
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded border border-blue-100 bg-white p-3">
+                    <p className="font-black text-app-text">{imageAssetCount}</p>
+                    <p className="mt-1 text-app-muted">تصویر</p>
+                  </div>
+                  <div className="rounded border border-blue-100 bg-white p-3">
+                    <p className="font-black text-app-text">{formatSize(totalSizeBytes)}</p>
+                    <p className="mt-1 text-app-muted">حجم کل</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          />
+
+          {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
+          {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
+
+          <MetricStrip>
+            <MetricTile label="کل رسانه‌ها" value={assets.length} hint="همه فایل‌های فضای کاری" tone="primary" icon={<Images className="h-4 w-4" aria-hidden="true" />} />
+            <MetricTile label="متصل به پست" value={attachedCount} hint="در یک پست استفاده شده" tone={attachedCount ? "info" : "neutral"} icon={<Link2 className="h-4 w-4" aria-hidden="true" />} />
+            <MetricTile label="رسانه آزاد" value={unusedCount} hint="آماده استفاده در پست جدید" tone={unusedCount ? "success" : "neutral"} icon={<FileImage className="h-4 w-4" aria-hidden="true" />} />
+            <MetricTile label="نمایش فعلی" value={filteredAssets.length} hint="نتیجه جست‌وجو و فیلتر" tone="neutral" icon={<Search className="h-4 w-4" aria-hidden="true" />} />
+          </MetricStrip>
+
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
+            <div className="min-w-0 space-y-4">
+              <WorkspaceToolbar
+                meta={(
+                  <>
+                    <StatusToken tone="neutral">{filteredAssets.length} نتیجه</StatusToken>
+                    <StatusToken tone={mediaFilter === "unused" ? "success" : mediaFilter === "attached" ? "info" : "primary"}>
+                      {mediaFilter === "unused" ? "رسانه‌های آزاد" : mediaFilter === "attached" ? "رسانه‌های متصل" : "همه رسانه‌ها"}
+                    </StatusToken>
+                  </>
+                )}
+              >
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+                  <label className="flex min-w-0 items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2">
+                    <Search className="h-4 w-4 shrink-0 text-app-muted" aria-hidden="true" />
+                    <input
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder="جست‌وجو بر اساس نام فایل یا عنوان پست"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                    />
+                  </label>
+                  <SegmentedControl options={mediaFilterOptions} value={mediaFilter} onChange={setMediaFilter} />
+                </div>
+              </WorkspaceToolbar>
+
+              <WorkspacePanel
+                title="برد رسانه"
+                description="برای دیدن جزئیات و مدیریت اتصال، یک تصویر را انتخاب کنید."
+                action={<Button href="/compose" variant="secondary" size="sm">ساخت پست با رسانه</Button>}
+                bodyClassName="p-4"
+              >
+                {loading ? <p className="text-sm text-app-muted">در حال دریافت رسانه‌ها...</p> : null}
+                {!loading && assets.length === 0 ? (
+                  <EmptyState
+                    icon={<ImageIcon className="h-5 w-5" aria-hidden="true" />}
+                    title="هنوز تصویری آپلود نشده است"
+                    description="اولین تصویر محصول را از پنل آپلود اضافه کنید تا در composer قابل استفاده باشد."
                   />
                 ) : null}
-                <Button type="submit" disabled={!file || uploading} className="mt-5 w-full">
-                  {uploading ? "در حال آپلود..." : "آپلود تصویر"}
-                </Button>
-              </form>
-            </SectionCard>
+                {!loading && assets.length > 0 && filteredAssets.length === 0 ? (
+                  <EmptyState
+                    title="نتیجه‌ای برای این جست‌وجو پیدا نشد"
+                    description="فیلتر یا عبارت جست‌وجو را تغییر دهید."
+                  />
+                ) : null}
+                {!loading && filteredAssets.length > 0 ? (
+                  <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+                    {filteredAssets.map((asset) => {
+                      const previewUrl = mediaPreviewUrls[asset.id];
+                      const linkedPost = asset.post_id ? postById.get(asset.post_id) : null;
+                      const selected = selectedAssetId === String(asset.id);
 
-            <SectionCard title="جزئیات رسانه" description="رسانه انتخاب‌شده و اتصال آن به پست.">
-              {selectedAsset ? (
-                <div>
-                  {selectedPreviewUrl ? (
-                    <img src={selectedPreviewUrl} alt={selectedAsset.original_filename} className="aspect-video w-full rounded-xl object-cover ring-1 ring-app-border" />
-                  ) : (
-                    <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-slate-50 text-xs text-app-muted ring-1 ring-app-border">
-                      پیش‌نمایش در دسترس نیست
-                    </div>
-                  )}
+                      return (
+                        <button
+                          key={asset.id}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => setSelectedAssetId(String(asset.id))}
+                          className={`overflow-hidden rounded-md border bg-white text-right transition hover:border-blue-200 hover:shadow-sm ${
+                            selected ? "border-app-primary ring-2 ring-blue-100" : "border-app-border"
+                          }`}
+                        >
+                          <div className="relative">
+                            {previewUrl ? (
+                              <img src={previewUrl} alt={asset.original_filename} className="aspect-video w-full object-cover" />
+                            ) : (
+                              <div className="flex aspect-video w-full items-center justify-center bg-slate-50 text-xs text-app-muted">
+                                پیش‌نمایش در دسترس نیست
+                              </div>
+                            )}
+                            <span className="absolute right-2 top-2">
+                              <Tag tone={linkedPost ? "primary" : "success"}>{linkedPost ? "در استفاده" : "آزاد"}</Tag>
+                            </span>
+                          </div>
+                          <div className="p-3">
+                            <p className="truncate text-sm font-black text-app-text" title={asset.original_filename}>{asset.original_filename}</p>
+                            <p className="mt-1 text-xs text-app-muted">{asset.content_type} · {formatSize(asset.size_bytes)}</p>
+                            <div className="mt-3 flex min-h-9 items-center gap-2 rounded bg-slate-50 px-2 py-1.5 text-xs text-app-muted ring-1 ring-app-border">
+                              <Link2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                              <span className="truncate">{linkedPost ? linkedPost.title : "بدون اتصال به پست"}</span>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </WorkspacePanel>
+            </div>
 
-                  <div className="mt-4 space-y-3 text-sm">
-                    <div>
-                      <p className="text-xs font-semibold text-app-muted">نام فایل</p>
-                      <p className="mt-1 break-words font-bold text-app-text">{selectedAsset.original_filename}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-app-border">
-                        <p className="text-xs text-app-muted">نوع</p>
-                        <p className="mt-1 text-xs font-semibold text-app-text">{selectedAsset.content_type}</p>
+            <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+              <WorkspacePanel
+                title="آپلود تصویر"
+                description="JPG، PNG یا WEBP را به کتابخانه اضافه کنید."
+                action={<StatusToken tone={file ? "primary" : "neutral"}>{file ? "فایل انتخاب شد" : "آماده انتخاب"}</StatusToken>}
+              >
+                <form onSubmit={upload} className="space-y-4">
+                  <label className="block cursor-pointer rounded-md border border-dashed border-app-border bg-slate-50 p-4 transition hover:border-blue-200 hover:bg-blue-50/60">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) => {
+                        setFile(event.target.files?.[0] ?? null);
+                        setMessage("");
+                        setError("");
+                      }}
+                      className="sr-only"
+                    />
+                    <span className="flex items-center gap-2 text-sm font-black text-app-text">
+                      <UploadCloud className="h-5 w-5 text-app-primary" aria-hidden="true" />
+                      انتخاب فایل از سیستم
+                    </span>
+                    <span className="mt-2 block text-xs leading-5 text-app-muted">
+                      {file ? `${file.name} · ${formatSize(file.size)}` : "برای آپلود، تصویر محصول یا محتوای آماده را انتخاب کنید."}
+                    </span>
+                  </label>
+                  {selectedFilePreviewUrl ? (
+                    <img
+                      src={selectedFilePreviewUrl}
+                      alt="پیش‌نمایش تصویر انتخاب‌شده"
+                      className="aspect-video w-full rounded-md object-cover ring-1 ring-app-border"
+                    />
+                  ) : null}
+                  <Button type="submit" disabled={!file || uploading} className="w-full">
+                    {uploading ? "در حال آپلود..." : "آپلود تصویر"}
+                  </Button>
+                </form>
+              </WorkspacePanel>
+
+              <WorkspacePanel
+                title="بازرس رسانه"
+                description="جزئیات فایل، وضعیت استفاده و اتصال به پست."
+                action={selectedAsset ? <StatusToken tone={selectedLinkedPost ? "primary" : "success"}>{selectedLinkedPost ? "در استفاده" : "آزاد"}</StatusToken> : null}
+              >
+                {selectedAsset ? (
+                  <div>
+                    {selectedPreviewUrl ? (
+                      <img src={selectedPreviewUrl} alt={selectedAsset.original_filename} className="aspect-video w-full rounded-md object-cover ring-1 ring-app-border" />
+                    ) : (
+                      <div className="flex aspect-video w-full items-center justify-center rounded-md bg-slate-50 text-xs text-app-muted ring-1 ring-app-border">
+                        پیش‌نمایش در دسترس نیست
                       </div>
-                      <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-app-border">
-                        <p className="text-xs text-app-muted">حجم</p>
-                        <p className="mt-1 text-xs font-semibold text-app-text">{formatSize(selectedAsset.size_bytes)}</p>
-                      </div>
+                    )}
+
+                    <div className="mt-4">
+                      <DetailGrid
+                        items={[
+                          { label: "نام فایل", value: <span className="break-words">{selectedAsset.original_filename}</span>, hint: "نام اصلی فایل" },
+                          { label: "نوع", value: selectedAsset.content_type, hint: "فرمت آپلود" },
+                          { label: "حجم", value: formatSize(selectedAsset.size_bytes), hint: "اندازه فایل" },
+                          { label: "شناسه", value: `#${selectedAsset.id}`, hint: "شناسه داخلی" }
+                        ]}
+                      />
                     </div>
-                    <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-app-border">
-                      <p className="text-xs text-app-muted">وضعیت اتصال</p>
+
+                    <div className="mt-4 rounded-md border border-app-border bg-slate-50 p-3">
+                      <p className="text-xs font-black text-app-muted">وضعیت اتصال</p>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <Tag tone={selectedLinkedPost ? "primary" : "neutral"}>{selectedLinkedPost ? "متصل به پست" : "بدون اتصال"}</Tag>
+                        <Tag tone={selectedLinkedPost ? "primary" : "success"}>{selectedLinkedPost ? "متصل به پست" : "بدون اتصال"}</Tag>
                         {selectedLinkedPost ? <StatusBadge status={selectedLinkedPost.status} /> : null}
                       </div>
-                      {selectedLinkedPost ? <p className="mt-2 text-sm font-bold text-app-text">{selectedLinkedPost.title}</p> : null}
+                      {selectedLinkedPost ? <p className="mt-2 text-sm font-black text-app-text">{selectedLinkedPost.title}</p> : null}
                     </div>
-                    <label className="block text-xs font-semibold text-app-muted">
+
+                    <label className="mt-4 block text-xs font-bold text-app-muted">
                       اتصال به پست
                       <select
-                        value={selectedAsset.post_id ?? ""}
-                        onChange={(event) => attachToPost(selectedAsset.id, event.target.value)}
-                        className="mt-2 w-full rounded-xl border border-app-border bg-white px-3 py-2 text-sm text-app-text outline-none focus:border-app-primary focus:ring-2 focus:ring-blue-100"
+                        value={selectedAsset.post_id ? String(selectedAsset.post_id) : ""}
+                        onChange={(event) => void attachToPost(selectedAsset.id, event.target.value)}
+                        className="mt-2 w-full rounded-md border border-app-border bg-white px-3 py-2 text-sm text-app-text outline-none focus:border-app-primary focus:ring-2 focus:ring-blue-100"
                       >
                         <option value="">بدون اتصال</option>
                         {posts.map((post) => (
@@ -324,9 +452,10 @@ export default function MediaPage() {
                         ))}
                       </select>
                     </label>
-                    <div className="flex flex-wrap gap-2">
+
+                    <div className="mt-4 flex flex-wrap gap-2">
                       {selectedLinkedPost ? (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => attachToPost(selectedAsset.id, "")}>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => void attachToPost(selectedAsset.id, "")}>
                           <XCircle className="ml-2 h-4 w-4" aria-hidden="true" />
                           جدا کردن
                         </Button>
@@ -342,103 +471,17 @@ export default function MediaPage() {
                       )}
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-app-border bg-slate-50 p-5 text-center text-sm text-app-muted">
-                  برای دیدن جزئیات، یک رسانه را از کتابخانه انتخاب کنید.
-                </div>
-              )}
-            </SectionCard>
-          </aside>
-
-          <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-soft">
-            <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
-              <div>
-                <h2 className="text-lg font-bold text-app-text">کتابخانه تصاویر</h2>
-                <p className="mt-1 text-sm text-app-muted">برای مدیریت اتصال، روی یک تصویر کلیک کنید.</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {mediaFilters.map((filter) => (
-                  <button
-                    key={filter.value}
-                    type="button"
-                    onClick={() => setMediaFilter(filter.value)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                      mediaFilter === filter.value ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center gap-2 rounded-xl border border-app-border bg-white px-3 py-2">
-              <Search className="h-4 w-4 text-app-muted" aria-hidden="true" />
-              <input
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="جست‌وجو بر اساس نام فایل یا عنوان پست"
-                className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-              />
-            </div>
-
-            {loading ? <p className="mt-5 text-sm text-app-muted">در حال دریافت...</p> : null}
-            {!loading && assets.length === 0 ? (
-              <div className="mt-5 rounded-2xl border border-dashed border-app-border bg-slate-50 p-8 text-center">
-                <ImageIcon className="mx-auto h-8 w-8 text-app-muted" aria-hidden="true" />
-                <p className="mt-3 font-bold text-app-text">هنوز تصویری آپلود نشده است.</p>
-                <p className="mt-2 text-sm text-app-muted">اولین تصویر محصول را از پنل آپلود اضافه کنید.</p>
-              </div>
-            ) : null}
-            {!loading && assets.length > 0 && filteredAssets.length === 0 ? (
-              <div className="mt-5 rounded-2xl border border-dashed border-app-border bg-slate-50 p-8 text-center">
-                <p className="font-bold text-app-text">نتیجه‌ای برای این جست‌وجو پیدا نشد.</p>
-                <p className="mt-2 text-sm text-app-muted">فیلتر یا عبارت جست‌وجو را تغییر دهید.</p>
-              </div>
-            ) : null}
-
-            <div className="mt-5 grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-              {filteredAssets.map((asset) => {
-                const previewUrl = mediaPreviewUrls[asset.id];
-                const linkedPost = asset.post_id ? postById.get(asset.post_id) : null;
-                const selected = selectedAssetId === String(asset.id);
-
-                return (
-                  <button
-                    key={asset.id}
-                    type="button"
-                    onClick={() => setSelectedAssetId(String(asset.id))}
-                    className={`overflow-hidden rounded-2xl border bg-white text-right shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-                      selected ? "border-app-primary ring-2 ring-blue-100" : "border-app-border"
-                    }`}
-                  >
-                    {previewUrl ? (
-                      <img src={previewUrl} alt={asset.original_filename} className="aspect-video w-full object-cover" />
-                    ) : (
-                      <div className="flex aspect-video w-full items-center justify-center bg-slate-50 text-xs text-app-muted">
-                        پیش‌نمایش در دسترس نیست
-                      </div>
-                    )}
-                    <div className="p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate font-bold text-app-text" title={asset.original_filename}>{asset.original_filename}</p>
-                          <p className="mt-1 text-xs text-app-muted">{asset.content_type} · {formatSize(asset.size_bytes)}</p>
-                        </div>
-                        <Tag tone={linkedPost ? "primary" : "neutral"}>{linkedPost ? "متصل" : "آزاد"}</Tag>
-                      </div>
-                      <div className="mt-3 flex min-h-10 items-center gap-2 text-xs text-app-muted">
-                        <Link2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-                        <span className="truncate">{linkedPost ? linkedPost.title : "بدون اتصال به پست"}</span>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </section>
+                ) : (
+                  <EmptyState
+                    icon={<FileImage className="h-5 w-5" aria-hidden="true" />}
+                    title="رسانه‌ای انتخاب نشده"
+                    description="برای دیدن جزئیات، یک تصویر را از برد رسانه انتخاب کنید."
+                  />
+                )}
+              </WorkspacePanel>
+            </aside>
+          </section>
+        </WorkspacePage>
       </AppShell>
     </AuthGate>
   );
