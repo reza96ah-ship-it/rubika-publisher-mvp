@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, ChevronLeft, LogOut, Plus, Search } from "lucide-react";
+import { AlertCircle, ChevronLeft, LogOut, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -8,11 +8,9 @@ import {
   isRubikaConnected,
   isStoreConfigured,
   loadWorkspaceOverview,
-  rubikaStatusLabel,
   WorkspaceOverview
 } from "../lib/workspace";
 import { getActiveNav, MobileNav, Sidebar } from "./sidebar";
-import { StatusToken } from "./workspace-ui";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -30,20 +28,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const storeReady = !overviewLoading && isStoreConfigured(overview.store);
   const rubikaReady = !overviewLoading && isRubikaConnected(overview.rubika);
-  const storeName = overviewLoading ? "در حال بررسی فضای کاری..." : overview.store?.name || "پروفایل فروشگاه کامل نشده";
-  const setupHref = (() => {
-    if (overviewLoading) return "/compose";
-    if (!storeReady) return "/store";
-    if (!rubikaReady) return "/rubika";
-    return "/compose";
-  })();
-  const setupLabel = overviewLoading ? "در حال بررسی..." : storeReady && rubikaReady ? "ایجاد پست جدید" : "تکمیل آماده‌سازی";
-  const rubikaTone = overviewLoading ? "neutral" : rubikaReady ? "success" : overview.rubika?.status === "failed" ? "alert" : "warning";
-  const storeTone = overviewLoading ? "neutral" : storeReady ? "success" : "warning";
-  const rubikaLabel = overviewLoading ? "در حال بررسی اتصال..." : rubikaStatusLabel(overview.rubika);
-  const storeLabel = overviewLoading ? "در حال بررسی پروفایل" : storeReady ? "پروفایل آماده" : "پروفایل ناقص";
   const shellReady = storeReady && rubikaReady;
   const readinessPercent = overviewLoading ? 25 : Number(storeReady) * 50 + Number(rubikaReady) * 50;
+  const setupHref = !storeReady ? "/store" : !rubikaReady ? "/rubika" : "/compose";
+  const showSetupAction = !overviewLoading && !shellReady;
 
   function logout() {
     window.localStorage.removeItem("rubika_publisher_access");
@@ -70,17 +58,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </div>
                     <div className="mt-1 flex min-w-0 items-center gap-2">
                       <p className="truncate text-base font-black text-app-text">{activeNav.item.label}</p>
-                      <span className="hidden h-1 w-1 rounded-full bg-slate-300 sm:block" />
-                      <p className="hidden truncate text-xs font-bold text-app-muted sm:block">{storeName}</p>
-                      <StatusToken tone={shellReady ? "success" : "warning"} className="gap-1">
-                        {shellReady ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />}
-                        {shellReady ? "آماده" : "نیازمند آماده‌سازی"}
-                      </StatusToken>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center xl:max-w-4xl xl:flex-1 xl:justify-end">
+                <div className="flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center xl:max-w-3xl xl:flex-1 xl:justify-end">
                   <Link
                     href="/content"
                     className="hidden h-10 min-w-0 items-center gap-2 rounded-md border border-app-border bg-slate-50 px-3 text-sm text-app-muted transition hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary lg:flex lg:w-64 2xl:w-[360px]"
@@ -92,34 +74,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </span>
                   </Link>
 
-                  <div className="hidden shrink-0 items-center gap-3 rounded-md border border-app-border bg-slate-50 px-3 py-2 xl:flex">
-                    <div className="min-w-28">
-                      <div className="flex items-center justify-between text-[11px] font-black text-app-muted">
-                        <span>آمادگی</span>
-                        <span>{readinessPercent}%</span>
-                      </div>
-                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white">
-                        <div
-                          className={`h-full rounded-full ${shellReady ? "bg-emerald-500" : "bg-amber-500"}`}
-                          style={{ width: `${readinessPercent}%` }}
-                        />
-                      </div>
-                    </div>
-                    <span className="h-5 w-px bg-app-border" />
-                    <StatusToken tone={rubikaTone}>{rubikaLabel}</StatusToken>
-                  </div>
-
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <span className="hidden xl:inline-flex">
-                      <StatusToken tone={storeTone}>{storeLabel}</StatusToken>
-                    </span>
-                    <Link
-                      href={setupHref}
-                      className="inline-flex items-center gap-2 rounded-md border border-app-primary bg-app-primary px-3 py-2 text-xs font-bold text-white transition hover:border-app-primaryHover hover:bg-app-primaryHover"
-                    >
-                      <Plus className="h-4 w-4" aria-hidden="true" />
-                      {setupLabel}
-                    </Link>
+                    {showSetupAction ? (
+                      <Link
+                        href={setupHref}
+                        className="inline-flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 transition hover:border-amber-300 hover:bg-amber-100"
+                      >
+                        <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                        تکمیل آماده‌سازی
+                      </Link>
+                    ) : null}
                     <button
                       onClick={logout}
                       className="inline-flex h-9 items-center gap-2 rounded-md border border-app-border bg-white px-3 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary"
