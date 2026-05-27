@@ -3,6 +3,7 @@
 import {
   AlertCircle,
   CalendarDays,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -15,10 +16,10 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { CountdownBadge } from "../../components/countdown-badge";
-import { PageHeader } from "../../components/page-header";
+import { DataSearchField } from "../../components/data-view";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
-import { SectionCard, SurfaceCard } from "../../components/ui/card";
+import { DetailGrid, EmptyState, MetricStrip, MetricTile, NoticeBanner, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel, WorkspaceToolbar } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, type Post } from "../../lib/posts";
 import {
   formatJalaliDate,
@@ -157,11 +158,17 @@ function dayRangeLabel(days: CalendarDay[]) {
   return `${formatJalaliDate(days[0].date)} تا ${formatJalaliDate(days[days.length - 1].date)}`;
 }
 
+function visibleCalendarText(post: Post) {
+  return [post.title, post.caption, post.hashtags, post.campaign, post.internal_note, post.last_error].filter(Boolean).join(" ").toLowerCase();
+}
+
 export default function CalendarPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [statusFilter, setStatusFilter] = useState<CalendarFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [monthAnchor, setMonthAnchor] = useState(new Date().toISOString());
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -178,6 +185,7 @@ export default function CalendarPage() {
       });
       setPosts(data);
       setMonthAnchor(upcoming?.scheduled_at ?? sorted[0]?.scheduled_at ?? new Date().toISOString());
+      setSelectedDayKey(upcoming?.scheduled_at ? jalaliDateKey(upcoming.scheduled_at) : sorted[0]?.scheduled_at ? jalaliDateKey(sorted[0].scheduled_at) : jalaliDateKey(new Date().toISOString()));
       setSelectedPostId(upcoming?.id ?? sorted[0]?.id ?? null);
       setLoading(false);
     }
@@ -190,9 +198,11 @@ export default function CalendarPage() {
 
   const calendarPosts = useMemo(() => sortByScheduleAsc(posts.filter(isCalendarPost)), [posts]);
   const filteredPosts = useMemo(() => {
-    if (statusFilter === "all") return calendarPosts;
-    return calendarPosts.filter((post) => post.status === statusFilter);
-  }, [calendarPosts, statusFilter]);
+    const query = searchTerm.trim().toLowerCase();
+    return calendarPosts
+      .filter((post) => statusFilter === "all" || post.status === statusFilter)
+      .filter((post) => !query || visibleCalendarText(post).includes(query));
+  }, [calendarPosts, searchTerm, statusFilter]);
 
   const postsByDay = useMemo(() => {
     const map = new Map<string, Post[]>();
@@ -230,10 +240,23 @@ export default function CalendarPage() {
     return post.status === "failed" || (post.status === "scheduled" && time !== null && time < now);
   });
   const monthPostCount = filteredPosts.filter((post) => postsByDay.has(jalaliDateKey(post.scheduled_at)) && monthDays.some((day) => day.key === jalaliDateKey(post.scheduled_at))).length;
+  const activeDayKey = selectedDayKey ?? (selectedPost?.scheduled_at ? jalaliDateKey(selectedPost.scheduled_at) : todayKey);
+  const selectedDayPosts = activeDayKey ? postsByDay.get(activeDayKey) ?? [] : [];
+  const selectedDayLabel = selectedDayPosts[0]?.scheduled_at ? formatJalaliDate(selectedDayPosts[0].scheduled_at) : activeDayKey === todayKey ? "امروز" : "روز انتخاب‌شده";
+  const publishedCount = calendarPosts.filter((post) => post.status === "published").length;
+  const scheduledCount = calendarPosts.filter((post) => post.status === "scheduled").length;
+  const failedCount = calendarPosts.filter((post) => post.status === "failed").length;
 
   function selectPost(post: Post) {
     setSelectedPostId(post.id);
     if (post.scheduled_at) setMonthAnchor(post.scheduled_at);
+    if (post.scheduled_at) setSelectedDayKey(jalaliDateKey(post.scheduled_at));
+  }
+
+  function selectDay(day: CalendarDay, dayPosts: Post[]) {
+    setSelectedDayKey(day.key);
+    setMonthAnchor(day.date);
+    if (dayPosts[0]) setSelectedPostId(dayPosts[0].id);
   }
 
   function renderPostChip(post: Post, compact = false) {
@@ -256,294 +279,369 @@ export default function CalendarPage() {
   return (
     <AuthGate>
       <AppShell>
-        <PageHeader
-          eyebrow="تقویم جلالی محتوا"
-          title="تقویم انتشار"
-          description="برنامه‌ریزی ماهانه، هفتگی و لیستی برای پیدا کردن شکاف‌ها، خطاها و پست بعدی انتشار."
-          actionLabel="ایجاد پست جدید"
-          actionHref="/compose"
-        />
-
-        {error ? <div className="mb-5 rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-
-        <section className="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <SurfaceCard>
-            <p className="text-sm font-semibold text-app-muted">ماه فعال</p>
-            <p className="mt-2 text-2xl font-black text-app-text">{formatJalaliMonth(monthAnchor)}</p>
-            <p className="mt-2 text-xs leading-6 text-app-muted">{monthPostCount} پست در نمای فعلی ماه</p>
-          </SurfaceCard>
-          <SurfaceCard>
-            <p className="text-sm font-semibold text-app-muted">پست بعدی</p>
-            {nextPost ? (
+        <WorkspacePage>
+          <WorkspaceHero
+            eyebrow="Publishing Planner"
+            title="تقویم انتشار"
+            description="برنامه‌ریزی ماهانه، هفتگی و لیستی برای پیدا کردن شکاف‌ها، خطاها و پست بعدی انتشار."
+            actions={(
               <>
-                <p className="mt-2 truncate text-base font-black text-app-text">{nextPost.title}</p>
-                <CountdownBadge status={nextPost.status} scheduledAt={nextPost.scheduled_at} className="mt-3" />
+                <Button href="/compose" size="sm">
+                  <Plus className="ml-2 h-4 w-4" aria-hidden="true" />
+                  زمان‌بندی پست
+                </Button>
+                <Button href="/queue" variant="secondary" size="sm">صف انتشار</Button>
               </>
-            ) : (
-              <p className="mt-2 text-sm text-app-muted">هنوز پست آینده ندارید.</p>
             )}
-          </SurfaceCard>
-          <SurfaceCard>
-            <p className="text-sm font-semibold text-app-muted">هفته آینده</p>
-            <p className="mt-2 text-2xl font-black text-app-text">{upcomingPosts.length}</p>
-            <p className="mt-2 text-xs leading-6 text-app-muted">پست آماده انتشار در ۷ روز آینده</p>
-          </SurfaceCard>
-          <SurfaceCard>
-            <p className="text-sm font-semibold text-app-muted">نیازمند توجه</p>
-            <p className={`mt-2 text-2xl font-black ${attentionPosts.length > 0 ? "text-rose-700" : "text-app-text"}`}>{attentionPosts.length}</p>
-            <p className="mt-2 text-xs leading-6 text-app-muted">خطاها یا پست‌های زمان‌گذشته</p>
-          </SurfaceCard>
-        </section>
-
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <SectionCard>
-            <div className="mb-4 flex flex-col gap-3 border-b border-app-border pb-4 xl:flex-row xl:items-center xl:justify-between">
+            meta={(
+              <>
+                <StatusToken tone="primary">{calendarPosts.length} پست تقویمی</StatusToken>
+                <StatusToken tone="warning">{scheduledCount} زمان‌بندی‌شده</StatusToken>
+                <StatusToken tone={failedCount ? "alert" : "success"}>{failedCount ? `${failedCount} خطای تقویمی` : "بدون خطای تقویمی"}</StatusToken>
+              </>
+            )}
+            aside={(
               <div>
-                <h2 className="text-base font-black text-app-text">برنامه‌ریز انتشار</h2>
-                <p className="mt-1 text-xs leading-6 text-app-muted">
-                  {viewMode === "week" ? dayRangeLabel(activeWeekDays) : formatJalaliMonth(monthAnchor)}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex rounded-lg border border-app-border bg-slate-50 p-1">
-                  {viewModes.map((mode) => {
-                    const Icon = mode.icon;
-                    const active = viewMode === mode.value;
-                    return (
-                      <button
-                        key={mode.value}
-                        type="button"
-                        onClick={() => setViewMode(mode.value)}
-                        className={`inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-bold transition ${
-                          active ? "bg-white text-app-primary shadow-sm ring-1 ring-app-border" : "text-slate-600 hover:text-app-text"
-                        }`}
-                      >
-                        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-                        {mode.label}
-                      </button>
-                    );
-                  })}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.12em] text-app-primary">Planner Health</p>
+                    <h2 className="mt-2 text-lg font-black text-app-text">{formatJalaliMonth(monthAnchor)}</h2>
+                    <p className="mt-1 text-xs leading-5 text-app-muted">تراکم انتشار، پست بعدی و موارد نیازمند رسیدگی را از یک نقطه کنترل کنید.</p>
+                  </div>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
+                    <CalendarDays className="h-5 w-5" aria-hidden="true" />
+                  </span>
                 </div>
-
-                <div className="flex items-center gap-1 rounded-lg border border-app-border bg-white p-1">
-                  <button
-                    type="button"
-                    onClick={() => setMonthAnchor(shiftPersianMonth(monthAnchor, 1))}
-                    className="rounded-md p-2 text-slate-600 transition hover:bg-slate-100"
-                    aria-label="ماه بعد"
-                  >
-                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMonthAnchor(new Date().toISOString())}
-                    className="rounded-md px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-100"
-                  >
-                    امروز
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMonthAnchor(shiftPersianMonth(monthAnchor, -1))}
-                    className="rounded-md p-2 text-slate-600 transition hover:bg-slate-100"
-                    aria-label="ماه قبل"
-                  >
-                    <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                  </button>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded border border-blue-100 bg-white p-3">
+                    <p className="font-black text-app-text">{upcomingPosts.length}</p>
+                    <p className="mt-1 text-app-muted">۷ روز آینده</p>
+                  </div>
+                  <div className="rounded border border-blue-100 bg-white p-3">
+                    <p className={`font-black ${attentionPosts.length ? "text-rose-700" : "text-app-text"}`}>{attentionPosts.length}</p>
+                    <p className="mt-1 text-app-muted">نیازمند توجه</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+          />
 
-            <div className="mb-4 flex flex-wrap gap-2">
-              {calendarFilters.map((filter) => {
-                const active = statusFilter === filter.value;
+          {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
+
+          <MetricStrip>
+            <MetricTile label="ماه فعال" value={formatJalaliMonth(monthAnchor)} hint={`${monthPostCount} پست در نمای فعلی ماه`} tone="primary" icon={<CalendarDays className="h-4 w-4" aria-hidden="true" />} />
+            <MetricTile label="پست بعدی" value={nextPost ? nextPost.title : "بدون پست"} hint={nextPost ? formatJalaliDateTime(nextPost.scheduled_at) : "هنوز پست آینده ندارید"} tone={nextPost ? "success" : "neutral"} icon={<Clock3 className="h-4 w-4" aria-hidden="true" />} />
+            <MetricTile label="منتشرشده" value={publishedCount} hint="خروجی‌های ثبت‌شده در تقویم" tone="success" icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />} />
+            <MetricTile label="نیازمند توجه" value={attentionPosts.length} hint="خطاها یا پست‌های زمان‌گذشته" tone={attentionPosts.length ? "alert" : "neutral"} icon={<AlertCircle className="h-4 w-4" aria-hidden="true" />} />
+          </MetricStrip>
+
+          <WorkspacePanel
+            title="تراکم هفته فعال"
+            description="هر روز هفته فعال چه میزان انتشار دارد."
+            action={<StatusToken tone="neutral">{dayRangeLabel(activeWeekDays)}</StatusToken>}
+          >
+            <div className="grid gap-2 md:grid-cols-7">
+              {activeWeekDays.map((day) => {
+                const dayPosts = postsByDay.get(day.key) ?? [];
+                const active = activeDayKey === day.key;
                 return (
                   <button
-                    key={filter.value}
+                    key={day.key}
                     type="button"
-                    onClick={() => setStatusFilter(filter.value)}
-                    className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
-                      active ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    onClick={() => selectDay(day, dayPosts)}
+                    className={`rounded-md border p-3 text-right transition hover:border-blue-200 hover:bg-blue-50 ${
+                      active ? "border-app-primary bg-blue-50 ring-2 ring-blue-100" : "border-app-border bg-white"
                     }`}
                   >
-                    {filter.label}
-                    <span className={`mr-2 rounded px-1.5 py-0.5 ${active ? "bg-white/20 text-white" : "bg-white text-slate-500"}`}>
-                      {statusCount(calendarPosts, filter.value)}
-                    </span>
+                    <p className="text-xs font-black text-app-muted">{formatJalaliDate(day.date)}</p>
+                    <p className="mt-2 text-2xl font-black text-app-text">{dayPosts.length}</p>
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full rounded-full bg-app-primary" style={{ width: `${Math.min(100, dayPosts.length * 25)}%` }} />
+                    </div>
                   </button>
                 );
               })}
             </div>
+          </WorkspacePanel>
 
-            {loading ? <p className="text-sm text-app-muted">در حال دریافت...</p> : null}
-
-            {!loading && filteredPosts.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-app-border bg-slate-50 p-8 text-center">
-                <CalendarDays className="mx-auto h-8 w-8 text-app-muted" aria-hidden="true" />
-                <p className="mt-3 font-bold text-app-text">برای این فیلتر پستی در تقویم نیست.</p>
-                <p className="mt-2 text-sm text-app-muted">از composer برای انتخاب زمان انتشار استفاده کنید یا فیلتر را تغییر دهید.</p>
-                <Button href="/compose" className="mt-4">
-                  <Plus className="ml-2 h-4 w-4" aria-hidden="true" />
-                  ایجاد پست زمان‌بندی‌شده
-                </Button>
-              </div>
-            ) : null}
-
-            {viewMode !== "list" && filteredPosts.length > 0 ? (
-              <div className="overflow-hidden rounded-lg border border-app-border bg-white">
-                <div className="grid grid-cols-7 border-b border-app-border bg-slate-50 text-center text-xs font-black text-slate-500">
-                  {weekDays.map((day) => (
-                    <div key={day} className="px-2 py-3">{day}</div>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-7">
-                  {(viewMode === "week" ? activeWeekDays : monthGrid).map((day, index) => {
-                    const dayPosts = day ? postsByDay.get(day.key) ?? [] : [];
-                    const isToday = day?.key === todayKey;
-                    const isSelectedDay = Boolean(day && selectedPost?.scheduled_at && jalaliDateKey(selectedPost.scheduled_at) === day.key);
-
-                    return (
-                      <div
-                        key={day?.key ?? `empty-${index}`}
-                        className={`min-h-32 border-b border-l border-app-border p-2 text-right last:border-l-0 ${
-                          day ? "bg-white" : "bg-slate-50/70"
-                        } ${isSelectedDay ? "bg-blue-50/40" : ""}`}
-                      >
-                        {day ? (
-                          <>
-                            <div className="mb-2 flex items-center justify-between gap-2">
-                              <span className={`flex h-7 w-7 items-center justify-center rounded-md text-sm font-black ${
-                                isToday ? "bg-app-primary text-white" : "text-app-text"
-                              }`}>
-                                {day.day}
-                              </span>
-                              {dayPosts.length > 0 ? <span className="text-[11px] font-bold text-app-muted">{dayPosts.length} پست</span> : null}
-                            </div>
-                            <div className="space-y-1.5">
-                              {dayPosts.slice(0, viewMode === "week" ? 5 : 3).map((post) => renderPostChip(post, viewMode === "month"))}
-                              {dayPosts.length > (viewMode === "week" ? 5 : 3) ? (
-                                <button type="button" className="w-full rounded-md bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">
-                                  +{dayPosts.length - (viewMode === "week" ? 5 : 3)} مورد دیگر
-                                </button>
-                              ) : null}
-                            </div>
-                          </>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-
-            {viewMode === "list" && filteredPosts.length > 0 ? (
-              <div className="overflow-hidden rounded-lg border border-app-border bg-white">
-                <div className="hidden grid-cols-[150px_minmax(0,1fr)_140px_110px] gap-4 border-b border-app-border bg-slate-50 px-4 py-3 text-xs font-black text-app-muted lg:grid">
-                  <span>زمان</span>
-                  <span>محتوا</span>
-                  <span>وضعیت</span>
-                  <span>عملیات</span>
-                </div>
-                <div className="divide-y divide-app-border">
-                  {filteredPosts.map((post) => (
-                    <article key={post.id} className="grid gap-3 px-4 py-3 transition hover:bg-slate-50 lg:grid-cols-[150px_minmax(0,1fr)_140px_110px] lg:items-center">
-                      <div className="text-xs leading-6 text-app-muted">
-                        <p className="font-bold text-app-text">{formatJalaliDate(post.scheduled_at)}</p>
-                        <p>{formatJalaliTime(post.scheduled_at)}</p>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate font-bold text-app-text">{post.title}</p>
-                        <p className="mt-1 line-clamp-1 text-sm text-app-muted">{post.caption || "بدون کپشن"}</p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <StatusBadge status={post.status} />
-                        <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
-                      </div>
-                      <Button type="button" variant={selectedPost?.id === post.id ? "primary" : "secondary"} size="sm" onClick={() => selectPost(post)}>
-                        جزئیات
-                      </Button>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </SectionCard>
-
-          <aside className="space-y-5">
-            <SectionCard title="بازبین برنامه" description="جزئیات پست انتخاب‌شده و عملیات سریع.">
-              {selectedPost ? (
-                <div className="space-y-4">
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
+            <div className="min-w-0 space-y-4">
+              <WorkspaceToolbar
+                meta={(
+                  <>
+                    <StatusToken tone="neutral">{filteredPosts.length} نتیجه</StatusToken>
+                    <StatusToken tone="neutral">{viewMode === "week" ? dayRangeLabel(activeWeekDays) : formatJalaliMonth(monthAnchor)}</StatusToken>
+                  </>
+                )}
+              >
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+                  <DataSearchField
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder="جست‌وجوی عنوان، کپشن، کمپین، یادداشت یا خطا"
+                  />
                   <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge status={selectedPost.status} />
-                    <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-black text-app-text">{selectedPost.title}</h3>
-                    <p className="mt-2 text-sm leading-7 text-app-muted">{selectedPost.caption || "بدون کپشن"}</p>
-                  </div>
-
-                  <div className="grid gap-3 text-xs text-app-muted">
-                    <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-app-border">
-                      <p className="flex items-center gap-2 font-bold text-app-text">
-                        <Clock3 className="h-4 w-4" aria-hidden="true" />
-                        زمان انتشار
-                      </p>
-                      <p className="mt-2">{formatJalaliDateTime(selectedPost.scheduled_at)}</p>
+                    <div className="flex rounded-md border border-app-border bg-slate-50 p-1">
+                      {viewModes.map((mode) => {
+                        const Icon = mode.icon;
+                        const active = viewMode === mode.value;
+                        return (
+                          <button
+                            key={mode.value}
+                            type="button"
+                            onClick={() => setViewMode(mode.value)}
+                            className={`inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-bold transition ${
+                              active ? "bg-white text-app-primary shadow-sm ring-1 ring-blue-200" : "text-slate-600 hover:text-app-primary"
+                            }`}
+                          >
+                            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                            {mode.label}
+                          </button>
+                        );
+                      })}
                     </div>
-                    <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-app-border">
-                      <p className="font-bold text-app-text">کمپین</p>
-                      <p className="mt-2">{selectedPost.campaign || "بدون کمپین"}</p>
+                    <div className="flex items-center gap-1 rounded-md border border-app-border bg-white p-1">
+                      <button type="button" onClick={() => setMonthAnchor(shiftPersianMonth(monthAnchor, 1))} className="rounded p-2 text-slate-600 transition hover:bg-slate-100" aria-label="ماه بعد">
+                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                      <button type="button" onClick={() => setMonthAnchor(new Date().toISOString())} className="rounded px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-100">
+                        امروز
+                      </button>
+                      <button type="button" onClick={() => setMonthAnchor(shiftPersianMonth(monthAnchor, -1))} className="rounded p-2 text-slate-600 transition hover:bg-slate-100" aria-label="ماه قبل">
+                        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                      </button>
                     </div>
-                    <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-app-border">
-                      <p className="font-bold text-app-text">تلاش انتشار</p>
-                      <p className="mt-2">{selectedPost.attempt_count} تلاش ثبت شده</p>
-                    </div>
-                  </div>
-
-                  {selectedPost.last_error ? (
-                    <div className="rounded-lg bg-rose-50 p-3 text-xs leading-6 text-rose-700 ring-1 ring-rose-100">
-                      <p className="flex items-center gap-2 font-bold">
-                        <AlertCircle className="h-4 w-4" aria-hidden="true" />
-                        آخرین خطا
-                      </p>
-                      <p className="mt-1">{selectedPost.last_error}</p>
-                    </div>
-                  ) : null}
-
-                  <div className="grid gap-2">
-                    <Button href={`/compose?postId=${selectedPost.id}`}>ویرایش در کمپوزر</Button>
-                    <Button href="/queue" variant="secondary">باز کردن صف انتشار</Button>
-                    <Button href="/logs" variant="secondary">لاگ انتشار</Button>
                   </div>
                 </div>
-              ) : (
-                <p className="text-sm text-app-muted">برای مشاهده جزئیات، یک پست را از تقویم انتخاب کنید.</p>
-              )}
-            </SectionCard>
+              </WorkspaceToolbar>
 
-            <SectionCard title="موردهای نیازمند توجه" description="خطاها یا پست‌هایی که زمانشان گذشته است.">
-              {attentionPosts.length === 0 ? <p className="text-sm text-app-muted">فعلاً مورد بحرانی در تقویم نیست.</p> : null}
-              <div className="space-y-2">
-                {attentionPosts.slice(0, 5).map((post) => (
-                  <button
-                    key={post.id}
-                    type="button"
-                    onClick={() => selectPost(post)}
-                    className="w-full rounded-lg border border-app-border bg-white p-3 text-right transition hover:bg-slate-50"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <StatusBadge status={post.status} />
-                      <span className="text-xs text-app-muted">{formatJalaliDateTime(post.scheduled_at)}</span>
+              <WorkspacePanel
+                title="برنامه‌ریز انتشار"
+                description={viewMode === "week" ? dayRangeLabel(activeWeekDays) : formatJalaliMonth(monthAnchor)}
+                action={(
+                  <div className="flex flex-wrap gap-2">
+                    {calendarFilters.map((filter) => {
+                      const active = statusFilter === filter.value;
+                      return (
+                        <button
+                          key={filter.value}
+                          type="button"
+                          onClick={() => setStatusFilter(filter.value)}
+                          className={`rounded px-3 py-1.5 text-xs font-bold transition ${
+                            active ? "bg-app-primary text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"
+                          }`}
+                        >
+                          {filter.label}
+                          <span className={`mr-2 rounded px-1.5 py-0.5 ${active ? "bg-white/20 text-white" : "bg-white text-slate-500"}`}>
+                            {statusCount(calendarPosts, filter.value)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              >
+                {loading ? <p className="text-sm text-app-muted">در حال دریافت...</p> : null}
+
+                {!loading && filteredPosts.length === 0 ? (
+                  <EmptyState
+                    icon={<CalendarDays className="h-5 w-5" aria-hidden="true" />}
+                    title="برای این فیلتر پستی در تقویم نیست"
+                    description="از composer برای انتخاب زمان انتشار استفاده کنید یا فیلتر را تغییر دهید."
+                    action={<Button href="/compose">زمان‌بندی پست</Button>}
+                  />
+                ) : null}
+
+                {viewMode !== "list" && filteredPosts.length > 0 ? (
+                  <div className="overflow-hidden rounded-md border border-app-border bg-white">
+                    <div className="grid grid-cols-7 border-b border-app-border bg-slate-50 text-center text-xs font-black text-slate-500">
+                      {weekDays.map((day) => (
+                        <div key={day} className="px-2 py-3">{day}</div>
+                      ))}
                     </div>
-                    <p className="mt-2 truncate text-sm font-bold text-app-text">{post.title}</p>
-                  </button>
-                ))}
-              </div>
-            </SectionCard>
-          </aside>
-        </section>
+
+                    <div className="grid grid-cols-7">
+                      {(viewMode === "week" ? activeWeekDays : monthGrid).map((day, index) => {
+                        const dayPosts = day ? postsByDay.get(day.key) ?? [] : [];
+                        const isToday = day?.key === todayKey;
+                        const isSelectedDay = Boolean(day && activeDayKey === day.key);
+
+                        return (
+                          <div
+                            key={day?.key ?? `empty-${index}`}
+                            onClick={() => day ? selectDay(day, dayPosts) : undefined}
+                            className={`min-h-32 border-b border-l border-app-border p-2 text-right last:border-l-0 ${
+                              day ? "bg-white hover:bg-blue-50/40" : "bg-slate-50/70"
+                            } ${isSelectedDay ? "bg-blue-50/70 ring-1 ring-inset ring-blue-200" : ""}`}
+                          >
+                            {day ? (
+                              <>
+                                <div className="mb-2 flex items-center justify-between gap-2">
+                                  <span className={`flex h-7 w-7 items-center justify-center rounded-md text-sm font-black ${
+                                    isToday ? "bg-app-primary text-white" : "text-app-text"
+                                  }`}>
+                                    {day.day}
+                                  </span>
+                                  {dayPosts.length > 0 ? <span className="text-[11px] font-bold text-app-muted">{dayPosts.length} پست</span> : null}
+                                </div>
+                                <div className="space-y-1.5" onClick={(event) => event.stopPropagation()}>
+                                  {dayPosts.slice(0, viewMode === "week" ? 5 : 3).map((post) => renderPostChip(post, viewMode === "month"))}
+                                  {dayPosts.length > (viewMode === "week" ? 5 : 3) ? (
+                                    <span className="block w-full rounded bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">
+                                      +{dayPosts.length - (viewMode === "week" ? 5 : 3)} مورد دیگر
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+
+                {viewMode === "list" && filteredPosts.length > 0 ? (
+                  <div className="overflow-hidden rounded-md border border-app-border bg-white">
+                    <div className="hidden grid-cols-[150px_minmax(0,1fr)_140px_110px] gap-4 border-b border-app-border bg-slate-50 px-4 py-3 text-xs font-black text-app-muted lg:grid">
+                      <span>زمان</span>
+                      <span>محتوا</span>
+                      <span>وضعیت</span>
+                      <span>عملیات</span>
+                    </div>
+                    <div className="divide-y divide-app-border">
+                      {filteredPosts.map((post) => (
+                        <article key={post.id} className="grid gap-3 px-4 py-3 transition hover:bg-slate-50 lg:grid-cols-[150px_minmax(0,1fr)_140px_110px] lg:items-center">
+                          <div className="text-xs leading-6 text-app-muted">
+                            <p className="font-bold text-app-text">{formatJalaliDate(post.scheduled_at)}</p>
+                            <p>{formatJalaliTime(post.scheduled_at)}</p>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate font-bold text-app-text">{post.title}</p>
+                            <p className="mt-1 line-clamp-1 text-sm text-app-muted">{post.caption || "بدون کپشن"}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <StatusBadge status={post.status} />
+                            <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
+                          </div>
+                          <Button type="button" variant={selectedPost?.id === post.id ? "primary" : "secondary"} size="sm" onClick={() => selectPost(post)}>
+                            جزئیات
+                          </Button>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </WorkspacePanel>
+            </div>
+
+            <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+              <WorkspacePanel
+                title="بازبین روز"
+                description={`${selectedDayLabel} · ${selectedDayPosts.length} پست`}
+                action={<StatusToken tone={selectedDayPosts.length ? "primary" : "neutral"}>{selectedDayPosts.length}</StatusToken>}
+              >
+                {selectedDayPosts.length === 0 ? (
+                  <EmptyState
+                    icon={<CalendarDays className="h-5 w-5" aria-hidden="true" />}
+                    title="برای این روز پستی ثبت نشده"
+                    description="می‌توانید از composer یک پست زمان‌بندی‌شده اضافه کنید."
+                    action={<Button href="/compose" variant="secondary">زمان‌بندی پست</Button>}
+                  />
+                ) : null}
+                <div className="space-y-2">
+                  {selectedDayPosts.map((post) => (
+                    <button
+                      key={post.id}
+                      type="button"
+                      onClick={() => selectPost(post)}
+                      className={`w-full rounded-md border p-3 text-right transition hover:border-blue-200 hover:bg-blue-50 ${
+                        selectedPost?.id === post.id ? "border-app-primary bg-blue-50 ring-2 ring-blue-100" : "border-app-border bg-white"
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusBadge status={post.status} />
+                        <span className="text-xs font-bold text-app-muted">{formatJalaliTime(post.scheduled_at)}</span>
+                      </div>
+                      <p className="mt-2 truncate text-sm font-black text-app-text">{post.title}</p>
+                    </button>
+                  ))}
+                </div>
+              </WorkspacePanel>
+
+              <WorkspacePanel title="بازبین برنامه" description="جزئیات پست انتخاب‌شده و عملیات سریع.">
+                {selectedPost ? (
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusBadge status={selectedPost.status} />
+                      <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-black text-app-text">{selectedPost.title}</h3>
+                      <p className="mt-2 max-h-44 overflow-auto whitespace-pre-wrap rounded-md border border-app-border bg-slate-50 p-3 text-sm leading-7 text-app-muted">
+                        {selectedPost.caption || "بدون کپشن"}
+                      </p>
+                    </div>
+
+                    <DetailGrid
+                      items={[
+                        { label: "زمان انتشار", value: formatJalaliDateTime(selectedPost.scheduled_at), hint: "تقویم شمسی" },
+                        { label: "کمپین", value: selectedPost.campaign || "بدون کمپین", hint: "برچسب عملیاتی" },
+                        { label: "تلاش انتشار", value: `${selectedPost.attempt_count} تلاش`, hint: "تعداد تلاش‌های ثبت‌شده" },
+                        { label: "شناسه پست", value: `#${selectedPost.id}`, hint: "شناسه داخلی" }
+                      ]}
+                    />
+
+                    {selectedPost.last_error ? (
+                      <NoticeBanner tone="alert" title="آخرین خطا">
+                        {selectedPost.last_error}
+                      </NoticeBanner>
+                    ) : null}
+
+                    <div className="grid gap-2">
+                      <Button href={`/compose?postId=${selectedPost.id}`}>ویرایش در کمپوزر</Button>
+                      <Button href="/queue" variant="secondary">باز کردن صف انتشار</Button>
+                      <Button href="/logs" variant="secondary">لاگ انتشار</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={<Clock3 className="h-5 w-5" aria-hidden="true" />}
+                    title="پستی انتخاب نشده"
+                    description="برای مشاهده جزئیات، یک پست را از تقویم انتخاب کنید."
+                  />
+                )}
+              </WorkspacePanel>
+
+              <WorkspacePanel title="موردهای نیازمند توجه" description="خطاها یا پست‌هایی که زمانشان گذشته است.">
+                {attentionPosts.length === 0 ? (
+                  <EmptyState
+                    icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
+                    title="فعلاً مورد بحرانی در تقویم نیست"
+                    description="برنامه انتشار در وضعیت پایدار است."
+                  />
+                ) : null}
+                <div className="space-y-2">
+                  {attentionPosts.slice(0, 5).map((post) => (
+                    <button
+                      key={post.id}
+                      type="button"
+                      onClick={() => selectPost(post)}
+                      className="w-full rounded-md border border-app-border bg-white p-3 text-right transition hover:border-blue-200 hover:bg-blue-50"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusBadge status={post.status} />
+                        <span className="text-xs text-app-muted">{formatJalaliDateTime(post.scheduled_at)}</span>
+                      </div>
+                      <p className="mt-2 truncate text-sm font-bold text-app-text">{post.title}</p>
+                    </button>
+                  ))}
+                </div>
+              </WorkspacePanel>
+            </aside>
+          </section>
+        </WorkspacePage>
       </AppShell>
     </AuthGate>
   );
