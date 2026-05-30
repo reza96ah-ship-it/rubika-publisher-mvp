@@ -38,7 +38,7 @@ export function ReadinessJourney({ store, rubika, posts, loading = false }: Read
   const nextActionHref = isReady ? "/compose" : nextStep.href;
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-4">
       <div className="overflow-hidden rounded-md border border-app-border bg-white">
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px_240px]">
           <div className="border-b border-app-border px-4 py-4 lg:border-b-0 lg:border-l">
