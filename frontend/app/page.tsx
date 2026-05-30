@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CalendarClock, CheckCircle2, ClipboardList, FileText, Rocket, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, ClipboardList, FileText, Rocket } from "lucide-react";
 import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
 import { CountdownBadge } from "../components/countdown-badge";
@@ -64,7 +64,7 @@ export default function HomePage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-4">
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <section>
             <div className="rounded-md border border-app-border bg-white">
               <div className="flex flex-col justify-between gap-4 border-b border-app-border px-4 py-4 lg:flex-row lg:items-center">
                 <div className="min-w-0">
@@ -109,30 +109,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            <aside className="rounded-md border border-blue-200 bg-blue-50 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-black text-app-primary">آمادگی فضای کاری</p>
-                  <h2 className="mt-2 text-lg font-black text-app-text">{setupScore}% آماده</h2>
-                </div>
-                <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
-                  <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-                </span>
-              </div>
-              <div className="mt-5 h-2 overflow-hidden rounded-full bg-white">
-                <div className={`h-full rounded-full ${setupScore === 100 ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${setupScore}%` }} />
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded border border-blue-100 bg-white p-3">
-                  <p className="font-black text-app-text">{store?.name || "فروشگاه"}</p>
-                  <p className="mt-1 text-app-muted">پروفایل</p>
-                </div>
-                <div className="rounded border border-blue-100 bg-white p-3">
-                  <p className="font-black text-app-text">{rubikaReady ? "متصل" : "تست نشده"}</p>
-                  <p className="mt-1 text-app-muted">اتصال روبیکا</p>
-                </div>
-              </div>
-            </aside>
           </section>
 
           {error ? <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{error}</div> : null}
