@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getJalaliPickerParts, jalaliPickerPartsToIso, type JalaliPickerParts } from "./jalali-picker";
+import { getJalaliPickerParts, jalaliDateToIsoAtTime, jalaliPickerPartsToIso, type JalaliPickerParts } from "./jalali-picker";
 
 const tehranTimeZone = "Asia/Tehran";
 const tehranLaunchSlot: JalaliPickerParts = {
@@ -29,5 +29,11 @@ describe("Jalali picker timezone conversion", () => {
 
     expect(jalaliPickerPartsToIso(tehranLaunchSlot)).toBe("2026-01-10T05:45:00.000Z");
     expect(getJalaliPickerParts("2026-01-10T05:45:00.000Z")).toEqual(tehranLaunchSlot);
+  });
+
+  it("creates a Tehran morning slot without depending on the host timezone", () => {
+    vi.stubEnv("TZ", "America/Los_Angeles");
+
+    expect(jalaliDateToIsoAtTime("2026-01-10T18:30:00.000Z", 9, 0)).toBe("2026-01-10T05:30:00.000Z");
   });
 });

@@ -33,6 +33,7 @@ import {
   jalaliDateKey,
   sortByScheduleAsc
 } from "../../lib/jalali";
+import { jalaliDateToIsoAtTime } from "../../lib/jalali-picker";
 
 type CalendarFilter = "all" | "scheduled" | "publishing" | "published" | "failed";
 type ViewMode = "month" | "week" | "list";
@@ -168,9 +169,8 @@ function visibleCalendarText(post: Post) {
 }
 
 function createPostHref(value: string) {
-  const date = new Date(value);
-  date.setHours(9, 0, 0, 0);
-  return `/compose?scheduledAt=${encodeURIComponent(date.toISOString())}`;
+  const scheduledAt = jalaliDateToIsoAtTime(value, 9, 0) ?? value;
+  return `/compose?scheduledAt=${encodeURIComponent(scheduledAt)}`;
 }
 
 export default function CalendarPage() {
@@ -248,8 +248,9 @@ export default function CalendarPage() {
   const activeDayKey = selectedDayKey ?? (selectedPost?.scheduled_at ? jalaliDateKey(selectedPost.scheduled_at) : todayKey);
   const selectedDayPosts = activeDayKey ? postsByDay.get(activeDayKey) ?? [] : [];
   const selectedDay = [...monthDays, ...activeWeekDays].find((day) => day.key === activeDayKey) ?? null;
-  const selectedDayLabel = selectedDay ? formatJalaliDate(selectedDay.date) : activeDayKey === todayKey ? "امروز" : "روز انتخاب‌شده";
-  const selectedDayCreateHref = createPostHref(selectedDay?.date ?? monthAnchor);
+  const selectedDayValue = selectedDay?.date ?? monthAnchor;
+  const selectedDayLabel = formatJalaliDate(selectedDayValue);
+  const selectedDayCreateHref = createPostHref(selectedDayValue);
   const publishedCount = calendarPosts.filter((post) => post.status === "published").length;
   const scheduledCount = calendarPosts.filter((post) => post.status === "scheduled").length;
   const failedCount = calendarPosts.filter((post) => post.status === "failed").length;
@@ -266,6 +267,20 @@ export default function CalendarPage() {
     setSelectedDayKey(day.key);
     setMonthAnchor(day.date);
     setSelectedPostId(dayPosts[0]?.id ?? null);
+  }
+
+  function movePlannerMonth(direction: -1 | 1) {
+    const nextAnchor = shiftPersianMonth(monthAnchor, direction);
+    setMonthAnchor(nextAnchor);
+    setSelectedDayKey(jalaliDateKey(nextAnchor));
+    setSelectedPostId(null);
+  }
+
+  function goToToday() {
+    const today = new Date().toISOString();
+    setMonthAnchor(today);
+    setSelectedDayKey(jalaliDateKey(today));
+    setSelectedPostId(null);
   }
 
   function renderPostChip(post: Post, compact = false) {
@@ -320,13 +335,13 @@ export default function CalendarPage() {
                     <StatusToken tone={attentionPosts.length ? "alert" : "success"}>{attentionPosts.length ? `${attentionPosts.length} نیازمند توجه` : "برنامه پایدار"}</StatusToken>
                   </div>
                   <div className="flex items-center gap-1 rounded-md border border-app-border bg-white p-1">
-                    <button type="button" onClick={() => setMonthAnchor(shiftPersianMonth(monthAnchor, 1))} className="rounded p-2 text-slate-600 transition hover:bg-slate-100" aria-label="ماه بعد">
+                    <button type="button" onClick={() => movePlannerMonth(1)} className="rounded p-2 text-slate-600 transition hover:bg-slate-100" aria-label="ماه بعد">
                       <ChevronRight className="h-4 w-4" aria-hidden="true" />
                     </button>
-                    <button type="button" onClick={() => setMonthAnchor(new Date().toISOString())} className="rounded px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-100">
+                    <button type="button" onClick={goToToday} className="rounded px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-100">
                       امروز
                     </button>
-                    <button type="button" onClick={() => setMonthAnchor(shiftPersianMonth(monthAnchor, -1))} className="rounded p-2 text-slate-600 transition hover:bg-slate-100" aria-label="ماه قبل">
+                    <button type="button" onClick={() => movePlannerMonth(-1)} className="rounded p-2 text-slate-600 transition hover:bg-slate-100" aria-label="ماه قبل">
                       <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>

@@ -130,6 +130,11 @@ export function jalaliPickerPartsToIso(parts: JalaliPickerParts, timeZone = "Asi
   );
 }
 
+export function jalaliDateToIsoAtTime(value: string, hour: number, minute: number, timeZone = "Asia/Tehran") {
+  const parts = getJalaliPickerParts(value, timeZone);
+  return jalaliPickerPartsToIso({ ...parts, hour, minute }, timeZone);
+}
+
 export function getJalaliMonthLength(year: number, month: number) {
   for (let day = 31; day >= 29; day -= 1) {
     if (jalaliDateToGregorianUtc(year, month, day)) return day;
