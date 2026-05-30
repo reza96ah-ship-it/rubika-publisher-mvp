@@ -22,6 +22,7 @@ def account_response(account: RubikaAccount) -> RubikaAccountResponse:
         bot_name=account.bot_name,
         status=account.status,
         last_error=account.last_error,
+        last_test_at=account.last_test_at,
         is_active=account.is_active,
     )
 
@@ -73,10 +74,10 @@ async def test_connection(current_user: User = Depends(get_current_user), db: Se
         account.last_error = ""
         account.last_test_at = datetime.utcnow()
         db.commit()
-        return RubikaTestResponse(ok=True, status="connected", bot_name=bot_name)
+        return RubikaTestResponse(ok=True, status="connected", bot_name=bot_name, last_test_at=account.last_test_at)
     except httpx.HTTPError as exc:
         account.status = "failed"
         account.last_error = str(exc)
         account.last_test_at = datetime.utcnow()
         db.commit()
-        return RubikaTestResponse(ok=False, status="failed", error=str(exc))
+        return RubikaTestResponse(ok=False, status="failed", error=str(exc), last_test_at=account.last_test_at)

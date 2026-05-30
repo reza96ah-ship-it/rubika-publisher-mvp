@@ -53,6 +53,7 @@ class RubikaAccountResponse(BaseModel):
     bot_name: str
     status: str
     last_error: str
+    last_test_at: datetime | None
     is_active: bool
 
 
@@ -61,6 +62,7 @@ class RubikaTestResponse(BaseModel):
     status: str
     bot_name: str = ""
     error: str = ""
+    last_test_at: datetime | None = None
 
 
 class PostRequest(BaseModel):

@@ -3,20 +3,21 @@
 import {
   AlertTriangle,
   BadgeCheck,
-  Bot,
-  KeyRound,
+  Clock3,
   PlugZap,
   RadioTower,
   RefreshCw,
+  Save,
   Send,
-  ShieldCheck
+  ShieldCheck,
+  Undo2
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { Button } from "../../components/ui/button";
 import { Field, Input } from "../../components/ui/form";
-import { MetricTile, NoticeBanner, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { DetailGrid, MetricTile, NoticeBanner, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders } from "../../lib/posts";
 
 type DiagnosticItem = {
@@ -26,20 +27,29 @@ type DiagnosticItem = {
   tone?: "success" | "warning" | "alert";
 };
 
-function statusLabel(status: string) {
+function statusLabel(status: string, dirty = false) {
+  if (dirty) return "تغییرات ذخیره نشده";
   if (status === "connected") return "اتصال تایید شده";
   if (status === "failed") return "اتصال خطا دارد";
   if (status === "missing_settings") return "تنظیمات ناقص است";
   return "نیازمند تست اتصال";
 }
 
-function statusTone(status: string): "success" | "warning" | "alert" | "neutral" {
+function statusTone(status: string, dirty = false): "success" | "warning" | "alert" | "neutral" {
+  if (dirty) return "warning";
   if (status === "connected") return "success";
   if (status === "failed" || status === "missing_settings") return "alert";
   return "warning";
 }
 
-function buildDiagnostics(maskedToken: string, chatId: string, status: string): DiagnosticItem[] {
+function formatLastTest(value: string) {
+  if (!value) return "هنوز اجرا نشده";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "زمان نامعتبر";
+  return new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
+function buildDiagnostics(maskedToken: string, chatId: string, status: string, dirty: boolean): DiagnosticItem[] {
   return [
     {
       label: "توکن ربات",
@@ -55,8 +65,8 @@ function buildDiagnostics(maskedToken: string, chatId: string, status: string): 
     },
     {
       label: "تست اتصال",
-      detail: status === "connected" ? "Rubika API با این تنظیمات پاسخ موفق داده است." : "بعد از ذخیره، تست اتصال را اجرا کنید.",
-      done: status === "connected",
+      detail: dirty ? "ابتدا تغییرات را ذخیره کنید، سپس تست اتصال را اجرا کنید." : status === "connected" ? "Rubika API با این تنظیمات پاسخ موفق داده است." : "بعد از ذخیره، تست اتصال را اجرا کنید.",
+      done: status === "connected" && !dirty,
       tone: status === "failed" ? "alert" : status === "connected" ? "success" : "warning"
     }
   ];
@@ -79,10 +89,12 @@ function DiagnosticRow({ item }: { item: DiagnosticItem }) {
 export default function RubikaPage() {
   const [botToken, setBotToken] = useState("");
   const [chatId, setChatId] = useState("");
+  const [savedChatId, setSavedChatId] = useState("");
   const [maskedToken, setMaskedToken] = useState("");
   const [botName, setBotName] = useState("");
   const [status, setStatus] = useState("not_tested");
   const [lastError, setLastError] = useState("");
+  const [lastTestAt, setLastTestAt] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -93,15 +105,17 @@ export default function RubikaPage() {
     async function loadSettings() {
       const response = await fetch(`${apiUrl}/rubika/settings`, { headers: authHeaders() });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data) {
-          setChatId(data.chat_id ?? "");
-          setMaskedToken(data.bot_token_masked ?? "");
-          setBotName(data.bot_name ?? "");
-          setStatus(data.status ?? "not_tested");
-          setLastError(data.last_error ?? "");
-        }
+      if (!response.ok) throw new Error("خطا در دریافت تنظیمات روبیکا");
+
+      const data = await response.json();
+      if (data) {
+        setChatId(data.chat_id ?? "");
+        setSavedChatId(data.chat_id ?? "");
+        setMaskedToken(data.bot_token_masked ?? "");
+        setBotName(data.bot_name ?? "");
+        setStatus(data.status ?? "not_tested");
+        setLastError(data.last_error ?? "");
+        setLastTestAt(data.last_test_at ?? "");
       }
       setLoading(false);
     }
@@ -112,11 +126,19 @@ export default function RubikaPage() {
     });
   }, []);
 
-  const diagnostics = useMemo(() => buildDiagnostics(maskedToken, chatId, status), [chatId, maskedToken, status]);
+  const dirty = useMemo(() => Boolean(botToken.trim()) || chatId !== savedChatId, [botToken, chatId, savedChatId]);
+  const diagnostics = useMemo(() => buildDiagnostics(maskedToken, chatId, status, dirty), [chatId, dirty, maskedToken, status]);
   const readyCount = diagnostics.filter((item) => item.done).length;
   const hasSavedToken = Boolean(maskedToken);
   const canSave = Boolean(chatId.trim()) && (Boolean(botToken.trim()) || hasSavedToken);
-  const canTest = Boolean(maskedToken) && Boolean(chatId.trim()) && !testing;
+  const canTest = Boolean(maskedToken) && Boolean(savedChatId.trim()) && !dirty && !testing && !saving;
+
+  function resetChanges() {
+    setBotToken("");
+    setChatId(savedChatId);
+    setMessage("");
+    setError("");
+  }
 
   async function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -142,9 +164,12 @@ export default function RubikaPage() {
 
       if (!response.ok) throw new Error("ذخیره تنظیمات روبیکا ناموفق بود");
       const data = await response.json();
+      setChatId(data.chat_id ?? "");
+      setSavedChatId(data.chat_id ?? "");
       setMaskedToken(data.bot_token_masked ?? "");
       setStatus(data.status ?? "not_tested");
       setLastError(data.last_error ?? "");
+      setLastTestAt(data.last_test_at ?? "");
       setMessage(botToken.trim() ? "تنظیمات روبیکا ذخیره شد؛ حالا تست اتصال را اجرا کنید" : "مقصد ذخیره شد و توکن قبلی حفظ شد");
       setBotToken("");
     } catch (err) {
@@ -169,6 +194,7 @@ export default function RubikaPage() {
       setStatus(data.status ?? "failed");
       setBotName(data.bot_name ?? "");
       setLastError(data.error ?? "");
+      setLastTestAt(data.last_test_at ?? "");
       if (data.ok) setMessage("اتصال روبیکا موفق بود");
       else setError(data.error || "تست اتصال ناموفق بود");
     } catch (err) {
@@ -178,6 +204,16 @@ export default function RubikaPage() {
     }
   }
 
+  useEffect(() => {
+    function warnAboutUnsavedChanges(event: BeforeUnloadEvent) {
+      if (!dirty) return;
+      event.preventDefault();
+    }
+
+    window.addEventListener("beforeunload", warnAboutUnsavedChanges);
+    return () => window.removeEventListener("beforeunload", warnAboutUnsavedChanges);
+  }, [dirty]);
+
   return (
     <AuthGate>
       <AppShell>
@@ -186,10 +222,9 @@ export default function RubikaPage() {
             eyebrow="Channel Setup"
             title="اتصال روبیکا"
             description="اتصال ربات، مقصد انتشار و تست عملیاتی را از یک صفحه کنترل کنید تا صف انتشار با اطمینان کار کند."
-            actions={<Button href="/compose">بازگشت به استودیو تولید</Button>}
             meta={(
               <>
-                <StatusToken tone={statusTone(status)}>{statusLabel(status)}</StatusToken>
+                <StatusToken tone={statusTone(status, dirty)}>{statusLabel(status, dirty)}</StatusToken>
                 <StatusToken tone={readyCount === 3 ? "success" : "warning"}>{readyCount}/3 آماده</StatusToken>
                 {botName ? <StatusToken tone="primary">{botName}</StatusToken> : null}
               </>
@@ -199,7 +234,7 @@ export default function RubikaPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-black text-app-primary">وضعیت اتصال</p>
-                    <p className="mt-2 text-lg font-black text-app-text">{statusLabel(status)}</p>
+                    <p className="mt-2 text-lg font-black text-app-text">{statusLabel(status, dirty)}</p>
                   </div>
                   <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
                     <PlugZap className="h-5 w-5" aria-hidden="true" />
@@ -215,16 +250,16 @@ export default function RubikaPage() {
           />
 
           <section className="grid gap-3 md:grid-cols-3">
-            <MetricTile label="وضعیت اتصال" value={statusLabel(status)} hint="آخرین نتیجه تست عملیاتی روبیکا" tone={status === "connected" ? "success" : status === "failed" ? "alert" : "warning"} icon={<PlugZap className="h-4 w-4" />} />
+            <MetricTile label="وضعیت اتصال" value={statusLabel(status, dirty)} hint={dirty ? "بعد از ذخیره، تست اتصال را دوباره اجرا کنید" : "آخرین نتیجه تست عملیاتی روبیکا"} tone={statusTone(status, dirty)} icon={<PlugZap className="h-4 w-4" />} />
             <MetricTile label="تشخیص آماده‌سازی" value={`${readyCount}/3`} hint="توکن، مقصد و تست اتصال" tone={readyCount === 3 ? "success" : "warning"} icon={<ShieldCheck className="h-4 w-4" />} />
-            <MetricTile label="ربات فعال" value={botName || "ثبت نشده"} hint={chatId || "مقصد انتشار هنوز مشخص نیست"} tone="neutral" icon={<Bot className="h-4 w-4" />} />
+            <MetricTile label="آخرین تست" value={formatLastTest(lastTestAt)} hint={botName || "نام ربات بعد از تست موفق نمایش داده می‌شود"} tone={status === "connected" ? "success" : "neutral"} icon={<Clock3 className="h-4 w-4" />} />
           </section>
 
           {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
           {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-            <WorkspacePanel title="تنظیمات اتصال" description="توکن فقط هنگام جایگزینی لازم است. اگر توکن ذخیره شده دارید، تغییر مقصد بدون وارد کردن توکن جدید انجام می‌شود.">
+            <WorkspacePanel title="اعتبارنامه و مقصد انتشار" description="توکن فقط هنگام جایگزینی لازم است. برای حفظ توکن ذخیره‌شده، فیلد آن را خالی بگذارید.">
               {loading ? (
                 <p className="text-sm text-app-muted">در حال دریافت تنظیمات...</p>
               ) : (
@@ -265,15 +300,21 @@ export default function RubikaPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-3">
-                    <Button type="submit" disabled={saving || !canSave}>
-                      <KeyRound className="ml-2 h-4 w-4" aria-hidden="true" />
-                      {saving ? "در حال ذخیره..." : "ذخیره تنظیمات"}
-                    </Button>
-                    <Button type="button" variant="secondary" onClick={testConnection} disabled={!canTest}>
-                      <RefreshCw className="ml-2 h-4 w-4" aria-hidden="true" />
-                      {testing ? "در حال تست..." : "تست اتصال"}
-                    </Button>
+                  <div className="flex flex-col gap-3 rounded-md border border-app-border bg-white p-3 shadow-sm md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm font-black text-app-text">{dirty ? "تغییرات آماده ذخیره است" : "تنظیمات اتصال به‌روز است"}</p>
+                      <p className="mt-1 text-xs text-app-muted">{dirty ? "ذخیره کنید تا تست اتصال برای نسخه جدید فعال شود." : "برای اطمینان از سلامت کانال، تست عملیاتی را اجرا کنید."}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" variant="secondary" onClick={resetChanges} disabled={!dirty || saving}>
+                        <Undo2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                        بازگردانی
+                      </Button>
+                      <Button type="submit" disabled={saving || !canSave || !dirty}>
+                        <Save className="ml-2 h-4 w-4" aria-hidden="true" />
+                        {saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
+                      </Button>
+                    </div>
                   </div>
                 </form>
               )}
@@ -291,6 +332,25 @@ export default function RubikaPage() {
                     </NoticeBanner>
                   </div>
                 ) : null}
+              </WorkspacePanel>
+
+              <WorkspacePanel title="تست عملیاتی" description="این تست با تنظیمات ذخیره‌شده، دسترسی ربات روبیکا را بررسی می‌کند.">
+                <Button type="button" className="w-full" onClick={testConnection} disabled={!canTest}>
+                  <RefreshCw className={`ml-2 h-4 w-4 ${testing ? "animate-spin" : ""}`} aria-hidden="true" />
+                  {testing ? "در حال بررسی اتصال..." : "اجرای تست اتصال"}
+                </Button>
+                {dirty ? <p className="mt-3 text-xs leading-6 text-amber-700">برای اجرای تست، ابتدا تغییرات را ذخیره کنید.</p> : null}
+              </WorkspacePanel>
+
+              <WorkspacePanel title="جزئیات کانال" description="خلاصه‌ای از تنظیمات ذخیره‌شده و آخرین بررسی.">
+                <DetailGrid
+                  items={[
+                    { label: "توکن", value: <span className="block break-all text-left font-mono text-xs" dir="ltr">{maskedToken || "ثبت نشده"}</span> },
+                    { label: "مقصد ذخیره‌شده", value: <span className="block break-all text-left font-mono text-xs" dir="ltr">{savedChatId || "ثبت نشده"}</span> },
+                    { label: "نام ربات", value: botName || "نامشخص" },
+                    { label: "آخرین تست", value: formatLastTest(lastTestAt) }
+                  ]}
+                />
               </WorkspacePanel>
 
               <WorkspacePanel title="مسیر بعدی" description="بعد از تست موفق، انتشار دستی یا زمان‌بندی را شروع کنید.">

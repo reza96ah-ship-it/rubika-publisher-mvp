@@ -7,7 +7,9 @@ import {
   Hash,
   MessageSquareText,
   Phone,
-  Store as StoreIcon
+  Save,
+  Store as StoreIcon,
+  Undo2
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
@@ -39,6 +41,18 @@ type ReadinessItem = {
 
 function trim(value: string) {
   return value.trim();
+}
+
+function normalizeStore(data: Partial<StoreForm> = {}): StoreForm {
+  return {
+    name: data.name ?? "",
+    category: data.category ?? "",
+    phone: data.phone ?? "",
+    description: data.description ?? "",
+    default_hashtags: data.default_hashtags ?? "",
+    caption_footer: data.caption_footer ?? "",
+    timezone: data.timezone ?? "Asia/Tehran"
+  };
 }
 
 function buildReadiness(form: StoreForm): ReadinessItem[] {
@@ -109,6 +123,7 @@ function ReadinessRow({ item }: { item: ReadinessItem }) {
 
 export default function StorePage() {
   const [form, setForm] = useState<StoreForm>(emptyStore);
+  const [savedForm, setSavedForm] = useState<StoreForm>(emptyStore);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -118,19 +133,13 @@ export default function StorePage() {
     async function loadStore() {
       const response = await fetch(`${apiUrl}/stores/active`, { headers: authHeaders() });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data) {
-          setForm({
-            name: data.name ?? "",
-            category: data.category ?? "",
-            phone: data.phone ?? "",
-            description: data.description ?? "",
-            default_hashtags: data.default_hashtags ?? "",
-            caption_footer: data.caption_footer ?? "",
-            timezone: data.timezone ?? "Asia/Tehran"
-          });
-        }
+      if (!response.ok) throw new Error("خطا در دریافت اطلاعات فروشگاه");
+
+      const data = await response.json();
+      if (data) {
+        const nextForm = normalizeStore(data);
+        setForm(nextForm);
+        setSavedForm(nextForm);
       }
 
       setLoading(false);
@@ -143,11 +152,19 @@ export default function StorePage() {
   }, []);
 
   const readinessItems = useMemo(() => buildReadiness(form), [form]);
+  const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm]);
   const score = readinessScore(readinessItems);
   const requiredReady = readinessItems.filter((item) => item.required).every((item) => item.done);
 
   function updateField(field: keyof StoreForm, value: string) {
+    setMessage("");
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function resetChanges() {
+    setForm(savedForm);
+    setMessage("");
+    setError("");
   }
 
   async function saveStore(event: FormEvent<HTMLFormElement>) {
@@ -171,15 +188,9 @@ export default function StorePage() {
       }
 
       const data = await response.json();
-      setForm({
-        name: data.name ?? "",
-        category: data.category ?? "",
-        phone: data.phone ?? "",
-        description: data.description ?? "",
-        default_hashtags: data.default_hashtags ?? "",
-        caption_footer: data.caption_footer ?? "",
-        timezone: data.timezone ?? "Asia/Tehran"
-      });
+      const nextForm = normalizeStore(data);
+      setForm(nextForm);
+      setSavedForm(nextForm);
       setMessage("پروفایل فروشگاه ذخیره شد");
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطای ذخیره اطلاعات");
@@ -187,6 +198,16 @@ export default function StorePage() {
       setSaving(false);
     }
   }
+
+  useEffect(() => {
+    function warnAboutUnsavedChanges(event: BeforeUnloadEvent) {
+      if (!dirty) return;
+      event.preventDefault();
+    }
+
+    window.addEventListener("beforeunload", warnAboutUnsavedChanges);
+    return () => window.removeEventListener("beforeunload", warnAboutUnsavedChanges);
+  }, [dirty]);
 
   return (
     <AuthGate>
@@ -196,12 +217,12 @@ export default function StorePage() {
             eyebrow="Brand Setup"
             title="پروفایل فروشگاه"
             description="هویت فروشگاه، متن‌های ثابت و تنظیمات پیش‌فرض را برای تولید محتوای سریع و منظم آماده کنید."
-            actions={<Button href="/rubika">ادامه به اتصال روبیکا</Button>}
             meta={(
               <>
                 <StatusToken tone={requiredReady ? "success" : "warning"}>{requiredReady ? "حداقل آماده" : "نیازمند تکمیل"}</StatusToken>
                 <StatusToken tone="primary">{score}% آمادگی</StatusToken>
                 <StatusToken tone={defaultCount(form) >= 2 ? "success" : "neutral"}>{defaultCount(form)}/3 تنظیم متن</StatusToken>
+                <StatusToken tone={dirty ? "warning" : "success"}>{dirty ? "تغییرات ذخیره نشده" : "ذخیره شده"}</StatusToken>
               </>
             )}
             aside={(
@@ -225,18 +246,22 @@ export default function StorePage() {
           <section className="grid gap-3 md:grid-cols-3">
             <MetricTile label="آمادگی پروفایل" value={`${score}%`} hint="نام و منطقه زمانی پایه‌های ضروری‌اند" tone={requiredReady ? "success" : "warning"} icon={<StoreIcon className="h-4 w-4" />} />
             <MetricTile label="تنظیمات متن" value={`${defaultCount(form)}/3`} hint="توضیح، هشتگ و CTA برای کپشن‌های سریع" tone="primary" icon={<MessageSquareText className="h-4 w-4" />} />
-            <MetricTile label="وضعیت راه‌اندازی" value={requiredReady ? "قابل استفاده" : "ناقص"} hint="برای ادامه به اتصال روبیکا آماده می‌شود" tone={requiredReady ? "success" : "warning"} icon={<BadgeCheck className="h-4 w-4" />} />
+            <MetricTile label="وضعیت ویرایش" value={dirty ? "ذخیره نشده" : "به‌روز"} hint={dirty ? "تغییرات را ذخیره کنید یا به آخرین نسخه برگردانید" : "آخرین تغییرات پروفایل ثبت شده است"} tone={dirty ? "warning" : "success"} icon={<Save className="h-4 w-4" />} />
           </section>
 
           {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
           {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-            <WorkspacePanel title="اطلاعات و متن‌های پایه" description="این داده‌ها در composer، کپشن‌ها و آماده‌سازی پست‌ها استفاده می‌شوند.">
-              {loading ? (
-                <p className="text-sm text-app-muted">در حال دریافت اطلاعات...</p>
-              ) : (
-                <form onSubmit={saveStore} className="grid gap-5 lg:grid-cols-2">
+          {loading ? (
+            <WorkspacePanel title="پروفایل فروشگاه">
+              <p className="text-sm text-app-muted">در حال دریافت اطلاعات...</p>
+            </WorkspacePanel>
+          ) : (
+            <form onSubmit={saveStore}>
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+                <div className="space-y-4">
+                  <WorkspacePanel title="هویت فروشگاه" description="اطلاعات پایه برند و تنظیمات عملیاتی workspace را مدیریت کنید.">
+                    <div className="grid gap-5 lg:grid-cols-2">
                   <Field label="نام فروشگاه" required>
                     <Input value={form.name} onChange={(event) => updateField("name", event.target.value)} required />
                   </Field>
@@ -252,7 +277,11 @@ export default function StorePage() {
                   <Field label="منطقه زمانی" required hint="برای ایران همین مقدار مناسب است.">
                     <Input value={form.timezone} onChange={(event) => updateField("timezone", event.target.value)} className="text-left" dir="ltr" required />
                   </Field>
+                    </div>
+                  </WorkspacePanel>
 
+                  <WorkspacePanel title="پیش‌فرض‌های انتشار" description="متن‌های تکرارشونده را یک‌بار تنظیم کنید تا composer شروع سریع‌تری داشته باشد.">
+                    <div className="grid gap-5 lg:grid-cols-2">
                   <Field label="توضیحات کوتاه فروشگاه" hint="یک توضیح کوتاه که شخصیت برند و پیشنهاد اصلی را مشخص کند.">
                     <Textarea value={form.description} onChange={(event) => updateField("description", event.target.value)} />
                   </Field>
@@ -265,20 +294,33 @@ export default function StorePage() {
                     <Textarea value={form.caption_footer} onChange={(event) => updateField("caption_footer", event.target.value)} placeholder="برای سفارش پیام بدهید." />
                   </Field>
 
-                  <NoticeBanner>
-                    بعد از ذخیره، composer از همین اطلاعات برای شروع سریع‌تر پست‌ها استفاده می‌کند.
-                  </NoticeBanner>
+                      <div className="lg:col-span-2">
+                        <NoticeBanner>
+                          composer از این اطلاعات برای شروع سریع‌تر کپشن‌ها استفاده می‌کند.
+                        </NoticeBanner>
+                      </div>
+                    </div>
+                  </WorkspacePanel>
 
-                  <div className="lg:col-span-2">
-                    <Button type="submit" disabled={saving}>
-                      {saving ? "در حال ذخیره..." : "ذخیره پروفایل فروشگاه"}
-                    </Button>
+                  <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-md border border-app-border bg-white/95 p-3 shadow-lg shadow-slate-200/60 backdrop-blur md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm font-black text-app-text">{dirty ? "تغییرات آماده ذخیره است" : "پروفایل فروشگاه به‌روز است"}</p>
+                      <p className="mt-1 text-xs text-app-muted">{dirty ? "برای استفاده در composer، نسخه جدید را ثبت کنید." : "هر تغییر جدید در این نوار مشخص می‌شود."}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" variant="secondary" onClick={resetChanges} disabled={!dirty || saving}>
+                        <Undo2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                        بازگردانی
+                      </Button>
+                      <Button type="submit" disabled={!dirty || saving}>
+                        <Save className="ml-2 h-4 w-4" aria-hidden="true" />
+                        {saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
+                      </Button>
+                    </div>
                   </div>
-                </form>
-              )}
-            </WorkspacePanel>
+                </div>
 
-            <aside className="space-y-4">
+                <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
               <WorkspacePanel title="چک‌لیست آماده‌سازی" description="برای یک workspace قابل اتکا، این موارد را کامل نگه دارید.">
                 <div className="space-y-0">
                   {readinessItems.map((item) => <ReadinessRow key={item.label} item={item} />)}
@@ -314,8 +356,10 @@ export default function StorePage() {
               <WorkspacePanel title="مرحله بعدی" description="بعد از هویت فروشگاه، اتصال روبیکا را تست کنید.">
                 <Button href="/rubika" className="w-full">باز کردن اتصال روبیکا</Button>
               </WorkspacePanel>
-            </aside>
-          </div>
+                </aside>
+              </div>
+            </form>
+          )}
         </WorkspacePage>
       </AppShell>
     </AuthGate>
