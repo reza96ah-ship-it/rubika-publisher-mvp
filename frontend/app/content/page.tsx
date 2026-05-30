@@ -15,9 +15,10 @@ import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { CountdownBadge } from "../../components/countdown-badge";
 import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
+import { PublishingTab, PublishingWorkspaceHeader } from "../../components/publishing-workspace";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
-import { DetailGrid, EmptyState, MetricStrip, MetricTile, NoticeBanner, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { DetailGrid, EmptyState, MetricStrip, MetricTile, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, formatDateTime, Post, postFinalText, workflowTabs } from "../../lib/posts";
 
 type Metric = {
@@ -78,6 +79,13 @@ export default function ContentWorkspacePage() {
       setLoading(false);
     });
   }, [loadPosts]);
+
+  useEffect(() => {
+    const requestedStatus = new URLSearchParams(window.location.search).get("status");
+    if (requestedStatus && workflowTabs.some((tab) => tab.value === requestedStatus)) {
+      setActiveStatus(requestedStatus);
+    }
+  }, []);
 
   const filteredPosts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -144,7 +152,18 @@ export default function ContentWorkspacePage() {
   const readyCount = statusCount(posts, "ready");
   const scheduledCount = statusCount(posts, "scheduled");
   const publishingCount = statusCount(posts, "publishing");
-  const activeContentCount = draftCount + readyCount + scheduledCount + publishingCount;
+  const publishedCount = statusCount(posts, "published");
+  const activePublishingTab: PublishingTab = activeStatus === "draft" || activeStatus === "published" || activeStatus === "failed"
+    ? activeStatus
+    : "content";
+
+  function applyPublishingTab(tab: PublishingTab) {
+    if (tab === "draft" || tab === "published" || tab === "failed") {
+      setActiveStatus(tab);
+    } else if (tab === "content") {
+      setActiveStatus("all");
+    }
+  }
 
   async function changeStatus(post: Post, status: string) {
     setMessage("");
@@ -190,41 +209,23 @@ export default function ContentWorkspacePage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage>
-          <WorkspaceHero
-            eyebrow="Editorial Inventory"
-            title="فضای محتوا"
-            description="چرخه عمر پست‌ها را در یک نمای عملیاتی کنترل کنید: پیش‌نویس، آماده‌سازی، زمان‌بندی، خطاها و خروجی منتشرشده."
-            actions={<Button href="/queue" variant="secondary" size="sm">صف انتشار</Button>}
+          <PublishingWorkspaceHeader
+            activeTab={activePublishingTab}
+            title="لیست محتوا"
+            description="پست‌ها را جست‌وجو، فیلتر و بدون خروج از فضای انتشار بررسی کنید."
+            counts={{
+              content: posts.length,
+              queue: readyCount + scheduledCount + publishingCount,
+              draft: draftCount,
+              published: publishedCount,
+              failed: failedCount
+            }}
+            onTabChange={applyPublishingTab}
             meta={(
               <>
-                <StatusToken tone="primary">{posts.length} پست</StatusToken>
                 <StatusToken tone={failedCount ? "alert" : "success"}>{failedCount ? `${failedCount} نیازمند رسیدگی` : "بدون خطای فعال"}</StatusToken>
                 <StatusToken tone="warning">{scheduledCount} زمان‌بندی‌شده</StatusToken>
               </>
-            )}
-            aside={(
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-black uppercase tracking-[0.12em] text-app-primary">Pipeline Health</p>
-                    <h2 className="mt-2 text-lg font-black text-app-text">وضعیت جریان محتوا</h2>
-                    <p className="mt-1 text-xs leading-5 text-app-muted">تمرکز این نما روی اسکن سریع، رفع خطا و حرکت دادن پست‌ها به مرحله بعد است.</p>
-                  </div>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
-                    <FileText className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded border border-blue-100 bg-white p-3">
-                    <p className="font-black text-app-text">{activeContentCount}</p>
-                    <p className="mt-1 text-app-muted">در جریان کار</p>
-                  </div>
-                  <div className="rounded border border-blue-100 bg-white p-3">
-                    <p className="font-black text-app-text">{readyCount}</p>
-                    <p className="mt-1 text-app-muted">آماده بررسی</p>
-                  </div>
-                </div>
-              </div>
             )}
           />
 

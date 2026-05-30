@@ -16,9 +16,10 @@ import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { CountdownBadge } from "../../components/countdown-badge";
 import { DataSearchField } from "../../components/data-view";
+import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
-import { DetailGrid, EmptyState, MetricStrip, MetricTile, NoticeBanner, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel, WorkspaceToolbar } from "../../components/workspace-ui";
+import { DetailGrid, EmptyState, MetricStrip, MetricTile, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel, WorkspaceToolbar } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, type Post } from "../../lib/posts";
 import {
   formatJalaliDate,
@@ -225,14 +226,9 @@ export default function CalendarPage() {
 
   const now = Date.now();
   const todayKey = jalaliDateKey(new Date().toISOString());
-  const weekEnd = now + 7 * 24 * 60 * 60 * 1000;
   const nextPost = calendarPosts.find((post) => {
     const time = dateTime(post.scheduled_at);
     return time !== null && time >= now && ["scheduled", "publishing"].includes(post.status);
-  });
-  const upcomingPosts = calendarPosts.filter((post) => {
-    const time = dateTime(post.scheduled_at);
-    return time !== null && time >= now && time <= weekEnd && ["scheduled", "publishing"].includes(post.status);
   });
   const attentionPosts = calendarPosts.filter((post) => {
     const time = dateTime(post.scheduled_at);
@@ -279,41 +275,21 @@ export default function CalendarPage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage>
-          <WorkspaceHero
-            eyebrow="Publishing Planner"
+          <PublishingWorkspaceHeader
+            activeTab="calendar"
             title="تقویم انتشار"
-            description="برنامه‌ریزی ماهانه، هفتگی و لیستی برای پیدا کردن شکاف‌ها، خطاها و پست بعدی انتشار."
-            actions={<Button href="/queue" variant="secondary" size="sm">صف انتشار</Button>}
+            description="برنامه انتشار را با نماهای ماه، هفته و لیست کنترل کنید."
+            counts={{
+              calendar: calendarPosts.length,
+              queue: scheduledCount,
+              published: publishedCount,
+              failed: failedCount
+            }}
             meta={(
               <>
-                <StatusToken tone="primary">{calendarPosts.length} پست تقویمی</StatusToken>
                 <StatusToken tone="warning">{scheduledCount} زمان‌بندی‌شده</StatusToken>
                 <StatusToken tone={failedCount ? "alert" : "success"}>{failedCount ? `${failedCount} خطای تقویمی` : "بدون خطای تقویمی"}</StatusToken>
               </>
-            )}
-            aside={(
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-black uppercase tracking-[0.12em] text-app-primary">Planner Health</p>
-                    <h2 className="mt-2 text-lg font-black text-app-text">{formatJalaliMonth(monthAnchor)}</h2>
-                    <p className="mt-1 text-xs leading-5 text-app-muted">تراکم انتشار، پست بعدی و موارد نیازمند رسیدگی را از یک نقطه کنترل کنید.</p>
-                  </div>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
-                    <CalendarDays className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded border border-blue-100 bg-white p-3">
-                    <p className="font-black text-app-text">{upcomingPosts.length}</p>
-                    <p className="mt-1 text-app-muted">۷ روز آینده</p>
-                  </div>
-                  <div className="rounded border border-blue-100 bg-white p-3">
-                    <p className={`font-black ${attentionPosts.length ? "text-rose-700" : "text-app-text"}`}>{attentionPosts.length}</p>
-                    <p className="mt-1 text-app-muted">نیازمند توجه</p>
-                  </div>
-                </div>
-              </div>
             )}
           />
 

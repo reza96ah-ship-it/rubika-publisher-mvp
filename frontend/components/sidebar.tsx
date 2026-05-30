@@ -44,9 +44,7 @@ const primaryNavGroups: NavGroup[] = [
   {
     title: "انتشار",
     items: [
-      { label: "پلنر انتشار", href: "/calendar", icon: CalendarDays },
-      { label: "محتوا", href: "/content", icon: FileText },
-      { label: "صف انتشار", href: "/queue", icon: ListChecks }
+      { label: "فضای انتشار", href: "/calendar", icon: CalendarDays }
     ]
   },
   {
@@ -65,6 +63,11 @@ const settingsNavItems: NavItem[] = [
 ];
 
 const composeNavItem: NavItem = { label: "پست جدید", href: "/compose", icon: PenLine };
+const publishingRouteItems: NavItem[] = [
+  { label: "پلنر انتشار", href: "/calendar", icon: CalendarDays },
+  { label: "لیست محتوا", href: "/content", icon: FileText },
+  { label: "صف انتشار", href: "/queue", icon: ListChecks }
+];
 const navGroups = [
   ...primaryNavGroups,
   { title: "تنظیمات", items: settingsNavItems }
@@ -78,6 +81,11 @@ function isActiveRoute(pathname: string, href: string) {
 export function getActiveNav(pathname: string) {
   if (isActiveRoute(pathname, composeNavItem.href)) {
     return { group: { title: "تولید محتوا", items: [composeNavItem] }, item: composeNavItem };
+  }
+
+  const publishingRoute = publishingRouteItems.find((item) => isActiveRoute(pathname, item.href));
+  if (publishingRoute) {
+    return { group: { title: "انتشار", items: publishingRouteItems }, item: publishingRoute };
   }
 
   for (const group of navGroups) {
@@ -148,7 +156,12 @@ export function Sidebar({ storeName = "فضای کاری", ready = false }: Side
           <div key={group.title}>
             <p className="mb-1 px-2.5 text-[10px] font-black text-slate-400">{group.title}</p>
             <div className="space-y-0.5">
-              {group.items.map((item) => <NavEntry key={item.href} item={item} active={isActiveRoute(pathname, item.href)} />)}
+              {group.items.map((item) => {
+                const active = item.href === "/calendar"
+                  ? publishingRouteItems.some((route) => isActiveRoute(pathname, route.href))
+                  : isActiveRoute(pathname, item.href);
+                return <NavEntry key={item.href} item={item} active={active} />;
+              })}
             </div>
           </div>
         ))}

@@ -6,9 +6,10 @@ import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { CountdownBadge } from "../../components/countdown-badge";
 import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
+import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
-import { DetailGrid, EmptyState, MetricStrip, MetricTile, NoticeBanner, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { DetailGrid, EmptyState, MetricStrip, MetricTile, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
 
 type QueueFilter = "all" | "ready" | "scheduled" | "publishing" | "failed";
@@ -172,45 +173,19 @@ export default function QueuePage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-4">
-          <WorkspaceHero
-            eyebrow="Publishing Queue"
+          <PublishingWorkspaceHeader
+            activeTab="queue"
             title="صف انتشار"
-            description="کنترل آماده‌سازی، زمان‌بندی، انتشار و بازیابی خطاها در یک نمای عملیاتی."
-            actions={(
-              <Button href="/calendar" variant="secondary">
-                <CalendarClock className="ml-2 h-4 w-4" aria-hidden="true" />
-                پلنر انتشار
-              </Button>
-            )}
+            description="گلوگاه‌های انتشار، زمان‌بندی و بازیابی خطا را در یک نمای عملیاتی کنترل کنید."
+            counts={{
+              queue: posts.length,
+              failed: counts.failed
+            }}
             meta={(
               <>
                 <StatusToken tone="primary">{posts.length} پست در صف</StatusToken>
                 <StatusToken tone={counts.failed ? "alert" : "success"}>{counts.failed ? `${counts.failed} خطای فعال` : "بدون خطای فعال"}</StatusToken>
-                {nextScheduled ? <CountdownBadge status={nextScheduled.status} scheduledAt={nextScheduled.scheduled_at} /> : null}
               </>
-            )}
-            aside={(
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-black text-app-primary">سلامت صف</p>
-                    <p className="mt-2 text-lg font-black text-app-text">{counts.failed ? "نیازمند رسیدگی" : "پایدار"}</p>
-                  </div>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
-                    <ListChecks className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded border border-blue-100 bg-white p-3">
-                    <p className="font-black text-app-text">{counts.ready + counts.scheduled}</p>
-                    <p className="mt-1 text-app-muted">قابل برنامه‌ریزی</p>
-                  </div>
-                  <div className="rounded border border-blue-100 bg-white p-3">
-                    <p className={`font-black ${counts.failed ? "text-rose-700" : "text-app-text"}`}>{counts.failed}</p>
-                    <p className="mt-1 text-app-muted">نیازمند بازیابی</p>
-                  </div>
-                </div>
-              </div>
             )}
           />
 
