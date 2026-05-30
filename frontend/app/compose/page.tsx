@@ -2,7 +2,7 @@
 
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ImagePlus, Send } from "lucide-react";
+import { ChevronDown, ImagePlus, Send, SlidersHorizontal } from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ComposerActionFooter } from "../../components/composer-action-footer";
@@ -70,6 +70,7 @@ function ComposePageContent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFilePreviewUrl, setSelectedFilePreviewUrl] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showOptionalDetails, setShowOptionalDetails] = useState(false);
   const [savingAction, setSavingAction] = useState<SaveAction | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -167,6 +168,7 @@ function ComposePageContent() {
         internal_note: post.internal_note || "",
         scheduled_at: post.scheduled_at
       });
+      setShowOptionalDetails(Boolean(post.campaign || post.internal_note));
 
       const attachedAsset = loadedMediaAssets.find((asset) => asset.post_id === post.id);
       setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
@@ -174,6 +176,7 @@ function ComposePageContent() {
       setEditingPost(null);
       setForm({ ...emptyForm, scheduled_at: presetScheduledAt });
       setSelectedMediaId("");
+      setShowOptionalDetails(false);
     }
 
     setLoading(false);
@@ -266,11 +269,13 @@ function ComposePageContent() {
         internal_note: editingPost.internal_note || "",
         scheduled_at: editingPost.scheduled_at
       });
+      setShowOptionalDetails(Boolean(editingPost.campaign || editingPost.internal_note));
       const attachedAsset = mediaAssets.find((asset) => asset.post_id === editingPost.id);
       setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
     } else {
       setForm({ ...emptyForm, scheduled_at: presetScheduledAt });
       setSelectedMediaId("");
+      setShowOptionalDetails(false);
     }
 
     setSelectedFile(null);
@@ -460,35 +465,24 @@ function ComposePageContent() {
           <form onSubmit={saveDraft} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
             <section className="min-w-0 space-y-4">
               <WorkspacePanel
-                title="بوم تولید محتوا"
-                description="عنوان، کپشن، هشتگ و یادداشت تیمی را در یک بوم عملیاتی کامل کنید."
+                title="محتوای پست"
+                description="ابتدا متن اصلی را کامل کنید؛ جزئیات داخلی در بخش اختیاری قرار دارند."
                 action={(
                   <div className="flex flex-wrap gap-2">
                     <Tag tone="primary">روبیکا</Tag>
-                    <Tag tone={form.caption ? "success" : "neutral"}>{form.caption ? "کپشن آماده" : "کپشن خالی"}</Tag>
                     {hasSchedule ? <Tag tone="success">زمان‌بندی شده</Tag> : null}
                   </div>
                 )}
                 bodyClassName="grid gap-5 p-4"
               >
-                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
-                    <Field label="عنوان داخلی پست" required hint="برای مدیریت محتوا، لاگ و صف انتشار.">
-                      <Input
-                        value={form.title}
-                        onChange={(event) => updateField("title", event.target.value)}
-                        placeholder="مثلاً معرفی محصول جدید"
-                        required
-                      />
-                    </Field>
-
-                    <Field label="کمپین">
-                      <Input
-                        value={form.campaign}
-                        onChange={(event) => updateField("campaign", event.target.value)}
-                        placeholder="مثلاً لانچ خرداد"
-                      />
-                    </Field>
-                  </div>
+                  <Field label="عنوان داخلی پست" required hint="فقط برای مدیریت محتوا و صف انتشار؛ مخاطب این عنوان را نمی‌بیند.">
+                    <Input
+                      value={form.title}
+                      onChange={(event) => updateField("title", event.target.value)}
+                      placeholder="مثلاً معرفی محصول جدید"
+                      required
+                    />
+                  </Field>
 
                   <Field label="کپشن" hint={`${captionLength} کاراکتر`}>
                     <Textarea
@@ -499,25 +493,56 @@ function ComposePageContent() {
                     />
                   </Field>
 
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <Field label="هشتگ‌ها" hint={`${hashtagCount} هشتگ شناسایی شد`}>
-                      <Textarea
-                        value={form.hashtags}
-                        onChange={(event) => updateField("hashtags", event.target.value)}
-                        className="min-h-28"
-                        placeholder="#روبیکا #فروشگاه #محصول"
-                      />
-                    </Field>
+                  <Field label="هشتگ‌ها" hint={`${hashtagCount} هشتگ شناسایی شد`}>
+                    <Input
+                      value={form.hashtags}
+                      onChange={(event) => updateField("hashtags", event.target.value)}
+                      placeholder="#روبیکا #فروشگاه #محصول"
+                    />
+                  </Field>
 
-                    <Field label="یادداشت داخلی">
-                      <Textarea
-                        value={form.internal_note}
-                        onChange={(event) => updateField("internal_note", event.target.value)}
-                        className="min-h-28"
-                        placeholder="نکته برای تیم، تایید مدیر یا دلیل زمان‌بندی..."
-                      />
-                    </Field>
-                  </div>
+                  <section className="overflow-hidden rounded-md border border-app-border">
+                    <button
+                      type="button"
+                      onClick={() => setShowOptionalDetails((current) => !current)}
+                      className="flex w-full items-center justify-between gap-3 bg-slate-50 px-3 py-3 text-right transition hover:bg-slate-100"
+                      aria-expanded={showOptionalDetails}
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <SlidersHorizontal className="h-4 w-4 shrink-0 text-app-primary" aria-hidden="true" />
+                        <span>
+                          <span className="block text-sm font-black text-app-text">جزئیات اختیاری</span>
+                          <span className="mt-1 block text-xs text-app-muted">کمپین و یادداشت داخلی تیم</span>
+                        </span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        {form.campaign ? <Tag tone="primary">{form.campaign}</Tag> : null}
+                        {form.internal_note ? <Tag tone="neutral">یادداشت دارد</Tag> : null}
+                        <ChevronDown className={`h-4 w-4 text-slate-500 transition ${showOptionalDetails ? "rotate-180" : ""}`} aria-hidden="true" />
+                      </span>
+                    </button>
+
+                    {showOptionalDetails ? (
+                      <div className="grid gap-4 border-t border-app-border bg-white p-3 lg:grid-cols-[220px_minmax(0,1fr)]">
+                        <Field label="کمپین" hint="برای دسته‌بندی و گزارش‌گیری داخلی.">
+                          <Input
+                            value={form.campaign}
+                            onChange={(event) => updateField("campaign", event.target.value)}
+                            placeholder="مثلاً لانچ خرداد"
+                          />
+                        </Field>
+
+                        <Field label="یادداشت داخلی" hint="این متن فقط برای تیم نمایش داده می‌شود.">
+                          <Textarea
+                            value={form.internal_note}
+                            onChange={(event) => updateField("internal_note", event.target.value)}
+                            className="min-h-24"
+                            placeholder="نکته برای تیم، تایید مدیر یا دلیل زمان‌بندی..."
+                          />
+                        </Field>
+                      </div>
+                    ) : null}
+                  </section>
               </WorkspacePanel>
 
               <WorkspacePanel
