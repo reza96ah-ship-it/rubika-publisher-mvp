@@ -18,7 +18,7 @@ import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "..
 import { PublishingTab, PublishingWorkspaceHeader } from "../../components/publishing-workspace";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
-import { DetailGrid, EmptyState, MetricStrip, MetricTile, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, formatDateTime, Post, postFinalText, workflowTabs } from "../../lib/posts";
 
 type Metric = {
@@ -36,8 +36,8 @@ const searchableFields: Array<keyof Pick<Post, "title" | "caption" | "hashtags" 
   "campaign",
   "internal_note"
 ];
-const contentHeaderGrid = "grid-cols-[minmax(0,1.4fr)_140px_150px_220px]";
-const contentRowGrid = "lg:grid-cols-[minmax(0,1.4fr)_140px_150px_220px]";
+const contentHeaderGrid = "grid-cols-[minmax(0,1.4fr)_140px_170px_100px]";
+const contentRowGrid = "lg:grid-cols-[minmax(0,1.4fr)_140px_170px_100px]";
 
 function statusCount(posts: Post[], status: string) {
   if (status === "all") return posts.length;
@@ -229,29 +229,40 @@ export default function ContentWorkspacePage() {
             )}
           />
 
-          <MetricStrip>
+          <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-2 xl:grid-cols-4">
             {metrics.map((metric) => {
               const Icon = metric.icon;
+              const toneClass = metric.tone === "alert"
+                ? "text-rose-700"
+                : metric.tone === "success"
+                  ? "text-emerald-700"
+                  : metric.tone === "warning"
+                    ? "text-amber-700"
+                    : "text-app-primary";
               return (
-                <MetricTile
-                  key={metric.label}
-                  label={metric.label}
-                  value={metric.value}
-                  hint={metric.hint}
-                  tone={metric.tone}
-                  icon={<Icon className="h-4 w-4" aria-hidden="true" />}
-                />
+                <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 last:border-b-0 sm:border-l sm:last:border-l-0 xl:border-b-0">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${toneClass}`}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <p className={`text-lg font-black ${toneClass}`}>{metric.value}</p>
+                      <p className="truncate text-xs font-bold text-app-text">{metric.label}</p>
+                    </div>
+                    <p className="mt-1 truncate text-[11px] text-app-muted">{metric.hint}</p>
+                  </div>
+                </div>
               );
             })}
-          </MetricStrip>
+          </section>
 
           {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
             <WorkspacePanel
-              title="مرکز کنترل محتوا"
-              description="ردیف‌ها برای اسکن سریع، انتخاب پست و اجرای عملیات طراحی شده‌اند."
+              title="کتابخانه محتوا"
+              description="پست‌ها را اسکن کنید و برای بازبینی یا اقدام عملیاتی به پنل کناری بفرستید."
               action={
                 <Button type="button" variant="secondary" size="sm" onClick={clearFilters}>
                   پاک کردن فیلتر
@@ -334,28 +345,8 @@ export default function ContentWorkspacePage() {
 
                       <div className="flex flex-wrap gap-2 lg:justify-end">
                         <Button type="button" variant={selected ? "primary" : "secondary"} size="sm" onClick={() => selectPost(post)}>
-                          جزئیات
+                          بازبینی
                         </Button>
-                        <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">
-                          <Pencil className="ml-1 h-3.5 w-3.5" aria-hidden="true" />
-                          ویرایش
-                        </Button>
-                        {(post.status === "draft" || post.status === "failed" || post.status === "cancelled") ? (
-                          <Button type="button" variant="secondary" size="sm" onClick={() => changeStatus(post, "ready")}>
-                            آماده
-                          </Button>
-                        ) : null}
-                        {post.status === "failed" ? (
-                          <Button type="button" size="sm" onClick={() => retryPost(post)}>
-                            <RotateCcw className="ml-1 h-3.5 w-3.5" aria-hidden="true" />
-                            تلاش مجدد
-                          </Button>
-                        ) : null}
-                        {post.status !== "cancelled" && post.status !== "published" ? (
-                          <Button type="button" variant="ghost" size="sm" onClick={() => changeStatus(post, "cancelled")}>
-                            لغو
-                          </Button>
-                        ) : null}
                       </div>
                     </DataRow>
                   );
@@ -440,13 +431,6 @@ export default function ContentWorkspacePage() {
                 )}
               </WorkspacePanel>
 
-              <WorkspacePanel title="مسیرهای عملیاتی" description="دسترسی سریع به مراحل بعدی چرخه انتشار.">
-                <div className="grid gap-2">
-                  <Button href="/queue" variant="secondary">صف انتشار</Button>
-                  <Button href="/calendar" variant="secondary">تقویم انتشار</Button>
-                  <Button href="/logs" variant="secondary">لاگ انتشار</Button>
-                </div>
-              </WorkspacePanel>
             </aside>
           </div>
         </WorkspacePage>
