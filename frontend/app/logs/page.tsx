@@ -7,7 +7,7 @@ import { AppShell } from "../../components/app-shell";
 import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
-import { DetailGrid, EmptyState, MetricStrip, MetricTile, NoticeBanner, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, formatDateTime } from "../../lib/posts";
 
 type PublishAttempt = {
@@ -32,13 +32,6 @@ type TimelineStage = {
   detail: string;
   state: TimelineStageState;
 };
-
-const statusFilters = [
-  ["all", "همه"],
-  ["started", "شروع‌شده"],
-  ["success", "موفق"],
-  ["failed", "ناموفق"]
-];
 
 const modeFilters: Array<{ label: string; value: LogMode }> = [
   { label: "همه نوع‌ها", value: "all" },
@@ -226,12 +219,10 @@ export default function LogsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadAttempts = useCallback(async (nextStatus: string) => {
+  const loadAttempts = useCallback(async () => {
     setLoading(true);
     setError("");
-    const params = new URLSearchParams();
-    if (nextStatus !== "all") params.set("status", nextStatus);
-    const response = await fetch(`${apiUrl}/publish-attempts?${params.toString()}`, { headers: authHeaders() });
+    const response = await fetch(`${apiUrl}/publish-attempts`, { headers: authHeaders() });
     if (!response.ok) throw new Error("دریافت لاگ انتشار ناموفق بود");
     const data = (await response.json()) as PublishAttempt[];
     setAttempts(data);
@@ -240,20 +231,14 @@ export default function LogsPage() {
   }, []);
 
   useEffect(() => {
-    loadAttempts("all").catch((err) => {
+    loadAttempts().catch((err) => {
       setError(err instanceof Error ? err.message : "خطا در دریافت لاگ انتشار");
       setLoading(false);
     });
   }, [loadAttempts]);
 
-  async function applyStatus(nextStatus: string) {
+  function applyStatus(nextStatus: string) {
     setStatus(nextStatus);
-    try {
-      await loadAttempts(nextStatus);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "خطا در دریافت لاگ انتشار");
-      setLoading(false);
-    }
   }
 
   const preparedAttempts = useMemo<PreparedAttempt[]>(() => {
@@ -274,13 +259,15 @@ export default function LogsPage() {
   const visibleAttempts = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
     return preparedAttempts
+      .filter((item) => status === "all" || item.attempt.status === status)
       .filter((item) => modeFilter === "all" || item.mode === modeFilter)
       .filter((item) => !query || attemptSearchText(item).includes(query));
-  }, [modeFilter, preparedAttempts, searchTerm]);
+  }, [modeFilter, preparedAttempts, searchTerm, status]);
 
   const summary = useMemo(() => {
     return {
       total: preparedAttempts.length,
+      started: preparedAttempts.filter((item) => item.attempt.status === "started").length,
       success: preparedAttempts.filter((item) => item.attempt.status === "success").length,
       failed: preparedAttempts.filter((item) => item.attempt.status === "failed").length,
       media: preparedAttempts.filter((item) => item.mode === "media").length
@@ -293,70 +280,66 @@ export default function LogsPage() {
     return visibleAttempts[0] ?? preparedAttempts[0] ?? null;
   }, [preparedAttempts, selectedAttemptId, visibleAttempts]);
   const successRate = summary.total ? Math.round((summary.success / summary.total) * 100) : 0;
-  const latestAttempt = preparedAttempts[0]?.attempt ?? null;
+  const healthSummary = [
+    { label: "همه تلاش‌ها", detail: "آخرین رکوردهای worker", value: "all", count: summary.total, icon: ListChecks, tone: "text-app-primary" },
+    { label: "در حال اجرا", detail: "تلاش‌های پایان‌نیافته", value: "started", count: summary.started, icon: Clock3, tone: "text-sky-700" },
+    { label: "موفق", detail: "انتشار کامل‌شده", value: "success", count: summary.success, icon: CheckCircle2, tone: "text-emerald-700" },
+    { label: "ناموفق", detail: "نیازمند بررسی", value: "failed", count: summary.failed, icon: AlertTriangle, tone: summary.failed ? "text-rose-700" : "text-slate-500" }
+  ];
 
   return (
     <AuthGate>
       <AppShell>
         <WorkspacePage>
-          <WorkspaceHero
-            eyebrow="Publishing Health"
-            title="سلامت انتشار"
-            description="هر تلاش انتشار را به‌صورت مرحله‌ای ببینید: شروع، آماده‌سازی متن یا رسانه، آپلود، ارسال و نتیجه نهایی."
-            actions={(
-              <>
-                <Button href="/queue" size="sm">صف انتشار</Button>
-                <Button href="/compose" variant="secondary" size="sm">استودیو تولید</Button>
-              </>
-            )}
-            meta={(
-              <>
-                <StatusToken tone="primary">{summary.total} تلاش</StatusToken>
-                <StatusToken tone={summary.failed ? "alert" : "success"}>{summary.failed ? `${summary.failed} ناموفق` : "بدون خطای فعال"}</StatusToken>
-                <StatusToken tone="success">{successRate}% موفقیت</StatusToken>
-              </>
-            )}
-            aside={(
+          <section className="rounded-md border border-app-border bg-white px-4 py-3">
+            <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-black uppercase tracking-[0.12em] text-app-primary">Delivery Monitor</p>
-                    <h2 className="mt-2 text-lg font-black text-app-text">{summary.failed ? "نیازمند رسیدگی" : "پایدار"}</h2>
-                    <p className="mt-1 text-xs leading-5 text-app-muted">آخرین تلاش‌ها، خطاها و payloadها برای عیب‌یابی انتشار.</p>
-                  </div>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
-                    <ListChecks className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded border border-blue-100 bg-white p-3">
-                    <p className="font-black text-app-text">{latestAttempt ? formatDateTime(latestAttempt.created_at) : "—"}</p>
-                    <p className="mt-1 text-app-muted">آخرین ثبت</p>
-                  </div>
-                  <div className="rounded border border-blue-100 bg-white p-3">
-                    <p className="font-black text-app-text">{summary.media}</p>
-                    <p className="mt-1 text-app-muted">رسانه‌ای</p>
-                  </div>
-                </div>
+                <p className="text-[10px] font-black text-app-primary">سلامت انتشار</p>
+                <h1 className="mt-1 text-xl font-black text-app-text">پایش تلاش‌های انتشار</h1>
+                <p className="mt-1 text-xs leading-5 text-app-muted">خطاها، مراحل ارسال و payloadهای فنی را در یک مسیر متمرکز بررسی کنید.</p>
               </div>
-            )}
-          />
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusToken tone={summary.failed ? "alert" : "success"}>{summary.failed ? `${summary.failed} خطای فعال` : "انتشار پایدار"}</StatusToken>
+                <StatusToken tone="success">{successRate}% موفقیت</StatusToken>
+                <StatusToken tone="neutral">{summary.media} رسانه‌ای</StatusToken>
+                <Button href="/queue" variant="secondary" size="sm">بازگشت به صف</Button>
+              </div>
+            </div>
+          </section>
 
-          <MetricStrip>
-            <MetricTile label="کل تلاش‌ها" value={summary.total} hint="در فیلتر وضعیت فعلی" tone="primary" icon={<ListChecks className="h-4 w-4" aria-hidden="true" />} />
-            <MetricTile label="موفق" value={summary.success} hint="انتشار کامل‌شده" tone="success" icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />} />
-            <MetricTile label="ناموفق" value={summary.failed} hint="نیازمند بررسی و بازیابی" tone={summary.failed ? "alert" : "neutral"} icon={<AlertTriangle className="h-4 w-4" aria-hidden="true" />} />
-            <MetricTile label="رسانه‌ای" value={summary.media} hint="تلاش دارای آپلود فایل" tone="info" icon={<FileUp className="h-4 w-4" aria-hidden="true" />} />
-          </MetricStrip>
+          <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-2 xl:grid-cols-4">
+            {healthSummary.map((item) => {
+              const Icon = item.icon;
+              const active = status === item.value;
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => applyStatus(item.value)}
+                  className={`flex min-w-0 items-start gap-3 border-b border-app-border p-3 text-right transition hover:bg-slate-50 sm:border-l sm:last:border-l-0 xl:border-b-0 ${
+                    active ? "bg-blue-50/60 ring-1 ring-inset ring-blue-200" : ""
+                  }`}
+                >
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${item.tone}`}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="flex items-baseline gap-2">
+                      <span className={`text-lg font-black ${item.tone}`}>{item.count}</span>
+                      <span className="truncate text-xs font-bold text-app-text">{item.label}</span>
+                    </span>
+                    <span className="mt-1 block truncate text-[11px] text-app-muted">{item.detail}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </section>
 
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
-            <div className="min-w-0 space-y-4">
-              <WorkspacePanel
-                title="مرکز پایش انتشار"
-                description="وضعیت، نوع تلاش و متن payload را برای بررسی سریع‌تر محدود کنید."
-              >
+            <div className="min-w-0">
+              <WorkspacePanel title="تلاش‌های انتشار" description="آخرین تلاش‌ها را اسکن کنید و جزئیات فنی را در بازرس کناری ببینید." bodyClassName="p-4">
                 <DataToolbar
                   meta={(
                     <>
@@ -365,42 +348,26 @@ export default function LogsPage() {
                     </>
                   )}
                 >
-                  <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+                  <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
                     <DataSearchField
                       value={searchTerm}
                       onChange={(event) => setSearchTerm(event.target.value)}
                       placeholder="جست‌وجوی عنوان، خطا، payload، file_id یا نوع تلاش"
                     />
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-2">
-                        {statusFilters.map(([value, label]) => (
-                          <FilterChip
-                            key={value}
-                            active={status === value}
-                            onClick={() => void applyStatus(value)}
-                          >
-                            {label}
-                          </FilterChip>
-                        ))}
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {modeFilters.map((filter) => (
-                          <FilterChip
-                            key={filter.value}
-                            active={modeFilter === filter.value}
-                            count={filter.value === "all" ? preparedAttempts.length : preparedAttempts.filter((item) => item.mode === filter.value).length}
-                            onClick={() => setModeFilter(filter.value)}
-                          >
-                            {filter.label}
-                          </FilterChip>
-                        ))}
-                      </div>
+                    <div className="flex flex-wrap gap-2">
+                      {modeFilters.map((filter) => (
+                        <FilterChip
+                          key={filter.value}
+                          active={modeFilter === filter.value}
+                          count={filter.value === "all" ? preparedAttempts.length : preparedAttempts.filter((item) => item.mode === filter.value).length}
+                          onClick={() => setModeFilter(filter.value)}
+                        >
+                          {filter.label}
+                        </FilterChip>
+                      ))}
                     </div>
                   </div>
                 </DataToolbar>
-              </WorkspacePanel>
-
-              <WorkspacePanel title="تلاش‌های انتشار" description="آخرین ۱۰۰ تلاش انتشار از جدیدترین به قدیمی‌ترین." bodyClassName="p-4">
                 <DataTable
                   columns={["تلاش", "وضعیت", "زمان", "عملیات"]}
                   gridClassName={logsHeaderGrid}
@@ -444,8 +411,7 @@ export default function LogsPage() {
                         </div>
 
                         <div className="flex flex-wrap gap-2 lg:justify-end">
-                          <Button type="button" variant={selected ? "primary" : "secondary"} size="sm" onClick={() => setSelectedAttemptId(attempt.id)}>جزئیات</Button>
-                          <Button href={`/compose?postId=${attempt.post_id}`} variant="secondary" size="sm">باز کردن پست</Button>
+                          <Button type="button" variant={selected ? "primary" : "secondary"} size="sm" onClick={() => setSelectedAttemptId(attempt.id)}>بازبینی</Button>
                         </div>
                       </DataRow>
                     );
@@ -533,32 +499,6 @@ export default function LogsPage() {
                 )}
               </WorkspacePanel>
 
-              <WorkspacePanel title="خطاهای اخیر" description="آخرین تلاش‌های ناموفق برای بازیابی سریع.">
-                {preparedAttempts.filter((item) => item.attempt.status === "failed").length === 0 ? (
-                  <EmptyState
-                    icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
-                    title="فعلاً خطای فعالی وجود ندارد"
-                    description="انتشارها در وضعیت پایدار هستند."
-                  />
-                ) : null}
-                <div className="space-y-2">
-                  {preparedAttempts.filter((item) => item.attempt.status === "failed").slice(0, 5).map((item) => (
-                    <button
-                      key={item.attempt.id}
-                      type="button"
-                      onClick={() => setSelectedAttemptId(item.attempt.id)}
-                      className="w-full rounded-md border border-app-border bg-white p-3 text-right transition hover:border-blue-200 hover:bg-blue-50"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={attemptTone(item.attempt.status)} />
-                        <span className="text-xs text-app-muted">{formatDateTime(item.attempt.finished_at || item.attempt.created_at)}</span>
-                      </div>
-                      <p className="mt-2 truncate text-sm font-black text-app-text">{item.attempt.post_title}</p>
-                      {item.attempt.error ? <p className="mt-1 line-clamp-2 text-xs leading-6 text-rose-600">{item.attempt.error}</p> : null}
-                    </button>
-                  ))}
-                </div>
-              </WorkspacePanel>
             </aside>
           </section>
         </WorkspacePage>
