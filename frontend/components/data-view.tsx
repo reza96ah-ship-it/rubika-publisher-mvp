@@ -52,7 +52,7 @@ export function FilterChip({ active, children, count, onClick }: FilterChipProps
     <button
       type="button"
       onClick={onClick}
-      className={`rounded px-3 py-1.5 text-xs font-bold transition ${
+      className={`app-interactive rounded px-3 py-1.5 text-xs font-bold ${
         active ? "bg-app-primary text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"
       }`}
     >
@@ -82,7 +82,7 @@ export function DataTable({ columns, gridClassName, children, loading, empty }: 
 export function DataRow({ children, gridClassName, selected, className = "" }: DataRowProps) {
   return (
     <article
-      className={`grid gap-4 px-4 py-4 transition hover:bg-slate-50 ${gridClassName} lg:items-start ${
+      className={`app-row grid gap-4 px-4 py-4 hover:bg-slate-50 ${gridClassName} lg:items-start ${
         selected ? "bg-blue-50/50 ring-1 ring-inset ring-blue-100" : ""
       } ${className}`}
     >

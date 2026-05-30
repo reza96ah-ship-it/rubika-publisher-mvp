@@ -36,3 +36,103 @@ a {
   background: #dbeafe;
   color: #172033;
 }
+
+@keyframes app-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes app-popover {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes app-progress-in {
+  from {
+    transform: scaleX(0.12);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes app-status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@layer utilities {
+  .app-enter {
+    animation: app-enter 240ms ease-out both;
+  }
+
+  .app-popover {
+    transform-origin: top left;
+    animation: app-popover 160ms ease-out both;
+  }
+
+  .app-interactive {
+    transition-duration: 180ms;
+    transition-property: background-color, border-color, box-shadow, color, opacity, transform;
+    transition-timing-function: ease-out;
+  }
+
+  .app-interactive:hover {
+    transform: translateY(-1px);
+  }
+
+  .app-interactive:active {
+    transform: translateY(0) scale(0.985);
+  }
+
+  .app-row {
+    transition-duration: 180ms;
+    transition-property: background-color, box-shadow, transform;
+    transition-timing-function: ease-out;
+  }
+
+  .app-row:hover {
+    transform: translateY(-1px);
+  }
+
+  .app-progress {
+    transform-origin: right center;
+    animation: app-progress-in 520ms ease-out both;
+  }
+
+  .app-status-pulse {
+    animation: app-status-pulse 1.8s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

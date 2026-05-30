@@ -66,7 +66,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <div className="flex min-w-0 items-center gap-2">
                 <Link
                   href="/content"
-                  className="hidden h-9 min-w-0 items-center gap-2 rounded-md border border-app-border bg-slate-50 px-3 text-xs text-app-muted transition hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary md:flex md:w-56 xl:w-72"
+                    className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md border border-app-border bg-slate-50 px-3 text-xs text-app-muted hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary md:flex md:w-56 xl:w-72"
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <span className="truncate">جست‌وجوی محتوا و کمپین</span>
@@ -74,7 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
                 <Link
                   href="/rubika"
-                  className={`hidden h-9 items-center gap-2 rounded-md border px-2.5 text-xs font-bold transition sm:flex ${
+                  className={`app-interactive hidden h-9 items-center gap-2 rounded-md border px-2.5 text-xs font-bold sm:flex ${
                     rubikaReady
                       ? "border-emerald-100 bg-emerald-50 text-emerald-700 hover:border-emerald-200"
                       : "border-amber-100 bg-amber-50 text-amber-700 hover:border-amber-200"
@@ -88,7 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {showSetupAction ? (
                   <Link
                     href={setupHref}
-                    className="hidden h-9 items-center gap-2 rounded-md border border-amber-200 bg-white px-2.5 text-xs font-bold text-amber-800 transition hover:bg-amber-50 lg:flex"
+                    className="app-interactive hidden h-9 items-center gap-2 rounded-md border border-amber-200 bg-white px-2.5 text-xs font-bold text-amber-800 hover:bg-amber-50 lg:flex"
                   >
                     <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
                     تکمیل آماده‌سازی
@@ -99,7 +99,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <button
                     type="button"
                     onClick={() => setAccountMenuOpen((current) => !current)}
-                    className="flex h-9 items-center gap-2 rounded-md border border-app-border bg-white px-2 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary"
+                    className="app-interactive flex h-9 items-center gap-2 rounded-md border border-app-border bg-white px-2 text-xs font-bold text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary"
                     aria-label="منوی حساب کاربری"
                     aria-expanded={accountMenuOpen}
                   >
@@ -111,24 +111,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </button>
 
                   {accountMenuOpen ? (
-                    <div className="absolute left-0 top-11 w-64 overflow-hidden rounded-md border border-app-border bg-white shadow-lg shadow-slate-200/70">
+                    <div className="app-popover absolute left-0 top-11 w-64 overflow-hidden rounded-md border border-app-border bg-white shadow-lg shadow-slate-200/70">
                       <div className="border-b border-app-border px-3 py-3">
                         <p className="text-xs font-black text-app-text">مدیر فضای کاری</p>
                         <p className="mt-1 truncate text-[11px] text-app-muted">{overview.store?.name || "Rubika Publisher"}</p>
                       </div>
                       <div className="p-1.5">
-                        <Link href="/store" className="flex items-center gap-2 rounded px-2.5 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50 hover:text-app-text">
+                        <Link href="/store" className="app-interactive flex items-center gap-2 rounded px-2.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-app-text">
                           <Settings2 className="h-3.5 w-3.5" aria-hidden="true" />
                           تنظیمات فضای کاری
                         </Link>
-                        <Link href="/rubika" className="flex items-center gap-2 rounded px-2.5 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50 hover:text-app-text">
+                        <Link href="/rubika" className="app-interactive flex items-center gap-2 rounded px-2.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-app-text">
                           <PlugZap className="h-3.5 w-3.5" aria-hidden="true" />
                           اتصال روبیکا
                         </Link>
                         <button
                           type="button"
                           onClick={logout}
-                          className="flex w-full items-center gap-2 rounded px-2.5 py-2 text-right text-xs font-bold text-rose-700 transition hover:bg-rose-50"
+                          className="app-interactive flex w-full items-center gap-2 rounded px-2.5 py-2 text-right text-xs font-bold text-rose-700 hover:bg-rose-50"
                         >
                           <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
                           خروج از حساب
@@ -140,7 +140,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </header>
-          <div className="p-4 pb-24 lg:p-5">{children}</div>
+          <div className="app-enter p-4 pb-24 lg:p-5">{children}</div>
           <MobileNav />
         </section>
       </div>

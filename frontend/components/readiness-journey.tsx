@@ -63,7 +63,7 @@ export function ReadinessJourney({ store, rubika, posts, loading = false }: Read
               <span>{progress}%</span>
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
-              <div className={`h-full rounded-full ${isReady ? "bg-emerald-500" : "bg-amber-500"} transition-all`} style={{ width: `${progress}%` }} />
+              <div className={`app-progress h-full rounded-full ${isReady ? "bg-emerald-500" : "bg-amber-500"} transition-all`} style={{ width: `${progress}%` }} />
             </div>
             <p className="mt-3 text-xs leading-5 text-app-muted">{completedCount} از {steps.length} مرحله تکمیل شده است.</p>
           </div>
@@ -85,7 +85,7 @@ export function ReadinessJourney({ store, rubika, posts, loading = false }: Read
             <Link
               key={step.key}
               href={step.href}
-              className={`group flex min-h-[76px] items-center gap-3 px-3 py-3 transition ${
+              className={`app-row group flex min-h-[76px] items-center gap-3 px-3 py-3 ${
                 step.done
                   ? "bg-emerald-50/50 hover:bg-emerald-50"
                   : "bg-white hover:bg-blue-50/50"

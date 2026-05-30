@@ -100,7 +100,7 @@ function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
   return (
     <Link
       href={item.href}
-      className={`group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition ${
+      className={`app-interactive group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm ${
         active
           ? "bg-blue-50 font-black text-app-primary"
           : "text-slate-600 hover:bg-slate-50 hover:text-app-text"
@@ -130,7 +130,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false }: Side
 
         <Link
           href="/store"
-          className="mt-3 flex items-center gap-2 rounded-md border border-app-border bg-slate-50 px-2.5 py-2 transition hover:border-blue-200 hover:bg-blue-50"
+          className="app-interactive mt-3 flex items-center gap-2 rounded-md border border-app-border bg-slate-50 px-2.5 py-2 hover:border-blue-200 hover:bg-blue-50"
         >
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-white text-slate-500 ring-1 ring-app-border">
             <Store className="h-3.5 w-3.5" aria-hidden="true" />
@@ -144,7 +144,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false }: Side
 
         <Link
           href="/compose"
-          className="mt-3 flex items-center justify-center gap-2 rounded-md bg-app-primary px-3 py-2.5 text-sm font-black text-white transition hover:bg-app-primaryHover"
+          className="app-interactive mt-3 flex items-center justify-center gap-2 rounded-md bg-app-primary px-3 py-2.5 text-sm font-black text-white hover:bg-app-primaryHover"
         >
           <PenLine className="h-4 w-4" aria-hidden="true" />
           ایجاد پست جدید
@@ -175,10 +175,10 @@ export function Sidebar({ storeName = "فضای کاری", ready = false }: Side
         <div className="space-y-0.5">
           {settingsNavItems.map((item) => <NavEntry key={item.href} item={item} active={isActiveRoute(pathname, item.href)} />)}
         </div>
-        <Link href="/rubika" className={`mt-3 flex items-center gap-2 rounded-md border px-2.5 py-2 text-xs font-bold ${
+        <Link href="/rubika" className={`app-interactive mt-3 flex items-center gap-2 rounded-md border px-2.5 py-2 text-xs font-bold ${
           ready ? "border-emerald-100 bg-emerald-50 text-emerald-700" : "border-amber-100 bg-amber-50 text-amber-700"
         }`}>
-          <span className={`h-2 w-2 rounded-full ${ready ? "bg-emerald-500" : "bg-amber-500"}`} />
+          <span className={`h-2 w-2 rounded-full ${ready ? "bg-emerald-500" : "app-status-pulse bg-amber-500"}`} />
           {ready ? "فضای کاری آماده انتشار" : "تکمیل آماده‌سازی"}
         </Link>
       </div>
@@ -208,7 +208,7 @@ export function MobileNav() {
             key={item.href}
             href={item.href}
             aria-label={item.label}
-            className={`flex min-w-0 flex-col items-center gap-1 text-[10px] font-bold transition ${
+            className={`app-interactive flex min-w-0 flex-col items-center gap-1 text-[10px] font-bold ${
               isCompose ? "-mt-5 text-app-primary" : active ? "text-app-primary" : "text-slate-500"
             }`}
           >
