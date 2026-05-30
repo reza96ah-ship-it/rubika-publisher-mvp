@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getJalaliMonthLength, getJalaliMonthStartOffset, getJalaliPickerParts, jalaliMonthNames, jalaliPickerPartsToIso, persianWeekdays, type JalaliPickerParts } from "../lib/jalali-picker";
 import { Button } from "./ui/button";
 
@@ -32,6 +32,10 @@ export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: Compo
   const monthLength = getJalaliMonthLength(draft.year, draft.month);
   const startOffset = getJalaliMonthStartOffset(draft.year, draft.month);
   const dayCells = useMemo(() => [...Array.from({ length: startOffset }, () => null), ...Array.from({ length: monthLength }, (_, index) => index + 1)], [monthLength, startOffset]);
+
+  useEffect(() => {
+    setDraft(getJalaliPickerParts(scheduledAt, scheduleTimezone));
+  }, [scheduleTimezone, scheduledAt]);
 
   function emit(next: JalaliPickerParts) {
     setDraft(next);

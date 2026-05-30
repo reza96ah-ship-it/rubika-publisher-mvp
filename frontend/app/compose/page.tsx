@@ -80,6 +80,7 @@ function formatScheduledAt(value: string | null) {
 function ComposePageContent() {
   const searchParams = useSearchParams();
   const editingPostId = searchParams.get("postId");
+  const presetScheduledAt = searchParams.get("scheduledAt");
   const isEditing = Boolean(editingPostId);
 
   const [store, setStore] = useState<StoreProfile | null>(null);
@@ -223,12 +224,12 @@ function ComposePageContent() {
       setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
     } else {
       setEditingPost(null);
-      setForm(emptyForm);
+      setForm({ ...emptyForm, scheduled_at: presetScheduledAt });
       setSelectedMediaId("");
     }
 
     setLoading(false);
-  }, [editingPostId]);
+  }, [editingPostId, presetScheduledAt]);
 
   useEffect(() => {
     loadData().catch((err) => {
@@ -320,7 +321,7 @@ function ComposePageContent() {
       const attachedAsset = mediaAssets.find((asset) => asset.post_id === editingPost.id);
       setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
     } else {
-      setForm(emptyForm);
+      setForm({ ...emptyForm, scheduled_at: presetScheduledAt });
       setSelectedMediaId("");
     }
 
