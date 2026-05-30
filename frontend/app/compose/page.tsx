@@ -2,20 +2,11 @@
 
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  CalendarClock,
-  ClipboardCheck,
-  GalleryHorizontalEnd,
-  ImagePlus,
-  MessageSquareText,
-  Send,
-  ShieldCheck
-} from "lucide-react";
+import { ImagePlus, Send } from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ComposerActionFooter } from "../../components/composer-action-footer";
 import { ComposerReadinessChecks } from "../../components/composer-readiness-checks";
-import { ComposerStepRail, type ComposerStep } from "../../components/composer-step-rail";
 import { RubikaPostPreview } from "../../components/rubika-post-preview";
 import { MediaGalleryPicker } from "../../components/media-gallery-picker";
 import { ComposerSchedulePanel } from "../../components/composer-schedule-panel";
@@ -23,7 +14,7 @@ import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
 import { Field, Input, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
-import { DetailGrid, MetricStrip, MetricTile, NoticeBanner, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { isRubikaConnected, loadWorkspaceOverview, type RubikaSettings, type StoreProfile } from "../../lib/workspace";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -62,20 +53,6 @@ const emptyForm = {
   internal_note: "",
   scheduled_at: null as string | null
 };
-
-function formatScheduledAt(value: string | null) {
-  if (!value) return "زمان انتشار انتخاب نشده";
-
-  try {
-    return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-      dateStyle: "medium",
-      timeStyle: "short",
-      timeZone: scheduleTimezone
-    }).format(new Date(value));
-  } catch {
-    return value;
-  }
-}
 
 function ComposePageContent() {
   const searchParams = useSearchParams();
@@ -121,33 +98,6 @@ function ComposePageContent() {
   const canSaveDraft = hasTitle;
   const canMarkReady = hasTitle && hasPostBody && canMoveToReady;
   const canSchedule = canMarkReady && hasSchedule && rubikaReady;
-  const activeStep = !hasTitle && !hasPostBody ? "media" : !canMarkReady ? "text" : !hasSchedule ? "schedule" : "review";
-  const workflowSteps: ComposerStep[] = [
-    {
-      label: "رسانه",
-      helper: previewImageUrl ? "تصویر پست انتخاب شده" : "پست بدون تصویر هم قابل ذخیره است",
-      icon: ImagePlus,
-      state: previewImageUrl ? "done" : activeStep === "media" ? "active" : "pending"
-    },
-    {
-      label: "متن",
-      helper: canMarkReady ? "عنوان و محتوای پست آماده است" : "عنوان و کپشن یا رسانه را کامل کنید",
-      icon: MessageSquareText,
-      state: canMarkReady ? "done" : activeStep === "text" ? "active" : "pending"
-    },
-    {
-      label: "زمان‌بندی",
-      helper: hasSchedule ? "زمان انتشار انتخاب شده" : "برای صف انتشار یک زمان انتخاب کنید",
-      icon: CalendarClock,
-      state: hasSchedule ? "done" : activeStep === "schedule" ? "active" : "pending"
-    },
-    {
-      label: "بررسی",
-      helper: canSchedule ? "آماده ورود به صف انتشار" : "وضعیت نهایی را بررسی کنید",
-      icon: ClipboardCheck,
-      state: canSchedule ? "done" : activeStep === "review" ? "active" : "pending"
-    }
-  ];
   const readinessItems = [
     {
       label: "عنوان داخلی",
@@ -177,8 +127,6 @@ function ComposePageContent() {
   const readinessScore = Math.round((readinessDoneCount / readinessItems.length) * 100);
   const publishTone = canSchedule ? "success" : canMarkReady ? "primary" : "warning";
   const publishStateLabel = canSchedule ? "آماده زمان‌بندی" : canMarkReady ? "آماده بازبینی" : "در حال تولید";
-  const selectedAssetLabel = selectedFile?.name || selectedMedia?.original_filename || "بدون رسانه";
-  const scheduleLabel = formatScheduledAt(form.scheduled_at);
 
   function token() {
     return window.localStorage.getItem("rubika_publisher_access") ?? "";
@@ -490,133 +438,26 @@ function ComposePageContent() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-4">
-          <WorkspaceHero
-            eyebrow="Publishing Studio"
-            title={isEditing ? "استودیوی ویرایش پست" : "استودیوی تولید پست روبیکا"}
-            description="متن، رسانه، زمان انتشار و بررسی نهایی در یک مسیر حرفه‌ای کنترل می‌شوند تا پست قبل از ورود به صف وضعیت روشن داشته باشد."
-            actions={(
-              <>
-                <Button href="/content" variant="secondary" size="sm">کتابخانه محتوا</Button>
-                <Button href="/queue" variant="secondary" size="sm">صف انتشار</Button>
-              </>
-            )}
-            meta={(
-              <>
+          <section className="rounded-md border border-app-border bg-white px-4 py-3">
+            <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+              <div>
+                <p className="text-[10px] font-black text-app-primary">استودیوی انتشار</p>
+                <h1 className="mt-1 text-xl font-black text-app-text">{isEditing ? "ویرایش پست روبیکا" : "پست جدید روبیکا"}</h1>
+                <p className="mt-1 text-xs leading-5 text-app-muted">محتوا را کامل کنید، خروجی را ببینید و زمان انتشار را از یک مسیر متمرکز تنظیم کنید.</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
                 <StatusToken tone={publishTone} className="gap-1">
                   <Send className="h-3.5 w-3.5" aria-hidden="true" />
                   {publishStateLabel}
                 </StatusToken>
-                {isEditing ? <StatusToken tone="neutral">ویرایش پست #{editingPostId}</StatusToken> : <StatusToken tone="neutral">پست جدید</StatusToken>}
                 <StatusToken tone={rubikaReady ? "success" : "warning"}>{rubikaReady ? "روبیکا متصل" : "اتصال روبیکا لازم است"}</StatusToken>
                 {editingPost?.status ? <StatusBadge status={editingPost.status} /> : null}
-              </>
-            )}
-            aside={(
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-black uppercase tracking-[0.12em] text-app-primary">Quality Gate</p>
-                    <h2 className="mt-2 text-lg font-black text-app-text">کنترل قبل از صف</h2>
-                    <p className="mt-1 text-xs leading-5 text-app-muted">وضعیت انتشار، اتصال و زمان‌بندی قبل از ذخیره نهایی.</p>
-                  </div>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
-                    <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                </div>
-                <div className="mt-5 h-2 overflow-hidden rounded-full bg-white">
-                  <div className={`h-full rounded-full ${canSchedule ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${readinessScore}%` }} />
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded border border-blue-100 bg-white p-3">
-                    <p className="font-black text-app-text">{readinessDoneCount}/{readinessItems.length}</p>
-                    <p className="mt-1 text-app-muted">چک آماده</p>
-                  </div>
-                  <div className="rounded border border-blue-100 bg-white p-3">
-                    <p className="font-black text-app-text">{rubikaReady ? "متصل" : "نیازمند اتصال"}</p>
-                    <p className="mt-1 text-app-muted">روبیکا</p>
-                  </div>
-                </div>
+                <Button href="/calendar" variant="secondary" size="sm">بازگشت به پلنر</Button>
               </div>
-            )}
-          />
+            </div>
+          </section>
 
-          <MetricStrip>
-            <MetricTile
-              label="آمادگی انتشار"
-              value={`${readinessScore}%`}
-              hint={`${readinessDoneCount} از ${readinessItems.length} کنترل آماده است`}
-              tone={publishTone}
-              icon={<ClipboardCheck className="h-4 w-4" aria-hidden="true" />}
-            />
-            <MetricTile
-              label="رسانه"
-              value={previewImageUrl ? "انتخاب شده" : "بدون رسانه"}
-              hint={selectedAssetLabel}
-              tone={previewImageUrl ? "success" : "warning"}
-              icon={<GalleryHorizontalEnd className="h-4 w-4" aria-hidden="true" />}
-            />
-            <MetricTile
-              label="کپشن"
-              value={`${captionLength}`}
-              hint={`${hashtagCount} هشتگ شناسایی شد`}
-              tone={form.caption ? "primary" : "neutral"}
-              icon={<MessageSquareText className="h-4 w-4" aria-hidden="true" />}
-            />
-            <MetricTile
-              label="زمان انتشار"
-              value={hasSchedule ? "تنظیم شده" : "نامشخص"}
-              hint={scheduleLabel}
-              tone={hasSchedule ? "success" : "warning"}
-              icon={<CalendarClock className="h-4 w-4" aria-hidden="true" />}
-            />
-          </MetricStrip>
-
-          <form onSubmit={saveDraft} className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)_390px]">
-            <aside className="space-y-4">
-              <ComposerStepRail steps={workflowSteps} />
-
-              <WorkspacePanel
-                title="رسانه"
-                description="آپلود مستقیم یا انتخاب از کتابخانه رسانه."
-                action={<Tag tone={previewImageUrl ? "success" : "warning"}>{previewImageUrl ? "انتخاب شده" : "خالی"}</Tag>}
-                bodyClassName="space-y-3 p-3"
-              >
-                  <label className="block cursor-pointer rounded-md border border-dashed border-app-border bg-slate-50 p-3 transition hover:border-slate-400">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={(event) => {
-                        setSelectedFile(event.target.files?.[0] ?? null);
-                        if (event.target.files?.[0]) setSelectedMediaId("");
-                        if (message) setMessage("");
-                      }}
-                      className="sr-only"
-                    />
-                    <span className="flex items-center gap-2 text-sm font-black text-app-text">
-                      <ImagePlus className="h-4 w-4" aria-hidden="true" />
-                      آپلود تصویر
-                    </span>
-                    <span className="mt-1 block text-xs leading-5 text-app-muted">JPEG، PNG یا WEBP</span>
-                  </label>
-
-                  {selectedFilePreviewUrl ? (
-                    <img src={selectedFilePreviewUrl} alt="پیش‌نمایش فایل انتخاب‌شده" className="aspect-video w-full rounded-md object-cover ring-1 ring-app-border" />
-                  ) : null}
-
-                  <MediaGalleryPicker
-                    assets={mediaAssets}
-                    previewUrls={mediaPreviewUrls}
-                    selectedMediaId={selectedMediaId}
-                    loading={loading}
-                    onSelect={(assetId) => {
-                      setSelectedMediaId(assetId);
-                      if (assetId) setSelectedFile(null);
-                      if (message) setMessage("");
-                    }}
-                  />
-              </WorkspacePanel>
-            </aside>
-
+          <form onSubmit={saveDraft} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
             <section className="min-w-0 space-y-4">
               <WorkspacePanel
                 title="بوم تولید محتوا"
@@ -680,17 +521,43 @@ function ComposePageContent() {
               </WorkspacePanel>
 
               <WorkspacePanel
-                title="استاندارد محتوا"
-                description="کنترل‌های ضروری برای ذخیره، آماده‌سازی و زمان‌بندی."
-                action={<StatusToken tone={publishTone}>{publishStateLabel}</StatusToken>}
+                title="رسانه"
+                description="یک تصویر تازه آپلود کنید یا از کتابخانه رسانه انتخاب کنید."
+                action={<Tag tone={previewImageUrl ? "success" : "warning"}>{previewImageUrl ? "انتخاب شده" : "بدون رسانه"}</Tag>}
+                bodyClassName="grid gap-3 p-3 lg:grid-cols-[220px_minmax(0,1fr)]"
               >
-                <DetailGrid
-                  items={[
-                    { label: "مقصد", value: store?.name || "کانال روبیکا", hint: "محل انتشار نهایی" },
-                    { label: "عنوان", value: hasTitle ? "ثبت شده" : "لازم است", hint: hasTitle ? "برای مدیریت داخلی آماده است" : "برای ذخیره پست لازم است" },
-                    { label: "بدنه پست", value: hasPostBody ? "قابل انتشار" : "ناقص", hint: "کپشن یا رسانه باید تکمیل شود" },
-                    { label: "فوتر فروشگاه", value: store?.caption_footer ? "فعال" : "تعریف نشده", hint: "در پیش‌نمایش خروجی اعمال می‌شود" }
-                  ]}
+                <div className="space-y-3">
+                  <label className="block cursor-pointer rounded-md border border-dashed border-app-border bg-slate-50 p-3 transition hover:border-slate-400">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) => {
+                        setSelectedFile(event.target.files?.[0] ?? null);
+                        if (event.target.files?.[0]) setSelectedMediaId("");
+                        if (message) setMessage("");
+                      }}
+                      className="sr-only"
+                    />
+                    <span className="flex items-center gap-2 text-sm font-black text-app-text">
+                      <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                      آپلود تصویر
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-app-muted">JPEG، PNG یا WEBP</span>
+                  </label>
+                  {selectedFilePreviewUrl ? (
+                    <img src={selectedFilePreviewUrl} alt="پیش‌نمایش فایل انتخاب‌شده" className="aspect-video w-full rounded-md object-cover ring-1 ring-app-border" />
+                  ) : null}
+                </div>
+                <MediaGalleryPicker
+                  assets={mediaAssets}
+                  previewUrls={mediaPreviewUrls}
+                  selectedMediaId={selectedMediaId}
+                  loading={loading}
+                  onSelect={(assetId) => {
+                    setSelectedMediaId(assetId);
+                    if (assetId) setSelectedFile(null);
+                    if (message) setMessage("");
+                  }}
                 />
               </WorkspacePanel>
 
@@ -732,7 +599,7 @@ function ComposePageContent() {
               </div>
             </aside>
 
-            <div className="xl:col-span-3">
+            <div className="xl:col-span-2">
               <ComposerActionFooter
                 savingAction={savingAction}
                 canSaveDraft={canSaveDraft}

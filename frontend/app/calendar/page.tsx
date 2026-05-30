@@ -15,12 +15,13 @@ import {
   Rows3
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { CountdownBadge } from "../../components/countdown-badge";
 import { DataSearchField } from "../../components/data-view";
 import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
+import { PlannerComposerDrawer } from "../../components/planner-composer-drawer";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, InspectorPanel, NoticeBanner, StatusToken, WorkspacePage } from "../../components/workspace-ui";
@@ -168,11 +169,6 @@ function visibleCalendarText(post: Post) {
   return [post.title, post.caption, post.hashtags, post.campaign, post.internal_note, post.last_error].filter(Boolean).join(" ").toLowerCase();
 }
 
-function createPostHref(value: string) {
-  const scheduledAt = jalaliDateToIsoAtTime(value, 9, 0) ?? value;
-  return `/compose?scheduledAt=${encodeURIComponent(scheduledAt)}`;
-}
-
 export default function CalendarPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [statusFilter, setStatusFilter] = useState<CalendarFilter>("all");
@@ -184,29 +180,32 @@ export default function CalendarPage() {
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [quickCreateAt, setQuickCreateAt] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadPosts() {
-      const response = await fetch(`${apiUrl}/posts`, { headers: authHeaders() });
-      if (!response.ok) throw new Error("دریافت تقویم انتشار ناموفق بود");
-      const data: Post[] = await response.json();
-      const sorted = sortByScheduleAsc(data.filter(isCalendarPost));
-      const upcoming = sorted.find((post) => {
-        const time = dateTime(post.scheduled_at);
-        return time !== null && time >= Date.now() && ["scheduled", "publishing"].includes(post.status);
-      });
-      setPosts(data);
+  const loadPosts = useCallback(async (preservePlannerState = false) => {
+    const response = await fetch(`${apiUrl}/posts`, { headers: authHeaders() });
+    if (!response.ok) throw new Error("دریافت تقویم انتشار ناموفق بود");
+    const data: Post[] = await response.json();
+    const sorted = sortByScheduleAsc(data.filter(isCalendarPost));
+    const upcoming = sorted.find((post) => {
+      const time = dateTime(post.scheduled_at);
+      return time !== null && time >= Date.now() && ["scheduled", "publishing"].includes(post.status);
+    });
+    setPosts(data);
+    if (!preservePlannerState) {
       setMonthAnchor(upcoming?.scheduled_at ?? sorted[0]?.scheduled_at ?? new Date().toISOString());
       setSelectedDayKey(upcoming?.scheduled_at ? jalaliDateKey(upcoming.scheduled_at) : sorted[0]?.scheduled_at ? jalaliDateKey(sorted[0].scheduled_at) : jalaliDateKey(new Date().toISOString()));
       setSelectedPostId(upcoming?.id ?? sorted[0]?.id ?? null);
-      setLoading(false);
     }
+    setLoading(false);
+  }, []);
 
+  useEffect(() => {
     loadPosts().catch((err) => {
       setError(err instanceof Error ? err.message : "خطا در دریافت تقویم انتشار");
       setLoading(false);
     });
-  }, []);
+  }, [loadPosts]);
 
   const calendarPosts = useMemo(() => sortByScheduleAsc(posts.filter(isCalendarPost)), [posts]);
   const filteredPosts = useMemo(() => {
@@ -250,7 +249,6 @@ export default function CalendarPage() {
   const selectedDay = [...monthDays, ...activeWeekDays].find((day) => day.key === activeDayKey) ?? null;
   const selectedDayValue = selectedDay?.date ?? monthAnchor;
   const selectedDayLabel = formatJalaliDate(selectedDayValue);
-  const selectedDayCreateHref = createPostHref(selectedDayValue);
   const publishedCount = calendarPosts.filter((post) => post.status === "published").length;
   const scheduledCount = calendarPosts.filter((post) => post.status === "scheduled").length;
   const failedCount = calendarPosts.filter((post) => post.status === "failed").length;
@@ -281,6 +279,10 @@ export default function CalendarPage() {
     setMonthAnchor(today);
     setSelectedDayKey(jalaliDateKey(today));
     setSelectedPostId(null);
+  }
+
+  function openQuickCreate(value: string) {
+    setQuickCreateAt(jalaliDateToIsoAtTime(value, 9, 0) ?? value);
   }
 
   function renderPostChip(post: Post, compact = false) {
@@ -413,7 +415,7 @@ export default function CalendarPage() {
                       );
                     })}
                   </div>
-                  <Button href={selectedDayCreateHref} size="sm">
+                  <Button type="button" onClick={() => openQuickCreate(selectedDayValue)} size="sm">
                     <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
                     پست جدید در {selectedDayLabel}
                   </Button>
@@ -450,15 +452,18 @@ export default function CalendarPage() {
                                   </span>
                                   <div className="flex items-center gap-1">
                                     {dayPosts.length > 0 ? <span className="text-[10px] font-bold text-app-muted">{dayPosts.length} پست</span> : null}
-                                    <Link
-                                      href={createPostHref(day.date)}
-                                      onClick={(event) => event.stopPropagation()}
+                                    <button
+                                      type="button"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        openQuickCreate(day.date);
+                                      }}
                                       className="flex h-6 w-6 items-center justify-center rounded text-slate-400 transition hover:bg-blue-100 hover:text-app-primary"
                                       aria-label={`افزودن پست در ${formatJalaliDate(day.date)}`}
                                       title="افزودن پست در این روز"
                                     >
                                       <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                                    </Link>
+                                    </button>
                                   </div>
                                 </div>
                                 <div className="space-y-1.5" onClick={(event) => event.stopPropagation()}>
@@ -517,7 +522,7 @@ export default function CalendarPage() {
                     icon={<CalendarDays className="h-5 w-5" aria-hidden="true" />}
                     title="پستی برای این فیلتر وجود ندارد"
                     description="فیلتر را تغییر دهید یا برای روز انتخاب‌شده یک پست جدید بسازید."
-                    action={<Button href={selectedDayCreateHref}>ایجاد پست زمان‌بندی‌شده</Button>}
+                    action={<Button type="button" onClick={() => openQuickCreate(selectedDayValue)}>ایجاد پست زمان‌بندی‌شده</Button>}
                   />
                 </div>
               ) : null}
@@ -528,7 +533,7 @@ export default function CalendarPage() {
                 title="برنامه روز"
                 description={`${selectedDayLabel} · ${selectedDayPosts.length} پست`}
                 footer={(
-                  <Button href={selectedDayCreateHref} className="w-full" size="sm">
+                  <Button type="button" onClick={() => openQuickCreate(selectedDayValue)} className="w-full" size="sm">
                     <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
                     افزودن پست در این روز
                   </Button>
@@ -610,6 +615,7 @@ export default function CalendarPage() {
               </InspectorPanel>
             </div>
           </section>
+          <PlannerComposerDrawer scheduledAt={quickCreateAt} onClose={() => setQuickCreateAt(null)} onCreated={() => loadPosts(true)} />
         </WorkspacePage>
       </AppShell>
     </AuthGate>

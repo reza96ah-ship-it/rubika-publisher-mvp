@@ -31,18 +31,13 @@ export function ComposerActionFooter({
   const saving = Boolean(savingAction);
 
   return (
-    <div className="sticky bottom-4 z-10 mt-5 rounded-md border border-blue-100 bg-white/95 p-2 shadow-[0_18px_45px_rgba(37,99,235,0.12)] backdrop-blur">
+    <div className="sticky bottom-4 z-10 mt-5 rounded-md border border-app-border bg-white/95 px-3 py-2.5 shadow-lg shadow-slate-200/70 backdrop-blur">
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-        <div className="flex min-w-0 items-start gap-3 rounded bg-blue-50/70 px-3 py-2.5">
-          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded border border-blue-100 bg-white text-app-primary">
-            <CalendarCheck className="h-4 w-4" aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-sm font-black text-app-text">مرکز فرمان انتشار</p>
-            <p className="mt-1 text-xs leading-6 text-app-muted">
-            {hasSchedule ? "زمان انتشار انتخاب شده؛ می‌توانید پست را مستقیم وارد صف زمان‌بندی کنید." : "برای انتشار خودکار، ابتدا زمان انتشار را انتخاب کنید."}
-            </p>
-          </div>
+        <div className="min-w-0">
+          <p className="text-sm font-black text-app-text">{hasSchedule ? "آماده بررسی و ورود به صف" : "زمان انتشار هنوز انتخاب نشده است"}</p>
+          <p className="mt-1 text-xs leading-5 text-app-muted">
+            {hasSchedule ? "پیش‌نمایش و کنترل‌های نهایی را بررسی کنید." : "برای انتشار خودکار، تاریخ و ساعت را از ستون کناری تنظیم کنید."}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2 xl:justify-end">
           <Button type="button" variant="secondary" size="sm" onClick={onUseDefaults} disabled={saving}>
