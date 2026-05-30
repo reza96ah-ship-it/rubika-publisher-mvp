@@ -116,8 +116,8 @@ export function Sidebar({ storeName = "فضای کاری", ready = false }: Side
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-[232px] shrink-0 border-l border-app-border bg-white lg:flex lg:min-h-screen lg:flex-col">
-      <div className="border-b border-app-border px-3 py-3">
+    <aside className="hidden w-[232px] shrink-0 border-l border-app-border bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:self-start lg:flex-col lg:overflow-hidden">
+      <div className="shrink-0 border-b border-app-border px-3 py-3">
         <Link href="/" className="flex items-center gap-2.5 rounded-md px-1 py-1">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-primary text-[10px] font-black text-white">
             RP
@@ -167,7 +167,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false }: Side
         ))}
       </nav>
 
-      <div className="border-t border-app-border p-3">
+      <div className="shrink-0 border-t border-app-border p-3">
         <div className="mb-2 flex items-center justify-between px-2.5">
           <p className="text-[10px] font-black text-slate-400">تنظیمات</p>
           <Settings2 className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
