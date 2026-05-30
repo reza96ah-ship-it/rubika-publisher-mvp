@@ -9,7 +9,7 @@ import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "..
 import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
-import { DetailGrid, EmptyState, MetricStrip, MetricTile, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
 
 type QueueFilter = "all" | "ready" | "scheduled" | "publishing" | "failed";
@@ -29,8 +29,8 @@ const queuePriority: Record<string, number> = {
   scheduled: 2,
   ready: 3
 };
-const queueHeaderGrid = "grid-cols-[minmax(0,1.4fr)_140px_160px_220px]";
-const queueRowGrid = "lg:grid-cols-[minmax(0,1.4fr)_140px_160px_220px]";
+const queueHeaderGrid = "grid-cols-[minmax(0,1.4fr)_140px_170px_100px]";
+const queueRowGrid = "lg:grid-cols-[minmax(0,1.4fr)_140px_170px_100px]";
 
 function scheduleTime(post: Post) {
   const date = post.scheduled_at ? new Date(post.scheduled_at) : null;
@@ -131,41 +131,40 @@ export default function QueuePage() {
     return posts.find((post) => post.status === "scheduled" && scheduleTime(post) >= now);
   }, [posts]);
 
-  const failedPosts = posts.filter((post) => post.status === "failed").slice(0, 4);
   const selectedPost = selectedPostId ? posts.find((post) => post.id === selectedPostId) ?? filteredPosts[0] ?? null : filteredPosts[0] ?? posts[0] ?? null;
   const filterCount = (filter: QueueFilter) => filter === "all" ? posts.length : counts[filter];
-  const laneGroups = [
+  const queueSummary = [
     {
-      title: "بازیابی خطا",
-      description: "اولویت اول برای رفع مانع انتشار",
-      status: "failed",
-      count: counts.failed,
-      tone: "alert" as const,
-      posts: posts.filter((post) => post.status === "failed").slice(0, 2)
-    },
-    {
-      title: "در حال ارسال",
-      description: "پست‌هایی که worker درگیر آن‌هاست",
-      status: "publishing",
-      count: counts.publishing,
-      tone: "info" as const,
-      posts: posts.filter((post) => post.status === "publishing").slice(0, 2)
-    },
-    {
-      title: "برنامه انتشار",
-      description: "دارای زمان و آماده ورود به worker",
-      status: "scheduled",
-      count: counts.scheduled,
-      tone: "warning" as const,
-      posts: posts.filter((post) => post.status === "scheduled").slice(0, 2)
-    },
-    {
-      title: "آماده زمان‌بندی",
-      description: "نیازمند انتخاب زمان انتشار",
-      status: "ready",
+      label: "آماده",
+      detail: "منتظر انتخاب زمان",
+      status: "ready" as const,
       count: counts.ready,
-      tone: "primary" as const,
-      posts: posts.filter((post) => post.status === "ready").slice(0, 2)
+      icon: CheckCircle2,
+      tone: "text-app-primary"
+    },
+    {
+      label: "زمان‌بندی‌شده",
+      detail: "داخل برنامه انتشار",
+      status: "scheduled" as const,
+      count: counts.scheduled,
+      icon: CalendarClock,
+      tone: "text-amber-700"
+    },
+    {
+      label: "در حال انتشار",
+      detail: "در اختیار worker",
+      status: "publishing" as const,
+      count: counts.publishing,
+      icon: TimerReset,
+      tone: "text-sky-700"
+    },
+    {
+      label: "ناموفق",
+      detail: "نیازمند بازیابی",
+      status: "failed" as const,
+      count: counts.failed,
+      icon: AlertTriangle,
+      tone: counts.failed ? "text-rose-700" : "text-slate-500"
     }
   ];
 
@@ -192,56 +191,38 @@ export default function QueuePage() {
           {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
           {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
 
-          <MetricStrip>
-            <MetricTile label="آماده" value={counts.ready} hint="منتظر انتخاب زمان انتشار" tone="primary" icon={<CheckCircle2 className="h-4 w-4" />} />
-            <MetricTile label="زمان‌بندی‌شده" value={counts.scheduled} hint="داخل برنامه انتشار" tone="warning" icon={<CalendarClock className="h-4 w-4" />} />
-            <MetricTile label="در حال انتشار" value={counts.publishing} hint="رزرو شده برای ارسال" tone="info" icon={<TimerReset className="h-4 w-4" />} />
-            <MetricTile label="ناموفق" value={counts.failed} hint="نیازمند تلاش مجدد یا اصلاح" tone={counts.failed ? "alert" : "neutral"} icon={<AlertTriangle className="h-4 w-4" />} />
-          </MetricStrip>
-
-          <WorkspacePanel
-            title="تابلوی وضعیت صف"
-            description="نمای کانبان فشرده برای فهم سریع گلوگاه‌ها قبل از ورود به جدول عملیات."
-            action={<StatusToken tone={counts.failed ? "alert" : "success"}>{counts.failed ? "رسیدگی لازم" : "صف پایدار"}</StatusToken>}
-          >
-            <div className="grid gap-3 lg:grid-cols-4">
-              {laneGroups.map((lane) => (
-                <div key={lane.status} className="rounded-md border border-app-border bg-slate-50 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-black text-app-text">{lane.title}</p>
-                      <p className="mt-1 text-xs leading-5 text-app-muted">{lane.description}</p>
-                    </div>
-                    <StatusToken tone={lane.tone}>{lane.count}</StatusToken>
-                  </div>
-                  <div className="mt-3 space-y-2">
-                    {lane.posts.length === 0 ? (
-                      <p className="rounded border border-dashed border-app-border bg-white px-3 py-2 text-xs text-app-muted">موردی در این مسیر نیست.</p>
-                    ) : null}
-                    {lane.posts.map((post) => (
-                      <button
-                        key={post.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedPostId(post.id);
-                          setStatusFilter(lane.status as QueueFilter);
-                        }}
-                        className="w-full rounded border border-app-border bg-white px-3 py-2 text-right transition hover:border-blue-200 hover:bg-blue-50"
-                      >
-                        <p className="truncate text-xs font-black text-app-text">{post.title}</p>
-                        <p className="mt-1 truncate text-[11px] text-app-muted">{formatDateTime(post.scheduled_at)}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </WorkspacePanel>
+          <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-2 xl:grid-cols-4">
+            {queueSummary.map((item) => {
+              const Icon = item.icon;
+              const active = statusFilter === item.status;
+              return (
+                <button
+                  key={item.status}
+                  type="button"
+                  onClick={() => setStatusFilter(active ? "all" : item.status)}
+                  className={`flex min-w-0 items-start gap-3 border-b border-app-border p-3 text-right transition hover:bg-slate-50 sm:border-l sm:last:border-l-0 xl:border-b-0 ${
+                    active ? "bg-blue-50/60 ring-1 ring-inset ring-blue-200" : ""
+                  }`}
+                >
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${item.tone}`}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="flex items-baseline gap-2">
+                      <span className={`text-lg font-black ${item.tone}`}>{item.count}</span>
+                      <span className="truncate text-xs font-bold text-app-text">{item.label}</span>
+                    </span>
+                    <span className="mt-1 block truncate text-[11px] text-app-muted">{item.detail}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </section>
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
             <WorkspacePanel
-              title="پست‌های داخل صف"
-              description="اسکن سریع وضعیت، زمان انتشار، خطا و عملیات‌های ضروری."
+              title="عملیات صف"
+              description="پست‌های صف را اسکن کنید و اقدام‌های اصلی را از بازبین کناری انجام دهید."
               bodyClassName="p-4"
               action={<Button href="/logs" variant="secondary" size="sm">سلامت انتشار</Button>}
             >
@@ -305,17 +286,7 @@ export default function QueuePage() {
                       <p>تلاش انتشار: {post.attempt_count}</p>
                     </div>
                     <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
-                      <Button type="button" variant={selectedPost?.id === post.id ? "primary" : "secondary"} size="sm" onClick={() => setSelectedPostId(post.id)}>جزئیات</Button>
-                      <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن</Button>
-                      {post.status === "failed" ? (
-                        <Button type="button" size="sm" onClick={() => retryPost(post)}>
-                          <RotateCcw className="ml-1 h-3.5 w-3.5" aria-hidden="true" />
-                          تلاش مجدد
-                        </Button>
-                      ) : null}
-                      {["ready", "scheduled"].includes(post.status) ? (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => cancelPost(post)}>لغو</Button>
-                      ) : null}
+                      <Button type="button" variant={selectedPost?.id === post.id ? "primary" : "secondary"} size="sm" onClick={() => setSelectedPostId(post.id)}>بازبینی</Button>
                     </div>
                   </DataRow>
                 ))}
@@ -385,31 +356,6 @@ export default function QueuePage() {
                   </WorkspacePanel>
                 ) : null}
 
-                <WorkspacePanel title="خطاهای فعال" description="پست‌های ناموفق برای بازیابی سریع." bodyClassName="p-4">
-                  {failedPosts.length === 0 ? (
-                    <EmptyState
-                      icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
-                      title="فعلاً خطای فعال وجود ندارد."
-                      description="صف انتشار در وضعیت پایدار است."
-                    />
-                  ) : null}
-                  <div className="space-y-3">
-                    {failedPosts.map((post) => (
-                      <article key={post.id} className="rounded-md border border-app-border bg-white p-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <StatusBadge status={post.status} />
-                          <span className="text-xs text-app-muted">تلاش: {post.attempt_count}</span>
-                        </div>
-                        <h3 className="mt-3 truncate font-bold text-app-text">{post.title}</h3>
-                        {post.last_error ? <p className="mt-2 line-clamp-2 text-xs leading-6 text-rose-600">{post.last_error}</p> : null}
-                        <div className="mt-3 flex gap-2">
-                          <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن</Button>
-                          <Button type="button" size="sm" onClick={() => retryPost(post)}>تلاش مجدد</Button>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </WorkspacePanel>
               </div>
             </aside>
           </section>
