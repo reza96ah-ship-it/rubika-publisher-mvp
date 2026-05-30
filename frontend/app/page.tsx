@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CalendarClock, CheckCircle2, ClipboardList, FileText, PenLine, Rocket, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, ClipboardList, FileText, Rocket, ShieldCheck } from "lucide-react";
 import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
 import { CountdownBadge } from "../components/countdown-badge";
@@ -82,10 +82,6 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button href="/compose">
-                    <PenLine className="ml-2 h-4 w-4" aria-hidden="true" />
-                    ایجاد پست جدید
-                  </Button>
                   <Button href="/calendar" variant="secondary">
                     <CalendarClock className="ml-2 h-4 w-4" aria-hidden="true" />
                     تقویم

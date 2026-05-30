@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  BarChart3,
   CalendarDays,
+  ChevronLeft,
   FileText,
   GalleryHorizontalEnd,
   LayoutDashboard,
@@ -10,6 +12,7 @@ import {
   PenLine,
   Plug,
   ScrollText,
+  Settings2,
   Store
 } from "lucide-react";
 import Link from "next/link";
@@ -19,50 +22,52 @@ export type NavItem = {
   label: string;
   href: string;
   icon: LucideIcon;
-  badge?: string;
-  disabled?: boolean;
 };
 
 export type NavGroup = {
   title: string;
-  caption: string;
   items: NavItem[];
 };
 
 type SidebarProps = {
   storeName?: string;
-  readinessPercent?: number;
   ready?: boolean;
 };
 
-export const navGroups: NavGroup[] = [
+const primaryNavGroups: NavGroup[] = [
   {
-    title: "برنامه‌ریزی و انتشار",
-    caption: "تولید، زمان‌بندی و صف",
+    title: "فضای کاری",
     items: [
-      { label: "مرکز عملیات", href: "/", icon: LayoutDashboard },
-      { label: "استودیو تولید", href: "/compose", icon: PenLine },
-      { label: "کتابخانه محتوا", href: "/content", icon: FileText },
+      { label: "مرکز عملیات", href: "/", icon: LayoutDashboard }
+    ]
+  },
+  {
+    title: "انتشار",
+    items: [
       { label: "پلنر انتشار", href: "/calendar", icon: CalendarDays },
+      { label: "محتوا", href: "/content", icon: FileText },
       { label: "صف انتشار", href: "/queue", icon: ListChecks }
     ]
   },
   {
-    title: "دارایی و سلامت",
-    caption: "رسانه، اتصال و گزارش",
+    title: "کتابخانه و گزارش",
     items: [
-      { label: "کتابخانه رسانه", href: "/media", icon: GalleryHorizontalEnd },
-      { label: "اتصال روبیکا", href: "/rubika", icon: Plug },
+      { label: "رسانه‌ها", href: "/media", icon: GalleryHorizontalEnd },
+      { label: "تحلیل عملکرد", href: "/analytics", icon: BarChart3 },
       { label: "سلامت انتشار", href: "/logs", icon: ScrollText }
     ]
-  },
-  {
-    title: "برند و تنظیمات",
-    caption: "هویت فروشگاه",
-    items: [
-      { label: "پروفایل فروشگاه", href: "/store", icon: Store }
-    ]
   }
+];
+
+const settingsNavItems: NavItem[] = [
+  { label: "پروفایل فروشگاه", href: "/store", icon: Store },
+  { label: "اتصال روبیکا", href: "/rubika", icon: Plug }
+];
+
+const composeNavItem: NavItem = { label: "پست جدید", href: "/compose", icon: PenLine };
+const navGroups = [
+  ...primaryNavGroups,
+  { title: "تنظیمات", items: settingsNavItems }
 ];
 
 function isActiveRoute(pathname: string, href: string) {
@@ -71,127 +76,139 @@ function isActiveRoute(pathname: string, href: string) {
 }
 
 export function getActiveNav(pathname: string) {
+  if (isActiveRoute(pathname, composeNavItem.href)) {
+    return { group: { title: "تولید محتوا", items: [composeNavItem] }, item: composeNavItem };
+  }
+
   for (const group of navGroups) {
     const item = group.items.find((entry) => isActiveRoute(pathname, entry.href));
     if (item) return { group, item };
   }
-  return { group: navGroups[0], item: navGroups[0].items[0] };
+  return { group: primaryNavGroups[0], item: primaryNavGroups[0].items[0] };
 }
 
 function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
   const Icon = item.icon;
-  const className = `group flex items-center justify-between rounded-md border px-2.5 py-2 text-sm transition ${
-    item.disabled
-      ? "pointer-events-none border-transparent text-slate-400"
-      : active
-        ? "border-blue-200 bg-blue-50 font-black text-app-primary shadow-soft"
-        : "border-transparent text-slate-600 hover:border-blue-100 hover:bg-blue-50 hover:text-app-primary"
-  }`;
-
-  const content = (
-    <>
-      <span className="flex min-w-0 items-center gap-2">
-        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${active ? "bg-white text-app-primary ring-1 ring-blue-100" : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-app-primary"}`}>
-          <Icon className="h-4 w-4" aria-hidden="true" />
-        </span>
-        <span className="truncate">{item.label}</span>
-      </span>
-      {item.badge ? (
-        <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${active ? "bg-white text-app-primary ring-1 ring-blue-100" : "bg-slate-100 text-slate-500"}`}>
-          {item.badge}
-        </span>
-      ) : null}
-    </>
-  );
-
-  if (item.disabled) {
-    return <div className={className}>{content}</div>;
-  }
-
   return (
-    <Link href={item.href} className={className}>
-      {content}
+    <Link
+      href={item.href}
+      className={`group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition ${
+        active
+          ? "bg-blue-50 font-black text-app-primary"
+          : "text-slate-600 hover:bg-slate-50 hover:text-app-text"
+      }`}
+    >
+      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-app-primary" : "text-slate-400 group-hover:text-slate-600"}`} aria-hidden="true" />
+      <span className="truncate">{item.label}</span>
     </Link>
   );
 }
 
-export function Sidebar({ storeName = "فضای کاری", readinessPercent = 0, ready = false }: SidebarProps) {
+export function Sidebar({ storeName = "فضای کاری", ready = false }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-[260px] shrink-0 border-l border-app-border bg-white lg:flex lg:min-h-screen lg:flex-col">
-      <div className="border-b border-app-border px-4 py-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-app-primary text-xs font-black text-white">
+    <aside className="hidden w-[232px] shrink-0 border-l border-app-border bg-white lg:flex lg:min-h-screen lg:flex-col">
+      <div className="border-b border-app-border px-3 py-3">
+        <Link href="/" className="flex items-center gap-2.5 rounded-md px-1 py-1">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-primary text-[10px] font-black text-white">
             RP
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-black uppercase tracking-[0.08em] text-app-primary">Rubika Publisher</p>
-            <h2 className="truncate text-base font-black text-app-text">انتشار روبیکا</h2>
+            <p className="truncate text-sm font-black text-app-text">Rubika Publisher</p>
+            <p className="mt-0.5 text-[10px] font-bold text-app-muted">Publishing workspace</p>
           </div>
-        </div>
-        <Link href="/store" className="mt-4 block rounded-md border border-blue-100 bg-blue-50/70 p-3 transition hover:border-blue-200 hover:bg-blue-50">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[11px] font-black text-app-primary">فضای کاری</p>
-              <p className="mt-1 truncate text-sm font-black text-app-text">{storeName}</p>
-            </div>
-            <span className={`rounded px-2 py-1 text-[10px] font-black ${ready ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100" : "bg-amber-50 text-amber-700 ring-1 ring-amber-100"}`}>
-              {readinessPercent}%
-            </span>
-          </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white">
-            <div className={`h-full rounded-full ${ready ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${readinessPercent}%` }} />
-          </div>
+        </Link>
+
+        <Link
+          href="/store"
+          className="mt-3 flex items-center gap-2 rounded-md border border-app-border bg-slate-50 px-2.5 py-2 transition hover:border-blue-200 hover:bg-blue-50"
+        >
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-white text-slate-500 ring-1 ring-app-border">
+            <Store className="h-3.5 w-3.5" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[10px] font-bold text-app-muted">فضای کاری فعال</span>
+            <span className="mt-0.5 block truncate text-xs font-black text-app-text">{storeName}</span>
+          </span>
+          <ChevronLeft className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+        </Link>
+
+        <Link
+          href="/compose"
+          className="mt-3 flex items-center justify-center gap-2 rounded-md bg-app-primary px-3 py-2.5 text-sm font-black text-white transition hover:bg-app-primaryHover"
+        >
+          <PenLine className="h-4 w-4" aria-hidden="true" />
+          ایجاد پست جدید
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4" aria-label="ناوبری اصلی">
-        {navGroups.map((group) => (
+      <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-3" aria-label="ناوبری اصلی">
+        {primaryNavGroups.map((group) => (
           <div key={group.title}>
-            <div className="mb-2 px-2">
-              <p className="text-[11px] font-black text-app-text">{group.title}</p>
-              <p className="mt-0.5 text-[10px] font-bold text-app-muted">{group.caption}</p>
-            </div>
-            <div className="space-y-1">
-              {group.items.map((item) => {
-                const active = isActiveRoute(pathname, item.href);
-                return <NavEntry key={item.href} item={item} active={active} />;
-              })}
+            <p className="mb-1 px-2.5 text-[10px] font-black text-slate-400">{group.title}</p>
+            <div className="space-y-0.5">
+              {group.items.map((item) => <NavEntry key={item.href} item={item} active={isActiveRoute(pathname, item.href)} />)}
             </div>
           </div>
         ))}
       </nav>
 
-      <div className="border-t border-app-border px-3 py-3">
-        <Link href="/logs" className="block rounded-md border border-app-border bg-slate-50 p-3 transition hover:border-blue-200 hover:bg-blue-50">
-          <p className="text-[11px] font-black text-app-text">سلامت انتشار</p>
-          <p className="mt-1 text-xs leading-5 text-app-muted">اتصال، تلاش‌ها و خطاهای انتشار.</p>
+      <div className="border-t border-app-border p-3">
+        <div className="mb-2 flex items-center justify-between px-2.5">
+          <p className="text-[10px] font-black text-slate-400">تنظیمات</p>
+          <Settings2 className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+        </div>
+        <div className="space-y-0.5">
+          {settingsNavItems.map((item) => <NavEntry key={item.href} item={item} active={isActiveRoute(pathname, item.href)} />)}
+        </div>
+        <Link href="/rubika" className={`mt-3 flex items-center gap-2 rounded-md border px-2.5 py-2 text-xs font-bold ${
+          ready ? "border-emerald-100 bg-emerald-50 text-emerald-700" : "border-amber-100 bg-amber-50 text-amber-700"
+        }`}>
+          <span className={`h-2 w-2 rounded-full ${ready ? "bg-emerald-500" : "bg-amber-500"}`} />
+          {ready ? "فضای کاری آماده انتشار" : "تکمیل آماده‌سازی"}
         </Link>
       </div>
     </aside>
   );
 }
 
+const mobileNavItems = [
+  { label: "عملیات", href: "/", icon: LayoutDashboard },
+  { label: "پلنر", href: "/calendar", icon: CalendarDays },
+  composeNavItem,
+  { label: "محتوا", href: "/content", icon: FileText },
+  { label: "صف", href: "/queue", icon: ListChecks }
+];
+
 export function MobileNav() {
   const pathname = usePathname();
-  const flatItems = navGroups.flatMap((group) => group.items);
 
   return (
-    <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:hidden" aria-label="ناوبری اصلی">
-      {flatItems.map((item) => {
+    <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-app-border bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:hidden" aria-label="ناوبری اصلی">
+      {mobileNavItems.map((item) => {
         const active = isActiveRoute(pathname, item.href);
         const Icon = item.icon;
+        const isCompose = item.href === "/compose";
         return (
           <Link
             key={item.href}
             href={item.href}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-xs font-bold ${
-              active ? "border-blue-200 bg-blue-50 text-app-primary" : "border-app-border bg-white text-slate-600"
+            aria-label={item.label}
+            className={`flex min-w-0 flex-col items-center gap-1 text-[10px] font-bold transition ${
+              isCompose ? "-mt-5 text-app-primary" : active ? "text-app-primary" : "text-slate-500"
             }`}
           >
-            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-            {item.label}
+            <span className={`flex items-center justify-center rounded-md ${
+              isCompose
+                ? "h-11 w-11 bg-app-primary text-white shadow-lg shadow-blue-200"
+                : active
+                  ? "h-7 w-9 bg-blue-50 text-app-primary"
+                  : "h-7 w-9 text-slate-400"
+            }`}>
+              <Icon className={isCompose ? "h-5 w-5" : "h-4 w-4"} aria-hidden="true" />
+            </span>
+            <span className="truncate">{item.label}</span>
           </Link>
         );
       })}

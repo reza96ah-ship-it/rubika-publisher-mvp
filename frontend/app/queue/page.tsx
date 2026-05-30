@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CalendarClock, CheckCircle2, ListChecks, RotateCcw, Send, TimerReset, XCircle } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, ListChecks, RotateCcw, TimerReset, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
@@ -177,16 +177,10 @@ export default function QueuePage() {
             title="صف انتشار"
             description="کنترل آماده‌سازی، زمان‌بندی، انتشار و بازیابی خطاها در یک نمای عملیاتی."
             actions={(
-              <>
-                <Button href="/compose">
-                  <Send className="ml-2 h-4 w-4" aria-hidden="true" />
-                  ایجاد پست جدید
-                </Button>
-                <Button href="/calendar" variant="secondary">
-                  <CalendarClock className="ml-2 h-4 w-4" aria-hidden="true" />
-                  پلنر انتشار
-                </Button>
-              </>
+              <Button href="/calendar" variant="secondary">
+                <CalendarClock className="ml-2 h-4 w-4" aria-hidden="true" />
+                پلنر انتشار
+              </Button>
             )}
             meta={(
               <>

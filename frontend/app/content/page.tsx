@@ -194,12 +194,7 @@ export default function ContentWorkspacePage() {
             eyebrow="Editorial Inventory"
             title="فضای محتوا"
             description="چرخه عمر پست‌ها را در یک نمای عملیاتی کنترل کنید: پیش‌نویس، آماده‌سازی، زمان‌بندی، خطاها و خروجی منتشرشده."
-            actions={(
-              <>
-                <Button href="/compose" size="sm">ایجاد پست جدید</Button>
-                <Button href="/queue" variant="secondary" size="sm">صف انتشار</Button>
-              </>
-            )}
+            actions={<Button href="/queue" variant="secondary" size="sm">صف انتشار</Button>}
             meta={(
               <>
                 <StatusToken tone="primary">{posts.length} پست</StatusToken>

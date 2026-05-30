@@ -225,12 +225,7 @@ export default function MediaPage() {
             eyebrow="Asset Library"
             title="کتابخانه رسانه"
             description="تصاویر محصول را مثل یک کتابخانه عملیاتی مدیریت کنید: آپلود، جست‌وجو، انتخاب، بررسی اتصال و ارسال سریع به composer."
-            actions={(
-              <>
-                <Button href="/compose" variant="secondary" size="sm">ساخت پست جدید</Button>
-                <Button href="/content" variant="secondary" size="sm">کتابخانه محتوا</Button>
-              </>
-            )}
+            actions={<Button href="/content" variant="secondary" size="sm">کتابخانه محتوا</Button>}
             meta={(
               <>
                 <StatusToken tone="primary">فضای کاری رسانه</StatusToken>

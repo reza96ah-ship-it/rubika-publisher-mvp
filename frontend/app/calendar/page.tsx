@@ -9,7 +9,6 @@ import {
   Clock3,
   Grid3X3,
   List,
-  Plus,
   Rows3
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -284,15 +283,7 @@ export default function CalendarPage() {
             eyebrow="Publishing Planner"
             title="تقویم انتشار"
             description="برنامه‌ریزی ماهانه، هفتگی و لیستی برای پیدا کردن شکاف‌ها، خطاها و پست بعدی انتشار."
-            actions={(
-              <>
-                <Button href="/compose" size="sm">
-                  <Plus className="ml-2 h-4 w-4" aria-hidden="true" />
-                  زمان‌بندی پست
-                </Button>
-                <Button href="/queue" variant="secondary" size="sm">صف انتشار</Button>
-              </>
-            )}
+            actions={<Button href="/queue" variant="secondary" size="sm">صف انتشار</Button>}
             meta={(
               <>
                 <StatusToken tone="primary">{calendarPosts.length} پست تقویمی</StatusToken>
