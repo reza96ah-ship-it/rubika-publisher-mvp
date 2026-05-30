@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   Building2,
   CalendarClock,
+  Clock3,
   Hash,
   MessageSquareText,
   Phone,
@@ -260,23 +261,33 @@ export default function StorePage() {
             <form onSubmit={saveStore}>
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
                 <div className="space-y-4">
-                  <WorkspacePanel title="هویت فروشگاه" description="اطلاعات پایه برند و تنظیمات عملیاتی workspace را مدیریت کنید.">
-                    <div className="grid gap-5 lg:grid-cols-2">
-                  <Field label="نام فروشگاه" required>
-                    <Input value={form.name} onChange={(event) => updateField("name", event.target.value)} required />
-                  </Field>
+                  <WorkspacePanel
+                    title="هویت فروشگاه"
+                    description="مشخصات اصلی برند و اطلاعات عملیاتی فروشگاه را یک‌جا مدیریت کنید."
+                    action={<Tag tone={requiredReady ? "success" : "warning"}>{requiredReady ? "اطلاعات پایه آماده" : "نیازمند تکمیل"}</Tag>}
+                    bodyClassName="p-0"
+                  >
+                    <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(240px,0.65fr)]">
+                      <Field label="نام فروشگاه" required hint="نامی که در workspace و پیش‌نمایش کپشن نمایش داده می‌شود.">
+                        <Input value={form.name} onChange={(event) => updateField("name", event.target.value)} placeholder="مثلاً فروشگاه سپهر" required />
+                      </Field>
 
-                  <Field label="دسته‌بندی فعالیت" hint="مثلاً پوشاک، کافه، آرایشی یا خدمات محلی.">
-                    <Input value={form.category} onChange={(event) => updateField("category", event.target.value)} placeholder="مثلاً پوشاک، کافه، آرایشی" />
-                  </Field>
+                      <Field label="دسته‌بندی فعالیت" hint="برای دسته‌بندی محتوا و ساخت کمپین‌های منظم‌تر.">
+                        <Input value={form.category} onChange={(event) => updateField("category", event.target.value)} placeholder="مثلاً پوشاک یا محصولات آرایشی" />
+                      </Field>
+                    </div>
 
-                  <Field label="شماره تماس">
-                    <Input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} className="text-left" dir="ltr" />
-                  </Field>
+                    <div className="grid gap-4 border-t border-app-border bg-slate-50/70 p-4 md:grid-cols-2">
+                      <Field label="شماره تماس" hint="در صورت نیاز برای CTA و اطلاعات تماس مشتری استفاده می‌شود.">
+                        <Input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} placeholder="0912 000 0000" className="text-left" dir="ltr" inputMode="tel" />
+                      </Field>
 
-                  <Field label="منطقه زمانی" required hint="برای ایران همین مقدار مناسب است.">
-                    <Input value={form.timezone} onChange={(event) => updateField("timezone", event.target.value)} className="text-left" dir="ltr" required />
-                  </Field>
+                      <Field label="منطقه زمانی" required hint="مبنای زمان‌بندی صف انتشار برای این workspace.">
+                        <div className="relative">
+                          <Input value={form.timezone} readOnly className="bg-white pl-10 text-left text-slate-600" dir="ltr" required />
+                          <Clock3 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                        </div>
+                      </Field>
                     </div>
                   </WorkspacePanel>
 
