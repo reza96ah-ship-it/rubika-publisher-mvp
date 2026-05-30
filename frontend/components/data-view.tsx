@@ -69,7 +69,7 @@ export function FilterChip({ active, children, count, onClick }: FilterChipProps
 export function DataTable({ columns, gridClassName, children, loading, empty }: DataTableProps) {
   return (
     <div className="mt-5 overflow-hidden rounded-md border border-app-border bg-white">
-      <div className={`hidden ${gridClassName} gap-4 border-b border-app-border bg-slate-100 px-4 py-3 text-[11px] font-black uppercase tracking-[0.04em] text-slate-500 lg:grid`}>
+      <div className={`hidden ${gridClassName} gap-4 border-b border-app-border bg-slate-100 px-4 py-3 text-[11px] font-black uppercase text-slate-500 lg:grid`}>
         {columns.map((column) => <span key={column}>{column}</span>)}
       </div>
       {loading ? <p className="p-5 text-sm text-app-muted">در حال دریافت...</p> : null}

@@ -18,7 +18,7 @@ import { AuthGate } from "../../components/auth-gate";
 import { Button } from "../../components/ui/button";
 import { Field, Input, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
-import { MetricTile, NoticeBanner, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders } from "../../lib/posts";
 
 const emptyStore = {
@@ -214,40 +214,40 @@ export default function StorePage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-4">
-          <WorkspaceHero
-            eyebrow="Brand Setup"
-            title="پروفایل فروشگاه"
-            description="هویت فروشگاه، متن‌های ثابت و تنظیمات پیش‌فرض را برای تولید محتوای سریع و منظم آماده کنید."
-            meta={(
-              <>
-                <StatusToken tone={requiredReady ? "success" : "warning"}>{requiredReady ? "حداقل آماده" : "نیازمند تکمیل"}</StatusToken>
-                <StatusToken tone="primary">{score}% آمادگی</StatusToken>
-                <StatusToken tone={defaultCount(form) >= 2 ? "success" : "neutral"}>{defaultCount(form)}/3 تنظیم متن</StatusToken>
-                <StatusToken tone={dirty ? "warning" : "success"}>{dirty ? "تغییرات ذخیره نشده" : "ذخیره شده"}</StatusToken>
-              </>
-            )}
-            aside={(
+          <section className="rounded-md border border-app-border bg-white px-4 py-3">
+            <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-black text-app-primary">آمادگی پروفایل</p>
-                    <p className="mt-2 text-lg font-black text-app-text">{score}% آماده</p>
-                  </div>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
-                    <StoreIcon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                </div>
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-white">
-                  <div className={`h-full rounded-full ${requiredReady ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${score}%` }} />
-                </div>
+                <p className="text-[10px] font-black text-app-primary">تنظیمات برند</p>
+                <h1 className="mt-1 text-xl font-black text-app-text">پروفایل فروشگاه</h1>
+                <p className="mt-1 text-xs leading-5 text-app-muted">هویت فروشگاه و متن‌های ثابت را برای تولید محتوای منظم نگه دارید.</p>
               </div>
-            )}
-          />
+              <div className="flex flex-wrap gap-2">
+                <StatusToken tone={requiredReady ? "success" : "warning"}>{requiredReady ? "حداقل آماده" : "نیازمند تکمیل"}</StatusToken>
+                <StatusToken tone={dirty ? "warning" : "success"}>{dirty ? "تغییرات ذخیره نشده" : "ذخیره شده"}</StatusToken>
+              </div>
+            </div>
+          </section>
 
-          <section className="grid gap-3 md:grid-cols-3">
-            <MetricTile label="آمادگی پروفایل" value={`${score}%`} hint="نام و منطقه زمانی پایه‌های ضروری‌اند" tone={requiredReady ? "success" : "warning"} icon={<StoreIcon className="h-4 w-4" />} />
-            <MetricTile label="تنظیمات متن" value={`${defaultCount(form)}/3`} hint="توضیح، هشتگ و CTA برای کپشن‌های سریع" tone="primary" icon={<MessageSquareText className="h-4 w-4" />} />
-            <MetricTile label="وضعیت ویرایش" value={dirty ? "ذخیره نشده" : "به‌روز"} hint={dirty ? "تغییرات را ذخیره کنید یا به آخرین نسخه برگردانید" : "آخرین تغییرات پروفایل ثبت شده است"} tone={dirty ? "warning" : "success"} icon={<Save className="h-4 w-4" />} />
+          <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-3">
+            {[
+              { label: "آمادگی پروفایل", value: `${score}%`, detail: "نام و منطقه زمانی پایه‌های ضروری‌اند", icon: StoreIcon, tone: requiredReady ? "text-emerald-700" : "text-amber-700" },
+              { label: "تنظیمات متن", value: `${defaultCount(form)}/3`, detail: "توضیح، هشتگ و CTA", icon: MessageSquareText, tone: "text-app-primary" },
+              { label: "وضعیت ویرایش", value: dirty ? "ذخیره نشده" : "به‌روز", detail: dirty ? "نسخه جدید را ثبت کنید" : "آخرین تغییرات ثبت شده است", icon: Save, tone: dirty ? "text-amber-700" : "text-emerald-700" }
+            ].map((metric) => {
+              const Icon = metric.icon;
+              return (
+                <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 sm:border-b-0 sm:border-l sm:last:border-l-0">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${metric.tone}`}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-black text-app-muted">{metric.label}</p>
+                    <p className="mt-0.5 truncate text-base font-black text-app-text">{metric.value}</p>
+                    <p className="truncate text-[11px] text-app-muted">{metric.detail}</p>
+                  </div>
+                </div>
+              );
+            })}
           </section>
 
           {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}

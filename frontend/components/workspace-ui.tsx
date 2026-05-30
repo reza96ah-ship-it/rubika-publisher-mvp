@@ -121,10 +121,10 @@ export function WorkspaceHero({ eyebrow, title, description, actions, meta, asid
     <section className="overflow-hidden rounded-md border border-app-border bg-white">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 px-4 py-4 lg:px-5">
-          {eyebrow ? <p className="text-[11px] font-black uppercase tracking-[0.12em] text-app-primary">{eyebrow}</p> : null}
+          {eyebrow ? <p className="text-[11px] font-black uppercase text-app-primary">{eyebrow}</p> : null}
           <div className="mt-2 flex flex-col justify-between gap-4 xl:flex-row xl:items-start">
             <div className="min-w-0">
-              <h1 className="text-2xl font-black tracking-tight text-app-text">{title}</h1>
+              <h1 className="text-2xl font-black text-app-text">{title}</h1>
               {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-app-muted">{description}</p> : null}
             </div>
             {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
@@ -141,8 +141,8 @@ export function WorkspaceHeader({ eyebrow, title, description, action }: Workspa
   return (
     <header className="flex flex-col justify-between gap-4 border-b border-app-border pb-5 lg:flex-row lg:items-end">
       <div className="min-w-0">
-        {eyebrow ? <p className="text-[11px] font-black uppercase tracking-[0.12em] text-app-primary">{eyebrow}</p> : null}
-        <h1 className="mt-1 text-2xl font-black tracking-tight text-app-text">{title}</h1>
+        {eyebrow ? <p className="text-[11px] font-black uppercase text-app-primary">{eyebrow}</p> : null}
+        <h1 className="mt-1 text-2xl font-black text-app-text">{title}</h1>
         {description ? <p className="mt-1.5 max-w-3xl text-sm leading-6 text-app-muted">{description}</p> : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}

@@ -8,7 +8,7 @@ import { CountdownBadge } from "../components/countdown-badge";
 import { ReadinessJourney } from "../components/readiness-journey";
 import { StatusBadge } from "../components/status-badge";
 import { Button } from "../components/ui/button";
-import { MetricTile, StatusToken, WorkspacePage } from "../components/workspace-ui";
+import { StatusToken, WorkspacePage } from "../components/workspace-ui";
 import { apiUrl, authHeaders, formatDateTime, Post } from "../lib/posts";
 import { isRubikaConnected, isStoreConfigured, loadWorkspaceOverview, RubikaSettings, StoreProfile } from "../lib/workspace";
 
@@ -76,7 +76,7 @@ export default function HomePage() {
                     <StatusToken tone={rubikaReady ? "success" : "warning"}>روبیکا {rubikaReady ? "متصل" : "ناقص"}</StatusToken>
                     <StatusToken tone={storeReady ? "success" : "warning"}>پروفایل {storeReady ? "آماده" : "ناقص"}</StatusToken>
                   </div>
-                  <h1 className="mt-3 text-2xl font-black tracking-tight text-app-text">مرکز عملیات انتشار</h1>
+                  <h1 className="mt-3 text-2xl font-black text-app-text">مرکز عملیات انتشار</h1>
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-app-muted">
                     صف، آماده‌سازی، خطاها و پست بعدی در یک نمای کاری برای شروع روز.
                   </p>
@@ -140,11 +140,27 @@ export default function HomePage() {
 
           <ReadinessJourney store={store} rubika={rubika} posts={posts} loading={loading} />
 
-          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <MetricTile label="پیش‌نویس" value={draftCount} hint="برای تکمیل و آماده‌سازی" tone="neutral" icon={<FileText className="h-4 w-4" />} />
-            <MetricTile label="آماده" value={readyCount} hint="منتظر زمان انتشار" tone="primary" icon={<CheckCircle2 className="h-4 w-4" />} />
-            <MetricTile label="زمان‌بندی‌شده" value={scheduledCount} hint="داخل برنامه انتشار" tone="warning" icon={<CalendarClock className="h-4 w-4" />} />
-            <MetricTile label="ناموفق" value={failedCount} hint="نیازمند بازیابی" tone={failedCount ? "alert" : "neutral"} icon={<AlertTriangle className="h-4 w-4" />} />
+          <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              { label: "پیش‌نویس", value: draftCount, detail: "برای تکمیل و آماده‌سازی", icon: FileText, tone: "text-slate-600" },
+              { label: "آماده", value: readyCount, detail: "منتظر زمان انتشار", icon: CheckCircle2, tone: "text-app-primary" },
+              { label: "زمان‌بندی‌شده", value: scheduledCount, detail: "داخل برنامه انتشار", icon: CalendarClock, tone: "text-amber-700" },
+              { label: "ناموفق", value: failedCount, detail: "نیازمند بازیابی", icon: AlertTriangle, tone: failedCount ? "text-rose-700" : "text-slate-500" }
+            ].map((metric) => {
+              const Icon = metric.icon;
+              return (
+                <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 sm:border-l sm:last:border-l-0 xl:border-b-0">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${metric.tone}`}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-black text-app-muted">{metric.label}</p>
+                    <p className="mt-0.5 text-lg font-black text-app-text">{metric.value}</p>
+                    <p className="truncate text-[11px] text-app-muted">{metric.detail}</p>
+                  </div>
+                </div>
+              );
+            })}
           </section>
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">

@@ -17,7 +17,7 @@ import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { Button } from "../../components/ui/button";
 import { Field, Input } from "../../components/ui/form";
-import { DetailGrid, MetricTile, NoticeBanner, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { DetailGrid, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders } from "../../lib/posts";
 
 type DiagnosticItem = {
@@ -218,41 +218,41 @@ export default function RubikaPage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-4">
-          <WorkspaceHero
-            eyebrow="Channel Setup"
-            title="اتصال روبیکا"
-            description="اتصال ربات، مقصد انتشار و تست عملیاتی را از یک صفحه کنترل کنید تا صف انتشار با اطمینان کار کند."
-            meta={(
-              <>
+          <section className="rounded-md border border-app-border bg-white px-4 py-3">
+            <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+              <div>
+                <p className="text-[10px] font-black text-app-primary">تنظیمات کانال</p>
+                <h1 className="mt-1 text-xl font-black text-app-text">اتصال روبیکا</h1>
+                <p className="mt-1 text-xs leading-5 text-app-muted">اعتبارنامه، مقصد و تست عملیاتی انتشار را از یک صفحه کنترل کنید.</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
                 <StatusToken tone={statusTone(status, dirty)}>{statusLabel(status, dirty)}</StatusToken>
                 <StatusToken tone={readyCount === 3 ? "success" : "warning"}>{readyCount}/3 آماده</StatusToken>
                 {botName ? <StatusToken tone="primary">{botName}</StatusToken> : null}
-              </>
-            )}
-            aside={(
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-black text-app-primary">وضعیت اتصال</p>
-                    <p className="mt-2 text-lg font-black text-app-text">{statusLabel(status, dirty)}</p>
-                  </div>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
-                    <PlugZap className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                </div>
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  {diagnostics.map((item) => (
-                    <span key={item.label} className={`h-2 rounded-full ${item.done ? "bg-emerald-500" : item.tone === "alert" ? "bg-rose-500" : "bg-amber-400"}`} />
-                  ))}
-                </div>
               </div>
-            )}
-          />
+            </div>
+          </section>
 
-          <section className="grid gap-3 md:grid-cols-3">
-            <MetricTile label="وضعیت اتصال" value={statusLabel(status, dirty)} hint={dirty ? "بعد از ذخیره، تست اتصال را دوباره اجرا کنید" : "آخرین نتیجه تست عملیاتی روبیکا"} tone={statusTone(status, dirty)} icon={<PlugZap className="h-4 w-4" />} />
-            <MetricTile label="تشخیص آماده‌سازی" value={`${readyCount}/3`} hint="توکن، مقصد و تست اتصال" tone={readyCount === 3 ? "success" : "warning"} icon={<ShieldCheck className="h-4 w-4" />} />
-            <MetricTile label="آخرین تست" value={formatLastTest(lastTestAt)} hint={botName || "نام ربات بعد از تست موفق نمایش داده می‌شود"} tone={status === "connected" ? "success" : "neutral"} icon={<Clock3 className="h-4 w-4" />} />
+          <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-3">
+            {[
+              { label: "وضعیت اتصال", value: statusLabel(status, dirty), detail: dirty ? "بعد از ذخیره دوباره تست کنید" : "آخرین نتیجه تست عملیاتی", icon: PlugZap, tone: status === "connected" && !dirty ? "text-emerald-700" : status === "failed" ? "text-rose-700" : "text-amber-700" },
+              { label: "تشخیص آماده‌سازی", value: `${readyCount}/3`, detail: "توکن، مقصد و تست اتصال", icon: ShieldCheck, tone: readyCount === 3 ? "text-emerald-700" : "text-amber-700" },
+              { label: "آخرین تست", value: formatLastTest(lastTestAt), detail: botName || "نام ربات بعد از تست موفق", icon: Clock3, tone: status === "connected" ? "text-emerald-700" : "text-slate-500" }
+            ].map((metric) => {
+              const Icon = metric.icon;
+              return (
+                <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 sm:border-b-0 sm:border-l sm:last:border-l-0">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${metric.tone}`}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-black text-app-muted">{metric.label}</p>
+                    <p className="mt-0.5 truncate text-base font-black text-app-text">{metric.value}</p>
+                    <p className="truncate text-[11px] text-app-muted">{metric.detail}</p>
+                  </div>
+                </div>
+              );
+            })}
           </section>
 
           {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
