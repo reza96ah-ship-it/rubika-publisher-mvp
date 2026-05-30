@@ -38,45 +38,47 @@ export function ReadinessJourney({ store, rubika, posts, loading = false }: Read
   const nextActionHref = isReady ? "/compose" : nextStep.href;
 
   return (
-    <section className="rounded-md border border-app-border bg-white">
-      <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px_240px]">
-        <div className="border-b border-app-border px-4 py-4 lg:border-b-0 lg:border-l">
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusToken tone={isReady ? "success" : "warning"}>{isReady ? "آماده عملیات" : "نیازمند تکمیل"}</StatusToken>
-            <StatusToken tone={workspaceCompleted === 2 ? "success" : "warning"}>{workspaceCompleted} از 2 تنظیم پایه</StatusToken>
+    <section className="space-y-3">
+      <div className="overflow-hidden rounded-md border border-app-border bg-white">
+        <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px_240px]">
+          <div className="border-b border-app-border px-4 py-4 lg:border-b-0 lg:border-l">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusToken tone={isReady ? "success" : "warning"}>{isReady ? "آماده عملیات" : "نیازمند تکمیل"}</StatusToken>
+              <StatusToken tone={workspaceCompleted === 2 ? "success" : "warning"}>{workspaceCompleted} از 2 تنظیم پایه</StatusToken>
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 shrink-0 text-app-primary" aria-hidden="true" />
+              <h2 className="text-lg font-black text-app-text">آمادگی فضای کاری</h2>
+            </div>
+            <p className="mt-2 text-sm leading-7 text-app-muted">
+              {isReady
+                ? "پروفایل، اتصال روبیکا، محتوا و زمان‌بندی فعال هستند. حالا تمرکز اصلی روی کیفیت پست‌ها و پایش نتیجه انتشار است."
+                : "تنظیمات پایه و قدم‌های انتشار را در یک مسیر کوتاه و قابل پیگیری کامل کنید."}
+            </p>
           </div>
-          <div className="mt-3 flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 shrink-0 text-app-primary" aria-hidden="true" />
-            <h2 className="text-lg font-black text-app-text">آمادگی فضای کاری</h2>
-          </div>
-          <p className="mt-2 text-sm leading-7 text-app-muted">
-            {isReady
-              ? "پروفایل، اتصال روبیکا، محتوا و زمان‌بندی فعال هستند. حالا تمرکز اصلی روی کیفیت پست‌ها و پایش نتیجه انتشار است."
-              : "تنظیمات پایه و قدم‌های انتشار را در یک مسیر کوتاه و قابل پیگیری کامل کنید."}
-          </p>
-        </div>
 
-        <div className="border-b border-app-border bg-blue-50/70 p-4 lg:border-b-0 lg:border-l">
-          <div className="flex items-center justify-between text-xs font-black text-app-muted">
-            <span>آمادگی انتشار</span>
-            <span>{progress}%</span>
+          <div className="border-b border-app-border bg-blue-50/70 p-4 lg:border-b-0 lg:border-l">
+            <div className="flex items-center justify-between text-xs font-black text-app-muted">
+              <span>آمادگی انتشار</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
+              <div className={`h-full rounded-full ${isReady ? "bg-emerald-500" : "bg-amber-500"} transition-all`} style={{ width: `${progress}%` }} />
+            </div>
+            <p className="mt-3 text-xs leading-5 text-app-muted">{completedCount} از {steps.length} مرحله تکمیل شده است.</p>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
-            <div className={`h-full rounded-full ${isReady ? "bg-emerald-500" : "bg-amber-500"} transition-all`} style={{ width: `${progress}%` }} />
-          </div>
-          <p className="mt-3 text-xs leading-5 text-app-muted">{completedCount} از {steps.length} مرحله تکمیل شده است.</p>
-        </div>
 
-        <div className="bg-slate-50 p-4">
-          <p className="text-xs font-black text-app-muted">{isReady ? "اقدام پیشنهادی" : "قدم بعدی"}</p>
-          <p className="mt-2 truncate text-sm font-black text-app-text">{nextActionLabel}</p>
-          <Button href={nextActionHref} size="sm" className="mt-3 w-full">
-            {isReady ? "ایجاد پست" : "ادامه مسیر"}
-          </Button>
+          <div className="bg-slate-50 p-4">
+            <p className="text-xs font-black text-app-muted">{isReady ? "اقدام پیشنهادی" : "قدم بعدی"}</p>
+            <p className="mt-2 truncate text-sm font-black text-app-text">{nextActionLabel}</p>
+            <Button href={nextActionHref} size="sm" className="mt-3 w-full">
+              {isReady ? "ایجاد پست" : "ادامه مسیر"}
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-0 border-t border-app-border divide-y divide-app-border md:grid-cols-2 md:divide-x md:divide-x-reverse xl:grid-cols-4 xl:divide-y-0">
+      <div className="grid gap-0 overflow-hidden rounded-md border border-app-border bg-white divide-y divide-app-border md:grid-cols-2 md:divide-x md:divide-x-reverse xl:grid-cols-4 xl:divide-y-0">
         {steps.map((step, index) => {
           const Icon = stepIcons[step.key];
           return (
