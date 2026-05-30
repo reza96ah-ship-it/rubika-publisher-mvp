@@ -179,6 +179,11 @@ export default function AnalyticsPage() {
   }, [scopedAttempts, timeRange]);
 
   const maxTrendTotal = Math.max(1, ...trend.map((item) => item.total));
+  const trendTickInterval = timeRange === "7d" ? 1 : timeRange === "30d" ? 5 : Math.max(1, Math.ceil(trend.length / 7));
+  const trendMinWidth = timeRange === "7d" ? "560px" : timeRange === "30d" ? "920px" : `${Math.max(560, trend.length * 56)}px`;
+  function showTrendTick(index: number) {
+    return index === 0 || index === trend.length - 1 || index % trendTickInterval === 0;
+  }
   const failedPosts = scopedPosts.filter((post) => post.status === "failed" || post.last_error).slice(0, 5);
   const queuedPosts = scopedPosts.filter((post) => ["ready", "scheduled", "publishing"].includes(post.status)).slice(0, 5);
   const highAttemptPosts = useMemo(() => {
@@ -289,10 +294,10 @@ export default function AnalyticsPage() {
                 <div className="overflow-x-auto pb-2">
                   <div
                     className="grid h-56 items-end gap-2 border-b border-app-border px-1 pt-3"
-                    style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(24px, 1fr))`, minWidth: timeRange === "30d" ? "840px" : "420px" }}
+                    style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(28px, 1fr))`, minWidth: trendMinWidth }}
                   >
-                    {trend.map((item) => (
-                      <div key={item.key} className="flex h-full min-w-0 flex-col justify-end text-center">
+                    {trend.map((item, index) => (
+                      <div key={item.key} className="flex h-full min-w-0 flex-col justify-end text-center" title={`${dayLabel(item.key)}: ${item.total} تلاش`}>
                         <p className="mb-2 text-[10px] font-black text-app-muted">{item.total || ""}</p>
                         <div className="flex h-40 items-end justify-center">
                           <div
@@ -305,7 +310,9 @@ export default function AnalyticsPage() {
                             <span className="bg-sky-500" style={{ height: `${percent(item.started, Math.max(1, item.total))}%` }} />
                           </div>
                         </div>
-                        <p className="mt-2 truncate text-[10px] text-app-muted">{dayLabel(item.key)}</p>
+                        <p className={`mt-2 min-h-4 whitespace-nowrap text-[10px] font-bold ${showTrendTick(index) ? "text-app-muted" : "text-transparent"}`}>
+                          {showTrendTick(index) ? dayLabel(item.key) : "—"}
+                        </p>
                       </div>
                     ))}
                   </div>
