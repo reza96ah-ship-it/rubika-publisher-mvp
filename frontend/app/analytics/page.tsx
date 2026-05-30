@@ -1,12 +1,12 @@
 "use client";
 
-import { Activity, AlertTriangle, BarChart3, CalendarClock, CheckCircle2, FileImage, LineChart, MessageSquareText, Target } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, FileImage, LineChart, MessageSquareText, Target } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
-import { DetailGrid, EmptyState, MetricStrip, MetricTile, NoticeBanner, StatusToken, WorkspaceHero, WorkspacePage, WorkspacePanel, WorkspaceToolbar } from "../../components/workspace-ui";
+import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel, WorkspaceToolbar } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
 
 type PublishAttempt = {
@@ -173,7 +173,8 @@ export default function AnalyticsPage() {
       const dayAttempts = scopedAttempts.filter((attempt) => dayKey(attempt.created_at) === key);
       const success = dayAttempts.filter((attempt) => attempt.status === "success").length;
       const failed = dayAttempts.filter((attempt) => attempt.status === "failed").length;
-      return { key, success, failed, total: dayAttempts.length };
+      const started = dayAttempts.filter((attempt) => attempt.status === "started").length;
+      return { key, success, failed, started, total: dayAttempts.length };
     });
   }, [scopedAttempts, timeRange]);
 
@@ -189,53 +190,32 @@ export default function AnalyticsPage() {
   const lastAttempt = scopedAttempts[0] ?? null;
   const publishedCount = statusCounts.published ?? 0;
   const failedCount = (statusCounts.failed ?? 0) + attemptSummary.failed;
+  const queuedCount = (statusCounts.ready ?? 0) + (statusCounts.scheduled ?? 0) + (statusCounts.publishing ?? 0);
+  const dashboardMetrics = [
+    { label: "منتشرشده", value: publishedCount, detail: "خروجی موفق در بازه", icon: CheckCircle2, tone: "text-emerald-700" },
+    { label: "موفقیت ارسال", value: `${attemptSummary.successRate}%`, detail: `${attemptSummary.success} از ${attemptSummary.completed} تلاش کامل`, icon: Target, tone: attemptSummary.successRate >= 80 ? "text-emerald-700" : "text-amber-700" },
+    { label: "نیازمند توجه", value: failedCount, detail: "پست یا تلاش ناموفق", icon: AlertTriangle, tone: failedCount ? "text-rose-700" : "text-slate-500" },
+    { label: "در جریان", value: queuedCount, detail: "آماده، زمان‌بندی یا ارسال", icon: CalendarClock, tone: "text-app-primary" }
+  ];
 
   return (
     <AuthGate>
       <AppShell>
         <WorkspacePage>
-          <WorkspaceHero
-            eyebrow="Performance Analytics"
-            title="تحلیل عملکرد"
-            description="نمای تصمیم‌گیری برای کیفیت انتشار، نرخ موفقیت، ترکیب محتوا و پست‌هایی که نیاز به اقدام دارند."
-            actions={(
-              <>
-                <Button href="/logs" size="sm">سلامت انتشار</Button>
-                <Button href="/content" variant="secondary" size="sm">کتابخانه محتوا</Button>
-              </>
-            )}
-            meta={(
-              <>
-                <StatusToken tone="primary">{scopedPosts.length} پست</StatusToken>
-                <StatusToken tone={attemptSummary.failed ? "alert" : "success"}>{attemptSummary.failed ? `${attemptSummary.failed} تلاش ناموفق` : "بدون تلاش ناموفق"}</StatusToken>
-                <StatusToken tone="success">{attemptSummary.successRate}% موفقیت</StatusToken>
-              </>
-            )}
-            aside={(
+          <section className="rounded-md border border-app-border bg-white px-4 py-3">
+            <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-black uppercase tracking-[0.12em] text-app-primary">Decision Center</p>
-                    <h2 className="mt-2 text-lg font-black text-app-text">{attemptSummary.successRate}% نرخ موفقیت</h2>
-                    <p className="mt-1 text-xs leading-5 text-app-muted">بر اساس تلاش‌های کامل‌شده در بازه انتخاب‌شده.</p>
-                  </div>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-md border border-blue-200 bg-white text-app-primary">
-                    <BarChart3 className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded border border-blue-100 bg-white p-3">
-                    <p className="font-black text-app-text">{lastAttempt ? formatDateTime(lastAttempt.created_at) : "—"}</p>
-                    <p className="mt-1 text-app-muted">آخرین تلاش</p>
-                  </div>
-                  <div className="rounded border border-blue-100 bg-white p-3">
-                    <p className="font-black text-app-text">{attemptSummary.media}</p>
-                    <p className="mt-1 text-app-muted">انتشار رسانه‌ای</p>
-                  </div>
-                </div>
+                <p className="text-[10px] font-black text-app-primary">تحلیل عملیاتی</p>
+                <h1 className="mt-1 text-xl font-black text-app-text">عملکرد انتشار</h1>
+                <p className="mt-1 text-xs leading-5 text-app-muted">کیفیت ارسال، روند تلاش‌ها و موارد نیازمند اقدام را برای بازه انتخاب‌شده بررسی کنید.</p>
               </div>
-            )}
-          />
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusToken tone={attemptSummary.failed ? "alert" : "success"}>{attemptSummary.failed ? `${attemptSummary.failed} تلاش ناموفق` : "ارسال پایدار"}</StatusToken>
+                <StatusToken tone="neutral">{scopedPosts.length} پست مرتبط</StatusToken>
+                <Button href="/logs" variant="secondary" size="sm">سلامت انتشار</Button>
+              </div>
+            </div>
+          </section>
 
           <WorkspaceToolbar
             meta={(
@@ -266,18 +246,31 @@ export default function AnalyticsPage() {
 
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
-          <MetricStrip>
-            <MetricTile label="پست منتشرشده" value={publishedCount} hint="خروجی‌های موفق در بازه" tone="success" icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />} />
-            <MetricTile label="نرخ موفقیت" value={`${attemptSummary.successRate}%`} hint={`${attemptSummary.success} موفق از ${attemptSummary.completed} تلاش کامل‌شده`} tone={attemptSummary.successRate >= 80 ? "success" : "warning"} icon={<Target className="h-4 w-4" aria-hidden="true" />} />
-            <MetricTile label="نیازمند توجه" value={failedCount} hint="پست یا تلاش ناموفق" tone={failedCount ? "alert" : "neutral"} icon={<AlertTriangle className="h-4 w-4" aria-hidden="true" />} />
-            <MetricTile label="در صف انتشار" value={(statusCounts.ready ?? 0) + (statusCounts.scheduled ?? 0) + (statusCounts.publishing ?? 0)} hint="آماده، زمان‌بندی‌شده یا در حال انتشار" tone="primary" icon={<CalendarClock className="h-4 w-4" aria-hidden="true" />} />
-          </MetricStrip>
+          <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-2 xl:grid-cols-4">
+            {dashboardMetrics.map((metric) => {
+              const Icon = metric.icon;
+              return (
+                <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 sm:border-l sm:last:border-l-0 xl:border-b-0">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${metric.tone}`}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <p className={`text-lg font-black ${metric.tone}`}>{metric.value}</p>
+                      <p className="truncate text-xs font-bold text-app-text">{metric.label}</p>
+                    </div>
+                    <p className="mt-1 truncate text-[11px] text-app-muted">{metric.detail}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </section>
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
             <div className="min-w-0 space-y-4">
               <WorkspacePanel
                 title="روند تلاش‌های انتشار"
-                description="موفقیت و شکست تلاش‌ها در بازه انتخاب‌شده."
+                description="مقایسه تلاش‌های موفق، ناموفق و در حال اجرا در بازه انتخاب‌شده."
                 action={<StatusToken tone="neutral">{trend.length} نقطه زمانی</StatusToken>}
               >
                 {loading ? <p className="text-sm text-app-muted">در حال دریافت تحلیل...</p> : null}
@@ -288,69 +281,74 @@ export default function AnalyticsPage() {
                     description="پس از ثبت تلاش‌های انتشار، نمودار عملیاتی اینجا کامل می‌شود."
                   />
                 ) : null}
-                <div className="grid gap-2">
-                  {trend.map((item) => (
-                    <div key={item.key} className="grid gap-2 rounded-md border border-app-border bg-slate-50 p-3 md:grid-cols-[90px_minmax(0,1fr)_70px] md:items-center">
-                      <p className="text-xs font-black text-app-muted">{dayLabel(item.key)}</p>
-                      <div className="h-3 overflow-hidden rounded-full bg-white ring-1 ring-app-border">
-                        <div className="flex h-full" style={{ width: `${Math.max(4, percent(item.total, maxTrendTotal))}%` }}>
-                          <div className="h-full bg-emerald-500" style={{ width: `${percent(item.success, Math.max(1, item.total))}%` }} />
-                          <div className="h-full bg-rose-500" style={{ width: `${percent(item.failed, Math.max(1, item.total))}%` }} />
+                <div className="mb-4 flex flex-wrap gap-3 text-[11px] font-bold text-app-muted">
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> موفق</span>
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-rose-500" /> ناموفق</span>
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-sky-500" /> در حال اجرا</span>
+                </div>
+                <div className="overflow-x-auto pb-2">
+                  <div
+                    className="grid h-56 items-end gap-2 border-b border-app-border px-1 pt-3"
+                    style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(24px, 1fr))`, minWidth: timeRange === "30d" ? "840px" : "420px" }}
+                  >
+                    {trend.map((item) => (
+                      <div key={item.key} className="flex h-full min-w-0 flex-col justify-end text-center">
+                        <p className="mb-2 text-[10px] font-black text-app-muted">{item.total || ""}</p>
+                        <div className="flex h-40 items-end justify-center">
+                          <div
+                            className="flex w-5 flex-col-reverse overflow-hidden rounded-t bg-slate-100"
+                            style={{ height: item.total ? `${Math.max(8, percent(item.total, maxTrendTotal))}%` : "0%" }}
+                            title={`${dayLabel(item.key)}: ${item.total} تلاش`}
+                          >
+                            <span className="bg-emerald-500" style={{ height: `${percent(item.success, Math.max(1, item.total))}%` }} />
+                            <span className="bg-rose-500" style={{ height: `${percent(item.failed, Math.max(1, item.total))}%` }} />
+                            <span className="bg-sky-500" style={{ height: `${percent(item.started, Math.max(1, item.total))}%` }} />
+                          </div>
                         </div>
+                        <p className="mt-2 truncate text-[10px] text-app-muted">{dayLabel(item.key)}</p>
                       </div>
-                      <p className="text-xs font-bold text-app-muted">{item.total} تلاش</p>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </WorkspacePanel>
 
               <WorkspacePanel
-                title="ترکیب چرخه محتوا"
-                description="وضعیت پست‌ها در بازه انتخاب‌شده."
+                title="ترکیب عملیات محتوا"
+                description="وضعیت چرخه پست‌ها و نوع ارسال در یک نمای فشرده."
               >
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 border-b border-app-border pb-4 sm:grid-cols-2">
+                  <div className="flex items-center justify-between gap-3 rounded-md bg-slate-50 p-3 ring-1 ring-app-border">
+                    <span className="flex items-center gap-2">
+                      <MessageSquareText className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <span className="text-sm font-black text-app-text">ارسال متنی</span>
+                    </span>
+                    <span className="text-sm font-black text-app-text">{attemptSummary.text} <span className="text-xs text-app-muted">({percent(attemptSummary.text, scopedAttempts.length)}%)</span></span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 rounded-md bg-slate-50 p-3 ring-1 ring-app-border">
+                    <span className="flex items-center gap-2">
+                      <FileImage className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <span className="text-sm font-black text-app-text">ارسال رسانه‌ای</span>
+                    </span>
+                    <span className="text-sm font-black text-app-text">{attemptSummary.media} <span className="text-xs text-app-muted">({percent(attemptSummary.media, scopedAttempts.length)}%)</span></span>
+                  </div>
+                </div>
+                <div className="mt-2 divide-y divide-app-border">
                   {Object.entries(statusLabels).map(([status, label]) => {
                     const count = statusCounts[status] ?? 0;
                     const ratio = percent(count, Math.max(1, scopedPosts.length));
                     return (
-                      <div key={status} className="rounded-md border border-app-border bg-slate-50 p-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2">
-                            <StatusBadge status={status} />
-                            <span className="text-sm font-black text-app-text">{label}</span>
-                          </div>
-                          <span className="text-sm font-black text-app-text">{count}</span>
+                      <div key={status} className="grid gap-2 py-3 md:grid-cols-[150px_minmax(0,1fr)_36px] md:items-center">
+                        <div className="flex items-center gap-2">
+                          <StatusBadge status={status} />
+                          <span className="text-xs font-black text-app-text">{label}</span>
                         </div>
-                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                        <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                           <div className="h-full rounded-full bg-app-primary" style={{ width: `${ratio}%` }} />
                         </div>
+                        <span className="text-left text-xs font-black text-app-text">{count}</span>
                       </div>
                     );
                   })}
-                </div>
-              </WorkspacePanel>
-
-              <WorkspacePanel
-                title="ترکیب نوع انتشار"
-                description="مقایسه تلاش‌های متنی و رسانه‌ای."
-              >
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="rounded-md border border-app-border bg-slate-50 p-4">
-                    <div className="flex items-center gap-2">
-                      <MessageSquareText className="h-5 w-5 text-app-primary" aria-hidden="true" />
-                      <p className="text-sm font-black text-app-text">متنی</p>
-                    </div>
-                    <p className="mt-3 text-3xl font-black text-app-text">{attemptSummary.text}</p>
-                    <p className="mt-2 text-xs text-app-muted">{percent(attemptSummary.text, scopedAttempts.length)}% از تلاش‌ها</p>
-                  </div>
-                  <div className="rounded-md border border-app-border bg-slate-50 p-4">
-                    <div className="flex items-center gap-2">
-                      <FileImage className="h-5 w-5 text-app-primary" aria-hidden="true" />
-                      <p className="text-sm font-black text-app-text">رسانه‌ای</p>
-                    </div>
-                    <p className="mt-3 text-3xl font-black text-app-text">{attemptSummary.media}</p>
-                    <p className="mt-2 text-xs text-app-muted">{percent(attemptSummary.media, scopedAttempts.length)}% از تلاش‌ها</p>
-                  </div>
                 </div>
               </WorkspacePanel>
             </div>
@@ -386,58 +384,46 @@ export default function AnalyticsPage() {
                 </div>
               </WorkspacePanel>
 
-              <WorkspacePanel title="پست‌های در جریان" description="آماده، زمان‌بندی‌شده یا در حال انتشار.">
-                {queuedPosts.length === 0 ? (
-                  <EmptyState
-                    icon={<CalendarClock className="h-5 w-5" aria-hidden="true" />}
-                    title="پست فعالی در صف نیست"
-                    description="از composer برای آماده‌سازی یا زمان‌بندی پست بعدی استفاده کنید."
-                    action={<Button href="/compose" variant="secondary">ساخت پست</Button>}
-                  />
-                ) : null}
-                <div className="space-y-2">
-                  {queuedPosts.map((post) => (
-                    <article key={post.id} className="rounded-md border border-app-border bg-white p-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={post.status} />
-                        <span className="text-xs text-app-muted">{formatDateTime(post.scheduled_at)}</span>
-                      </div>
-                      <h3 className="mt-2 truncate text-sm font-black text-app-text">{post.title}</h3>
-                    </article>
-                  ))}
-                </div>
-              </WorkspacePanel>
-
-              <WorkspacePanel title="پرریسک‌ترین پست‌ها" description="بر اساس تعداد تلاش انتشار.">
-                {highAttemptPosts.length === 0 ? (
-                  <EmptyState
-                    icon={<Activity className="h-5 w-5" aria-hidden="true" />}
-                    title="تلاشی برای رتبه‌بندی وجود ندارد"
-                    description="پس از انتشار، پست‌های پرتلاش اینجا مشخص می‌شوند."
-                  />
-                ) : null}
-                <div className="space-y-2">
-                  {highAttemptPosts.map((post) => (
-                    <article key={post.id} className="rounded-md border border-app-border bg-white p-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <StatusBadge status={post.status} />
-                        <StatusToken tone={post.attempt_count > 1 ? "warning" : "neutral"}>{post.attempt_count} تلاش</StatusToken>
-                      </div>
-                      <h3 className="mt-2 truncate text-sm font-black text-app-text">{post.title}</h3>
-                    </article>
-                  ))}
-                </div>
-              </WorkspacePanel>
-
-              <WorkspacePanel title="جزئیات بازه" description="خلاصه قابل اتکا برای تصمیم‌گیری.">
+              <WorkspacePanel title="خلاصه عملیاتی" description="سیگنال‌های قابل اتکا برای تصمیم بعدی.">
                 <DetailGrid
                   items={[
                     { label: "تلاش کامل‌شده", value: attemptSummary.completed, hint: "موفق + ناموفق" },
                     { label: "در حال اجرا", value: attemptSummary.started, hint: "تلاش شروع‌شده" },
-                    { label: "کل محتوا", value: scopedPosts.length, hint: "پست‌های مرتبط با بازه" },
-                    { label: "کل تلاش‌ها", value: scopedAttempts.length, hint: "آخرین تلاش‌های ثبت‌شده" }
+                    { label: "پست در جریان", value: queuedCount, hint: "آماده یا زمان‌بندی‌شده" },
+                    { label: "کل تلاش‌ها", value: scopedAttempts.length, hint: "ثبت‌شده در بازه" }
                   ]}
                 />
+                <div className="mt-4 divide-y divide-app-border border-t border-app-border">
+                  <div className="py-3">
+                    <p className="text-[11px] font-black text-app-muted">آخرین تلاش ثبت‌شده</p>
+                    <p className="mt-1 text-sm font-black text-app-text">{lastAttempt ? formatDateTime(lastAttempt.created_at) : "—"}</p>
+                  </div>
+                  <div className="py-3">
+                    <p className="text-[11px] font-black text-app-muted">نزدیک‌ترین پست در جریان</p>
+                    {queuedPosts[0] ? (
+                      <>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <StatusBadge status={queuedPosts[0].status} />
+                          <span className="text-xs text-app-muted">{formatDateTime(queuedPosts[0].scheduled_at)}</span>
+                        </div>
+                        <p className="mt-2 truncate text-sm font-black text-app-text">{queuedPosts[0].title}</p>
+                      </>
+                    ) : <p className="mt-1 text-sm text-app-muted">پست فعالی در صف نیست.</p>}
+                  </div>
+                  <div className="py-3">
+                    <p className="text-[11px] font-black text-app-muted">بیشترین تلاش انتشار</p>
+                    {highAttemptPosts[0] ? (
+                      <div className="mt-2 flex items-center justify-between gap-3">
+                        <p className="truncate text-sm font-black text-app-text">{highAttemptPosts[0].title}</p>
+                        <StatusToken tone={highAttemptPosts[0].attempt_count > 1 ? "warning" : "neutral"}>{highAttemptPosts[0].attempt_count} تلاش</StatusToken>
+                      </div>
+                    ) : <p className="mt-1 text-sm text-app-muted">داده‌ای برای رتبه‌بندی وجود ندارد.</p>}
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-2">
+                  <Button href="/queue" variant="secondary">باز کردن صف انتشار</Button>
+                  <Button href="/content" variant="secondary">کتابخانه محتوا</Button>
+                </div>
               </WorkspacePanel>
             </aside>
           </section>
