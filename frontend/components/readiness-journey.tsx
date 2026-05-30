@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, CalendarClock, CheckCircle2, Circle, PenLine, Plug, ShieldCheck, Store } from "lucide-react";
+import { ArrowLeft, CalendarClock, CheckCircle2, PenLine, Plug, ShieldCheck, Store } from "lucide-react";
 import { Post } from "../lib/posts";
 import {
   buildReadinessSteps,
@@ -79,28 +79,31 @@ export function ReadinessJourney({ store, rubika, posts, loading = false }: Read
       <div className="grid gap-0 border-t border-app-border divide-y divide-app-border md:grid-cols-2 md:divide-x md:divide-x-reverse xl:grid-cols-4 xl:divide-y-0">
         {steps.map((step, index) => {
           const Icon = stepIcons[step.key];
-          const StateIcon = step.done ? CheckCircle2 : Circle;
           return (
             <Link
               key={step.key}
               href={step.href}
-              className={`group flex min-h-36 flex-col justify-between p-4 transition ${
+              className={`group flex min-h-[76px] items-center gap-3 px-3 py-3 transition ${
                 step.done
                   ? "bg-emerald-50/50 hover:bg-emerald-50"
                   : "bg-white hover:bg-blue-50/50"
               }`}
             >
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <span className={`rounded-md border p-2 ${step.done ? "border-emerald-100 bg-white text-emerald-700" : "border-blue-100 bg-blue-50 text-app-primary"}`}>
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  {step.done ? <StateIcon className="h-5 w-5 text-emerald-600" aria-hidden="true" /> : <ArrowLeft className="h-4 w-4 text-app-primary opacity-0 transition group-hover:opacity-100" aria-hidden="true" />}
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${step.done ? "border-emerald-100 bg-white text-emerald-700" : "border-blue-100 bg-blue-50 text-app-primary"}`}>
+                <Icon className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-sm font-black text-app-text">{step.label}</p>
+                  <span className="shrink-0 text-[10px] font-bold text-app-muted">{index + 1}/{steps.length}</span>
                 </div>
-                <p className="mt-3 font-black text-app-text">{step.label}</p>
-                <p className="mt-1 line-clamp-2 text-xs leading-6 text-app-muted">{loading ? "در حال بررسی..." : step.description}</p>
+                <p className="mt-1 truncate text-[11px] text-app-muted">{loading ? "در حال بررسی..." : step.description}</p>
               </div>
-              <p className="mt-3 text-[11px] font-bold text-app-muted">مرحله {index + 1} از {steps.length}</p>
+              {step.done ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
+              ) : (
+                <ArrowLeft className="h-4 w-4 shrink-0 text-app-primary opacity-70 transition group-hover:opacity-100" aria-hidden="true" />
+              )}
             </Link>
           );
         })}
