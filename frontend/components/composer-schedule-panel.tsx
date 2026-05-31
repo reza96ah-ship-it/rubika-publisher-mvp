@@ -63,7 +63,7 @@ export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: Compo
 
   return (
     <div className="space-y-4" dir="rtl">
-      <div className="rounded-md border border-app-border bg-white p-3">
+      <div className="rounded-md bg-white p-3 shadow-hairline">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)}>ماه قبل</Button>
           <div className="text-center">
@@ -96,7 +96,7 @@ export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: Compo
         <label className="text-sm font-semibold text-app-text">دقیقه<select value={draft.minute} onChange={(event) => changeTime("minute", event.target.value)} className="mt-2 w-full rounded-md border border-app-border bg-white px-3 py-2 text-sm outline-none ring-app-primary focus:ring-2">{Array.from({ length: 12 }, (_, index) => index * 5).map((minute) => <option key={minute} value={minute}>{pad(minute)}</option>)}</select></label>
         <Button type="button" variant="ghost" onClick={clearSchedule}>حذف زمان‌بندی</Button>
       </div>
-      <div className="rounded-md bg-slate-50 p-3 text-sm leading-7 text-app-muted ring-1 ring-app-border">
+      <div className="rounded-md bg-app-surfaceMuted p-3 text-sm leading-7 text-app-muted shadow-hairline">
         <p><span className="font-semibold text-app-text">وضعیت:</span> {hasSchedule ? "با ذخیره فرم، پست زمان‌بندی می‌شود." : "فعلاً به عنوان پیش‌نویس ذخیره می‌شود."}</p>
         <p><span className="font-semibold text-app-text">زمان انتخاب‌شده:</span> {formatSchedule(selectedParts)}</p>
       </div>

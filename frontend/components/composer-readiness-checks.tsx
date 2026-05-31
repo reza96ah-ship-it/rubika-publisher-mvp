@@ -13,14 +13,16 @@ type ComposerReadinessChecksProps = {
 
 export function ComposerReadinessChecks({ items }: ComposerReadinessChecksProps) {
   return (
-    <div className="space-y-3">
-      {items.map((item) => {
+    <div>
+      {items.map((item, index) => {
         const Icon = item.done ? CheckCircle2 : item.required ? CircleAlert : Clock3;
         const color = item.done ? "text-emerald-700" : item.required ? "text-amber-700" : "text-slate-500";
+        const dotColor = item.done ? "border-emerald-200 bg-emerald-50" : item.required ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50";
 
         return (
-          <div key={item.label} className="flex items-start gap-3 border-b border-app-border py-3 first:pt-0 last:border-0 last:pb-0">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-app-border bg-slate-50">
+          <div key={item.label} className="relative flex items-start gap-3 pb-4 last:pb-0">
+            {index < items.length - 1 ? <span className="absolute right-[15px] top-8 h-[calc(100%-1.6rem)] w-px bg-app-border" aria-hidden="true" /> : null}
+            <span className={`relative z-[1] flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${dotColor}`}>
               <Icon className={`h-4 w-4 ${color}`} aria-hidden="true" />
             </span>
             <div>

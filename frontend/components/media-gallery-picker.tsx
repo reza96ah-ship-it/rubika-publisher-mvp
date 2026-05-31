@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Folder, Hash, ImageIcon, Link2, Search } from "lucide-react";
+import { CheckCircle2, Folder, Hash, ImageIcon, Link2, Search } from "lucide-react";
 import { Skeleton } from "./loading-skeleton";
 import { Tag } from "./ui/tag";
 
@@ -64,7 +64,7 @@ export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loadi
 
   return (
     <div>
-      <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2">
+      <label className="flex items-center gap-2 rounded-md bg-white px-3 py-2 shadow-hairline">
         <Search className="h-4 w-4 shrink-0 text-app-muted" aria-hidden="true" />
         <input
           value={searchTerm}
@@ -86,19 +86,23 @@ export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loadi
           ))}
         </div>
       ) : null}
-      <div className="mt-3 grid max-h-[420px] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => onSelect("")}
-          className={`rounded-md border p-2.5 text-right transition ${!selectedMediaId ? "border-app-primary bg-blue-50 ring-2 ring-blue-100" : "border-app-border bg-white hover:bg-slate-50"}`}
-        >
-          <div className="flex aspect-video items-center justify-center rounded bg-slate-100 text-app-muted">
-            <ImageIcon className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <p className="mt-2 text-sm font-bold text-app-text">بدون انتخاب رسانه</p>
-          <p className="mt-1 text-xs text-app-muted">پست فقط با متن ذخیره می‌شود.</p>
-        </button>
-
+      <button
+        type="button"
+        onClick={() => onSelect("")}
+        className={`mt-3 flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-right transition ${
+          !selectedMediaId ? "bg-blue-50 text-app-primary shadow-hairline ring-1 ring-blue-200" : "bg-app-surfaceMuted text-app-muted hover:bg-slate-100"
+        }`}
+      >
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${!selectedMediaId ? "bg-white text-app-primary" : "bg-white text-app-muted"}`}>
+          <ImageIcon className="h-4 w-4" aria-hidden="true" />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-sm font-black">پست بدون تصویر</span>
+          <span className="mt-0.5 block text-xs">فقط کپشن برای انتشار استفاده می‌شود.</span>
+        </span>
+        {!selectedMediaId ? <CheckCircle2 className="mr-auto h-4 w-4 shrink-0 text-app-primary" aria-hidden="true" /> : null}
+      </button>
+      <div className="mt-3 grid max-h-[360px] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
         {filteredAssets.map((asset) => {
           const selected = selectedMediaId === String(asset.id);
           const previewUrl = previewUrls[asset.id];
@@ -109,8 +113,9 @@ export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loadi
               key={asset.id}
               type="button"
               onClick={() => onSelect(String(asset.id))}
-              className={`overflow-hidden rounded-md border text-right transition ${selected ? "border-app-primary bg-blue-50 ring-2 ring-blue-100" : "border-app-border bg-white hover:bg-slate-50"}`}
+              className={`relative overflow-hidden rounded-md text-right transition ${selected ? "bg-blue-50 shadow-hairline ring-2 ring-app-primary" : "bg-white shadow-hairline hover:bg-slate-50 hover:shadow-soft"}`}
             >
+              {selected ? <span className="absolute left-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-app-primary text-white shadow-sm"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span> : null}
               {previewUrl ? (
                 <img src={previewUrl} alt={asset.original_filename} className="aspect-video w-full object-cover" />
               ) : (

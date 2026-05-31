@@ -33,7 +33,7 @@ export function ComposerActionFooter({
   const saving = Boolean(savingAction);
 
   return (
-    <div className="sticky bottom-4 z-10 mt-5 rounded-md border border-app-border bg-white/95 px-3 py-2.5 shadow-lg shadow-slate-200/70 backdrop-blur">
+    <div className="sticky bottom-4 z-10 mt-5 rounded-lg bg-white/95 px-3 py-2.5 shadow-lift ring-1 ring-app-border backdrop-blur">
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
         <div className="min-w-0">
           <p className="text-sm font-black text-app-text">{hasSchedule ? "آماده بررسی و ورود به صف" : "زمان انتشار هنوز انتخاب نشده است"}</p>

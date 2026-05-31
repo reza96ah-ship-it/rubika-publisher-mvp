@@ -2,7 +2,7 @@
 
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CalendarClock, ChevronDown, Cloud, FileText, ImagePlus, Images, Send, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { CalendarClock, ChevronDown, Cloud, Eye, FileText, ImagePlus, Images, Send, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ComposerActionFooter } from "../../components/composer-action-footer";
@@ -35,6 +35,7 @@ type MediaAsset = {
 
 type SaveAction = "draft" | "ready" | "schedule";
 type AutosaveState = "idle" | "dirty" | "saved" | "restored";
+type StudioPanel = "preview" | "schedule" | "review";
 
 type Post = {
   id: number;
@@ -82,6 +83,7 @@ function ComposePageContent() {
   const [composerReady, setComposerReady] = useState(false);
   const [autosaveState, setAutosaveState] = useState<AutosaveState>("idle");
   const [autosaveAt, setAutosaveAt] = useState("");
+  const [studioPanel, setStudioPanel] = useState<StudioPanel>("preview");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -169,6 +171,11 @@ function ComposePageContent() {
       icon: ShieldCheck,
       state: canSchedule ? "done" : canMarkReady ? "active" : "pending"
     }
+  ];
+  const studioPanels: Array<{ label: string; value: StudioPanel; icon: typeof Eye; ready?: boolean }> = [
+    { label: "پیش‌نمایش", value: "preview", icon: Eye, ready: hasPostBody },
+    { label: "زمان انتشار", value: "schedule", icon: CalendarClock, ready: hasSchedule },
+    { label: "بازبینی", value: "review", icon: ShieldCheck, ready: canSchedule }
   ];
 
   function token() {
@@ -531,7 +538,7 @@ function ComposePageContent() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-4">
-          <section className="rounded-md border border-app-border bg-white px-4 py-3">
+          <section className="rounded-lg bg-white px-4 py-3 shadow-hairline">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
                 <p className="text-[10px] font-black text-app-primary">استودیوی انتشار</p>
@@ -555,14 +562,14 @@ function ComposePageContent() {
             <section className="min-w-0 space-y-4">
               <WorkspacePanel
                 title="محتوای پست"
-                description="ابتدا متن اصلی را کامل کنید؛ جزئیات داخلی در بخش اختیاری قرار دارند."
+                description="متن اصلی را روی بوم ویرایش کامل کنید؛ اطلاعات داخلی تیم در بخش اختیاری باقی می‌مانند."
                 action={(
                   <div className="flex flex-wrap gap-2">
                     <Tag tone="primary">روبیکا</Tag>
                     {hasSchedule ? <Tag tone="success">زمان‌بندی شده</Tag> : null}
                   </div>
                 )}
-                bodyClassName="grid gap-5 p-4"
+                bodyClassName="grid gap-5 p-5"
               >
                   <Field label="عنوان داخلی پست" required hint="فقط برای مدیریت محتوا و صف انتشار؛ مخاطب این عنوان را نمی‌بیند.">
                     <Input
@@ -577,7 +584,7 @@ function ComposePageContent() {
                     <Textarea
                       value={form.caption}
                       onChange={(event) => updateField("caption", event.target.value)}
-                      className="min-h-[260px] resize-y text-[15px] leading-8"
+                      className="min-h-[320px] resize-y border-0 bg-app-canvas px-4 py-3 text-[15px] leading-8 shadow-hairline"
                       placeholder="متن پست روبیکا را وارد کنید..."
                     />
                   </Field>
@@ -590,11 +597,11 @@ function ComposePageContent() {
                     />
                   </Field>
 
-                  <section className="overflow-hidden rounded-md border border-app-border">
+                  <section className="overflow-hidden rounded-md bg-app-surfaceMuted shadow-hairline">
                     <button
                       type="button"
                       onClick={() => setShowOptionalDetails((current) => !current)}
-                      className="flex w-full items-center justify-between gap-3 bg-slate-50 px-3 py-3 text-right transition hover:bg-slate-100"
+                      className="flex w-full items-center justify-between gap-3 px-3 py-3 text-right transition hover:bg-slate-100"
                       aria-expanded={showOptionalDetails}
                     >
                       <span className="flex min-w-0 items-center gap-2">
@@ -612,7 +619,7 @@ function ComposePageContent() {
                     </button>
 
                     {showOptionalDetails ? (
-                      <div className="grid gap-4 border-t border-app-border bg-white p-3 lg:grid-cols-[220px_minmax(0,1fr)]">
+                      <div className="grid gap-4 border-t border-app-border bg-white p-4 lg:grid-cols-[220px_minmax(0,1fr)]">
                         <Field label="کمپین" hint="برای دسته‌بندی و گزارش‌گیری داخلی.">
                           <Input
                             value={form.campaign}
@@ -638,10 +645,10 @@ function ComposePageContent() {
                 title="رسانه"
                 description="یک تصویر تازه آپلود کنید یا از کتابخانه رسانه انتخاب کنید."
                 action={<Tag tone={previewImageUrl ? "success" : "warning"}>{previewImageUrl ? "انتخاب شده" : "بدون رسانه"}</Tag>}
-                bodyClassName="grid gap-3 p-3 lg:grid-cols-[220px_minmax(0,1fr)]"
+                bodyClassName="grid gap-4 p-4 lg:grid-cols-[230px_minmax(0,1fr)]"
               >
                 <div className="space-y-3">
-                  <label className="block cursor-pointer rounded-md border border-dashed border-app-border bg-slate-50 p-3 transition hover:border-slate-400">
+                  <label className="app-interactive block cursor-pointer rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted p-3 hover:border-blue-300 hover:bg-blue-50">
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
@@ -669,7 +676,7 @@ function ComposePageContent() {
                   loading={loading}
                   onSelect={(assetId) => {
                     setSelectedMediaId(assetId);
-                    if (assetId) setSelectedFile(null);
+                    setSelectedFile(null);
                     if (message) setMessage("");
                   }}
                 />
@@ -684,33 +691,67 @@ function ComposePageContent() {
                 <ComposerStepRail steps={composerSteps} />
 
                 <WorkspacePanel
-                  title="پیش‌نمایش خروجی"
-                  description="نمای نزدیک از چیزی که مخاطب روبیکا می‌بیند."
-                  action={<StatusToken tone="neutral">Rubika</StatusToken>}
-                  bodyClassName="p-3"
+                  title="بازرس استودیو"
+                  description="پیش‌نمایش، زمان‌بندی و کنترل نهایی را در یک فضای متمرکز بررسی کنید."
+                  action={<StatusToken tone={publishTone}>{readinessScore}%</StatusToken>}
+                  bodyClassName="p-0"
                 >
-                  <RubikaPostPreview imageUrl={previewImageUrl} caption={finalPreview} destination={store?.name || "کانال روبیکا"} />
-                </WorkspacePanel>
+                  <div className="grid grid-cols-3 border-b border-app-border bg-app-surfaceMuted p-1">
+                    {studioPanels.map((panel) => {
+                      const Icon = panel.icon;
+                      const active = studioPanel === panel.value;
+                      return (
+                        <button
+                          key={panel.value}
+                          type="button"
+                          onClick={() => setStudioPanel(panel.value)}
+                          className={`app-interactive relative flex min-w-0 flex-col items-center gap-1 rounded-md px-2 py-2 text-[11px] font-black ${
+                            active ? "bg-white text-app-primary shadow-sm" : "text-slate-500 hover:text-app-text"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" aria-hidden="true" />
+                          <span className="truncate">{panel.label}</span>
+                          <span className={`absolute left-2 top-2 h-1.5 w-1.5 rounded-full ${panel.ready ? "bg-emerald-500" : "bg-slate-300"}`} />
+                        </button>
+                      );
+                    })}
+                  </div>
 
-                <WorkspacePanel
-                  title="زمان انتشار"
-                  description="انتخاب تاریخ شمسی و ساعت برای ورود به صف."
-                  bodyClassName="p-3"
-                >
-                  <ComposerSchedulePanel
-                    scheduledAt={form.scheduled_at}
-                    timezone={timezone}
-                    onChange={(value) => updateField("scheduled_at", value)}
-                  />
-                </WorkspacePanel>
+                  <div className="p-3">
+                    {studioPanel === "preview" ? (
+                      <div>
+                        <div className="mb-3 flex items-center justify-between gap-2">
+                          <p className="text-xs font-black text-app-text">خروجی مخاطب</p>
+                          <StatusToken tone="neutral">Rubika</StatusToken>
+                        </div>
+                        <RubikaPostPreview imageUrl={previewImageUrl} caption={finalPreview} destination={store?.name || "کانال روبیکا"} />
+                        <div className="mt-3 grid grid-cols-3 divide-x divide-x-reverse divide-app-border overflow-hidden rounded-md bg-app-surfaceMuted text-center shadow-hairline">
+                          <div className="p-2"><p className="text-sm font-black text-app-text">{captionLength}</p><p className="mt-1 text-[10px] text-app-muted">کاراکتر</p></div>
+                          <div className="p-2"><p className="text-sm font-black text-app-text">{hashtagCount}</p><p className="mt-1 text-[10px] text-app-muted">هشتگ</p></div>
+                          <div className="p-2"><p className="text-sm font-black text-app-text">{previewImageUrl ? "1" : "0"}</p><p className="mt-1 text-[10px] text-app-muted">رسانه</p></div>
+                        </div>
+                      </div>
+                    ) : null}
 
-                <WorkspacePanel
-                  title="بررسی نهایی"
-                  description="وضعیت الزامات قبل از ذخیره یا زمان‌بندی."
-                  action={<StatusToken tone={canSchedule ? "success" : "warning"}>{readinessScore}%</StatusToken>}
-                >
-                  <ComposerReadinessChecks items={readinessItems} />
-                  <Button href="/media" variant="secondary" className="mt-4 w-full">کتابخانه رسانه</Button>
+                    {studioPanel === "schedule" ? (
+                      <ComposerSchedulePanel
+                        scheduledAt={form.scheduled_at}
+                        timezone={timezone}
+                        onChange={(value) => updateField("scheduled_at", value)}
+                      />
+                    ) : null}
+
+                    {studioPanel === "review" ? (
+                      <div>
+                        <div className="mb-3 flex items-center justify-between gap-2">
+                          <p className="text-xs font-black text-app-text">کنترل پیش از انتشار</p>
+                          <StatusToken tone={canSchedule ? "success" : "warning"}>{canSchedule ? "آماده صف" : "نیازمند تکمیل"}</StatusToken>
+                        </div>
+                        <ComposerReadinessChecks items={readinessItems} />
+                        <Button href="/media" variant="secondary" className="mt-4 w-full">کتابخانه رسانه</Button>
+                      </div>
+                    ) : null}
+                  </div>
                 </WorkspacePanel>
               </div>
             </aside>
