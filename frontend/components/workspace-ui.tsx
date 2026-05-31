@@ -102,7 +102,7 @@ type TimelineItem = {
   description?: string;
   meta?: ReactNode;
   icon?: ReactNode;
-  tone?: "neutral" | "primary" | "success" | "warning" | "alert";
+  tone?: "neutral" | "primary" | "success" | "warning" | "alert" | "info";
 };
 
 const metricToneClasses: Record<NonNullable<MetricTileProps["tone"]>, string> = {
@@ -338,7 +338,8 @@ const timelineDotClasses: Record<NonNullable<TimelineItem["tone"]>, string> = {
   primary: "border-blue-500 bg-blue-50 text-app-primary",
   success: "border-emerald-500 bg-emerald-50 text-emerald-700",
   warning: "border-amber-500 bg-amber-50 text-amber-700",
-  alert: "border-rose-500 bg-rose-50 text-rose-700"
+  alert: "border-rose-500 bg-rose-50 text-rose-700",
+  info: "border-sky-500 bg-sky-50 text-sky-700"
 };
 
 export function Timeline({ items }: { items: TimelineItem[] }) {

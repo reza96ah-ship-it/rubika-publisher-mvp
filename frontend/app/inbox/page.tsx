@@ -7,11 +7,12 @@ import { AppShell } from "../../components/app-shell";
 import { DataSearchField, FilterChip } from "../../components/data-view";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
-import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { DetailGrid, EmptyState, NoticeBanner, StatusToken, Timeline, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import {
   emptyOperationalNotifications,
   loadOperationalNotifications,
   loadReadNotificationIds,
+  notificationsLiveEvent,
   OperationalNotification,
   OperationalNotifications,
   saveReadNotificationIds
@@ -83,6 +84,19 @@ export default function InboxPage() {
     loadInbox();
   }, [loadInbox]);
 
+  useEffect(() => {
+    function applyLiveNotifications(event: Event) {
+      const result = (event as CustomEvent<OperationalNotifications>).detail;
+      if (!result) return;
+      setData(result);
+      setReadIds(loadReadNotificationIds());
+      setSelectedId((current) => current ?? result.notifications[0]?.id ?? null);
+      setLastUpdatedAt(new Date());
+    }
+    window.addEventListener(notificationsLiveEvent, applyLiveNotifications);
+    return () => window.removeEventListener(notificationsLiveEvent, applyLiveNotifications);
+  }, []);
+
   const visibleNotifications = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
     return data.notifications
@@ -142,6 +156,10 @@ export default function InboxPage() {
                 <p className="mt-1 max-w-3xl text-xs leading-5 text-app-muted">خطاهای انتشار، سلامت worker، آمادگی اتصال و نتیجه‌های موفق اخیر را در یک مسیر قابل اقدام دنبال کنید.</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                <StatusToken tone="success" className="gap-1.5">
+                  <span className="app-status-pulse h-2 w-2 rounded-full bg-emerald-500" />
+                  اعلان زنده
+                </StatusToken>
                 {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
                 <Button type="button" variant="secondary" size="sm" disabled={refreshing} onClick={() => loadInbox(true)}>
                   <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
@@ -242,6 +260,27 @@ export default function InboxPage() {
                       { label: "شناسه پست", value: selected.post_id ? `#${selected.post_id}` : "—" },
                       { label: "اولویت", value: selected.severity === "critical" ? "فوری" : selected.severity === "warning" ? "هشدار" : "اطلاع" }
                     ]} />
+                    <div>
+                      <p className="mb-3 text-xs font-black text-app-text">مسیر اعلان</p>
+                      <Timeline items={[
+                        {
+                          title: "تشخیص سیگنال عملیاتی",
+                          description: selected.description,
+                          meta: formatDateTime(selected.created_at),
+                          tone: severityTone(selected.severity)
+                        },
+                        {
+                          title: readIds.has(selected.id) ? "بازبینی شده" : "در انتظار بازبینی",
+                          description: readIds.has(selected.id) ? "این اعلان در فضای کاری باز شده است." : "اعلان هنوز توسط مدیر فضای کاری باز نشده است.",
+                          tone: readIds.has(selected.id) ? "success" : "warning"
+                        },
+                        {
+                          title: "اقدام پیشنهادی",
+                          description: selected.recovery_hint,
+                          tone: selected.action_required ? "primary" : "neutral"
+                        }
+                      ]} />
+                    </div>
                     <NoticeBanner tone={selected.action_required ? "warning" : "info"} title="پیشنهاد بعدی">
                       {selected.recovery_hint}
                     </NoticeBanner>

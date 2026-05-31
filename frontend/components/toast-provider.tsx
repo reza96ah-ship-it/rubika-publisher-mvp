@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, CheckCircle2, Info, X } from "lucide-react";
+import Link from "next/link";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 type ToastTone = "success" | "warning" | "alert" | "info";
@@ -9,6 +10,8 @@ type ToastInput = {
   title: string;
   description?: string;
   tone?: ToastTone;
+  actionHref?: string;
+  actionLabel?: string;
 };
 
 type ToastItem = ToastInput & {
@@ -63,6 +66,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-black text-app-text">{toast.title}</p>
                 {toast.description ? <p className="mt-1 text-xs leading-5 text-app-muted">{toast.description}</p> : null}
+                {toast.actionHref && toast.actionLabel ? (
+                  <Link href={toast.actionHref} className="mt-2 inline-flex text-xs font-black text-app-primary hover:text-app-primaryHover">
+                    {toast.actionLabel}
+                  </Link>
+                ) : null}
               </div>
               <button type="button" onClick={() => dismiss(toast.id)} className="app-interactive flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-slate-50 hover:text-slate-700" aria-label="بستن اعلان">
                 <X className="h-3.5 w-3.5" aria-hidden="true" />

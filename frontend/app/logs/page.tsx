@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Circle, CircleAlert, Clock3, FileUp, ListChecks, MessageSquareText, RefreshCw, RotateCcw, Search, UploadCloud } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, FileUp, ListChecks, MessageSquareText, RefreshCw, RotateCcw, Search, UploadCloud } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
@@ -8,7 +8,7 @@ import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "..
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
-import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { DetailGrid, EmptyState, NoticeBanner, StatusToken, Timeline, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { notifyNotificationsUpdated } from "../../lib/notifications";
 import { apiUrl, authHeaders, formatDateTime, readApiError, recoveryGuidance } from "../../lib/posts";
 
@@ -169,18 +169,11 @@ function buildTimeline(attempt: PublishAttempt, requestPayload: ParsedPayload, r
   return stages;
 }
 
-function stageClasses(state: TimelineStageState) {
-  if (state === "done") return "border-emerald-100 bg-emerald-50 text-emerald-700";
-  if (state === "failed") return "border-rose-100 bg-rose-50 text-rose-700";
-  if (state === "active") return "border-sky-100 bg-sky-50 text-sky-700";
-  return "border-slate-200 bg-slate-50 text-slate-500";
-}
-
-function StageIcon({ state }: { state: TimelineStageState }) {
-  if (state === "done") return <CheckCircle2 className="h-5 w-5" aria-hidden="true" />;
-  if (state === "failed") return <CircleAlert className="h-5 w-5" aria-hidden="true" />;
-  if (state === "active") return <Clock3 className="h-5 w-5" aria-hidden="true" />;
-  return <Circle className="h-5 w-5" aria-hidden="true" />;
+function timelineTone(state: TimelineStageState): "neutral" | "primary" | "success" | "warning" | "alert" {
+  if (state === "done") return "success";
+  if (state === "failed") return "alert";
+  if (state === "active") return "primary";
+  return "neutral";
 }
 
 function actionLabel(action: string) {
@@ -488,16 +481,13 @@ export default function LogsPage() {
                       ]}
                     />
 
-                    <div className="space-y-2">
-                      {selectedAttempt.timeline.map((stage, index) => (
-                        <div key={`${selectedAttempt.attempt.id}-${stage.label}`} className={`rounded-md border p-3 ${stageClasses(stage.state)}`}>
-                          <div className="flex items-center gap-2">
-                            <StageIcon state={stage.state} />
-                            <p className="text-sm font-black">{index + 1}. {stage.label}</p>
-                          </div>
-                          <p className="mt-2 text-xs leading-6 opacity-90">{stage.detail}</p>
-                        </div>
-                      ))}
+                    <div>
+                      <p className="mb-3 text-xs font-black text-app-text">مسیر اجرای worker</p>
+                      <Timeline items={selectedAttempt.timeline.map((stage) => ({
+                        title: stage.label,
+                        description: stage.detail,
+                        tone: timelineTone(stage.state)
+                      }))} />
                     </div>
 
                     {selectedAttempt.mode === "media" ? (

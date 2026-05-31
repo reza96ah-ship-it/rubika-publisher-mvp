@@ -10,7 +10,7 @@ import { PublishingWorkspaceHeader } from "../../components/publishing-workspace
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
-import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { DetailGrid, EmptyState, NoticeBanner, StatusToken, Timeline, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { notifyNotificationsUpdated } from "../../lib/notifications";
 import { apiUrl, authHeaders, formatDateTime, readApiError, recoveryGuidance, type Post } from "../../lib/posts";
 
@@ -383,6 +383,29 @@ export default function QueuePage() {
                             { label: "شناسه پست", value: `#${selectedPost.id}` }
                           ]}
                         />
+                      </div>
+                      <div className="mt-4">
+                        <p className="mb-3 text-xs font-black text-app-text">مسیر صف</p>
+                        <Timeline items={[
+                          {
+                            title: "ساخت محتوا",
+                            description: "رکورد پست در فضای کاری ایجاد شده است.",
+                            meta: formatDateTime(selectedPost.created_at),
+                            tone: "primary"
+                          },
+                          {
+                            title: selectedPost.scheduled_at ? "ورود به برنامه انتشار" : "آماده‌سازی برای صف",
+                            description: selectedPost.scheduled_at ? "زمان انتشار برای این پست ثبت شده است." : "پست منتظر تصمیم بعدی مدیر فضای کاری است.",
+                            meta: selectedPost.scheduled_at ? formatDateTime(selectedPost.scheduled_at) : undefined,
+                            tone: selectedPost.scheduled_at ? "warning" : "neutral"
+                          },
+                          {
+                            title: selectedPost.status === "failed" ? "نیازمند بازیابی" : selectedPost.status === "publishing" ? "در اختیار worker" : "وضعیت فعلی صف",
+                            description: selectedPost.last_error || "وضعیت صف برای این پست پایدار است.",
+                            meta: `آخرین تغییر: ${formatDateTime(selectedPost.updated_at)}`,
+                            tone: selectedPost.status === "failed" ? "alert" : selectedPost.status === "publishing" ? "primary" : "success"
+                          }
+                        ]} />
                       </div>
                       {selectedPost.last_error ? (
                         <div className="mt-4 space-y-3">

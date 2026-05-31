@@ -3,7 +3,7 @@
 import { AlertCircle, BellRing, ChevronDown, ChevronLeft, LogOut, PlugZap, Search, Settings2, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   isRubikaConnected,
   isStoreConfigured,
@@ -11,19 +11,30 @@ import {
   WorkspaceOverview,
   workspaceUpdatedEvent
 } from "../lib/workspace";
-import { loadOperationalNotifications, notificationsUpdatedEvent, unreadOperationalCount } from "../lib/notifications";
+import {
+  loadKnownNotificationIds,
+  loadOperationalNotifications,
+  notificationsUpdatedEvent,
+  notifyLiveNotifications,
+  saveKnownNotificationIds,
+  unreadOperationalCount
+} from "../lib/notifications";
 import { CommandPalette } from "./command-palette";
 import { getActiveNav, MobileNav, Sidebar } from "./sidebar";
+import { useToast } from "./toast-provider";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const { showToast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
   const activeNav = getActiveNav(pathname);
   const [overview, setOverview] = useState<WorkspaceOverview>({ store: null, rubika: null });
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [liveNotificationsReady, setLiveNotificationsReady] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const knownNotificationIds = useRef<Set<string> | null>(null);
 
   useEffect(() => {
     function refreshOverview() {
@@ -38,20 +49,65 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener(workspaceUpdatedEvent, refreshOverview);
   }, []);
 
-  useEffect(() => {
-    function refreshNotifications() {
-      loadOperationalNotifications()
-        .then((data) => setNotificationCount(unreadOperationalCount(data)))
-        .catch(() => setNotificationCount(0));
+  const refreshNotifications = useCallback(async (announceNew = true) => {
+    try {
+      const data = await loadOperationalNotifications();
+      const currentIds = new Set(data.notifications.map((item) => item.id));
+      const knownIds = knownNotificationIds.current ?? loadKnownNotificationIds();
+      const isFirstRefresh = knownNotificationIds.current === null && knownIds.size === 0;
+      knownNotificationIds.current = currentIds;
+      saveKnownNotificationIds(currentIds);
+      setNotificationCount(unreadOperationalCount(data));
+      setLiveNotificationsReady(true);
+      notifyLiveNotifications(data);
+
+      if (!isFirstRefresh && announceNew) {
+        data.notifications
+          .filter((item) => !knownIds.has(item.id))
+          .slice(0, 2)
+          .forEach((item) => {
+            showToast({
+              title: item.title,
+              description: item.description,
+              tone: item.severity === "critical" ? "alert" : item.severity === "warning" ? "warning" : "success",
+              actionHref: item.action_href,
+              actionLabel: item.action_label
+            });
+          });
+      }
+    } catch {
+      setNotificationCount(0);
+      setLiveNotificationsReady(false);
     }
-    refreshNotifications();
-    window.addEventListener(notificationsUpdatedEvent, refreshNotifications);
-    window.addEventListener(workspaceUpdatedEvent, refreshNotifications);
+  }, [showToast]);
+
+  useEffect(() => {
+    function refreshWithAnnouncement() {
+      void refreshNotifications();
+    }
+    function refreshWithoutAnnouncement() {
+      void refreshNotifications(false);
+    }
+    function refreshWhenVisible() {
+      if (document.visibilityState === "visible") void refreshNotifications();
+    }
+
+    void refreshNotifications(false);
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refreshNotifications();
+    }, 15000);
+    window.addEventListener(notificationsUpdatedEvent, refreshWithAnnouncement);
+    window.addEventListener(workspaceUpdatedEvent, refreshWithoutAnnouncement);
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
     return () => {
-      window.removeEventListener(notificationsUpdatedEvent, refreshNotifications);
-      window.removeEventListener(workspaceUpdatedEvent, refreshNotifications);
+      window.clearInterval(interval);
+      window.removeEventListener(notificationsUpdatedEvent, refreshWithAnnouncement);
+      window.removeEventListener(workspaceUpdatedEvent, refreshWithoutAnnouncement);
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
-  }, [pathname]);
+  }, [refreshNotifications]);
 
   useEffect(() => {
     setAccountMenuOpen(false);
@@ -151,6 +207,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   aria-label={notificationCount ? `${notificationCount} اعلان عملیاتی خوانده‌نشده` : "صندوق عملیات انتشار"}
                 >
                   <BellRing className="h-4 w-4" aria-hidden="true" />
+                  <span className={`absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full ring-2 ring-white ${liveNotificationsReady ? "bg-emerald-500" : "bg-slate-300"}`} aria-label={liveNotificationsReady ? "اعلان زنده فعال" : "اعلان زنده در حال اتصال"} />
                   {notificationCount ? (
                     <span className="absolute -left-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-black text-white">
                       {notificationCount > 9 ? "9+" : notificationCount}
