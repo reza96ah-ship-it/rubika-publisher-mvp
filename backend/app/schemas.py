@@ -123,6 +123,17 @@ class RetryFailedPostsResponse(BaseModel):
     post_ids: list[int]
 
 
+class BulkPostStatusRequest(BaseModel):
+    post_ids: list[int]
+    status: str
+
+
+class BulkPostStatusResponse(BaseModel):
+    updated_count: int
+    post_ids: list[int]
+    skipped_post_ids: list[int]
+
+
 class OperationalNotificationResponse(BaseModel):
     id: str
     category: str

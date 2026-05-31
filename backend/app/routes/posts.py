@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_active_store
 from app.models import Post, RubikaAccount, Store
-from app.schemas import PostRequest, PostResponse, PostScheduleRequest, PostStatsResponse, PostStatusRequest, RetryFailedPostsResponse
+from app.schemas import BulkPostStatusRequest, BulkPostStatusResponse, PostRequest, PostResponse, PostScheduleRequest, PostStatsResponse, PostStatusRequest, RetryFailedPostsResponse
 from app.services.rubika_health import is_rubika_account_ready
 from app.store_scope import get_store_post
 
@@ -84,6 +84,16 @@ def requeue_failed_post(post: Post, now: datetime) -> None:
     post.updated_at = now
 
 
+def apply_workflow_status(post: Post, status: str, now: datetime) -> None:
+    post.status = status
+    post.updated_at = now
+    if status == "ready":
+        post.ready_at = post.ready_at or now
+        post.last_error = ""
+    if status == "cancelled":
+        post.scheduled_at = None
+
+
 @router.get("/stats", response_model=PostStatsResponse)
 def post_stats(store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostStatsResponse:
     rows = db.execute(select(Post.status, func.count(Post.id)).where(Post.store_id == store.id).group_by(Post.status)).all()
@@ -108,6 +118,41 @@ def list_posts(
         statement = statement.where(Post.title.ilike(pattern) | Post.caption.ilike(pattern) | Post.hashtags.ilike(pattern))
     posts = db.scalars(statement.order_by(Post.scheduled_at.asc().nulls_last(), Post.id.desc())).all()
     return [post_response(post) for post in posts]
+
+
+@router.post("/retry-failed", response_model=RetryFailedPostsResponse)
+def retry_all_failed_posts(store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> RetryFailedPostsResponse:
+    posts = db.scalars(select(Post).where(Post.store_id == store.id, Post.status == "failed").order_by(Post.failed_at.asc(), Post.id.asc())).all()
+    if not posts:
+        return RetryFailedPostsResponse(retried_count=0, post_ids=[])
+    require_rubika_ready(db)
+    now = datetime.utcnow()
+    for post in posts:
+        requeue_failed_post(post, now)
+    db.commit()
+    return RetryFailedPostsResponse(retried_count=len(posts), post_ids=[post.id for post in posts])
+
+
+@router.post("/bulk-status", response_model=BulkPostStatusResponse)
+def bulk_change_status(payload: BulkPostStatusRequest, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> BulkPostStatusResponse:
+    if payload.status not in {"ready", "cancelled"}:
+        raise HTTPException(status_code=400, detail="Bulk status only supports ready or cancelled")
+    unique_post_ids = list(dict.fromkeys(payload.post_ids))
+    posts = db.scalars(select(Post).where(Post.store_id == store.id, Post.id.in_(unique_post_ids))).all() if unique_post_ids else []
+    posts_by_id = {post.id: post for post in posts}
+    eligible_statuses = {"draft", "failed", "cancelled"} if payload.status == "ready" else {"draft", "ready", "scheduled", "failed"}
+    updated_ids: list[int] = []
+    skipped_ids: list[int] = []
+    now = datetime.utcnow()
+    for post_id in unique_post_ids:
+        post = posts_by_id.get(post_id)
+        if post is None or post.status not in eligible_statuses:
+            skipped_ids.append(post_id)
+            continue
+        apply_workflow_status(post, payload.status, now)
+        updated_ids.append(post.id)
+    db.commit()
+    return BulkPostStatusResponse(updated_count=len(updated_ids), post_ids=updated_ids, skipped_post_ids=skipped_ids)
 
 
 @router.get("/{post_id}", response_model=PostResponse)
@@ -180,19 +225,6 @@ def retry_failed_post(post_id: int, store: Store = Depends(get_active_store), db
     return post_response(post)
 
 
-@router.post("/retry-failed", response_model=RetryFailedPostsResponse)
-def retry_all_failed_posts(store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> RetryFailedPostsResponse:
-    posts = db.scalars(select(Post).where(Post.store_id == store.id, Post.status == "failed").order_by(Post.failed_at.asc(), Post.id.asc())).all()
-    if not posts:
-        return RetryFailedPostsResponse(retried_count=0, post_ids=[])
-    require_rubika_ready(db)
-    now = datetime.utcnow()
-    for post in posts:
-        requeue_failed_post(post, now)
-    db.commit()
-    return RetryFailedPostsResponse(retried_count=len(posts), post_ids=[post.id for post in posts])
-
-
 @router.post("/{post_id}/status", response_model=PostResponse)
 def change_status(post_id: int, payload: PostStatusRequest, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostResponse:
     if payload.status not in WORKFLOW_STATUSES:
@@ -200,12 +232,7 @@ def change_status(post_id: int, payload: PostStatusRequest, store: Store = Depen
     post = get_store_post(db, store, post_id)
     if payload.status == "scheduled":
         require_rubika_ready(db)
-    post.status = payload.status
-    post.updated_at = datetime.utcnow()
-    if payload.status == "ready":
-        post.ready_at = post.ready_at or datetime.utcnow()
-    if payload.status == "cancelled":
-        post.scheduled_at = None
+    apply_workflow_status(post, payload.status, datetime.utcnow())
     db.commit()
     db.refresh(post)
     return post_response(post)

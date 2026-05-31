@@ -7,8 +7,8 @@ from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
 from app.models import Post, RubikaAccount, Store
-from app.routes.posts import apply_payload, change_status, post_response, retry_all_failed_posts, retry_failed_post, schedule_post
-from app.schemas import PostRequest, PostScheduleRequest, PostStatusRequest
+from app.routes.posts import apply_payload, bulk_change_status, change_status, post_response, retry_all_failed_posts, retry_failed_post, router, schedule_post
+from app.schemas import BulkPostStatusRequest, PostRequest, PostScheduleRequest, PostStatusRequest
 
 
 def test_apply_payload_stores_aware_schedule_as_utc_naive() -> None:
@@ -145,3 +145,59 @@ def test_retry_all_failed_posts_requeues_current_store_only() -> None:
         assert first.last_error == ""
         assert second.failed_at is None
         assert other.status == "failed"
+
+
+def test_bulk_change_status_updates_eligible_current_store_posts_and_reports_skips() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime.utcnow()
+
+    with session_factory() as db:
+        current_store = Store(name="Main", created_at=now, updated_at=now)
+        other_store = Store(name="Other", created_at=now, updated_at=now)
+        db.add_all([current_store, other_store])
+        db.flush()
+        draft = Post(store_id=current_store.id, title="Draft", status="draft", created_at=now, updated_at=now)
+        failed = Post(store_id=current_store.id, title="Failed", status="failed", last_error="Timeout", created_at=now, updated_at=now)
+        published = Post(store_id=current_store.id, title="Published", status="published", created_at=now, updated_at=now)
+        other = Post(store_id=other_store.id, title="Other", status="draft", created_at=now, updated_at=now)
+        db.add_all([draft, failed, published, other])
+        db.commit()
+
+        response = bulk_change_status(
+            BulkPostStatusRequest(post_ids=[draft.id, failed.id, published.id, other.id, draft.id], status="ready"),
+            store=current_store,
+            db=db,
+        )
+
+        assert response.updated_count == 2
+        assert response.post_ids == [draft.id, failed.id]
+        assert response.skipped_post_ids == [published.id, other.id]
+        assert draft.status == "ready"
+        assert failed.status == "ready"
+        assert failed.last_error == ""
+        assert published.status == "published"
+        assert other.status == "draft"
+
+
+def test_bulk_change_status_rejects_unsafe_transition() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime.utcnow()
+
+    with session_factory() as db:
+        store = Store(name="Main", created_at=now, updated_at=now)
+        db.add(store)
+        db.commit()
+
+        with pytest.raises(HTTPException, match="Bulk status only supports ready or cancelled"):
+            bulk_change_status(BulkPostStatusRequest(post_ids=[], status="published"), store=store, db=db)
+
+
+def test_literal_bulk_routes_are_registered_before_dynamic_post_route() -> None:
+    paths = [route.path for route in router.routes]
+
+    assert paths.index("/posts/retry-failed") < paths.index("/posts/{post_id}")
+    assert paths.index("/posts/bulk-status") < paths.index("/posts/{post_id}")

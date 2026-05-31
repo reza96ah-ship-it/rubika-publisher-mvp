@@ -47,6 +47,10 @@ export function loadReadNotificationIds() {
 
 export function saveReadNotificationIds(ids: Set<string>) {
   window.localStorage.setItem(readNotificationsKey, JSON.stringify([...ids]));
+  notifyNotificationsUpdated();
+}
+
+export function notifyNotificationsUpdated() {
   window.dispatchEvent(new Event(notificationsUpdatedEvent));
 }
 

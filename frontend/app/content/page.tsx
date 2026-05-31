@@ -2,11 +2,14 @@
 
 import {
   AlertCircle,
+  ArrowDownUp,
   CalendarClock,
   CheckCircle2,
+  CheckSquare2,
   Clock3,
   FileText,
   Pencil,
+  RefreshCw,
   RotateCcw,
   XCircle
 } from "lucide-react";
@@ -20,7 +23,8 @@ import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
-import { apiUrl, authHeaders, formatDateTime, Post, postFinalText, workflowTabs } from "../../lib/posts";
+import { notifyNotificationsUpdated } from "../../lib/notifications";
+import { apiUrl, authHeaders, formatDateTime, Post, postFinalText, readApiError, workflowTabs } from "../../lib/posts";
 
 type Metric = {
   label: string;
@@ -29,6 +33,8 @@ type Metric = {
   icon: typeof FileText;
   tone: "neutral" | "primary" | "success" | "warning" | "alert" | "info";
 };
+
+type SortMode = "priority" | "updated" | "schedule" | "title";
 
 const searchableFields: Array<keyof Pick<Post, "title" | "caption" | "hashtags" | "campaign" | "internal_note">> = [
   "title",
@@ -60,19 +66,33 @@ export default function ContentWorkspacePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [activeStatus, setActiveStatus] = useState("all");
   const [search, setSearch] = useState("");
+  const [campaignFilter, setCampaignFilter] = useState("all");
+  const [sortMode, setSortMode] = useState<SortMode>("priority");
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const loadPosts = useCallback(async () => {
-    setLoading(true);
-    const response = await fetch(`${apiUrl}/posts`, { headers: authHeaders() });
-    if (!response.ok) throw new Error("دریافت پست‌ها ناموفق بود");
-    const data: Post[] = await response.json();
-    setPosts(data);
-    setSelectedPostId((current) => current ?? data[0]?.id ?? null);
-    setLoading(false);
+  const loadPosts = useCallback(async (quiet = false) => {
+    if (quiet) setRefreshing(true);
+    else setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(`${apiUrl}/posts`, { headers: authHeaders() });
+      if (!response.ok) throw new Error("دریافت پست‌ها ناموفق بود");
+      const data: Post[] = await response.json();
+      setPosts(data);
+      setSelectedPostId((current) => current ?? data[0]?.id ?? null);
+      setSelectedIds((current) => new Set([...current].filter((id) => data.some((post) => post.id === id))));
+      setLastUpdatedAt(new Date());
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -93,13 +113,21 @@ export default function ContentWorkspacePage() {
     const query = search.trim().toLowerCase();
     return posts
       .filter((post) => activeStatus === "all" || post.status === activeStatus)
+      .filter((post) => campaignFilter === "all" || post.campaign === campaignFilter)
       .filter((post) => !query || visiblePostText(post).includes(query))
       .sort((a, b) => {
+        if (sortMode === "updated") return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        if (sortMode === "schedule") return compareBySchedule(a, b);
+        if (sortMode === "title") return a.title.localeCompare(b.title, "fa");
         if (a.status === "failed" && b.status !== "failed") return -1;
         if (a.status !== "failed" && b.status === "failed") return 1;
         return compareBySchedule(a, b);
       });
-  }, [activeStatus, posts, search]);
+  }, [activeStatus, campaignFilter, posts, search, sortMode]);
+
+  const campaigns = useMemo(() => {
+    return [...new Set(posts.map((post) => post.campaign.trim()).filter(Boolean))].sort((first, second) => first.localeCompare(second, "fa"));
+  }, [posts]);
 
   const selectedPost = useMemo(() => {
     if (selectedPostId) {
@@ -158,6 +186,8 @@ export default function ContentWorkspacePage() {
   const activePublishingTab: PublishingTab = activeStatus === "draft" || activeStatus === "published" || activeStatus === "failed"
     ? activeStatus
     : "content";
+  const selectedVisibleIds = filteredPosts.map((post) => post.id);
+  const allVisibleSelected = selectedVisibleIds.length > 0 && selectedVisibleIds.every((id) => selectedIds.has(id));
 
   function applyPublishingTab(tab: PublishingTab) {
     if (tab === "draft" || tab === "published" || tab === "failed") {
@@ -165,6 +195,51 @@ export default function ContentWorkspacePage() {
     } else if (tab === "content") {
       setActiveStatus("all");
     }
+  }
+
+  function toggleSelected(postId: number) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(postId)) next.delete(postId);
+      else next.add(postId);
+      return next;
+    });
+  }
+
+  function toggleAllVisible() {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (allVisibleSelected) selectedVisibleIds.forEach((id) => next.delete(id));
+      else selectedVisibleIds.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
+  async function bulkChangeStatus(status: "ready" | "cancelled") {
+    if (!selectedIds.size) return;
+    setMessage("");
+    setError("");
+    setBulkUpdating(true);
+    const response = await fetch(`${apiUrl}/posts/bulk-status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ post_ids: [...selectedIds], status })
+    });
+    if (!response.ok) {
+      const detail = await readApiError(response, "به‌روزرسانی گروهی محتوا ناموفق بود");
+      setError(detail);
+      setBulkUpdating(false);
+      showToast({ title: "عملیات گروهی ناموفق بود", description: detail, tone: "alert" });
+      return;
+    }
+    const result = (await response.json()) as { updated_count: number; skipped_post_ids: number[] };
+    const skippedText = result.skipped_post_ids.length ? `، ${result.skipped_post_ids.length} مورد بدون تغییر باقی ماند` : "";
+    setMessage(`${result.updated_count} پست به‌روزرسانی شد${skippedText}`);
+    showToast({ title: "عملیات گروهی انجام شد", description: `${result.updated_count} پست به‌روزرسانی شد`, tone: "success" });
+    setSelectedIds(new Set());
+    setBulkUpdating(false);
+    notifyNotificationsUpdated();
+    await loadPosts(true);
   }
 
   async function changeStatus(post: Post, status: string) {
@@ -179,13 +254,15 @@ export default function ContentWorkspacePage() {
     });
     if (!response.ok) {
       setPosts(previousPosts);
-      setError("تغییر وضعیت پست ناموفق بود");
-      showToast({ title: "تغییر وضعیت ناموفق بود", description: "دوباره تلاش کنید یا سلامت انتشار را بررسی کنید.", tone: "alert" });
+      const detail = await readApiError(response, "تغییر وضعیت پست ناموفق بود");
+      setError(detail);
+      showToast({ title: "تغییر وضعیت ناموفق بود", description: detail, tone: "alert" });
       return;
     }
     setMessage("وضعیت پست به‌روزرسانی شد");
     showToast({ title: "وضعیت پست به‌روزرسانی شد", description: post.title, tone: "success" });
-    await loadPosts();
+    notifyNotificationsUpdated();
+    await loadPosts(true);
   }
 
   async function retryPost(post: Post) {
@@ -199,18 +276,22 @@ export default function ContentWorkspacePage() {
     });
     if (!response.ok) {
       setPosts(previousPosts);
-      setError("تلاش مجدد انتشار ناموفق بود");
-      showToast({ title: "تلاش مجدد ناموفق بود", description: post.title, tone: "alert" });
+      const detail = await readApiError(response, "تلاش مجدد انتشار ناموفق بود");
+      setError(detail);
+      showToast({ title: "تلاش مجدد ناموفق بود", description: detail, tone: "alert" });
       return;
     }
     setMessage("پست برای تلاش مجدد وارد صف انتشار شد");
     showToast({ title: "پست دوباره وارد صف شد", description: post.title, tone: "success" });
-    await loadPosts();
+    notifyNotificationsUpdated();
+    await loadPosts(true);
   }
 
   function clearFilters() {
     setActiveStatus("all");
     setSearch("");
+    setCampaignFilter("all");
+    setSortMode("priority");
   }
 
   function selectPost(post: Post) {
@@ -237,7 +318,14 @@ export default function ContentWorkspacePage() {
               <>
                 <StatusToken tone={failedCount ? "alert" : "success"}>{failedCount ? `${failedCount} نیازمند رسیدگی` : "بدون خطای فعال"}</StatusToken>
                 <StatusToken tone="warning">{scheduledCount} زمان‌بندی‌شده</StatusToken>
+                {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
               </>
+            )}
+            action={(
+              <Button type="button" variant="secondary" size="sm" disabled={refreshing} onClick={() => loadPosts(true)}>
+                <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
+                به‌روزرسانی
+              </Button>
             )}
           />
 
@@ -276,9 +364,13 @@ export default function ContentWorkspacePage() {
               title="کتابخانه محتوا"
               description="پست‌ها را اسکن کنید و برای بازبینی یا اقدام عملیاتی به پنل کناری بفرستید."
               action={
-                <Button type="button" variant="secondary" size="sm" onClick={clearFilters}>
-                  پاک کردن فیلتر
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="secondary" size="sm" onClick={toggleAllVisible}>
+                    <CheckSquare2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                    {allVisibleSelected ? "لغو انتخاب نما" : "انتخاب همه نما"}
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>پاک کردن فیلتر</Button>
+                </div>
               }
             >
               <DataToolbar
@@ -289,12 +381,50 @@ export default function ContentWorkspacePage() {
                   </>
                 )}
               >
-                <DataSearchField
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="جست‌وجوی عنوان، کپشن، هشتگ، کمپین یا یادداشت"
-                />
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_170px_170px]">
+                  <DataSearchField
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="جست‌وجوی عنوان، کپشن، هشتگ، کمپین یا یادداشت"
+                  />
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
+                    <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                      <option value="all">همه کمپین‌ها</option>
+                      {campaigns.map((campaign) => <option key={campaign} value={campaign}>{campaign}</option>)}
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
+                    <ArrowDownUp className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                      <option value="priority">اولویت عملیاتی</option>
+                      <option value="updated">آخرین تغییر</option>
+                      <option value="schedule">زمان انتشار</option>
+                      <option value="title">عنوان</option>
+                    </select>
+                  </label>
+                </div>
               </DataToolbar>
+
+              {selectedIds.size ? (
+                <div className="mt-4 flex flex-col justify-between gap-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-3 sm:flex-row sm:items-center">
+                  <div>
+                    <p className="text-sm font-black text-app-text">{selectedIds.size} پست انتخاب شده است</p>
+                    <p className="mt-1 text-xs leading-5 text-app-muted">عملیات گروهی فقط روی وضعیت‌های مجاز اجرا می‌شود و موارد ناسازگار بدون تغییر باقی می‌مانند.</p>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    <Button type="button" size="sm" disabled={bulkUpdating} onClick={() => bulkChangeStatus("ready")}>
+                      <CheckCircle2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                      آماده‌سازی گروهی
+                    </Button>
+                    <Button type="button" variant="danger" size="sm" disabled={bulkUpdating} onClick={() => bulkChangeStatus("cancelled")}>
+                      <XCircle className="ml-2 h-4 w-4" aria-hidden="true" />
+                      لغو گروهی
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm" disabled={bulkUpdating} onClick={() => setSelectedIds(new Set())}>پاک کردن انتخاب</Button>
+                  </div>
+                </div>
+              ) : null}
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {workflowTabs.map((tab) => {
@@ -332,6 +462,15 @@ export default function ContentWorkspacePage() {
                   return (
                     <DataRow key={post.id} gridClassName={contentRowGrid} selected={selected}>
                       <div className="min-w-0">
+                        <label className="mb-3 inline-flex items-center gap-2 text-xs font-bold text-app-muted">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(post.id)}
+                            onChange={() => toggleSelected(post.id)}
+                            className="h-4 w-4 rounded border-app-border accent-blue-600"
+                          />
+                          انتخاب برای عملیات گروهی
+                        </label>
                         <div className="flex flex-wrap items-center gap-2">
                           {post.campaign ? <StatusToken tone="neutral">{post.campaign}</StatusToken> : null}
                           {post.hashtags ? <StatusToken tone="primary" className="max-w-full truncate">{post.hashtags}</StatusToken> : null}

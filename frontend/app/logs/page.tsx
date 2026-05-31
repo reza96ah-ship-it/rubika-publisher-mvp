@@ -9,6 +9,7 @@ import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { notifyNotificationsUpdated } from "../../lib/notifications";
 import { apiUrl, authHeaders, formatDateTime, readApiError, recoveryGuidance } from "../../lib/posts";
 
 type PublishAttempt = {
@@ -271,6 +272,7 @@ export default function LogsPage() {
     setMessage("پست دوباره وارد صف انتشار شد. تلاش جدید پس از اجرای worker در این فهرست نمایش داده می‌شود.");
     setRetryingPostId(null);
     showToast({ title: "پست دوباره وارد صف شد", description: title, tone: "success" });
+    notifyNotificationsUpdated();
     await loadAttempts(true);
   }
 

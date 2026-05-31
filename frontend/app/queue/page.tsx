@@ -11,6 +11,7 @@ import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { notifyNotificationsUpdated } from "../../lib/notifications";
 import { apiUrl, authHeaders, formatDateTime, readApiError, recoveryGuidance, type Post } from "../../lib/posts";
 
 type QueueFilter = "all" | "ready" | "scheduled" | "publishing" | "failed";
@@ -110,6 +111,7 @@ export default function QueuePage() {
     setMessage("پست برای تلاش مجدد وارد صف انتشار شد");
     showToast({ title: "پست دوباره وارد صف شد", description: post.title, tone: "success" });
     setRetryingPostId(null);
+    notifyNotificationsUpdated();
     await loadQueue(true);
   }
 
@@ -132,6 +134,7 @@ export default function QueuePage() {
     setMessage(`${result.retried_count} پست دوباره وارد صف انتشار شد`);
     showToast({ title: "بازیابی صف انجام شد", description: `${result.retried_count} پست برای تلاش مجدد آماده شد`, tone: "success" });
     setRetryingAll(false);
+    notifyNotificationsUpdated();
     await loadQueue(true);
   }
 
@@ -156,6 +159,7 @@ export default function QueuePage() {
     }
     setMessage("پست از صف انتشار خارج شد");
     showToast({ title: "پست از صف خارج شد", description: post.title, tone: "success" });
+    notifyNotificationsUpdated();
     await loadQueue();
   }
 
