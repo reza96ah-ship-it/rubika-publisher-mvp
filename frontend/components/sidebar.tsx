@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  BellRing,
   CalendarDays,
   ChevronLeft,
   FileText,
@@ -52,6 +53,7 @@ const primaryNavGroups: NavGroup[] = [
     items: [
       { label: "رسانه‌ها", href: "/media", icon: GalleryHorizontalEnd },
       { label: "تحلیل عملکرد", href: "/analytics", icon: BarChart3 },
+      { label: "هشدارهای عملیات", href: "/inbox", icon: BellRing },
       { label: "سلامت انتشار", href: "/logs", icon: ScrollText }
     ]
   }

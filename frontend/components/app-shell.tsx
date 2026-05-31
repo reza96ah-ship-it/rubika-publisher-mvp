@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, ChevronDown, ChevronLeft, LogOut, PlugZap, Search, Settings2, UserRound } from "lucide-react";
+import { AlertCircle, BellRing, ChevronDown, ChevronLeft, LogOut, PlugZap, Search, Settings2, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -11,6 +11,7 @@ import {
   WorkspaceOverview,
   workspaceUpdatedEvent
 } from "../lib/workspace";
+import { loadOperationalNotifications, notificationsUpdatedEvent, unreadOperationalCount } from "../lib/notifications";
 import { CommandPalette } from "./command-palette";
 import { getActiveNav, MobileNav, Sidebar } from "./sidebar";
 
@@ -20,6 +21,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const activeNav = getActiveNav(pathname);
   const [overview, setOverview] = useState<WorkspaceOverview>({ store: null, rubika: null });
   const [overviewLoading, setOverviewLoading] = useState(true);
+  const [notificationCount, setNotificationCount] = useState(0);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
@@ -35,6 +37,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     window.addEventListener(workspaceUpdatedEvent, refreshOverview);
     return () => window.removeEventListener(workspaceUpdatedEvent, refreshOverview);
   }, []);
+
+  useEffect(() => {
+    function refreshNotifications() {
+      loadOperationalNotifications()
+        .then((data) => setNotificationCount(unreadOperationalCount(data)))
+        .catch(() => setNotificationCount(0));
+    }
+    refreshNotifications();
+    window.addEventListener(notificationsUpdatedEvent, refreshNotifications);
+    window.addEventListener(workspaceUpdatedEvent, refreshNotifications);
+    return () => {
+      window.removeEventListener(notificationsUpdatedEvent, refreshNotifications);
+      window.removeEventListener(workspaceUpdatedEvent, refreshNotifications);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     setAccountMenuOpen(false);
@@ -127,6 +144,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     تکمیل آماده‌سازی
                   </Link>
                 ) : null}
+
+                <Link
+                  href="/inbox"
+                  className="app-interactive relative flex h-9 w-9 items-center justify-center rounded-md border border-app-border bg-white text-slate-500 hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary"
+                  aria-label={notificationCount ? `${notificationCount} اعلان عملیاتی خوانده‌نشده` : "صندوق عملیات انتشار"}
+                >
+                  <BellRing className="h-4 w-4" aria-hidden="true" />
+                  {notificationCount ? (
+                    <span className="absolute -left-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-black text-white">
+                      {notificationCount > 9 ? "9+" : notificationCount}
+                    </span>
+                  ) : null}
+                </Link>
 
                 <div className="relative">
                   <button

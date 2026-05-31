@@ -123,6 +123,33 @@ class RetryFailedPostsResponse(BaseModel):
     post_ids: list[int]
 
 
+class OperationalNotificationResponse(BaseModel):
+    id: str
+    category: str
+    severity: str
+    title: str
+    description: str
+    recovery_hint: str
+    action_label: str
+    action_href: str
+    post_id: int | None = None
+    created_at: datetime
+    action_required: bool
+
+
+class OperationalNotificationSummaryResponse(BaseModel):
+    total: int
+    action_required: int
+    critical: int
+    warning: int
+    info: int
+
+
+class OperationalNotificationListResponse(BaseModel):
+    notifications: list[OperationalNotificationResponse]
+    summary: OperationalNotificationSummaryResponse
+
+
 class PublishAttemptResponse(BaseModel):
     id: int
     post_id: int
