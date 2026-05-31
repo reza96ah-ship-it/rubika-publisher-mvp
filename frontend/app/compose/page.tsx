@@ -2,7 +2,7 @@
 
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ChevronDown, ImagePlus, Send, SlidersHorizontal } from "lucide-react";
+import { CalendarClock, ChevronDown, Cloud, FileText, ImagePlus, Images, Send, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ComposerActionFooter } from "../../components/composer-action-footer";
@@ -10,6 +10,7 @@ import { ComposerReadinessChecks } from "../../components/composer-readiness-che
 import { RubikaPostPreview } from "../../components/rubika-post-preview";
 import { MediaGalleryPicker } from "../../components/media-gallery-picker";
 import { ComposerSchedulePanel } from "../../components/composer-schedule-panel";
+import { ComposerStepRail, type ComposerStep } from "../../components/composer-step-rail";
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
@@ -20,6 +21,7 @@ import { isRubikaConnected, loadWorkspaceOverview, type RubikaSettings, type Sto
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const scheduleTimezone = "Asia/Tehran";
+const localDraftKey = "rubika_publisher_compose_draft";
 
 type MediaAsset = {
   id: number;
@@ -27,9 +29,12 @@ type MediaAsset = {
   original_filename: string;
   content_type: string;
   size_bytes: number;
+  folder: string;
+  tags: string;
 };
 
 type SaveAction = "draft" | "ready" | "schedule";
+type AutosaveState = "idle" | "dirty" | "saved" | "restored";
 
 type Post = {
   id: number;
@@ -74,6 +79,9 @@ function ComposePageContent() {
   const [loading, setLoading] = useState(true);
   const [showOptionalDetails, setShowOptionalDetails] = useState(false);
   const [savingAction, setSavingAction] = useState<SaveAction | null>(null);
+  const [composerReady, setComposerReady] = useState(false);
+  const [autosaveState, setAutosaveState] = useState<AutosaveState>("idle");
+  const [autosaveAt, setAutosaveAt] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -96,6 +104,7 @@ function ComposePageContent() {
   const hasSchedule = Boolean(form.scheduled_at);
   const hasTitle = Boolean(form.title.trim());
   const hasPostBody = Boolean(form.caption.trim() || previewImageUrl);
+  const hasLocalDraftContent = Boolean(form.title.trim() || form.caption.trim() || form.hashtags.trim() || form.campaign.trim() || form.internal_note.trim() || form.scheduled_at || selectedMediaId);
   const rubikaReady = isRubikaConnected(rubika);
   const canMoveToReady = !editingPost || ["draft", "failed", "cancelled"].includes(editingPost.status);
   const canSaveDraft = hasTitle;
@@ -130,6 +139,37 @@ function ComposePageContent() {
   const readinessScore = Math.round((readinessDoneCount / readinessItems.length) * 100);
   const publishTone = canSchedule ? "success" : canMarkReady ? "primary" : "warning";
   const publishStateLabel = canSchedule ? "آماده زمان‌بندی" : canMarkReady ? "آماده بازبینی" : "در حال تولید";
+  const autosaveLabel = autosaveState === "dirty"
+    ? "در حال ذخیره محلی..."
+    : autosaveAt
+      ? `ذخیره خودکار ${new Date(autosaveAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}`
+      : "ذخیره خودکار فعال";
+  const composerSteps: ComposerStep[] = [
+    {
+      label: "محتوا",
+      helper: hasTitle && hasPostBody ? "عنوان و محتوای اصلی آماده است." : "عنوان داخلی و کپشن یا رسانه را کامل کنید.",
+      icon: FileText,
+      state: hasTitle && hasPostBody ? "done" : "active"
+    },
+    {
+      label: "رسانه",
+      helper: previewImageUrl ? "تصویر خروجی انتخاب شده است." : "رسانه اختیاری است؛ برای پست تصویری انتخاب کنید.",
+      icon: Images,
+      state: previewImageUrl ? "done" : hasPostBody ? "active" : "pending"
+    },
+    {
+      label: "زمان انتشار",
+      helper: hasSchedule ? "تاریخ و ساعت ورود به صف مشخص است." : "برای انتشار خودکار، تاریخ و ساعت را انتخاب کنید.",
+      icon: CalendarClock,
+      state: hasSchedule ? "done" : canMarkReady ? "active" : "pending"
+    },
+    {
+      label: "بازبینی نهایی",
+      helper: canSchedule ? "پست آماده ورود به صف انتشار است." : "پیش‌نمایش و الزام‌های انتشار را بررسی کنید.",
+      icon: ShieldCheck,
+      state: canSchedule ? "done" : canMarkReady ? "active" : "pending"
+    }
+  ];
 
   function token() {
     return window.localStorage.getItem("rubika_publisher_access") ?? "";
@@ -137,6 +177,7 @@ function ComposePageContent() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setComposerReady(false);
     const headers = { Authorization: `Bearer ${token()}` };
     const [overview, mediaResponse, postResponse] = await Promise.all([
       loadWorkspaceOverview(),
@@ -175,12 +216,25 @@ function ComposePageContent() {
       const attachedAsset = loadedMediaAssets.find((asset) => asset.post_id === post.id);
       setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
     } else {
+      let restoredDraft: { form: typeof emptyForm; selectedMediaId: string; savedAt: string } | null = null;
+      try {
+        const savedDraft = window.localStorage.getItem(localDraftKey);
+        restoredDraft = savedDraft ? JSON.parse(savedDraft) : null;
+      } catch {
+        window.localStorage.removeItem(localDraftKey);
+      }
       setEditingPost(null);
-      setForm({ ...emptyForm, scheduled_at: presetScheduledAt });
-      setSelectedMediaId("");
-      setShowOptionalDetails(false);
+      setForm(restoredDraft?.form ? { ...restoredDraft.form, scheduled_at: presetScheduledAt || restoredDraft.form.scheduled_at } : { ...emptyForm, scheduled_at: presetScheduledAt });
+      const restoredMediaId = restoredDraft?.selectedMediaId ?? "";
+      setSelectedMediaId(loadedMediaAssets.some((asset) => String(asset.id) === restoredMediaId) ? restoredMediaId : "");
+      setShowOptionalDetails(Boolean(restoredDraft?.form?.campaign || restoredDraft?.form?.internal_note));
+      if (restoredDraft?.savedAt) {
+        setAutosaveState("restored");
+        setAutosaveAt(restoredDraft.savedAt);
+      }
     }
 
+    setComposerReady(true);
     setLoading(false);
   }, [editingPostId, presetScheduledAt]);
 
@@ -245,6 +299,30 @@ function ComposePageContent() {
     };
   }, [mediaAssets]);
 
+  useEffect(() => {
+    if (!composerReady || isEditing) return;
+    if (!hasLocalDraftContent) {
+      window.localStorage.removeItem(localDraftKey);
+      setAutosaveAt("");
+      setAutosaveState("idle");
+      return;
+    }
+    setAutosaveState("dirty");
+    const timeout = window.setTimeout(() => {
+      const savedAt = new Date().toISOString();
+      window.localStorage.setItem(localDraftKey, JSON.stringify({ form, selectedMediaId, savedAt }));
+      setAutosaveAt(savedAt);
+      setAutosaveState("saved");
+    }, 700);
+    return () => window.clearTimeout(timeout);
+  }, [composerReady, form, hasLocalDraftContent, isEditing, selectedMediaId]);
+
+  function clearAutosavedDraft() {
+    window.localStorage.removeItem(localDraftKey);
+    setAutosaveAt("");
+    setAutosaveState("idle");
+  }
+
   function updateField(field: keyof typeof emptyForm, value: string | null) {
     setForm((current) => ({ ...current, [field]: value }));
     if (message) setMessage("");
@@ -278,6 +356,7 @@ function ComposePageContent() {
       setForm({ ...emptyForm, scheduled_at: presetScheduledAt });
       setSelectedMediaId("");
       setShowOptionalDetails(false);
+      clearAutosavedDraft();
     }
 
     setSelectedFile(null);
@@ -419,6 +498,7 @@ function ComposePageContent() {
       }
 
       if (!isEditing) {
+        clearAutosavedDraft();
         resetComposer({ clearStatus: false });
       }
 
@@ -464,6 +544,7 @@ function ComposePageContent() {
                   {publishStateLabel}
                 </StatusToken>
                 <StatusToken tone={rubikaReady ? "success" : "warning"}>{rubikaReady ? "روبیکا متصل" : "اتصال روبیکا لازم است"}</StatusToken>
+                {!isEditing ? <StatusToken tone={autosaveState === "dirty" ? "warning" : "neutral"}><Cloud className="h-3.5 w-3.5" aria-hidden="true" />{autosaveLabel}</StatusToken> : null}
                 {editingPost?.status ? <StatusBadge status={editingPost.status} /> : null}
                 <Button href="/calendar" variant="secondary" size="sm">بازگشت به پلنر</Button>
               </div>
@@ -600,6 +681,8 @@ function ComposePageContent() {
 
             <aside className="min-w-0 space-y-4">
               <div className="sticky top-24 space-y-4">
+                <ComposerStepRail steps={composerSteps} />
+
                 <WorkspacePanel
                   title="پیش‌نمایش خروجی"
                   description="نمای نزدیک از چیزی که مخاطب روبیکا می‌بیند."
@@ -642,6 +725,7 @@ function ComposePageContent() {
                 isEditing={isEditing}
                 onUseDefaults={useDefaults}
                 onCancel={resetComposer}
+                autosaveLabel={!isEditing ? autosaveLabel : undefined}
                 onSaveDraft={() => persistPost("draft")}
                 onMarkReady={() => persistPost("ready")}
                 onSchedule={() => persistPost("schedule")}

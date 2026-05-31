@@ -1,4 +1,4 @@
-import { CalendarCheck, CheckCircle2, RotateCcw, Save, Sparkles } from "lucide-react";
+import { CalendarCheck, CheckCircle2, Cloud, RotateCcw, Save, Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
 
 type ComposerActionFooterProps = {
@@ -8,6 +8,7 @@ type ComposerActionFooterProps = {
   canSchedule: boolean;
   hasSchedule?: boolean;
   isEditing?: boolean;
+  autosaveLabel?: string;
   onUseDefaults: () => void;
   onCancel: () => void;
   onSaveDraft: () => void;
@@ -22,6 +23,7 @@ export function ComposerActionFooter({
   canSchedule,
   hasSchedule = false,
   isEditing = false,
+  autosaveLabel,
   onUseDefaults,
   onCancel,
   onSaveDraft,
@@ -38,6 +40,7 @@ export function ComposerActionFooter({
           <p className="mt-1 text-xs leading-5 text-app-muted">
             {hasSchedule ? "پیش‌نمایش و کنترل‌های نهایی را بررسی کنید." : "برای انتشار خودکار، تاریخ و ساعت را از ستون کناری تنظیم کنید."}
           </p>
+          {autosaveLabel ? <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-slate-500"><Cloud className="h-3.5 w-3.5" aria-hidden="true" />{autosaveLabel}</p> : null}
         </div>
         <div className="flex flex-wrap gap-2 xl:justify-end">
           <Button type="button" variant="secondary" size="sm" onClick={onUseDefaults} disabled={saving}>
