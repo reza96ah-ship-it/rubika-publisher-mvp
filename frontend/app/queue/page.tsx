@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CalendarClock, CheckCircle2, ListChecks, RotateCcw, TimerReset, XCircle } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, ListChecks, RefreshCw, RotateCcw, TimerReset, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
@@ -11,7 +11,7 @@ import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
-import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
+import { apiUrl, authHeaders, formatDateTime, readApiError, recoveryGuidance, type Post } from "../../lib/posts";
 
 type QueueFilter = "all" | "ready" | "scheduled" | "publishing" | "failed";
 
@@ -57,18 +57,29 @@ export default function QueuePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [retryingPostId, setRetryingPostId] = useState<number | null>(null);
+  const [retryingAll, setRetryingAll] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const loadQueue = useCallback(async () => {
-    setLoading(true);
-    const response = await fetch(`${apiUrl}/posts`, { headers: authHeaders() });
-    if (!response.ok) throw new Error("دریافت صف انتشار ناموفق بود");
-    const allPosts = (await response.json()) as Post[];
-    const queuePosts = sortQueuePosts(allPosts.filter((post) => queueStatuses.has(post.status)));
-    setPosts(queuePosts);
-    setSelectedPostId((current) => current ?? queuePosts[0]?.id ?? null);
-    setLoading(false);
+  const loadQueue = useCallback(async (quiet = false) => {
+    if (quiet) setRefreshing(true);
+    else setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(`${apiUrl}/posts`, { headers: authHeaders() });
+      if (!response.ok) throw new Error("دریافت صف انتشار ناموفق بود");
+      const allPosts = (await response.json()) as Post[];
+      const queuePosts = sortQueuePosts(allPosts.filter((post) => queueStatuses.has(post.status)));
+      setPosts(queuePosts);
+      setSelectedPostId((current) => current ?? queuePosts[0]?.id ?? null);
+      setLastUpdatedAt(new Date());
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -81,6 +92,7 @@ export default function QueuePage() {
   async function retryPost(post: Post) {
     setMessage("");
     setError("");
+    setRetryingPostId(post.id);
     const previousPosts = posts;
     setPosts((current) => current.map((item) => item.id === post.id ? { ...item, status: "scheduled", scheduled_at: new Date().toISOString(), failed_at: null, last_error: "" } : item));
     const response = await fetch(`${apiUrl}/posts/${post.id}/retry`, {
@@ -89,13 +101,38 @@ export default function QueuePage() {
     });
     if (!response.ok) {
       setPosts(previousPosts);
-      setError("تلاش مجدد انتشار ناموفق بود");
-      showToast({ title: "تلاش مجدد ناموفق بود", description: post.title, tone: "alert" });
+      const detail = await readApiError(response, "تلاش مجدد انتشار ناموفق بود");
+      setError(detail);
+      setRetryingPostId(null);
+      showToast({ title: "تلاش مجدد ناموفق بود", description: detail, tone: "alert" });
       return;
     }
     setMessage("پست برای تلاش مجدد وارد صف انتشار شد");
     showToast({ title: "پست دوباره وارد صف شد", description: post.title, tone: "success" });
-    await loadQueue();
+    setRetryingPostId(null);
+    await loadQueue(true);
+  }
+
+  async function retryAllFailed() {
+    setMessage("");
+    setError("");
+    setRetryingAll(true);
+    const response = await fetch(`${apiUrl}/posts/retry-failed`, {
+      method: "POST",
+      headers: authHeaders()
+    });
+    if (!response.ok) {
+      const detail = await readApiError(response, "بازیابی گروهی صف ناموفق بود");
+      setError(detail);
+      setRetryingAll(false);
+      showToast({ title: "بازیابی صف ناموفق بود", description: detail, tone: "alert" });
+      return;
+    }
+    const result = (await response.json()) as { retried_count: number };
+    setMessage(`${result.retried_count} پست دوباره وارد صف انتشار شد`);
+    showToast({ title: "بازیابی صف انجام شد", description: `${result.retried_count} پست برای تلاش مجدد آماده شد`, tone: "success" });
+    setRetryingAll(false);
+    await loadQueue(true);
   }
 
   async function cancelPost(post: Post) {
@@ -196,7 +233,22 @@ export default function QueuePage() {
               <>
                 <StatusToken tone="primary">{posts.length} پست در صف</StatusToken>
                 <StatusToken tone={counts.failed ? "alert" : "success"}>{counts.failed ? `${counts.failed} خطای فعال` : "بدون خطای فعال"}</StatusToken>
+                {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
               </>
+            )}
+            action={(
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" size="sm" disabled={refreshing} onClick={() => loadQueue(true)}>
+                  <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
+                  به‌روزرسانی
+                </Button>
+                {counts.failed ? (
+                  <Button type="button" size="sm" disabled={retryingAll} onClick={retryAllFailed}>
+                    <RotateCcw className={`ml-2 h-4 w-4 ${retryingAll ? "animate-spin" : ""}`} aria-hidden="true" />
+                    بازیابی همه خطاها
+                  </Button>
+                ) : null}
+              </div>
             )}
           />
 
@@ -329,18 +381,21 @@ export default function QueuePage() {
                         />
                       </div>
                       {selectedPost.last_error ? (
-                        <div className="mt-4">
+                        <div className="mt-4 space-y-3">
                           <NoticeBanner tone="alert" title="آخرین خطا">
                             {selectedPost.last_error}
+                          </NoticeBanner>
+                          <NoticeBanner tone="info" title="پیشنهاد بازیابی">
+                            {recoveryGuidance(selectedPost.last_error)}
                           </NoticeBanner>
                         </div>
                       ) : null}
                       <div className="mt-4 grid gap-2">
                         <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary">باز کردن پست</Button>
                         {selectedPost.status === "failed" ? (
-                          <Button type="button" onClick={() => retryPost(selectedPost)}>
-                            <RotateCcw className="ml-2 h-4 w-4" aria-hidden="true" />
-                            تلاش مجدد انتشار
+                          <Button type="button" disabled={retryingPostId === selectedPost.id} onClick={() => retryPost(selectedPost)}>
+                            <RotateCcw className={`ml-2 h-4 w-4 ${retryingPostId === selectedPost.id ? "animate-spin" : ""}`} aria-hidden="true" />
+                            {retryingPostId === selectedPost.id ? "در حال ورود به صف" : "تلاش مجدد انتشار"}
                           </Button>
                         ) : null}
                         {["ready", "scheduled"].includes(selectedPost.status) ? (

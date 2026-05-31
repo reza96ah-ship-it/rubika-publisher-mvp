@@ -118,6 +118,11 @@ class PostStatsResponse(BaseModel):
     cancelled: int
 
 
+class RetryFailedPostsResponse(BaseModel):
+    retried_count: int
+    post_ids: list[int]
+
+
 class PublishAttemptResponse(BaseModel):
     id: int
     post_id: int

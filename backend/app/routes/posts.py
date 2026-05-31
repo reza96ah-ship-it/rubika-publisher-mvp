@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_active_store
 from app.models import Post, RubikaAccount, Store
-from app.schemas import PostRequest, PostResponse, PostScheduleRequest, PostStatsResponse, PostStatusRequest
+from app.schemas import PostRequest, PostResponse, PostScheduleRequest, PostStatsResponse, PostStatusRequest, RetryFailedPostsResponse
 from app.services.rubika_health import is_rubika_account_ready
 from app.store_scope import get_store_post
 
@@ -73,6 +73,15 @@ def require_rubika_ready(db: Session) -> None:
     account = db.scalar(select(RubikaAccount).where(RubikaAccount.is_active.is_(True)).order_by(RubikaAccount.id.asc()))
     if not is_rubika_account_ready(account):
         raise HTTPException(status_code=400, detail="Rubika connection must be tested successfully within the last 24 hours")
+
+
+def requeue_failed_post(post: Post, now: datetime) -> None:
+    post.status = "scheduled"
+    post.scheduled_at = now
+    post.ready_at = post.ready_at or now
+    post.failed_at = None
+    post.last_error = ""
+    post.updated_at = now
 
 
 @router.get("/stats", response_model=PostStatsResponse)
@@ -163,16 +172,25 @@ def retry_failed_post(post_id: int, store: Store = Depends(get_active_store), db
     post = get_store_post(db, store, post_id)
     if post.status != "failed":
         raise HTTPException(status_code=400, detail="Only failed posts can be retried")
+    require_rubika_ready(db)
     now = datetime.utcnow()
-    post.status = "scheduled"
-    post.scheduled_at = now
-    post.ready_at = post.ready_at or now
-    post.failed_at = None
-    post.last_error = ""
-    post.updated_at = now
+    requeue_failed_post(post, now)
     db.commit()
     db.refresh(post)
     return post_response(post)
+
+
+@router.post("/retry-failed", response_model=RetryFailedPostsResponse)
+def retry_all_failed_posts(store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> RetryFailedPostsResponse:
+    posts = db.scalars(select(Post).where(Post.store_id == store.id, Post.status == "failed").order_by(Post.failed_at.asc(), Post.id.asc())).all()
+    if not posts:
+        return RetryFailedPostsResponse(retried_count=0, post_ids=[])
+    require_rubika_ready(db)
+    now = datetime.utcnow()
+    for post in posts:
+        requeue_failed_post(post, now)
+    db.commit()
+    return RetryFailedPostsResponse(retried_count=len(posts), post_ids=[post.id for post in posts])
 
 
 @router.post("/{post_id}/status", response_model=PostResponse)

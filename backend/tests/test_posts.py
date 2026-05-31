@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
 from app.models import Post, RubikaAccount, Store
-from app.routes.posts import apply_payload, change_status, post_response, schedule_post
+from app.routes.posts import apply_payload, change_status, post_response, retry_all_failed_posts, retry_failed_post, schedule_post
 from app.schemas import PostRequest, PostScheduleRequest, PostStatusRequest
 
 
@@ -111,3 +111,37 @@ def test_schedule_post_rejects_stale_rubika_connection() -> None:
 
         with pytest.raises(HTTPException, match="Rubika connection must be tested successfully"):
             change_status(post.id, PostStatusRequest(status="scheduled"), store=store, db=db)
+
+        post.status = "failed"
+        db.commit()
+        with pytest.raises(HTTPException, match="Rubika connection must be tested successfully"):
+            retry_failed_post(post.id, store=store, db=db)
+
+
+def test_retry_all_failed_posts_requeues_current_store_only() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime.utcnow()
+
+    with session_factory() as db:
+        current_store = Store(name="Main", created_at=now, updated_at=now)
+        other_store = Store(name="Other", created_at=now, updated_at=now)
+        db.add_all([current_store, other_store])
+        db.flush()
+        first = Post(store_id=current_store.id, title="First", status="failed", last_error="Timeout", failed_at=now, created_at=now, updated_at=now)
+        second = Post(store_id=current_store.id, title="Second", status="failed", last_error="Missing file", failed_at=now, created_at=now, updated_at=now)
+        other = Post(store_id=other_store.id, title="Other", status="failed", last_error="Other error", failed_at=now, created_at=now, updated_at=now)
+        db.add_all([first, second, other])
+        db.add(RubikaAccount(bot_token="token", chat_id="channel", status="connected", last_test_at=now))
+        db.commit()
+
+        response = retry_all_failed_posts(store=current_store, db=db)
+
+        assert response.retried_count == 2
+        assert response.post_ids == [first.id, second.id]
+        assert first.status == "scheduled"
+        assert second.status == "scheduled"
+        assert first.last_error == ""
+        assert second.failed_at is None
+        assert other.status == "failed"

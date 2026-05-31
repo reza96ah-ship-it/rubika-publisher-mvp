@@ -80,3 +80,28 @@ export function fromDatetimeLocalValue(value: string) {
 export function postFinalText(post: Pick<Post, "caption" | "hashtags">) {
   return [post.caption, post.hashtags].filter(Boolean).join("\n\n");
 }
+
+export async function readApiError(response: Response, fallback: string) {
+  try {
+    const payload = (await response.json()) as { detail?: unknown };
+    if (typeof payload.detail === "string" && payload.detail.trim()) return payload.detail;
+  } catch {
+    // Fall back to the user-facing operation message when the API has no JSON detail.
+  }
+  return fallback;
+}
+
+export function recoveryGuidance(error?: string | null) {
+  const normalized = error?.toLowerCase() ?? "";
+  if (!normalized) return "";
+  if (normalized.includes("rubika") || normalized.includes("connection") || normalized.includes("account")) {
+    return "اتصال روبیکا را در تنظیمات دوباره آزمایش کنید، سپس تلاش مجدد را اجرا کنید.";
+  }
+  if (normalized.includes("media") || normalized.includes("file") || normalized.includes("upload")) {
+    return "رسانه پیوست‌شده را در کتابخانه بررسی کنید. اگر فایل حذف شده است، آن را دوباره بارگذاری و متصل کنید.";
+  }
+  if (normalized.includes("timeout") || normalized.includes("timed out") || normalized.includes("worker")) {
+    return "پس از بررسی سلامت worker، پست را دوباره وارد صف کنید. زمان انتشار به زمان فعلی منتقل می‌شود.";
+  }
+  return "جزئیات خطا را بررسی کنید. پس از اصلاح علت، پست را دوباره وارد صف انتشار کنید.";
+}

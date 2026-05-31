@@ -1,14 +1,15 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Circle, CircleAlert, Clock3, FileUp, ListChecks, MessageSquareText, Search, UploadCloud } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, CircleAlert, Clock3, FileUp, ListChecks, MessageSquareText, RefreshCw, RotateCcw, Search, UploadCloud } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
 import { StatusBadge } from "../../components/status-badge";
+import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
-import { apiUrl, authHeaders, formatDateTime } from "../../lib/posts";
+import { apiUrl, authHeaders, formatDateTime, readApiError, recoveryGuidance } from "../../lib/posts";
 
 type PublishAttempt = {
   id: number;
@@ -211,23 +212,34 @@ function modeLabel(mode: Exclude<LogMode, "all">) {
 }
 
 export default function LogsPage() {
+  const { showToast } = useToast();
   const [attempts, setAttempts] = useState<PublishAttempt[]>([]);
   const [status, setStatus] = useState("all");
   const [modeFilter, setModeFilter] = useState<LogMode>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAttemptId, setSelectedAttemptId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [retryingPostId, setRetryingPostId] = useState<number | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const loadAttempts = useCallback(async () => {
-    setLoading(true);
+  const loadAttempts = useCallback(async (quiet = false) => {
+    if (quiet) setRefreshing(true);
+    else setLoading(true);
     setError("");
-    const response = await fetch(`${apiUrl}/publish-attempts`, { headers: authHeaders() });
-    if (!response.ok) throw new Error("دریافت لاگ انتشار ناموفق بود");
-    const data = (await response.json()) as PublishAttempt[];
-    setAttempts(data);
-    setSelectedAttemptId((current) => current ?? data[0]?.id ?? null);
-    setLoading(false);
+    try {
+      const response = await fetch(`${apiUrl}/publish-attempts`, { headers: authHeaders() });
+      if (!response.ok) throw new Error("دریافت لاگ انتشار ناموفق بود");
+      const data = (await response.json()) as PublishAttempt[];
+      setAttempts(data);
+      setSelectedAttemptId((current) => current ?? data[0]?.id ?? null);
+      setLastUpdatedAt(new Date());
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -239,6 +251,27 @@ export default function LogsPage() {
 
   function applyStatus(nextStatus: string) {
     setStatus(nextStatus);
+  }
+
+  async function retryPost(postId: number, title: string) {
+    setMessage("");
+    setError("");
+    setRetryingPostId(postId);
+    const response = await fetch(`${apiUrl}/posts/${postId}/retry`, {
+      method: "POST",
+      headers: authHeaders()
+    });
+    if (!response.ok) {
+      const detail = await readApiError(response, "تلاش مجدد انتشار ناموفق بود");
+      setError(detail);
+      setRetryingPostId(null);
+      showToast({ title: "تلاش مجدد ناموفق بود", description: detail, tone: "alert" });
+      return;
+    }
+    setMessage("پست دوباره وارد صف انتشار شد. تلاش جدید پس از اجرای worker در این فهرست نمایش داده می‌شود.");
+    setRetryingPostId(null);
+    showToast({ title: "پست دوباره وارد صف شد", description: title, tone: "success" });
+    await loadAttempts(true);
   }
 
   const preparedAttempts = useMemo<PreparedAttempt[]>(() => {
@@ -302,6 +335,11 @@ export default function LogsPage() {
                 <StatusToken tone={summary.failed ? "alert" : "success"}>{summary.failed ? `${summary.failed} خطای فعال` : "انتشار پایدار"}</StatusToken>
                 <StatusToken tone="success">{successRate}% موفقیت</StatusToken>
                 <StatusToken tone="neutral">{summary.media} رسانه‌ای</StatusToken>
+                {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
+                <Button type="button" variant="secondary" size="sm" disabled={refreshing} onClick={() => loadAttempts(true)}>
+                  <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
+                  به‌روزرسانی
+                </Button>
                 <Button href="/queue" variant="secondary" size="sm">بازگشت به صف</Button>
               </div>
             </div>
@@ -336,6 +374,7 @@ export default function LogsPage() {
           </section>
 
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
+          {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
             <div className="min-w-0">
@@ -471,9 +510,14 @@ export default function LogsPage() {
                     ) : null}
 
                     {selectedAttempt.attempt.error ? (
-                      <NoticeBanner tone="alert" title="خطای ثبت‌شده">
-                        {selectedAttempt.attempt.error}
-                      </NoticeBanner>
+                      <div className="space-y-3">
+                        <NoticeBanner tone="alert" title="خطای ثبت‌شده">
+                          {selectedAttempt.attempt.error}
+                        </NoticeBanner>
+                        <NoticeBanner tone="info" title="پیشنهاد بازیابی">
+                          {recoveryGuidance(selectedAttempt.attempt.error)}
+                        </NoticeBanner>
+                      </div>
                     ) : null}
 
                     <details className="rounded-md border border-app-border bg-slate-50 p-3 text-xs text-app-muted">
@@ -485,6 +529,16 @@ export default function LogsPage() {
                     </details>
 
                     <div className="grid gap-2">
+                      {selectedAttempt.attempt.status === "failed" ? (
+                        <Button
+                          type="button"
+                          disabled={retryingPostId === selectedAttempt.attempt.post_id}
+                          onClick={() => retryPost(selectedAttempt.attempt.post_id, selectedAttempt.attempt.post_title)}
+                        >
+                          <RotateCcw className={`ml-2 h-4 w-4 ${retryingPostId === selectedAttempt.attempt.post_id ? "animate-spin" : ""}`} aria-hidden="true" />
+                          {retryingPostId === selectedAttempt.attempt.post_id ? "در حال ورود به صف" : "تلاش مجدد انتشار"}
+                        </Button>
+                      ) : null}
                       <Button href={`/compose?postId=${selectedAttempt.attempt.post_id}`} variant="secondary">باز کردن پست</Button>
                       <Button href="/queue" variant="secondary">صف انتشار</Button>
                       <Button href="/rubika" variant="secondary">بررسی اتصال روبیکا</Button>
