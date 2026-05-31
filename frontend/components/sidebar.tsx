@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ProductMark } from "./brand-mark";
 
 export type NavItem = {
   label: string;
@@ -122,10 +123,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false }: Side
     <aside className="hidden w-[252px] shrink-0 border-l border-[#D5E5E5] bg-[#F2F8F8] lg:sticky lg:top-0 lg:flex lg:h-screen lg:self-start lg:flex-col lg:overflow-hidden">
       <div className="shrink-0 border-b border-[#D5E5E5] px-3 py-3">
         <Link href="/" className="flex items-center gap-2.5 rounded-md px-1 py-1">
-          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-app-primary text-[10px] font-black text-white shadow-accent">
-            RP
-            <span className="absolute -bottom-1 -left-1 h-3 w-3 rounded-sm border-2 border-[#F2F8F8] bg-app-teal" />
-          </div>
+          <ProductMark />
           <div className="min-w-0">
             <p className="truncate text-sm font-black text-app-text">Rubika Publisher</p>
             <p className="mt-0.5 text-[10px] font-bold text-app-teal">Content operations studio</p>

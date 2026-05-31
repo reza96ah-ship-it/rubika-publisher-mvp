@@ -21,6 +21,7 @@ import { Button } from "../../components/ui/button";
 import { Field, Input, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
 import { NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { WorkspaceAvatar } from "../../components/brand-mark";
 import { apiUrl, authHeaders } from "../../lib/posts";
 import { notifyWorkspaceUpdated } from "../../lib/workspace";
 
@@ -348,15 +349,15 @@ export default function StorePage() {
 
               <WorkspacePanel title="پیش‌نمایش کپشن پایه" description="خروجی پایه‌ای که در کپشن‌ها تکرار می‌شود.">
                 <div className="rounded-md border border-app-border bg-slate-50 p-4">
-                  <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-app-muted">
-                    <Building2 className="h-4 w-4" aria-hidden="true" />
-                    <span>{form.name || "نام فروشگاه"}</span>
-                    {form.category ? (
-                      <>
-                        <span>·</span>
-                        <span>{form.category}</span>
-                      </>
-                    ) : null}
+                  <div className="mb-4 flex items-center gap-3 border-b border-app-border pb-3">
+                    <WorkspaceAvatar name={form.name || "نام فروشگاه"} />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-app-text">{form.name || "نام فروشگاه"}</p>
+                      <p className="mt-1 flex items-center gap-1 text-xs text-app-muted">
+                        <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
+                        {form.category || "دسته‌بندی فروشگاه"}
+                      </p>
+                    </div>
                   </div>
                   <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">{previewCaption(form)}</p>
                 </div>

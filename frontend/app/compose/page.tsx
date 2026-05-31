@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CalendarClock, ChevronDown, Cloud, Eye, FileText, ImagePlus, Images, Send, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
@@ -11,6 +11,7 @@ import { RubikaPostPreview } from "../../components/rubika-post-preview";
 import { MediaGalleryPicker } from "../../components/media-gallery-picker";
 import { ComposerSchedulePanel } from "../../components/composer-schedule-panel";
 import { ComposerStepRail, type ComposerStep } from "../../components/composer-step-rail";
+import { ComposerStartPanel } from "../../components/composer-start-panel";
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
@@ -84,8 +85,10 @@ function ComposePageContent() {
   const [autosaveState, setAutosaveState] = useState<AutosaveState>("idle");
   const [autosaveAt, setAutosaveAt] = useState("");
   const [studioPanel, setStudioPanel] = useState<StudioPanel>("preview");
+  const [showComposerEntry, setShowComposerEntry] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const uploadInputRef = useRef<HTMLInputElement>(null);
 
   const selectedMedia = useMemo(() => {
     if (!selectedMediaId) return null;
@@ -93,6 +96,12 @@ function ComposePageContent() {
   }, [mediaAssets, selectedMediaId]);
 
   const previewImageUrl = selectedFilePreviewUrl || (selectedMedia ? mediaPreviewUrls[selectedMedia.id] : "");
+  const readyMediaPreviewUrls = useMemo(() => {
+    return mediaAssets
+      .map((asset) => mediaPreviewUrls[asset.id])
+      .filter(Boolean)
+      .slice(0, 3);
+  }, [mediaAssets, mediaPreviewUrls]);
 
   const finalPreview = useMemo(() => {
     return [form.caption, form.caption ? store?.caption_footer : "", form.hashtags]
@@ -222,6 +231,7 @@ function ComposePageContent() {
 
       const attachedAsset = loadedMediaAssets.find((asset) => asset.post_id === post.id);
       setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
+      setShowComposerEntry(false);
     } else {
       let restoredDraft: { form: typeof emptyForm; selectedMediaId: string; savedAt: string } | null = null;
       try {
@@ -235,6 +245,7 @@ function ComposePageContent() {
       const restoredMediaId = restoredDraft?.selectedMediaId ?? "";
       setSelectedMediaId(loadedMediaAssets.some((asset) => String(asset.id) === restoredMediaId) ? restoredMediaId : "");
       setShowOptionalDetails(Boolean(restoredDraft?.form?.campaign || restoredDraft?.form?.internal_note));
+      setShowComposerEntry(!restoredDraft?.form && !restoredMediaId && !presetScheduledAt);
       if (restoredDraft?.savedAt) {
         setAutosaveState("restored");
         setAutosaveAt(restoredDraft.savedAt);
@@ -335,13 +346,28 @@ function ComposePageContent() {
     if (message) setMessage("");
   }
 
-  function useDefaults() {
+  function applyDefaults() {
     setForm((current) => ({
       ...current,
       hashtags: store?.default_hashtags || current.hashtags,
       timezone: scheduleTimezone
     }));
     if (message) setMessage("");
+  }
+
+  function openComposerSection(sectionId: "composer-content" | "composer-media") {
+    setShowComposerEntry(false);
+    window.setTimeout(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  }
+
+  function startWithUpload() {
+    setShowComposerEntry(false);
+    window.setTimeout(() => uploadInputRef.current?.click(), 0);
+  }
+
+  function startWithDefaults() {
+    applyDefaults();
+    openComposerSection("composer-content");
   }
 
   function resetComposer(options: { clearStatus?: boolean } = { clearStatus: true }) {
@@ -558,9 +584,23 @@ function ComposePageContent() {
             </div>
           </section>
 
+          {!isEditing && showComposerEntry ? (
+            <ComposerStartPanel
+              storeName={store?.name || "فضای کاری روبیکا"}
+              storeCategory={store?.category}
+              mediaPreviewUrls={readyMediaPreviewUrls}
+              hasDefaults={Boolean(store?.default_hashtags)}
+              onStartText={() => openComposerSection("composer-content")}
+              onUploadImage={startWithUpload}
+              onChooseMedia={() => openComposerSection("composer-media")}
+              onUseDefaults={startWithDefaults}
+            />
+          ) : null}
+
           <form onSubmit={saveDraft} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
             <section className="min-w-0 space-y-4">
-              <WorkspacePanel
+              <div id="composer-content">
+                <WorkspacePanel
                 title="محتوای پست"
                 description="متن اصلی را روی بوم ویرایش کامل کنید؛ اطلاعات داخلی تیم در بخش اختیاری باقی می‌مانند."
                 action={(
@@ -639,48 +679,52 @@ function ComposePageContent() {
                       </div>
                     ) : null}
                   </section>
-              </WorkspacePanel>
+                </WorkspacePanel>
+              </div>
 
-              <WorkspacePanel
-                title="رسانه"
-                description="یک تصویر تازه آپلود کنید یا از کتابخانه رسانه انتخاب کنید."
-                action={<Tag tone={previewImageUrl ? "success" : "warning"}>{previewImageUrl ? "انتخاب شده" : "بدون رسانه"}</Tag>}
-                bodyClassName="grid gap-4 p-4 lg:grid-cols-[230px_minmax(0,1fr)]"
-              >
-                <div className="space-y-3">
-                  <label className="app-interactive block cursor-pointer rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted p-3 hover:border-blue-300 hover:bg-blue-50">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={(event) => {
-                        setSelectedFile(event.target.files?.[0] ?? null);
-                        if (event.target.files?.[0]) setSelectedMediaId("");
-                        if (message) setMessage("");
-                      }}
-                      className="sr-only"
-                    />
-                    <span className="flex items-center gap-2 text-sm font-black text-app-text">
-                      <ImagePlus className="h-4 w-4" aria-hidden="true" />
-                      آپلود تصویر
-                    </span>
-                    <span className="mt-1 block text-xs leading-5 text-app-muted">JPEG، PNG یا WEBP</span>
-                  </label>
-                  {selectedFilePreviewUrl ? (
-                    <img src={selectedFilePreviewUrl} alt="پیش‌نمایش فایل انتخاب‌شده" className="aspect-video w-full rounded-md object-cover ring-1 ring-app-border" />
-                  ) : null}
-                </div>
-                <MediaGalleryPicker
-                  assets={mediaAssets}
-                  previewUrls={mediaPreviewUrls}
-                  selectedMediaId={selectedMediaId}
-                  loading={loading}
-                  onSelect={(assetId) => {
-                    setSelectedMediaId(assetId);
-                    setSelectedFile(null);
-                    if (message) setMessage("");
-                  }}
-                />
-              </WorkspacePanel>
+              <div id="composer-media">
+                <WorkspacePanel
+                  title="رسانه"
+                  description="یک تصویر تازه آپلود کنید یا از کتابخانه رسانه انتخاب کنید."
+                  action={<Tag tone={previewImageUrl ? "success" : "warning"}>{previewImageUrl ? "انتخاب شده" : "بدون رسانه"}</Tag>}
+                  bodyClassName="grid gap-4 p-4 lg:grid-cols-[230px_minmax(0,1fr)]"
+                >
+                  <div className="space-y-3">
+                    <label className="app-interactive block cursor-pointer rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted p-3 hover:border-blue-300 hover:bg-blue-50">
+                      <input
+                        ref={uploadInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(event) => {
+                          setSelectedFile(event.target.files?.[0] ?? null);
+                          if (event.target.files?.[0]) setSelectedMediaId("");
+                          if (message) setMessage("");
+                        }}
+                        className="sr-only"
+                      />
+                      <span className="flex items-center gap-2 text-sm font-black text-app-text">
+                        <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                        آپلود تصویر
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-app-muted">JPEG، PNG یا WEBP</span>
+                    </label>
+                    {selectedFilePreviewUrl ? (
+                      <img src={selectedFilePreviewUrl} alt="پیش‌نمایش فایل انتخاب‌شده" className="aspect-video w-full rounded-md object-cover ring-1 ring-app-border" />
+                    ) : null}
+                  </div>
+                  <MediaGalleryPicker
+                    assets={mediaAssets}
+                    previewUrls={mediaPreviewUrls}
+                    selectedMediaId={selectedMediaId}
+                    loading={loading}
+                    onSelect={(assetId) => {
+                      setSelectedMediaId(assetId);
+                      setSelectedFile(null);
+                      if (message) setMessage("");
+                    }}
+                  />
+                </WorkspacePanel>
+              </div>
 
               {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
               {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
@@ -764,7 +808,7 @@ function ComposePageContent() {
                 canSchedule={canSchedule}
                 hasSchedule={hasSchedule}
                 isEditing={isEditing}
-                onUseDefaults={useDefaults}
+                onUseDefaults={applyDefaults}
                 onCancel={resetComposer}
                 autosaveLabel={!isEditing ? autosaveLabel : undefined}
                 onSaveDraft={() => persistPost("draft")}

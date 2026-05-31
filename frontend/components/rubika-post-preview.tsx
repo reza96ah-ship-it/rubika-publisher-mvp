@@ -1,4 +1,5 @@
-import { ImageIcon, Send } from "lucide-react";
+import { ImageIcon } from "lucide-react";
+import { WorkspaceAvatar } from "./brand-mark";
 
 type RubikaPostPreviewProps = {
   imageUrl?: string;
@@ -18,9 +19,7 @@ export function RubikaPostPreview({
       <div className="overflow-hidden rounded-md bg-white shadow-hairline">
         <div className="flex items-center justify-between border-b border-app-border px-3 py-2.5">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-app-primary text-white shadow-sm">
-              <Send className="h-4 w-4" aria-hidden="true" />
-            </div>
+            <WorkspaceAvatar name={destination} />
             <div>
               <p className="text-sm font-bold text-app-text">{destination}</p>
               <p className="text-xs text-app-muted">پیش‌نمایش انتشار</p>
