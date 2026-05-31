@@ -102,12 +102,13 @@ function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
   return (
     <Link
       href={item.href}
-      className={`app-interactive group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm ${
+      className={`app-interactive group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm ${
         active
-          ? "bg-blue-50 font-black text-app-primary"
+          ? "bg-blue-50/80 font-black text-app-primary"
           : "text-slate-600 hover:bg-slate-50 hover:text-app-text"
       }`}
     >
+      {active ? <span className="absolute inset-y-2 right-0 w-0.5 rounded-l-full bg-app-primary" /> : null}
       <Icon className={`h-4 w-4 shrink-0 ${active ? "text-app-primary" : "text-slate-400 group-hover:text-slate-600"}`} aria-hidden="true" />
       <span className="truncate">{item.label}</span>
     </Link>
@@ -118,7 +119,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false }: Side
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-[232px] shrink-0 border-l border-app-border bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:self-start lg:flex-col lg:overflow-hidden">
+    <aside className="hidden w-[240px] shrink-0 border-l border-app-border bg-app-canvas lg:sticky lg:top-0 lg:flex lg:h-screen lg:self-start lg:flex-col lg:overflow-hidden">
       <div className="shrink-0 border-b border-app-border px-3 py-3">
         <Link href="/" className="flex items-center gap-2.5 rounded-md px-1 py-1">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-primary text-[10px] font-black text-white">
@@ -132,7 +133,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false }: Side
 
         <Link
           href="/store"
-          className="app-interactive mt-3 flex items-center gap-2 rounded-md border border-app-border bg-slate-50 px-2.5 py-2 hover:border-blue-200 hover:bg-blue-50"
+          className="app-interactive mt-3 flex items-center gap-2 rounded-md bg-white px-2.5 py-2 shadow-hairline hover:bg-blue-50"
         >
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-white text-slate-500 ring-1 ring-app-border">
             <Store className="h-3.5 w-3.5" aria-hidden="true" />
@@ -146,7 +147,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false }: Side
 
         <Link
           href="/compose"
-          className="app-interactive mt-3 flex items-center justify-center gap-2 rounded-md bg-app-primary px-3 py-2.5 text-sm font-black text-white hover:bg-app-primaryHover"
+          className="app-interactive mt-3 flex items-center justify-center gap-2 rounded-md bg-app-primary px-3 py-2.5 text-sm font-black text-white shadow-accent hover:bg-app-primaryHover"
         >
           <PenLine className="h-4 w-4" aria-hidden="true" />
           ایجاد پست جدید
@@ -177,8 +178,8 @@ export function Sidebar({ storeName = "فضای کاری", ready = false }: Side
         <div className="space-y-0.5">
           {settingsNavItems.map((item) => <NavEntry key={item.href} item={item} active={isActiveRoute(pathname, item.href)} />)}
         </div>
-        <Link href="/rubika" className={`app-interactive mt-3 flex items-center gap-2 rounded-md border px-2.5 py-2 text-xs font-bold ${
-          ready ? "border-emerald-100 bg-emerald-50 text-emerald-700" : "border-amber-100 bg-amber-50 text-amber-700"
+        <Link href="/rubika" className={`app-interactive mt-3 flex items-center gap-2 rounded-md px-2.5 py-2 text-xs font-bold shadow-hairline ${
+          ready ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
         }`}>
           <span className={`h-2 w-2 rounded-full ${ready ? "bg-emerald-500" : "app-status-pulse bg-amber-500"}`} />
           {ready ? "فضای کاری آماده انتشار" : "تکمیل آماده‌سازی"}
@@ -200,7 +201,7 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-app-border bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:hidden" aria-label="ناوبری اصلی">
+    <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-app-border bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_rgba(30,41,59,0.06)] backdrop-blur-xl lg:hidden" aria-label="ناوبری اصلی">
       {mobileNavItems.map((item) => {
         const active = isActiveRoute(pathname, item.href);
         const Icon = item.icon;

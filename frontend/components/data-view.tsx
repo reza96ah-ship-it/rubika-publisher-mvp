@@ -38,7 +38,7 @@ export function DataToolbar({ children, meta }: DataToolbarProps) {
 
 export function DataSearchField(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 ring-app-primary focus-within:ring-2">
+    <label className="flex items-center gap-2 rounded-md bg-white px-3 py-2 shadow-hairline ring-app-primary focus-within:ring-2">
       <Search className="h-4 w-4 shrink-0 text-app-muted" aria-hidden="true" />
       <input
         {...props}
@@ -69,8 +69,8 @@ export function FilterChip({ active, children, count, onClick }: FilterChipProps
 
 export function DataTable({ columns, gridClassName, children, loading, empty }: DataTableProps) {
   return (
-    <div className="mt-5 overflow-hidden rounded-md border border-app-border bg-white">
-      <div className={`hidden ${gridClassName} gap-4 border-b border-app-border bg-slate-100 px-4 py-3 text-[11px] font-black uppercase text-slate-500 lg:grid`}>
+    <div className="mt-5 overflow-hidden rounded-lg bg-white shadow-hairline">
+      <div className={`hidden ${gridClassName} gap-4 border-b border-app-border bg-app-surfaceMuted px-4 py-3 text-[11px] font-black uppercase text-slate-500 lg:grid`}>
         {columns.map((column) => <span key={column}>{column}</span>)}
       </div>
       {loading ? <LoadingRows /> : null}

@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, CalendarClock, CheckCircle2, PenLine, Plug, ShieldCheck, Store } from "lucide-react";
+import { CalendarClock, PenLine, Plug, ShieldCheck, Store } from "lucide-react";
 import { Post } from "../lib/posts";
 import {
   buildReadinessSteps,
@@ -11,7 +10,7 @@ import {
   StoreProfile
 } from "../lib/workspace";
 import { Button } from "./ui/button";
-import { StatusToken } from "./workspace-ui";
+import { StatusRail, StatusToken } from "./workspace-ui";
 
 type ReadinessJourneyProps = {
   store: StoreProfile | null;
@@ -39,7 +38,7 @@ export function ReadinessJourney({ store, rubika, posts, loading = false }: Read
 
   return (
     <section className="space-y-4">
-      <div className="overflow-hidden rounded-md border border-app-border bg-white">
+      <div className="overflow-hidden rounded-lg bg-white shadow-hairline">
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px_240px]">
           <div className="border-b border-app-border px-4 py-4 lg:border-b-0 lg:border-l">
             <div className="flex flex-wrap items-center gap-2">
@@ -78,38 +77,19 @@ export function ReadinessJourney({ store, rubika, posts, loading = false }: Read
         </div>
       </div>
 
-      <div className="grid gap-0 overflow-hidden rounded-md border border-app-border bg-white divide-y divide-app-border md:grid-cols-2 md:divide-x md:divide-x-reverse xl:grid-cols-4 xl:divide-y-0">
-        {steps.map((step, index) => {
+      <StatusRail
+        steps={steps.map((step, index) => {
           const Icon = stepIcons[step.key];
-          return (
-            <Link
-              key={step.key}
-              href={step.href}
-              className={`app-row group flex min-h-[76px] items-center gap-3 px-3 py-3 ${
-                step.done
-                  ? "bg-emerald-50/50 hover:bg-emerald-50"
-                  : "bg-white hover:bg-blue-50/50"
-              }`}
-            >
-              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${step.done ? "border-emerald-100 bg-white text-emerald-700" : "border-blue-100 bg-blue-50 text-app-primary"}`}>
-                <Icon className="h-4 w-4" aria-hidden="true" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="truncate text-sm font-black text-app-text">{step.label}</p>
-                  <span className="shrink-0 text-[10px] font-bold text-app-muted">{index + 1}/{steps.length}</span>
-                </div>
-                <p className="mt-1 truncate text-[11px] text-app-muted">{loading ? "در حال بررسی..." : step.description}</p>
-              </div>
-              {step.done ? (
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
-              ) : (
-                <ArrowLeft className="h-4 w-4 shrink-0 text-app-primary opacity-70 transition group-hover:opacity-100" aria-hidden="true" />
-              )}
-            </Link>
-          );
+          return {
+            label: step.label,
+            description: loading ? "در حال بررسی..." : step.description,
+            href: step.href,
+            icon: <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />,
+            meta: `${index + 1}/${steps.length}`,
+            state: step.done ? "done" : step.key === nextStep.key ? "active" : "pending"
+          };
         })}
-      </div>
+      />
     </section>
   );
 }

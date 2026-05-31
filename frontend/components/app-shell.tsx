@@ -85,8 +85,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen">
         <Sidebar storeName={overview.store?.name || "پروفایل فروشگاه"} ready={shellReady} />
         <section className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-app-border bg-white/95 backdrop-blur-xl">
-            <div className="flex min-h-14 items-center justify-between gap-3 px-4 py-2 lg:px-5">
+          <header className="sticky top-0 z-20 border-b border-app-border/80 bg-white/90 shadow-[0_4px_18px_rgba(30,41,59,0.035)] backdrop-blur-xl">
+            <div className="flex min-h-16 items-center justify-between gap-3 px-4 py-2 lg:px-6">
               <div className="flex min-w-0 items-center gap-3">
                 <Link href="/" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-primary text-[10px] font-black text-white lg:hidden">
                   RP
@@ -105,7 +105,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
-                  className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md border border-app-border bg-slate-50 px-3 text-xs text-app-muted hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary md:flex md:w-56 xl:w-72"
+                  className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md bg-app-surfaceMuted px-3 text-xs text-app-muted shadow-hairline hover:bg-blue-50 hover:text-app-primary md:flex md:w-56 xl:w-72"
                   aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -116,7 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
-                  className="app-interactive flex h-9 w-9 items-center justify-center rounded-md border border-app-border bg-slate-50 text-app-muted hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary md:hidden"
+                  className="app-interactive flex h-9 w-9 items-center justify-center rounded-md bg-app-surfaceMuted text-app-muted shadow-hairline hover:bg-blue-50 hover:text-app-primary md:hidden"
                   aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
@@ -124,10 +124,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
                 <Link
                   href="/rubika"
-                  className={`app-interactive hidden h-9 items-center gap-2 rounded-md border px-2.5 text-xs font-bold sm:flex ${
+                  className={`app-interactive hidden h-9 items-center gap-2 rounded-md px-2.5 text-xs font-bold shadow-hairline sm:flex ${
                     rubikaReady
-                      ? "border-emerald-100 bg-emerald-50 text-emerald-700 hover:border-emerald-200"
-                      : "border-amber-100 bg-amber-50 text-amber-700 hover:border-amber-200"
+                      ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                      : "bg-amber-50 text-amber-700 hover:bg-amber-100"
                   }`}
                 >
                   <PlugZap className="h-3.5 w-3.5" aria-hidden="true" />
@@ -138,7 +138,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {showSetupAction ? (
                   <Link
                     href={setupHref}
-                    className="app-interactive hidden h-9 items-center gap-2 rounded-md border border-amber-200 bg-white px-2.5 text-xs font-bold text-amber-800 hover:bg-amber-50 lg:flex"
+                    className="app-interactive hidden h-9 items-center gap-2 rounded-md bg-white px-2.5 text-xs font-bold text-amber-800 shadow-hairline hover:bg-amber-50 lg:flex"
                   >
                     <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
                     تکمیل آماده‌سازی
@@ -147,7 +147,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
                 <Link
                   href="/inbox"
-                  className="app-interactive relative flex h-9 w-9 items-center justify-center rounded-md border border-app-border bg-white text-slate-500 hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary"
+                  className="app-interactive relative flex h-9 w-9 items-center justify-center rounded-md bg-white text-slate-500 shadow-hairline hover:bg-blue-50 hover:text-app-primary"
                   aria-label={notificationCount ? `${notificationCount} اعلان عملیاتی خوانده‌نشده` : "صندوق عملیات انتشار"}
                 >
                   <BellRing className="h-4 w-4" aria-hidden="true" />
@@ -162,7 +162,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <button
                     type="button"
                     onClick={() => setAccountMenuOpen((current) => !current)}
-                    className="app-interactive flex h-9 items-center gap-2 rounded-md border border-app-border bg-white px-2 text-xs font-bold text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary"
+                    className="app-interactive flex h-9 items-center gap-2 rounded-md bg-white px-2 text-xs font-bold text-slate-600 shadow-hairline hover:bg-blue-50 hover:text-app-primary"
                     aria-label="منوی حساب کاربری"
                     aria-expanded={accountMenuOpen}
                   >
@@ -203,7 +203,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </header>
-          <div className="app-enter p-4 pb-24 lg:p-5">{children}</div>
+          <div className="app-enter p-4 pb-24 lg:px-6 lg:py-5">{children}</div>
           <MobileNav />
           <CommandPalette open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
         </section>

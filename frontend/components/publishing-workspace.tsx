@@ -35,7 +35,7 @@ export function PublishingWorkspaceHeader({
   onTabChange
 }: PublishingWorkspaceHeaderProps) {
   return (
-    <section className="overflow-hidden rounded-md border border-app-border bg-white">
+    <section className="overflow-hidden rounded-lg bg-white shadow-hairline">
       <div className="flex flex-col justify-between gap-3 px-4 py-3 lg:flex-row lg:items-center">
         <div className="min-w-0">
           <p className="text-[10px] font-black text-app-primary">فضای انتشار</p>
@@ -48,7 +48,7 @@ export function PublishingWorkspaceHeader({
         </div>
       </div>
 
-      <nav className="overflow-x-auto border-t border-app-border bg-slate-50/70 px-2" aria-label="نماهای فضای انتشار">
+      <nav className="overflow-x-auto border-t border-app-border bg-app-surfaceMuted px-2" aria-label="نماهای فضای انتشار">
         <div className="flex min-w-max items-center gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -62,7 +62,7 @@ export function PublishingWorkspaceHeader({
                 className={`flex items-center gap-1.5 border-b-2 px-3 py-3 text-xs font-bold transition ${
                   active
                     ? "border-app-primary bg-white text-app-primary"
-                    : "border-transparent text-slate-500 hover:bg-white hover:text-app-text"
+                    : "border-transparent text-slate-500 hover:bg-white/80 hover:text-app-text"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" aria-hidden="true" />

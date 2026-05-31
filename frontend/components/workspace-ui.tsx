@@ -1,3 +1,5 @@
+import { Check } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 type WorkspacePageProps = {
@@ -86,6 +88,23 @@ type StatusTokenProps = {
   className?: string;
 };
 
+type StatusRailStep = {
+  label: string;
+  description?: string;
+  meta?: ReactNode;
+  href?: string;
+  icon?: ReactNode;
+  state: "done" | "active" | "pending";
+};
+
+type TimelineItem = {
+  title: string;
+  description?: string;
+  meta?: ReactNode;
+  icon?: ReactNode;
+  tone?: "neutral" | "primary" | "success" | "warning" | "alert";
+};
+
 const metricToneClasses: Record<NonNullable<MetricTileProps["tone"]>, string> = {
   neutral: "text-slate-700",
   primary: "text-app-primary",
@@ -113,12 +132,12 @@ const noticeToneClasses: Record<NoticeTone, string> = {
 };
 
 export function WorkspacePage({ children, className = "" }: WorkspacePageProps) {
-  return <div className={`mx-auto w-full max-w-[1560px] space-y-5 ${className}`}>{children}</div>;
+  return <div className={`mx-auto w-full max-w-[1560px] space-y-4 ${className}`}>{children}</div>;
 }
 
 export function WorkspaceHero({ eyebrow, title, description, actions, meta, aside }: WorkspaceHeroProps) {
   return (
-    <section className="overflow-hidden rounded-md border border-app-border bg-white">
+    <section className="overflow-hidden rounded-lg bg-white shadow-hairline">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 px-4 py-4 lg:px-5">
           {eyebrow ? <p className="text-[11px] font-black uppercase text-app-primary">{eyebrow}</p> : null}
@@ -131,7 +150,7 @@ export function WorkspaceHero({ eyebrow, title, description, actions, meta, asid
           </div>
           {meta ? <div className="mt-4 flex flex-wrap gap-2">{meta}</div> : null}
         </div>
-        {aside ? <div className="border-t border-app-border bg-blue-50/70 p-4 lg:border-r lg:border-t-0">{aside}</div> : null}
+        {aside ? <div className="border-t border-app-border bg-blue-50/55 p-4 lg:border-r lg:border-t-0">{aside}</div> : null}
       </div>
     </section>
   );
@@ -152,7 +171,7 @@ export function WorkspaceHeader({ eyebrow, title, description, action }: Workspa
 
 export function WorkspaceToolbar({ children, meta, className = "" }: WorkspaceToolbarProps) {
   return (
-    <div className={`app-row flex flex-col gap-3 rounded-md border border-app-border bg-white px-3 py-2.5 lg:flex-row lg:items-center lg:justify-between ${className}`}>
+    <div className={`app-row flex flex-col gap-3 rounded-lg bg-white px-3 py-2.5 shadow-hairline lg:flex-row lg:items-center lg:justify-between ${className}`}>
       <div className="min-w-0">{children}</div>
       {meta ? <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-app-muted">{meta}</div> : null}
     </div>
@@ -161,13 +180,13 @@ export function WorkspaceToolbar({ children, meta, className = "" }: WorkspaceTo
 
 export function MetricTile({ label, value, hint, tone = "neutral", icon }: MetricTileProps) {
   return (
-    <div className="app-row rounded-md border border-app-border bg-white p-3">
+    <div className="app-row min-w-0 bg-white p-3.5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold text-app-muted">{label}</p>
           <p className={`mt-2 text-2xl font-black ${metricToneClasses[tone]}`}>{value}</p>
         </div>
-        {icon ? <div className="rounded-md border border-app-border bg-slate-50 p-2 text-slate-600">{icon}</div> : null}
+        {icon ? <div className="rounded-md bg-app-surfaceMuted p-2 text-slate-600">{icon}</div> : null}
       </div>
       {hint ? <p className="mt-3 text-xs leading-5 text-app-muted">{hint}</p> : null}
     </div>
@@ -175,12 +194,12 @@ export function MetricTile({ label, value, hint, tone = "neutral", icon }: Metri
 }
 
 export function MetricStrip({ children }: { children: ReactNode }) {
-  return <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{children}</div>;
+  return <div className="grid overflow-hidden rounded-lg bg-white shadow-hairline divide-y divide-app-border md:grid-cols-2 md:divide-x md:divide-x-reverse xl:grid-cols-4 xl:divide-y-0">{children}</div>;
 }
 
 export function WorkspacePanel({ title, description, action, children, className = "", bodyClassName = "p-4" }: WorkspacePanelProps) {
   return (
-    <section className={`rounded-md border border-app-border bg-white ${className}`}>
+    <section className={`rounded-lg bg-white shadow-hairline ${className}`}>
       <div className="flex flex-col justify-between gap-3 border-b border-app-border px-4 py-3 lg:flex-row lg:items-center">
         <div className="min-w-0">
           <h2 className="text-sm font-black text-app-text">{title}</h2>
@@ -195,7 +214,7 @@ export function WorkspacePanel({ title, description, action, children, className
 
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="app-enter flex flex-col items-center justify-center rounded-md border border-dashed border-app-border bg-slate-50 px-4 py-8 text-center">
+    <div className="app-enter flex flex-col items-center justify-center rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted px-4 py-8 text-center">
       {icon ? <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-blue-100 bg-white text-app-primary">{icon}</div> : null}
       <p className="text-sm font-black text-app-text">{title}</p>
       {description ? <p className="mt-2 max-w-md text-sm leading-6 text-app-muted">{description}</p> : null}
@@ -217,7 +236,7 @@ export function DetailGrid({ items }: { items: DetailGridItem[] }) {
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       {items.map((item) => (
-        <div key={item.label} className="rounded-md border border-app-border bg-slate-50 p-3">
+        <div key={item.label} className="rounded-md bg-app-surfaceMuted p-3 shadow-hairline">
           <p className="text-[11px] font-black text-app-muted">{item.label}</p>
           <div className="mt-1 text-sm font-black text-app-text">{item.value}</div>
           {item.hint ? <div className="mt-1 text-xs leading-5 text-app-muted">{item.hint}</div> : null}
@@ -229,7 +248,7 @@ export function DetailGrid({ items }: { items: DetailGridItem[] }) {
 
 export function InspectorPanel({ title, description, children, footer }: InspectorPanelProps) {
   return (
-    <aside className="rounded-md border border-app-border bg-white">
+    <aside className="rounded-lg bg-white shadow-lift ring-1 ring-app-border">
       <div className="border-b border-app-border px-4 py-3">
         <h2 className="text-sm font-black text-app-text">{title}</h2>
         {description ? <p className="mt-1 text-xs leading-5 text-app-muted">{description}</p> : null}
@@ -242,7 +261,7 @@ export function InspectorPanel({ title, description, children, footer }: Inspect
 
 export function SegmentedControl<T extends string>({ options, value, onChange }: SegmentedControlProps<T>) {
   return (
-    <div className="inline-flex rounded-md border border-app-border bg-slate-50 p-1">
+    <div className="inline-flex rounded-md bg-app-surfaceMuted p-1 shadow-hairline">
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -272,5 +291,72 @@ export function StatusToken({ tone = "neutral", children, className = "" }: Stat
     <span className={`inline-flex items-center rounded px-2 py-1 text-[11px] font-black leading-none border transition-colors duration-200 ${tokenToneClasses[tone]} ${className}`}>
       {children}
     </span>
+  );
+}
+
+const railDotClasses: Record<StatusRailStep["state"], string> = {
+  done: "border-emerald-500 bg-emerald-500 text-white",
+  active: "app-dot-pulse border-emerald-500 bg-emerald-500 text-white",
+  pending: "border-slate-300 bg-white text-slate-400"
+};
+
+export function StatusRail({ steps }: { steps: StatusRailStep[] }) {
+  return (
+    <ol className="grid overflow-hidden rounded-lg bg-white shadow-hairline md:grid-cols-2 xl:grid-cols-4">
+      {steps.map((step, index) => {
+        const content = (
+          <>
+            <div className="flex items-center">
+              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 ${railDotClasses[step.state]}`}>
+                {step.state === "done" ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
+              </span>
+              {index < steps.length - 1 ? <span className={`mx-2 h-px flex-1 border-t border-dashed ${step.state === "done" ? "border-emerald-300" : "border-slate-300"}`} /> : null}
+            </div>
+            <div className="mt-2.5 flex items-start gap-2">
+              {step.icon ? <span className={step.state === "pending" ? "text-slate-400" : "text-app-primary"}>{step.icon}</span> : null}
+              <div className="min-w-0">
+                <p className="truncate text-xs font-black text-app-text">{step.label}</p>
+                {step.description ? <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-app-muted">{step.description}</p> : null}
+                {step.meta ? <div className="mt-1 text-[10px] font-bold text-slate-400">{step.meta}</div> : null}
+              </div>
+            </div>
+          </>
+        );
+
+        return (
+          <li key={`${step.label}-${index}`} className="border-b border-app-border p-3.5 md:border-l md:last:border-l-0 xl:border-b-0">
+            {step.href ? <Link href={step.href} className="app-interactive block">{content}</Link> : content}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+const timelineDotClasses: Record<NonNullable<TimelineItem["tone"]>, string> = {
+  neutral: "border-slate-300 bg-white text-slate-500",
+  primary: "border-blue-500 bg-blue-50 text-app-primary",
+  success: "border-emerald-500 bg-emerald-50 text-emerald-700",
+  warning: "border-amber-500 bg-amber-50 text-amber-700",
+  alert: "border-rose-500 bg-rose-50 text-rose-700"
+};
+
+export function Timeline({ items }: { items: TimelineItem[] }) {
+  return (
+    <ol>
+      {items.map((item, index) => (
+        <li key={`${item.title}-${index}`} className="relative flex gap-3 pb-4 last:pb-0">
+          {index < items.length - 1 ? <span className="absolute right-[13px] top-7 h-[calc(100%-1rem)] border-r border-dashed border-slate-300" /> : null}
+          <span className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${timelineDotClasses[item.tone ?? "neutral"]}`}>
+            {item.icon ?? <span className="h-1.5 w-1.5 rounded-full bg-current" />}
+          </span>
+          <div className="min-w-0 pt-1">
+            <p className="text-xs font-black text-app-text">{item.title}</p>
+            {item.description ? <p className="mt-1 text-xs leading-5 text-app-muted">{item.description}</p> : null}
+            {item.meta ? <div className="mt-1 text-[11px] text-slate-400">{item.meta}</div> : null}
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }

@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, type LucideIcon } from "lucide-react";
+import { Check, type LucideIcon } from "lucide-react";
 
 export type ComposerStep = {
   label: string;
@@ -8,50 +8,47 @@ export type ComposerStep = {
 };
 
 const stateClasses: Record<ComposerStep["state"], string> = {
-  done: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  active: "border-blue-200 bg-blue-50 text-blue-800",
-  pending: "border-app-border bg-white text-slate-600"
+  done: "text-emerald-700",
+  active: "text-app-primary",
+  pending: "text-slate-500"
+};
+
+const dotClasses: Record<ComposerStep["state"], string> = {
+  done: "border-emerald-500 bg-emerald-500 text-white",
+  active: "app-dot-pulse border-emerald-500 bg-emerald-500 text-white",
+  pending: "border-slate-300 bg-white text-slate-400"
 };
 
 export function ComposerStepRail({ steps }: { steps: ComposerStep[] }) {
   const completed = steps.filter((step) => step.state === "done").length;
 
   return (
-    <section className="rounded-md border border-app-border bg-white">
+    <section className="rounded-lg bg-white shadow-hairline">
       <div className="flex items-center justify-between border-b border-app-border px-3 py-3">
         <p className="text-sm font-black text-app-text">مسیر تولید</p>
         <span className="rounded bg-slate-100 px-2 py-1 text-[11px] font-black text-slate-600">{completed}/{steps.length}</span>
       </div>
-      <div className="divide-y divide-app-border">
+      <ol className="px-3 py-2">
         {steps.map((step, index) => {
           const Icon = step.icon;
-          const StateIcon = step.state === "done" ? CheckCircle2 : Circle;
 
           return (
-            <div key={step.label} className={`p-3 transition ${stateClasses[step.state]}`}>
-              <div className="flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-current/15 bg-white/60 text-xs font-black">
-                  {index + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex min-w-0 items-center gap-2 text-sm font-black">
-                      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      <span className="truncate">{step.label}</span>
-                    </span>
-                    {step.state === "active" ? (
-                      <span className="h-5 w-5 shrink-0 animate-pulse rounded-full bg-emerald-500 ring-4 ring-emerald-100" aria-label="مرحله فعال" />
-                    ) : (
-                      <StateIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                    )}
-                  </div>
-                  <p className="mt-1 text-xs leading-5 opacity-80">{step.helper}</p>
+            <li key={step.label} className={`relative flex gap-3 px-1 py-2.5 ${stateClasses[step.state]}`}>
+              {index < steps.length - 1 ? <span className="absolute right-[15px] top-9 h-[calc(100%-0.75rem)] border-r border-dashed border-slate-300" /> : null}
+              <span className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-black ${dotClasses[step.state]}`}>
+                {step.state === "done" ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : index + 1}
+              </span>
+              <div className="min-w-0 flex-1 pt-0.5">
+                <div className="flex items-center gap-2">
+                  <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span className="truncate text-sm font-black text-app-text">{step.label}</span>
                 </div>
+                <p className="mt-1 text-xs leading-5 text-app-muted">{step.helper}</p>
               </div>
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ol>
     </section>
   );
 }
