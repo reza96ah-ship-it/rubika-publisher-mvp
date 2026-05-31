@@ -17,7 +17,6 @@ export function ProductMark({ size = "md", className = "" }: { size?: keyof type
       <span className="absolute inset-y-[22%] right-[24%] w-[12%] rounded-full bg-white/95" />
       <span className="absolute inset-y-[22%] right-[47%] w-[12%] rounded-full bg-white/75" />
       <span className="absolute right-[24%] top-[22%] h-[12%] w-[36%] rounded-full bg-white/95" />
-      <span className="absolute bottom-[18%] left-[16%] h-[24%] w-[24%] rounded-sm border-2 border-white bg-app-teal" />
     </span>
   );
 }

@@ -178,6 +178,14 @@ function postRailTone(status: string) {
   return "bg-blue-500";
 }
 
+const campaignMarkerTones = ["bg-violet-500", "bg-amber-500", "bg-teal-500", "bg-rose-500", "bg-sky-500"];
+
+function campaignMarkerTone(campaign?: string | null) {
+  if (!campaign?.trim()) return "bg-slate-300";
+  const score = Array.from(campaign).reduce((total, character) => total + character.charCodeAt(0), 0);
+  return campaignMarkerTones[score % campaignMarkerTones.length];
+}
+
 function postStatusLabel(status: string) {
   if (status === "failed") return "انتشار ناموفق";
   if (status === "published") return "منتشرشده";
@@ -453,25 +461,28 @@ export default function CalendarPage() {
         draggable={draggable}
         onDragStart={(event) => startDraggingPost(event, post)}
         onDragEnd={stopDraggingPost}
-        className={`app-interactive relative w-full overflow-hidden rounded-md px-2 py-1.5 text-right text-[11px] leading-5 shadow-hairline hover:shadow-sm ${postTone(post.status)} ${
+        className={`app-interactive relative w-full overflow-hidden rounded-md text-right shadow-hairline hover:shadow-sm ${compact ? "px-1.5 py-1 text-[10px] leading-4" : "px-2 py-1.5 text-[11px] leading-5"} ${postTone(post.status)} ${
           selected ? "ring-2 ring-blue-200" : ""
         } ${draggable ? "cursor-grab active:cursor-grabbing" : "cursor-default"} ${rescheduling ? "animate-pulse opacity-70" : ""}`}
         title={draggable ? "برای تغییر روز انتشار، پست را روی روز جدید بکشید." : undefined}
       >
         <span className={`absolute inset-y-0 right-0 w-1 ${postRailTone(post.status)}`} />
         <span className="flex min-w-0 items-center gap-2 pr-1">
-          {!compact ? (
-            previewUrl ? (
-              <img src={previewUrl} alt="" className="h-8 w-8 shrink-0 rounded object-cover ring-1 ring-white/80" />
-            ) : (
+          {previewUrl ? (
+            <img src={previewUrl} alt="" className={`${compact ? "h-6 w-6" : "h-9 w-9"} shrink-0 rounded object-cover ring-1 ring-white/80`} />
+          ) : (
+            !compact ? (
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-white/60 text-current">
                 <ImageIcon className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
               </span>
-            )
-          ) : null}
+            ) : null
+          )}
           <span className="min-w-0 flex-1">
             <span className="block truncate font-bold">{formatJalaliTime(post.scheduled_at)} · {post.title}</span>
-            {!compact ? <span className="mt-0.5 block truncate opacity-75">{post.campaign || post.caption || "بدون کمپین"}</span> : null}
+            <span className="mt-0.5 flex items-center gap-1 truncate opacity-75">
+              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${campaignMarkerTone(post.campaign)}`} />
+              <span className="truncate">{post.campaign || (!compact ? post.caption : "") || "بدون کمپین"}</span>
+            </span>
           </span>
         </span>
       </button>
@@ -756,26 +767,42 @@ export default function CalendarPage() {
                       برای این روز هنوز پستی ثبت نشده است.
                     </p>
                   ) : null}
-                  {selectedDayPosts.map((post) => (
-                    <button
-                      key={post.id}
-                      type="button"
-                      onClick={() => selectPost(post)}
-                      className={`relative w-full overflow-hidden rounded-md p-3 text-right shadow-hairline transition hover:bg-blue-50 ${
-                        selectedPost?.id === post.id ? "bg-blue-50 ring-2 ring-blue-100" : "bg-white"
-                      }`}
-                    >
-                      <span className={`absolute inset-y-0 right-0 w-1 ${postRailTone(post.status)}`} />
-                      <div className="pr-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <StatusBadge status={post.status} />
-                          <span className="text-xs font-bold text-app-muted">{formatJalaliTime(post.scheduled_at)}</span>
+                  {selectedDayPosts.map((post) => {
+                    const asset = assetByPostId.get(post.id);
+                    const previewUrl = asset ? mediaPreviewUrls[asset.id] : "";
+                    return (
+                      <button
+                        key={post.id}
+                        type="button"
+                        onClick={() => selectPost(post)}
+                        className={`relative w-full overflow-hidden rounded-md p-3 text-right shadow-hairline transition hover:bg-blue-50 ${
+                          selectedPost?.id === post.id ? "bg-blue-50 ring-2 ring-blue-100" : "bg-white"
+                        }`}
+                      >
+                        <span className={`absolute inset-y-0 right-0 w-1 ${postRailTone(post.status)}`} />
+                        <div className="flex min-w-0 items-center gap-3 pr-1">
+                          {previewUrl ? (
+                            <img src={previewUrl} alt="" className="h-12 w-12 shrink-0 rounded-md object-cover ring-1 ring-app-border" />
+                          ) : (
+                            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-400">
+                              <ImageIcon className="h-4 w-4" aria-hidden="true" />
+                            </span>
+                          )}
+                          <span className="min-w-0 flex-1">
+                            <span className="flex flex-wrap items-center gap-2">
+                              <StatusBadge status={post.status} />
+                              <span className="text-xs font-bold text-app-muted">{formatJalaliTime(post.scheduled_at)}</span>
+                            </span>
+                            <span className="mt-2 block truncate text-sm font-black text-app-text">{post.title}</span>
+                            <span className="mt-1 flex items-center gap-1 truncate text-[11px] font-bold text-app-primary">
+                              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${campaignMarkerTone(post.campaign)}`} />
+                              <span className="truncate">{post.campaign || "بدون کمپین"}</span>
+                            </span>
+                          </span>
                         </div>
-                        <p className="mt-2 truncate text-sm font-black text-app-text">{post.title}</p>
-                        {post.campaign ? <p className="mt-1 truncate text-[11px] font-bold text-app-primary">{post.campaign}</p> : null}
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <div className="mt-4 border-t border-app-border pt-4">
@@ -792,6 +819,10 @@ export default function CalendarPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <StatusBadge status={selectedPost.status} />
                           <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
+                          <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1 text-[11px] font-black text-slate-600">
+                            <span className={`h-1.5 w-1.5 rounded-full ${campaignMarkerTone(selectedPost.campaign)}`} />
+                            {selectedPost.campaign || "بدون کمپین"}
+                          </span>
                         </div>
                         <h3 className="mt-3 text-base font-black text-app-text">{selectedPost.title}</h3>
                         <p className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap rounded-md bg-slate-50 p-3 text-xs leading-6 text-app-muted ring-1 ring-app-border">
