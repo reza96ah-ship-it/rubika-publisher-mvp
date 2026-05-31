@@ -178,6 +178,17 @@ export default function AnalyticsPage() {
     });
   }, [loadAnalytics]);
 
+  useEffect(() => {
+    if (!selectedTrendKey) return;
+    function clearSelectedTrend(event: PointerEvent) {
+      const target = event.target;
+      if (target instanceof Element && target.closest("[data-trend-inspector]")) return;
+      setSelectedTrendKey("");
+    }
+    document.addEventListener("pointerdown", clearSelectedTrend);
+    return () => document.removeEventListener("pointerdown", clearSelectedTrend);
+  }, [selectedTrendKey]);
+
   const scopedPosts = useMemo(() => posts.filter((post) => isInRange(postActivityDate(post), timeRange)), [posts, timeRange]);
   const scopedAttempts = useMemo(() => attempts.filter((attempt) => isInRange(attempt.created_at, timeRange)), [attempts, timeRange]);
   const previousPosts = useMemo(() => posts.filter((post) => isInPreviousRange(postActivityDate(post), timeRange)), [posts, timeRange]);
@@ -228,7 +239,7 @@ export default function AnalyticsPage() {
   function showTrendTick(index: number) {
     return index === 0 || index === trend.length - 1 || index % trendTickInterval === 0;
   }
-  const selectedTrend = trend.find((item) => item.key === selectedTrendKey) ?? trend[trend.length - 1] ?? null;
+  const selectedTrend = trend.find((item) => item.key === selectedTrendKey) ?? null;
   const failedPosts = scopedPosts.filter((post) => post.status === "failed" || post.last_error).slice(0, 5);
   const queuedPosts = scopedPosts.filter((post) => ["ready", "scheduled", "publishing"].includes(post.status)).slice(0, 5);
   const highAttemptPosts = useMemo(() => {
@@ -378,6 +389,8 @@ export default function AnalyticsPage() {
                         key={item.key}
                         type="button"
                         onClick={() => setSelectedTrendKey(item.key)}
+                        data-trend-inspector
+                        data-trend-bar
                         className={`flex h-full min-w-0 flex-col justify-end rounded-t text-center transition hover:bg-blue-50/70 ${selectedTrend?.key === item.key ? "bg-blue-50 ring-1 ring-inset ring-blue-100" : ""}`}
                         title={`${dayLongLabel(item.key)}: ${item.total} تلاش`}
                       >
@@ -401,7 +414,7 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 {selectedTrend ? (
-                  <div className="mt-4 grid gap-3 rounded-md border border-app-border bg-slate-50 p-3 sm:grid-cols-[minmax(0,1fr)_repeat(4,auto)] sm:items-center">
+                  <div data-trend-inspector className="mt-4 grid gap-3 rounded-md border border-app-border bg-slate-50 p-3 sm:grid-cols-[minmax(0,1fr)_repeat(4,auto)] sm:items-center">
                     <div className="min-w-0">
                       <p className="text-[11px] font-black text-app-primary">جزئیات روز انتخاب‌شده</p>
                       <p className="mt-1 truncate text-sm font-black text-app-text">{dayLongLabel(selectedTrend.key)}</p>
