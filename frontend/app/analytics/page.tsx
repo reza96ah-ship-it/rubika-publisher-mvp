@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowDownUp, ArrowUpLeft, CalendarClock, CheckCircle2, FileImage, LineChart, MessageSquareText, Search, Target, TrendingDown, TrendingUp } from "lucide-react";
+import { Activity, AlertTriangle, ArrowDownUp, ArrowUpLeft, CalendarClock, CheckCircle2, FileImage, LineChart, MessageSquareText, Search, Target, TrendingDown, TrendingUp, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
@@ -53,6 +53,16 @@ const statusLabels: Record<string, string> = {
   published: "منتشر",
   failed: "ناموفق",
   cancelled: "لغوشده"
+};
+
+const statusProgressClasses: Record<string, string> = {
+  draft: "bg-slate-400",
+  ready: "bg-sky-500",
+  scheduled: "bg-blue-500",
+  publishing: "bg-amber-500",
+  published: "bg-emerald-500",
+  failed: "bg-rose-500",
+  cancelled: "bg-slate-300"
 };
 
 function parsePayload(value: string): ParsedPayload {
@@ -240,6 +250,13 @@ export default function AnalyticsPage() {
     return index === 0 || index === trend.length - 1 || index % trendTickInterval === 0;
   }
   const selectedTrend = trend.find((item) => item.key === selectedTrendKey) ?? null;
+  const selectedTrendAttempts = useMemo(() => {
+    if (!selectedTrendKey) return [];
+    return scopedAttempts
+      .filter((attempt) => dayKey(attempt.created_at) === selectedTrendKey)
+      .sort((first, second) => (toTime(second.created_at) ?? 0) - (toTime(first.created_at) ?? 0))
+      .slice(0, 5);
+  }, [scopedAttempts, selectedTrendKey]);
   const failedPosts = scopedPosts.filter((post) => post.status === "failed" || post.last_error).slice(0, 5);
   const queuedPosts = scopedPosts.filter((post) => ["ready", "scheduled", "publishing"].includes(post.status)).slice(0, 5);
   const highAttemptPosts = useMemo(() => {
@@ -287,7 +304,7 @@ export default function AnalyticsPage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage>
-          <section className="rounded-md border border-app-border bg-white px-4 py-3">
+          <section className="rounded-lg bg-white px-4 py-3 shadow-hairline">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
                 <p className="text-[10px] font-black text-app-primary">تحلیل عملیاتی</p>
@@ -332,7 +349,7 @@ export default function AnalyticsPage() {
 
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
-          <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-2 xl:grid-cols-4">
+          <section className="grid overflow-hidden rounded-lg bg-white shadow-hairline sm:grid-cols-2 xl:grid-cols-4">
             {dashboardMetrics.map((metric) => {
               const Icon = metric.icon;
               const deltaIsGood = metric.delta === 0 ? null : metric.positiveIsGood === false ? metric.delta < 0 : metric.delta > 0;
@@ -364,7 +381,21 @@ export default function AnalyticsPage() {
               <WorkspacePanel
                 title="روند تلاش‌های انتشار"
                 description="مقایسه تلاش‌های موفق، ناموفق و در حال اجرا در بازه انتخاب‌شده."
-                action={<StatusToken tone="neutral">{trend.length} نقطه زمانی</StatusToken>}
+                action={(
+                  <div className="flex items-center gap-2">
+                    {selectedTrend ? (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTrendKey("")}
+                        className="app-interactive inline-flex items-center gap-1 text-xs font-bold text-app-primary hover:text-app-primaryHover"
+                      >
+                        <X className="h-3.5 w-3.5" aria-hidden="true" />
+                        لغو انتخاب
+                      </button>
+                    ) : null}
+                    <StatusToken tone="neutral">{trend.length} نقطه زمانی</StatusToken>
+                  </div>
+                )}
               >
                 {loading ? <LoadingPanel /> : null}
                 {!loading && trend.length === 0 ? (
@@ -388,7 +419,7 @@ export default function AnalyticsPage() {
                       <button
                         key={item.key}
                         type="button"
-                        onClick={() => setSelectedTrendKey(item.key)}
+                        onClick={() => setSelectedTrendKey((current) => current === item.key ? "" : item.key)}
                         data-trend-inspector
                         data-trend-bar
                         className={`flex h-full min-w-0 flex-col justify-end rounded-t text-center transition hover:bg-blue-50/70 ${selectedTrend?.key === item.key ? "bg-blue-50 ring-1 ring-inset ring-blue-100" : ""}`}
@@ -413,18 +444,6 @@ export default function AnalyticsPage() {
                     ))}
                   </div>
                 </div>
-                {selectedTrend ? (
-                  <div data-trend-inspector className="mt-4 grid gap-3 rounded-md border border-app-border bg-slate-50 p-3 sm:grid-cols-[minmax(0,1fr)_repeat(4,auto)] sm:items-center">
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-black text-app-primary">جزئیات روز انتخاب‌شده</p>
-                      <p className="mt-1 truncate text-sm font-black text-app-text">{dayLongLabel(selectedTrend.key)}</p>
-                    </div>
-                    <div><p className="text-[10px] font-bold text-app-muted">کل تلاش</p><p className="mt-1 text-sm font-black text-app-text">{selectedTrend.total}</p></div>
-                    <div><p className="text-[10px] font-bold text-app-muted">موفق</p><p className="mt-1 text-sm font-black text-emerald-700">{selectedTrend.success}</p></div>
-                    <div><p className="text-[10px] font-bold text-app-muted">ناموفق</p><p className="mt-1 text-sm font-black text-rose-700">{selectedTrend.failed}</p></div>
-                    <div><p className="text-[10px] font-bold text-app-muted">در حال اجرا</p><p className="mt-1 text-sm font-black text-sky-700">{selectedTrend.started}</p></div>
-                  </div>
-                ) : null}
               </WorkspacePanel>
 
               <WorkspacePanel
@@ -432,14 +451,14 @@ export default function AnalyticsPage() {
                 description="وضعیت چرخه پست‌ها و نوع ارسال در یک نمای فشرده."
               >
                 <div className="grid gap-3 border-b border-app-border pb-4 sm:grid-cols-2">
-                  <div className="flex items-center justify-between gap-3 rounded-md bg-slate-50 p-3 ring-1 ring-app-border">
+                  <div className="flex items-center justify-between gap-3 rounded-md bg-app-surfaceMuted p-3 shadow-hairline">
                     <span className="flex items-center gap-2">
                       <MessageSquareText className="h-4 w-4 text-app-primary" aria-hidden="true" />
                       <span className="text-sm font-black text-app-text">ارسال متنی</span>
                     </span>
                     <span className="text-sm font-black text-app-text">{attemptSummary.text} <span className="text-xs text-app-muted">({percent(attemptSummary.text, scopedAttempts.length)}%)</span></span>
                   </div>
-                  <div className="flex items-center justify-between gap-3 rounded-md bg-slate-50 p-3 ring-1 ring-app-border">
+                  <div className="flex items-center justify-between gap-3 rounded-md bg-app-surfaceMuted p-3 shadow-hairline">
                     <span className="flex items-center gap-2">
                       <FileImage className="h-4 w-4 text-app-primary" aria-hidden="true" />
                       <span className="text-sm font-black text-app-text">ارسال رسانه‌ای</span>
@@ -458,7 +477,7 @@ export default function AnalyticsPage() {
                           <span className="text-xs font-black text-app-text">{label}</span>
                         </div>
                         <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                          <div className="h-full rounded-full bg-app-primary" style={{ width: `${ratio}%` }} />
+                          <div className={`h-full rounded-full ${statusProgressClasses[status] ?? "bg-app-primary"}`} style={{ width: `${ratio}%` }} />
                         </div>
                         <span className="text-left text-xs font-black text-app-text">{count}</span>
                       </div>
@@ -532,6 +551,54 @@ export default function AnalyticsPage() {
             </div>
 
             <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+              {selectedTrend ? (
+                <WorkspacePanel
+                  title="بازرس روز انتخاب‌شده"
+                  description={dayLongLabel(selectedTrend.key)}
+                  action={(
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTrendKey("")}
+                      className="app-interactive flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-app-text"
+                      aria-label="بستن جزئیات روز"
+                      title="بستن جزئیات روز"
+                    >
+                      <X className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  )}
+                  bodyClassName="p-4"
+                >
+                  <div data-trend-inspector>
+                    <div className="grid grid-cols-4 divide-x divide-x-reverse divide-app-border overflow-hidden rounded-md bg-app-surfaceMuted text-center shadow-hairline">
+                      <div className="p-2"><p className="text-sm font-black text-app-text">{selectedTrend.total}</p><p className="mt-1 text-[10px] text-app-muted">کل تلاش</p></div>
+                      <div className="p-2"><p className="text-sm font-black text-emerald-700">{selectedTrend.success}</p><p className="mt-1 text-[10px] text-app-muted">موفق</p></div>
+                      <div className="p-2"><p className="text-sm font-black text-rose-700">{selectedTrend.failed}</p><p className="mt-1 text-[10px] text-app-muted">ناموفق</p></div>
+                      <div className="p-2"><p className="text-sm font-black text-sky-700">{selectedTrend.started}</p><p className="mt-1 text-[10px] text-app-muted">در اجرا</p></div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <p className="text-xs font-black text-app-text">فعالیت‌های ثبت‌شده</p>
+                    </div>
+                    {selectedTrendAttempts.length ? (
+                      <div className="mt-3 divide-y divide-app-border">
+                        {selectedTrendAttempts.map((attempt) => (
+                          <article key={attempt.id} className="py-3 first:pt-0 last:pb-0">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="truncate text-xs font-black text-app-text">{attempt.post_title}</p>
+                              <StatusToken tone={attempt.status === "success" ? "success" : attempt.status === "failed" ? "alert" : "info"}>
+                                {attempt.status === "success" ? "موفق" : attempt.status === "failed" ? "ناموفق" : "در اجرا"}
+                              </StatusToken>
+                            </div>
+                            <p className="mt-1 text-[11px] text-app-muted">{formatDateTime(attempt.created_at)}</p>
+                          </article>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-xs leading-5 text-app-muted">برای این روز تلاش انتشاری ثبت نشده است.</p>
+                    )}
+                  </div>
+                </WorkspacePanel>
+              ) : null}
               <WorkspacePanel
                 title="اقدام‌های پیشنهادی"
                 description="مواردی که بهتر است اول بررسی شوند."
