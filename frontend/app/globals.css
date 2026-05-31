@@ -100,6 +100,16 @@ a {
   }
 }
 
+@keyframes dashboard-flow-scan {
+  from {
+    right: 0;
+  }
+
+  to {
+    right: calc(100% - 1.25rem);
+  }
+}
+
 @layer utilities {
   .app-workspace-bg {
     background-color: #eef4f6;
@@ -185,6 +195,85 @@ a {
 
   .app-dot-pulse {
     animation: app-dot-pulse 1.8s ease-in-out infinite;
+  }
+
+  .dashboard-pulse {
+    background-color: #f5fbfb;
+    background-image:
+      linear-gradient(rgba(176, 205, 207, 0.34) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(176, 205, 207, 0.34) 1px, transparent 1px),
+      radial-gradient(circle, rgba(15, 118, 110, 0.24) 1px, transparent 1.25px);
+    background-position: 0 0, 0 0, 12px 12px;
+    background-size: 24px 24px, 24px 24px, 24px 24px;
+  }
+
+  .dashboard-flow-track {
+    background-image: repeating-linear-gradient(90deg, #b8d5d4 0, #b8d5d4 8px, transparent 8px, transparent 14px);
+  }
+
+  .dashboard-flow-track::after {
+    position: absolute;
+    top: -0.2rem;
+    right: 0;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: #0f766e;
+    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+    content: "";
+    animation: dashboard-flow-scan 3.8s ease-in-out infinite alternate;
+  }
+
+  .dashboard-flow-node {
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.78), 0 4px 10px rgba(49, 88, 94, 0.12);
+  }
+
+  .dashboard-signal-ribbon {
+    background-color: rgba(247, 251, 252, 0.97);
+    box-shadow: 0 0 0 1px rgba(199, 213, 221, 0.92), 0 10px 24px rgba(33, 61, 75, 0.045);
+  }
+
+  .dashboard-live-monitor {
+    overflow: hidden;
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.985);
+    box-shadow: 0 0 0 1px rgba(199, 213, 221, 0.92), 0 16px 38px rgba(33, 61, 75, 0.065);
+  }
+
+  .dashboard-monitor-head {
+    background-color: #f4faf9;
+    background-image: repeating-linear-gradient(90deg, transparent 0, transparent 23px, rgba(15, 118, 110, 0.1) 24px);
+  }
+
+  .dashboard-alert-rail {
+    position: relative;
+  }
+
+  .dashboard-alert-rail::before {
+    position: absolute;
+    top: 0.75rem;
+    right: 0;
+    bottom: 0.75rem;
+    width: 0.2rem;
+    border-radius: 999px;
+    background: #e95757;
+    content: "";
+  }
+
+  .dashboard-schedule-row {
+    position: relative;
+  }
+
+  .dashboard-schedule-row::before {
+    position: absolute;
+    top: 1.1rem;
+    right: 1rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: #0f766e;
+    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+    content: "";
   }
 }
 

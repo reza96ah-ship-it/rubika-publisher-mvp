@@ -2,7 +2,6 @@
 
 import {
   AlertTriangle,
-  BellRing,
   CalendarClock,
   CheckCircle2,
   CircleAlert,
@@ -12,11 +11,11 @@ import {
   Rocket,
   TimerReset
 } from "lucide-react";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
 import { CountdownBadge } from "../components/countdown-badge";
+import { LiveOperations, PublicationPulse, SignalRibbon } from "../components/dashboard-command-center";
 import { Skeleton } from "../components/loading-skeleton";
 import { ReadinessJourney } from "../components/readiness-journey";
 import { StatusBadge } from "../components/status-badge";
@@ -122,10 +121,16 @@ export default function HomePage() {
       : "فضای کاری آماده است. برنامه انتشار را با یک محتوای جدید شروع کنید.";
   const healthTone = priorityAlerts.length ? "alert" : setupScore === 100 ? "success" : "warning";
   const pipeline = [
-    { label: "آماده", count: queueCounts.ready, detail: "منتظر زمان", icon: CheckCircle2, tone: "text-app-primary", href: "/content?status=ready" },
-    { label: "زمان‌بندی", count: queueCounts.scheduled, detail: "در برنامه", icon: CalendarClock, tone: "text-amber-700", href: "/calendar" },
-    { label: "در انتشار", count: queueCounts.publishing, detail: "در اختیار worker", icon: TimerReset, tone: "text-sky-700", href: "/queue" },
-    { label: "ناموفق", count: queueCounts.failed, detail: "نیازمند بازیابی", icon: AlertTriangle, tone: queueCounts.failed ? "text-rose-700" : "text-slate-500", href: "/queue" }
+    { label: "آماده", count: queueCounts.ready, detail: "منتظر زمان", icon: CheckCircle2, tone: "primary" as const, href: "/content?status=ready" },
+    { label: "زمان‌بندی", count: queueCounts.scheduled, detail: "در برنامه", icon: CalendarClock, tone: "warning" as const, href: "/calendar" },
+    { label: "در انتشار", count: queueCounts.publishing, detail: "در اختیار worker", icon: TimerReset, tone: "info" as const, href: "/queue" },
+    { label: "ناموفق", count: queueCounts.failed, detail: "نیازمند بازیابی", icon: AlertTriangle, tone: "alert" as const, href: "/queue" }
+  ];
+  const signals = [
+    { label: "داخل صف", value: queueTotal, detail: "تمام وضعیت‌های عملیاتی", icon: ListChecks, tone: "primary" as const },
+    { label: "زمان‌بندی‌شده", value: queueCounts.scheduled, detail: "انتشارهای آینده", icon: CalendarClock, tone: "warning" as const },
+    { label: "منتشرشده", value: publishedCount, detail: "کل خروجی موفق", icon: CheckCircle2, tone: "success" as const },
+    { label: "خطای فعال", value: queueCounts.failed, detail: "نیازمند بازیابی", icon: AlertTriangle, tone: "alert" as const }
   ];
 
   return (
@@ -133,8 +138,8 @@ export default function HomePage() {
       <AppShell>
         <WorkspacePage className="space-y-4">
           <section className="app-studio-panel overflow-hidden rounded-lg">
-            <div className="grid lg:grid-cols-[minmax(0,1fr)_330px]">
-              <div className="px-4 py-4 lg:px-5">
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_410px]">
+              <div className="px-4 py-5 lg:px-5">
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusToken tone={healthTone} className="gap-1">
                     <Rocket className="h-3.5 w-3.5" aria-hidden="true" />
@@ -146,7 +151,8 @@ export default function HomePage() {
                   </StatusToken>
                   {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
                 </div>
-                <h1 className="mt-3 text-2xl font-black text-app-text">مرکز فرمان انتشار</h1>
+                <p className="app-section-kicker mt-4 text-[10px] font-black">Rubika Content Operations</p>
+                <h1 className="mt-2 text-2xl font-black text-app-text">مرکز فرمان انتشار</h1>
                 <p className="mt-2 max-w-3xl text-sm leading-7 text-app-muted">{briefing}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button href="/queue">باز کردن صف عملیات</Button>
@@ -158,50 +164,14 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="app-studio-grid border-t border-app-border bg-teal-50/55 p-4 lg:border-r lg:border-t-0">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-black text-app-muted">اولویت امروز</p>
-                    <p className={`mt-2 text-3xl font-black ${priorityAlerts.length ? "text-rose-700" : "text-emerald-700"}`}>{priorityAlerts.length}</p>
-                  </div>
-                  <span className={`flex h-10 w-10 items-center justify-center rounded-md border ${priorityAlerts.length ? "border-rose-100 bg-white text-rose-700" : "border-emerald-100 bg-white text-emerald-700"}`}>
-                    {priorityAlerts.length ? <CircleAlert className="h-5 w-5" aria-hidden="true" /> : <CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
-                  </span>
-                </div>
-                <p className="mt-3 text-xs leading-6 text-app-muted">{priorityAlerts.length ? "خطاها و هشدارهای فعال را پیش از ادامه انتشار بررسی کنید." : "مورد فوری ثبت نشده است. روند انتشار تحت کنترل است."}</p>
-                <Button href="/inbox" variant="secondary" size="sm" className="mt-3 w-full">
-                  <BellRing className="ml-2 h-4 w-4" aria-hidden="true" />
-                  صندوق عملیات {unreadAlerts ? `(${unreadAlerts})` : ""}
-                </Button>
-              </div>
+              <PublicationPulse items={pipeline} alertCount={priorityAlerts.length} unreadAlerts={unreadAlerts} />
             </div>
           </section>
 
           {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
           {loading ? <Skeleton className="h-4 w-44" /> : null}
 
-          <section className="app-studio-surface grid overflow-hidden rounded-lg sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              { label: "داخل صف", value: queueTotal, detail: "تمام وضعیت‌های عملیاتی", icon: ListChecks, tone: "text-app-primary" },
-              { label: "زمان‌بندی‌شده", value: queueCounts.scheduled, detail: "انتشارهای آینده", icon: CalendarClock, tone: "text-amber-700" },
-              { label: "منتشرشده", value: publishedCount, detail: "کل خروجی موفق", icon: CheckCircle2, tone: "text-emerald-700" },
-              { label: "خطای فعال", value: queueCounts.failed, detail: "نیازمند بازیابی", icon: AlertTriangle, tone: queueCounts.failed ? "text-rose-700" : "text-slate-500" }
-            ].map((metric) => {
-              const Icon = metric.icon;
-              return (
-                <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 sm:border-l sm:last:border-l-0 xl:border-b-0">
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${metric.tone}`}>
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-black text-app-muted">{metric.label}</p>
-                    <p className={`mt-0.5 text-lg font-black ${metric.tone}`}>{metric.value}</p>
-                    <p className="truncate text-[11px] text-app-muted">{metric.detail}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </section>
+          <SignalRibbon items={signals} />
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
             <div className="space-y-4">
@@ -235,8 +205,8 @@ export default function HomePage() {
                 {nextPosts.length ? (
                   <div className="divide-y divide-app-border">
                     {nextPosts.map((post) => (
-                      <article key={post.id} className="app-row grid gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_180px] lg:items-center">
-                        <div className="min-w-0">
+                      <article key={post.id} className="dashboard-schedule-row app-row grid gap-3 py-4 pr-8 pl-4 lg:grid-cols-[minmax(0,1fr)_180px] lg:items-center">
+                        <div className="min-w-0 border-r border-dashed border-teal-200 pr-4">
                           <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge status={post.status} />
                             <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
@@ -262,25 +232,12 @@ export default function HomePage() {
             </div>
 
             <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-              <WorkspacePanel title="جریان صف" description="نمای فشرده از گلوگاه‌های فعال انتشار." bodyClassName="p-0">
-                <div className="divide-y divide-app-border">
-                  {pipeline.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Link key={item.label} href={item.href} className="app-row flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
-                        <span className={`flex h-8 w-8 items-center justify-center rounded-md bg-slate-50 ${item.tone}`}>
-                          <Icon className="h-4 w-4" aria-hidden="true" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-xs font-black text-app-text">{item.label}</span>
-                          <span className="mt-1 block text-[11px] text-app-muted">{item.detail}</span>
-                        </span>
-                        <span className={`text-lg font-black ${item.tone}`}>{item.count}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </WorkspacePanel>
+              <LiveOperations
+                setupScore={setupScore}
+                queueTotal={queueTotal}
+                rubikaReady={rubikaReady}
+                nextWindow={nextPosts[0]?.scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"}
+              />
 
               <WorkspacePanel title="میز کار سریع" description="دسترسی کوتاه به کارهای پرتکرار روزانه." bodyClassName="p-3">
                 <div className="grid gap-2">
@@ -302,7 +259,7 @@ export default function HomePage() {
 
 function PriorityAlert({ alert }: { alert: OperationalNotification }) {
   return (
-    <article className="app-row grid gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_170px] lg:items-center">
+    <article className="dashboard-alert-rail app-row grid gap-3 py-4 pr-5 pl-4 lg:grid-cols-[minmax(0,1fr)_170px] lg:items-center">
       <div className="flex min-w-0 gap-3">
         <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${severityClasses(alert.severity)}`}>
           <AlertIcon severity={alert.severity} />
