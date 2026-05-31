@@ -15,7 +15,7 @@ import {
   Rows3
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { DragEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { LoadingRows } from "../../components/loading-skeleton";
@@ -24,6 +24,7 @@ import { DataSearchField } from "../../components/data-view";
 import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
 import { PlannerComposerDrawer } from "../../components/planner-composer-drawer";
 import { StatusBadge } from "../../components/status-badge";
+import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, InspectorPanel, NoticeBanner, StatusToken, WorkspacePage } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, type Post } from "../../lib/posts";
@@ -35,7 +36,7 @@ import {
   jalaliDateKey,
   sortByScheduleAsc
 } from "../../lib/jalali";
-import { jalaliDateToIsoAtTime } from "../../lib/jalali-picker";
+import { getJalaliPickerParts, jalaliDateToIsoAtTime } from "../../lib/jalali-picker";
 
 type CalendarFilter = "all" | "scheduled" | "publishing" | "published" | "failed";
 type ViewMode = "month" | "week" | "list";
@@ -63,6 +64,7 @@ const viewModes: Array<{ label: string; value: ViewMode; icon: typeof Grid3X3 }>
 
 const weekDays = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
 const calendarStatuses = new Set(["scheduled", "publishing", "published", "failed"]);
+const scheduleTimezone = "Asia/Tehran";
 
 function isCalendarPost(post: Post) {
   return Boolean(post.scheduled_at && calendarStatuses.has(post.status));
@@ -171,6 +173,7 @@ function visibleCalendarText(post: Post) {
 }
 
 export default function CalendarPage() {
+  const { showToast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
   const [statusFilter, setStatusFilter] = useState<CalendarFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("month");
@@ -182,6 +185,9 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [quickCreateAt, setQuickCreateAt] = useState<string | null>(null);
+  const [draggingPostId, setDraggingPostId] = useState<number | null>(null);
+  const [dragTargetDayKey, setDragTargetDayKey] = useState<string | null>(null);
+  const [reschedulingPostId, setReschedulingPostId] = useState<number | null>(null);
 
   const loadPosts = useCallback(async (preservePlannerState = false) => {
     const response = await fetch(`${apiUrl}/posts`, { headers: authHeaders() });
@@ -286,16 +292,90 @@ export default function CalendarPage() {
     setQuickCreateAt(jalaliDateToIsoAtTime(value, 9, 0) ?? value);
   }
 
+  function startDraggingPost(event: DragEvent<HTMLButtonElement>, post: Post) {
+    if (post.status !== "scheduled" || !post.scheduled_at) return;
+    event.stopPropagation();
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(post.id));
+    setDraggingPostId(post.id);
+  }
+
+  function stopDraggingPost() {
+    setDraggingPostId(null);
+    setDragTargetDayKey(null);
+  }
+
+  function allowDropOnDay(event: DragEvent<HTMLDivElement>, day: CalendarDay) {
+    if (!draggingPostId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setDragTargetDayKey(day.key);
+  }
+
+  async function reschedulePost(post: Post, day: CalendarDay) {
+    if (!post.scheduled_at || post.status !== "scheduled") return;
+    const originalScheduledAt = post.scheduled_at;
+    const originalDayKey = jalaliDateKey(originalScheduledAt);
+    if (originalDayKey === day.key) return;
+
+    const time = getJalaliPickerParts(originalScheduledAt, scheduleTimezone);
+    const scheduledAt = jalaliDateToIsoAtTime(day.date, time.hour, time.minute, scheduleTimezone);
+    if (!scheduledAt) {
+      showToast({ title: "جابجایی پست ناموفق بود", description: "تاریخ مقصد قابل تبدیل نیست.", tone: "alert" });
+      return;
+    }
+
+    setError("");
+    setReschedulingPostId(post.id);
+    setPosts((current) => current.map((item) => item.id === post.id ? { ...item, scheduled_at: scheduledAt } : item));
+    setSelectedDayKey(day.key);
+    setSelectedPostId(post.id);
+
+    try {
+      const response = await fetch(`${apiUrl}/posts/${post.id}/schedule`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ scheduled_at: scheduledAt, timezone: scheduleTimezone })
+      });
+      if (!response.ok) throw new Error("زمان‌بندی جدید پست ذخیره نشد");
+      const savedPost = await response.json() as Post;
+      setPosts((current) => current.map((item) => item.id === post.id ? savedPost : item));
+      showToast({ title: "زمان انتشار جابجا شد", description: `${post.title} · ${formatJalaliDateTime(savedPost.scheduled_at)}`, tone: "success" });
+    } catch (err) {
+      const nextError = err instanceof Error ? err.message : "جابجایی پست ناموفق بود";
+      setPosts((current) => current.map((item) => item.id === post.id ? { ...item, scheduled_at: originalScheduledAt } : item));
+      setSelectedDayKey(originalDayKey);
+      setError(nextError);
+      showToast({ title: "جابجایی پست ناموفق بود", description: nextError, tone: "alert" });
+    } finally {
+      setReschedulingPostId(null);
+    }
+  }
+
+  function dropPostOnDay(event: DragEvent<HTMLDivElement>, day: CalendarDay) {
+    event.preventDefault();
+    const postId = Number(event.dataTransfer.getData("text/plain") || draggingPostId);
+    const post = posts.find((item) => item.id === postId);
+    stopDraggingPost();
+    if (post) void reschedulePost(post, day);
+  }
+
   function renderPostChip(post: Post, compact = false) {
     const selected = selectedPost?.id === post.id;
+    const draggable = post.status === "scheduled" && Boolean(post.scheduled_at);
+    const rescheduling = reschedulingPostId === post.id;
     return (
       <button
         key={post.id}
         type="button"
         onClick={() => selectPost(post)}
-        className={`w-full rounded-md border px-2 py-1.5 text-right text-[11px] leading-5 transition hover:border-app-primary ${postTone(post.status)} ${
+        draggable={draggable}
+        onDragStart={(event) => startDraggingPost(event, post)}
+        onDragEnd={stopDraggingPost}
+        className={`app-interactive w-full rounded-md border px-2 py-1.5 text-right text-[11px] leading-5 hover:border-app-primary ${postTone(post.status)} ${
           selected ? "ring-2 ring-blue-200" : ""
-        }`}
+        } ${draggable ? "cursor-grab active:cursor-grabbing" : "cursor-default"} ${rescheduling ? "animate-pulse opacity-70" : ""}`}
+        title={draggable ? "برای تغییر روز انتشار، پست را روی روز جدید بکشید." : undefined}
       >
         <span className="block font-bold">{formatJalaliTime(post.scheduled_at)} · {post.title}</span>
         {!compact ? <span className="mt-0.5 block truncate opacity-75">{post.caption || "بدون کپشن"}</span> : null}
@@ -336,6 +416,8 @@ export default function CalendarPage() {
                     <StatusToken tone="neutral">{monthPostCount} پست در ماه</StatusToken>
                     {nextPost ? <StatusToken tone="success">بعدی: {formatJalaliDateTime(nextPost.scheduled_at)}</StatusToken> : null}
                     <StatusToken tone={attentionPosts.length ? "alert" : "success"}>{attentionPosts.length ? `${attentionPosts.length} نیازمند توجه` : "برنامه پایدار"}</StatusToken>
+                    <StatusToken tone="info">پست زمان‌بندی‌شده را برای تغییر روز بکشید</StatusToken>
+                    {reschedulingPostId ? <StatusToken tone="warning">در حال ذخیره جابجایی</StatusToken> : null}
                   </div>
                   <div className="flex items-center gap-1 rounded-md border border-app-border bg-white p-1">
                     <button type="button" onClick={() => movePlannerMonth(1)} className="rounded p-2 text-slate-600 transition hover:bg-slate-100" aria-label="ماه بعد">
@@ -441,9 +523,13 @@ export default function CalendarPage() {
                           <div
                             key={day?.key ?? `empty-${index}`}
                             onClick={() => day ? selectDay(day, dayPosts) : undefined}
+                            onDragOver={(event) => day ? allowDropOnDay(event, day) : undefined}
+                            onDrop={(event) => day ? dropPostOnDay(event, day) : undefined}
                             className={`${calendarCellHeight} border-b border-l border-app-border p-2 text-right transition last:border-l-0 ${
                               day ? "bg-white hover:bg-blue-50/40" : "bg-slate-50/70"
-                            } ${isSelectedDay ? "bg-blue-50/70 ring-1 ring-inset ring-blue-200" : ""}`}
+                            } ${isSelectedDay ? "bg-blue-50/70 ring-1 ring-inset ring-blue-200" : ""} ${
+                              day && draggingPostId && dragTargetDayKey === day.key ? "bg-blue-100/80 ring-2 ring-inset ring-app-primary" : ""
+                            } ${day && draggingPostId ? "cursor-copy" : ""}`}
                           >
                             {day ? (
                               <>

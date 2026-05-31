@@ -7,6 +7,7 @@ import { getJalaliPickerParts, jalaliPickerPartsToIso } from "../lib/jalali-pick
 import { apiUrl, authHeaders } from "../lib/posts";
 import { Button } from "./ui/button";
 import { Field, Input, Textarea } from "./ui/form";
+import { useToast } from "./toast-provider";
 import { NoticeBanner, StatusToken } from "./workspace-ui";
 
 type PlannerComposerDrawerProps = {
@@ -24,6 +25,7 @@ function pad(value: number) {
 }
 
 export function PlannerComposerDrawer({ scheduledAt, onClose, onCreated }: PlannerComposerDrawerProps) {
+  const { showToast } = useToast();
   const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
   const [hashtags, setHashtags] = useState("");
@@ -58,6 +60,7 @@ export function PlannerComposerDrawer({ scheduledAt, onClose, onCreated }: Plann
   async function save(action: QuickSaveAction) {
     if (!hasTitle) {
       setError("برای ذخیره سریع، عنوان داخلی پست را وارد کنید.");
+      showToast({ title: "عنوان داخلی لازم است", description: "برای ذخیره سریع پست، یک عنوان وارد کنید.", tone: "warning" });
       return;
     }
 
@@ -94,9 +97,16 @@ export function PlannerComposerDrawer({ scheduledAt, onClose, onCreated }: Plann
       }
 
       await onCreated();
+      showToast({
+        title: action === "schedule" ? "پست در پلنر زمان‌بندی شد" : "پیش‌نویس ذخیره شد",
+        description: title.trim(),
+        tone: "success"
+      });
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطای ذخیره سریع پست");
+      const nextError = err instanceof Error ? err.message : "خطای ذخیره سریع پست";
+      setError(nextError);
+      showToast({ title: "ذخیره سریع ناموفق بود", description: nextError, tone: "alert" });
     } finally {
       setSavingAction(null);
     }
