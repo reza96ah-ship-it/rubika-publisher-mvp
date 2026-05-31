@@ -230,6 +230,12 @@ export default function MediaPage() {
     setDropTargetPostId(null);
   }
 
+  function clearSelectedAsset() {
+    setSelectedAssetId("");
+    setInspectorTab("details");
+    stopDraggingAsset();
+  }
+
   function allowPostDrop(event: DragEvent<HTMLButtonElement>, postId: number) {
     if (!draggingAssetId) return;
     event.preventDefault();
@@ -556,8 +562,12 @@ export default function MediaPage() {
                           draggable
                           aria-pressed={selected}
                           onClick={() => {
-                            setSelectedAssetId(String(asset.id));
-                            setInspectorTab("details");
+                            if (selected) {
+                              clearSelectedAsset();
+                            } else {
+                              setSelectedAssetId(String(asset.id));
+                              setInspectorTab("details");
+                            }
                           }}
                           onDragStart={(event) => startDraggingAsset(event, asset.id)}
                           onDragEnd={stopDraggingAsset}
@@ -612,7 +622,20 @@ export default function MediaPage() {
               <WorkspacePanel
                 title="بازرس رسانه"
                 description="جزئیات فایل، وضعیت استفاده و اتصال به پست."
-                action={selectedAsset ? <StatusToken tone={selectedLinkedPost ? "primary" : "success"}>{selectedLinkedPost ? "در استفاده" : "آزاد"}</StatusToken> : null}
+                action={selectedAsset ? (
+                  <div className="flex items-center gap-2">
+                    <StatusToken tone={selectedLinkedPost ? "primary" : "success"}>{selectedLinkedPost ? "در استفاده" : "آزاد"}</StatusToken>
+                    <button
+                      type="button"
+                      onClick={clearSelectedAsset}
+                      className="app-interactive flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-app-text"
+                      aria-label="لغو انتخاب رسانه"
+                      title="لغو انتخاب رسانه"
+                    >
+                      <X className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                ) : null}
                 bodyClassName="p-0"
               >
                 <div className="grid grid-cols-2 border-b border-app-border bg-app-surfaceMuted p-1">
