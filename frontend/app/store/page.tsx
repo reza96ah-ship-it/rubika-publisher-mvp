@@ -22,6 +22,7 @@ import { Field, Input, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
 import { NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders } from "../../lib/posts";
+import { notifyWorkspaceUpdated } from "../../lib/workspace";
 
 const emptyStore = {
   name: "",
@@ -197,6 +198,7 @@ export default function StorePage() {
       setSavedForm(nextForm);
       setMessage("پروفایل فروشگاه ذخیره شد");
       showToast({ title: "پروفایل فروشگاه ذخیره شد", description: "متن‌های پایه از این لحظه در composer قابل استفاده‌اند.", tone: "success" });
+      notifyWorkspaceUpdated();
     } catch (err) {
       const nextError = err instanceof Error ? err.message : "خطای ذخیره اطلاعات";
       setError(nextError);

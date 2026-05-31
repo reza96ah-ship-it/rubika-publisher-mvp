@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_active_store
-from app.models import Post, Store
+from app.models import Post, RubikaAccount, Store
 from app.schemas import PostRequest, PostResponse, PostScheduleRequest, PostStatsResponse, PostStatusRequest
+from app.services.rubika_health import is_rubika_account_ready
 from app.store_scope import get_store_post
 
 router = APIRouter(prefix="/posts", tags=["posts"])
@@ -66,6 +67,12 @@ def apply_payload(post: Post, payload: PostRequest) -> None:
     post.internal_note = payload.internal_note.strip()
     post.scheduled_at = utc_naive(payload.scheduled_at)
     post.updated_at = datetime.utcnow()
+
+
+def require_rubika_ready(db: Session) -> None:
+    account = db.scalar(select(RubikaAccount).where(RubikaAccount.is_active.is_(True)).order_by(RubikaAccount.id.asc()))
+    if not is_rubika_account_ready(account):
+        raise HTTPException(status_code=400, detail="Rubika connection must be tested successfully within the last 24 hours")
 
 
 @router.get("/stats", response_model=PostStatsResponse)
@@ -139,6 +146,7 @@ def schedule_post(post_id: int, payload: PostScheduleRequest, store: Store = Dep
     post = get_store_post(db, store, post_id)
     if post.status not in {"draft", "ready", "scheduled", "failed"}:
         raise HTTPException(status_code=400, detail="Post cannot be scheduled in its current status")
+    require_rubika_ready(db)
     post.status = "scheduled"
     post.scheduled_at = utc_naive(payload.scheduled_at)
     post.timezone = payload.timezone.strip() or "Asia/Tehran"
@@ -172,6 +180,8 @@ def change_status(post_id: int, payload: PostStatusRequest, store: Store = Depen
     if payload.status not in WORKFLOW_STATUSES:
         raise HTTPException(status_code=400, detail="Invalid post status")
     post = get_store_post(db, store, post_id)
+    if payload.status == "scheduled":
+        require_rubika_ready(db)
     post.status = payload.status
     post.updated_at = datetime.utcnow()
     if payload.status == "ready":

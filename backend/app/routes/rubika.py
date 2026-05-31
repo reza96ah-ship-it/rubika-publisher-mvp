@@ -64,6 +64,12 @@ async def test_connection(current_user: User = Depends(get_current_user), db: Se
     account = get_account(db)
     if account is None or not account.bot_token.strip():
         return RubikaTestResponse(ok=False, status="missing_settings", error="Rubika token is missing")
+    if not account.chat_id.strip():
+        account.status = "missing_settings"
+        account.last_error = "Rubika destination is missing"
+        account.last_test_at = datetime.utcnow()
+        db.commit()
+        return RubikaTestResponse(ok=False, status="missing_settings", error=account.last_error, last_test_at=account.last_test_at)
 
     try:
         client = RubikaClient(account.bot_token)

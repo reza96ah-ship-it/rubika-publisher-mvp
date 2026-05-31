@@ -8,7 +8,8 @@ import {
   isRubikaConnected,
   isStoreConfigured,
   loadWorkspaceOverview,
-  WorkspaceOverview
+  WorkspaceOverview,
+  workspaceUpdatedEvent
 } from "../lib/workspace";
 import { CommandPalette } from "./command-palette";
 import { getActiveNav, MobileNav, Sidebar } from "./sidebar";
@@ -23,10 +24,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   useEffect(() => {
-    loadWorkspaceOverview()
-      .then(setOverview)
-      .catch(() => setOverview({ store: null, rubika: null }))
-      .finally(() => setOverviewLoading(false));
+    function refreshOverview() {
+      setOverviewLoading(true);
+      loadWorkspaceOverview()
+        .then(setOverview)
+        .catch(() => setOverview({ store: null, rubika: null }))
+        .finally(() => setOverviewLoading(false));
+    }
+    refreshOverview();
+    window.addEventListener(workspaceUpdatedEvent, refreshOverview);
+    return () => window.removeEventListener(workspaceUpdatedEvent, refreshOverview);
   }, []);
 
   useEffect(() => {

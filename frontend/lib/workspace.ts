@@ -1,5 +1,7 @@
 import { apiUrl, authHeaders, Post } from "./posts";
 
+export const workspaceUpdatedEvent = "rubika-publisher:workspace-updated";
+
 export type StoreProfile = {
   id: number;
   name: string;
@@ -19,6 +21,7 @@ export type RubikaSettings = {
   bot_name: string;
   status: string;
   last_error: string;
+  last_test_at: string | null;
   is_active: boolean;
 };
 
@@ -39,13 +42,25 @@ export function isStoreConfigured(store?: StoreProfile | null) {
   return Boolean(store?.name?.trim());
 }
 
+export function notifyWorkspaceUpdated() {
+  window.dispatchEvent(new Event(workspaceUpdatedEvent));
+}
+
 export function isRubikaConnected(rubika?: RubikaSettings | null) {
-  return rubika?.status === "connected";
+  return rubika?.status === "connected" && isRubikaTestFresh(rubika.last_test_at);
+}
+
+export function isRubikaTestFresh(value?: string | null) {
+  if (!value) return false;
+  const testedAt = new Date(value);
+  if (Number.isNaN(testedAt.getTime())) return false;
+  return testedAt.getTime() >= Date.now() - 24 * 60 * 60 * 1000;
 }
 
 export function rubikaStatusLabel(rubika?: RubikaSettings | null) {
   if (!rubika) return "اتصال روبیکا تنظیم نشده";
-  if (rubika.status === "connected") return "روبیکا متصل است";
+  if (rubika.status === "connected" && isRubikaTestFresh(rubika.last_test_at)) return "روبیکا متصل است";
+  if (rubika.status === "connected") return "تست اتصال روبیکا منقضی شده";
   if (rubika.status === "failed") return "اتصال روبیکا خطا دارد";
   if (rubika.bot_token_masked) return "تست اتصال روبیکا لازم است";
   return "اتصال روبیکا تنظیم نشده";

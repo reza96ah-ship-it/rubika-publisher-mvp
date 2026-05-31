@@ -1,12 +1,14 @@
 from datetime import datetime, timedelta, timezone
 
+import pytest
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
-from app.models import Post, Store
-from app.routes.posts import apply_payload, post_response, schedule_post
-from app.schemas import PostRequest, PostScheduleRequest
+from app.models import Post, RubikaAccount, Store
+from app.routes.posts import apply_payload, change_status, post_response, schedule_post
+from app.schemas import PostRequest, PostScheduleRequest, PostStatusRequest
 
 
 def test_apply_payload_stores_aware_schedule_as_utc_naive() -> None:
@@ -64,6 +66,7 @@ def test_schedule_post_normalizes_tehran_time_and_returns_utc_response() -> None
 
         post = Post(store_id=store.id, title="Launch", status="draft", created_at=now, updated_at=now)
         db.add(post)
+        db.add(RubikaAccount(bot_token="token", chat_id="channel", status="connected", last_test_at=datetime.utcnow()))
         db.commit()
 
         response = schedule_post(
@@ -81,3 +84,30 @@ def test_schedule_post_normalizes_tehran_time_and_returns_utc_response() -> None
         assert post.timezone == "Asia/Tehran"
         assert response.scheduled_at == expected_utc_naive.replace(tzinfo=timezone.utc)
         assert response.ready_at is not None
+
+
+def test_schedule_post_rejects_stale_rubika_connection() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime.utcnow()
+
+    with session_factory() as db:
+        store = Store(name="Main", created_at=now, updated_at=now)
+        db.add(store)
+        db.flush()
+        post = Post(store_id=store.id, title="Launch", status="draft", created_at=now, updated_at=now)
+        db.add(post)
+        db.add(RubikaAccount(bot_token="token", chat_id="channel", status="connected", last_test_at=now - timedelta(days=2)))
+        db.commit()
+
+        with pytest.raises(HTTPException, match="Rubika connection must be tested successfully"):
+            schedule_post(
+                post.id,
+                PostScheduleRequest(scheduled_at=now + timedelta(hours=1), timezone="Asia/Tehran"),
+                store=store,
+                db=db,
+            )
+
+        with pytest.raises(HTTPException, match="Rubika connection must be tested successfully"):
+            change_status(post.id, PostStatusRequest(status="scheduled"), store=store, db=db)
