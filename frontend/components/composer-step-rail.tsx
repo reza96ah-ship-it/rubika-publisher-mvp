@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, Dot, type LucideIcon } from "lucide-react";
+import { CheckCircle2, Circle, type LucideIcon } from "lucide-react";
 
 export type ComposerStep = {
   label: string;
@@ -25,7 +25,7 @@ export function ComposerStepRail({ steps }: { steps: ComposerStep[] }) {
       <div className="divide-y divide-app-border">
         {steps.map((step, index) => {
           const Icon = step.icon;
-          const StateIcon = step.state === "done" ? CheckCircle2 : step.state === "active" ? Dot : Circle;
+          const StateIcon = step.state === "done" ? CheckCircle2 : Circle;
 
           return (
             <div key={step.label} className={`p-3 transition ${stateClasses[step.state]}`}>
@@ -39,7 +39,11 @@ export function ComposerStepRail({ steps }: { steps: ComposerStep[] }) {
                       <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                       <span className="truncate">{step.label}</span>
                     </span>
-                    <StateIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    {step.state === "active" ? (
+                      <span className="h-5 w-5 shrink-0 animate-pulse rounded-full bg-emerald-500 ring-4 ring-emerald-100" aria-label="مرحله فعال" />
+                    ) : (
+                      <StateIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    )}
                   </div>
                   <p className="mt-1 text-xs leading-5 opacity-80">{step.helper}</p>
                 </div>
