@@ -18,6 +18,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
+import { LoadingRows } from "../../components/loading-skeleton";
 import { CountdownBadge } from "../../components/countdown-badge";
 import { DataSearchField } from "../../components/data-view";
 import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
@@ -422,7 +423,7 @@ export default function CalendarPage() {
                 </div>
               </div>
 
-              {loading ? <p className="p-4 text-sm text-app-muted">در حال دریافت برنامه انتشار...</p> : null}
+              {loading ? <LoadingRows rows={5} /> : null}
 
               {!loading && viewMode !== "list" ? (
                 <div className="overflow-x-auto">

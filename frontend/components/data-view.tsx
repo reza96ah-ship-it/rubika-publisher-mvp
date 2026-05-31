@@ -1,5 +1,6 @@
 import { Search } from "lucide-react";
 import type { InputHTMLAttributes, ReactNode } from "react";
+import { LoadingRows } from "./loading-skeleton";
 import { WorkspaceToolbar } from "./workspace-ui";
 
 type DataToolbarProps = {
@@ -72,7 +73,7 @@ export function DataTable({ columns, gridClassName, children, loading, empty }: 
       <div className={`hidden ${gridClassName} gap-4 border-b border-app-border bg-slate-100 px-4 py-3 text-[11px] font-black uppercase text-slate-500 lg:grid`}>
         {columns.map((column) => <span key={column}>{column}</span>)}
       </div>
-      {loading ? <p className="p-5 text-sm text-app-muted">در حال دریافت...</p> : null}
+      {loading ? <LoadingRows /> : null}
       {!loading && empty ? empty : null}
       <div className="divide-y divide-app-border">{children}</div>
     </div>

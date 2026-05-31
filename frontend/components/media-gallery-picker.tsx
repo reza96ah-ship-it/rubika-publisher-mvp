@@ -1,3 +1,5 @@
+import { Skeleton } from "./loading-skeleton";
+
 type MediaAsset = {
   id: number;
   post_id: number | null;
@@ -23,7 +25,13 @@ export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loadi
   const imageAssets = assets.filter((asset) => asset.content_type.startsWith("image/"));
 
   if (loading) {
-    return <p className="mt-3 text-xs text-app-muted">در حال دریافت رسانه‌ها...</p>;
+    return (
+      <div className="mt-3 grid grid-cols-3 gap-2" aria-label="در حال دریافت رسانه‌ها">
+        <Skeleton className="aspect-square w-full" />
+        <Skeleton className="aspect-square w-full" />
+        <Skeleton className="aspect-square w-full" />
+      </div>
+    );
   }
 
   if (imageAssets.length === 0) {

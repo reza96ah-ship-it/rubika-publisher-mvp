@@ -17,6 +17,7 @@ import { CountdownBadge } from "../../components/countdown-badge";
 import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
 import { PublishingTab, PublishingWorkspaceHeader } from "../../components/publishing-workspace";
 import { StatusBadge } from "../../components/status-badge";
+import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, formatDateTime, Post, postFinalText, workflowTabs } from "../../lib/posts";
@@ -55,6 +56,7 @@ function visiblePostText(post: Post) {
 }
 
 export default function ContentWorkspacePage() {
+  const { showToast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
   const [activeStatus, setActiveStatus] = useState("all");
   const [search, setSearch] = useState("");
@@ -168,31 +170,41 @@ export default function ContentWorkspacePage() {
   async function changeStatus(post: Post, status: string) {
     setMessage("");
     setError("");
+    const previousPosts = posts;
+    setPosts((current) => current.map((item) => item.id === post.id ? { ...item, status, scheduled_at: status === "cancelled" ? null : item.scheduled_at } : item));
     const response = await fetch(`${apiUrl}/posts/${post.id}/status`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({ status })
     });
     if (!response.ok) {
+      setPosts(previousPosts);
       setError("تغییر وضعیت پست ناموفق بود");
+      showToast({ title: "تغییر وضعیت ناموفق بود", description: "دوباره تلاش کنید یا سلامت انتشار را بررسی کنید.", tone: "alert" });
       return;
     }
     setMessage("وضعیت پست به‌روزرسانی شد");
+    showToast({ title: "وضعیت پست به‌روزرسانی شد", description: post.title, tone: "success" });
     await loadPosts();
   }
 
   async function retryPost(post: Post) {
     setMessage("");
     setError("");
+    const previousPosts = posts;
+    setPosts((current) => current.map((item) => item.id === post.id ? { ...item, status: "scheduled", scheduled_at: new Date().toISOString(), failed_at: null, last_error: "" } : item));
     const response = await fetch(`${apiUrl}/posts/${post.id}/retry`, {
       method: "POST",
       headers: authHeaders()
     });
     if (!response.ok) {
+      setPosts(previousPosts);
       setError("تلاش مجدد انتشار ناموفق بود");
+      showToast({ title: "تلاش مجدد ناموفق بود", description: post.title, tone: "alert" });
       return;
     }
     setMessage("پست برای تلاش مجدد وارد صف انتشار شد");
+    showToast({ title: "پست دوباره وارد صف شد", description: post.title, tone: "success" });
     await loadPosts();
   }
 

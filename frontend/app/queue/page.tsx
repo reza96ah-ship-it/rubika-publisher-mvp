@@ -8,6 +8,7 @@ import { CountdownBadge } from "../../components/countdown-badge";
 import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
 import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
 import { StatusBadge } from "../../components/status-badge";
+import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
@@ -50,6 +51,7 @@ function visibleQueueText(post: Post) {
 }
 
 export default function QueuePage() {
+  const { showToast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
   const [statusFilter, setStatusFilter] = useState<QueueFilter>("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -79,21 +81,28 @@ export default function QueuePage() {
   async function retryPost(post: Post) {
     setMessage("");
     setError("");
+    const previousPosts = posts;
+    setPosts((current) => current.map((item) => item.id === post.id ? { ...item, status: "scheduled", scheduled_at: new Date().toISOString(), failed_at: null, last_error: "" } : item));
     const response = await fetch(`${apiUrl}/posts/${post.id}/retry`, {
       method: "POST",
       headers: authHeaders()
     });
     if (!response.ok) {
+      setPosts(previousPosts);
       setError("تلاش مجدد انتشار ناموفق بود");
+      showToast({ title: "تلاش مجدد ناموفق بود", description: post.title, tone: "alert" });
       return;
     }
     setMessage("پست برای تلاش مجدد وارد صف انتشار شد");
+    showToast({ title: "پست دوباره وارد صف شد", description: post.title, tone: "success" });
     await loadQueue();
   }
 
   async function cancelPost(post: Post) {
     setMessage("");
     setError("");
+    const previousPosts = posts;
+    setPosts((current) => current.filter((item) => item.id !== post.id));
     const response = await fetch(`${apiUrl}/posts/${post.id}/status`, {
       method: "POST",
       headers: {
@@ -103,10 +112,13 @@ export default function QueuePage() {
       body: JSON.stringify({ status: "cancelled" })
     });
     if (!response.ok) {
+      setPosts(previousPosts);
       setError("لغو پست ناموفق بود");
+      showToast({ title: "لغو پست ناموفق بود", description: post.title, tone: "alert" });
       return;
     }
     setMessage("پست از صف انتشار خارج شد");
+    showToast({ title: "پست از صف خارج شد", description: post.title, tone: "success" });
     await loadQueue();
   }
 

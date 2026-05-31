@@ -4,7 +4,9 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { FileImage, ImageIcon, Images, Link2, Search, UploadCloud, XCircle } from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
+import { LoadingRows } from "../../components/loading-skeleton";
 import { StatusBadge } from "../../components/status-badge";
+import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { Tag } from "../../components/ui/tag";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel, WorkspaceToolbar } from "../../components/workspace-ui";
@@ -36,6 +38,7 @@ function formatSize(size: number) {
 }
 
 export default function MediaPage() {
+  const { showToast } = useToast();
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [posts, setPosts] = useState<PostOption[]>([]);
   const [file, setFile] = useState<File | null>(null);
@@ -155,9 +158,12 @@ export default function MediaPage() {
       setMediaFilter("all");
       setSearchTerm("");
       setMessage("تصویر آپلود شد");
+      showToast({ title: "تصویر آپلود شد", description: uploadedAsset.original_filename, tone: "success" });
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطای آپلود تصویر");
+      const nextError = err instanceof Error ? err.message : "خطای آپلود تصویر";
+      setError(nextError);
+      showToast({ title: "آپلود تصویر ناموفق بود", description: nextError, tone: "alert" });
     } finally {
       setUploading(false);
     }
@@ -178,10 +184,12 @@ export default function MediaPage() {
 
     if (!response.ok) {
       setError("اتصال تصویر به پست ناموفق بود");
+      showToast({ title: "اتصال تصویر ناموفق بود", description: "دوباره تلاش کنید.", tone: "alert" });
       return;
     }
 
     setMessage("اتصال تصویر به پست ذخیره شد");
+    showToast({ title: "اتصال تصویر ذخیره شد", description: postId ? "رسانه به پست انتخاب‌شده متصل شد." : "رسانه از پست جدا شد.", tone: "success" });
     await loadData();
   }
 
@@ -354,7 +362,7 @@ export default function MediaPage() {
                     />
                   </label>
                 </WorkspaceToolbar>
-                {loading ? <p className="text-sm text-app-muted">در حال دریافت رسانه‌ها...</p> : null}
+                {loading ? <LoadingRows rows={3} /> : null}
                 {!loading && assets.length === 0 ? (
                   <EmptyState
                     icon={<ImageIcon className="h-5 w-5" aria-hidden="true" />}

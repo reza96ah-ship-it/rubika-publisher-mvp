@@ -15,6 +15,8 @@ import {
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
+import { LoadingPanel } from "../../components/loading-skeleton";
+import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { Field, Input } from "../../components/ui/form";
 import { DetailGrid, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
@@ -87,6 +89,7 @@ function DiagnosticRow({ item }: { item: DiagnosticItem }) {
 }
 
 export default function RubikaPage() {
+  const { showToast } = useToast();
   const [botToken, setBotToken] = useState("");
   const [chatId, setChatId] = useState("");
   const [savedChatId, setSavedChatId] = useState("");
@@ -147,6 +150,7 @@ export default function RubikaPage() {
 
     if (!canSave) {
       setError("توکن ربات و شناسه مقصد برای ذخیره لازم است");
+      showToast({ title: "اطلاعات اتصال کامل نیست", description: "توکن ربات و شناسه مقصد را بررسی کنید.", tone: "warning" });
       return;
     }
 
@@ -170,10 +174,14 @@ export default function RubikaPage() {
       setStatus(data.status ?? "not_tested");
       setLastError(data.last_error ?? "");
       setLastTestAt(data.last_test_at ?? "");
-      setMessage(botToken.trim() ? "تنظیمات روبیکا ذخیره شد؛ حالا تست اتصال را اجرا کنید" : "مقصد ذخیره شد و توکن قبلی حفظ شد");
+      const nextMessage = botToken.trim() ? "تنظیمات روبیکا ذخیره شد؛ حالا تست اتصال را اجرا کنید" : "مقصد ذخیره شد و توکن قبلی حفظ شد";
+      setMessage(nextMessage);
+      showToast({ title: "تنظیمات روبیکا ذخیره شد", description: nextMessage, tone: "success" });
       setBotToken("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطای ذخیره تنظیمات");
+      const nextError = err instanceof Error ? err.message : "خطای ذخیره تنظیمات";
+      setError(nextError);
+      showToast({ title: "ذخیره اتصال ناموفق بود", description: nextError, tone: "alert" });
     } finally {
       setSaving(false);
     }
@@ -195,10 +203,18 @@ export default function RubikaPage() {
       setBotName(data.bot_name ?? "");
       setLastError(data.error ?? "");
       setLastTestAt(data.last_test_at ?? "");
-      if (data.ok) setMessage("اتصال روبیکا موفق بود");
-      else setError(data.error || "تست اتصال ناموفق بود");
+      if (data.ok) {
+        setMessage("اتصال روبیکا موفق بود");
+        showToast({ title: "اتصال روبیکا تایید شد", description: "کانال برای انتشار خودکار آماده است.", tone: "success" });
+      } else {
+        const nextError = data.error || "تست اتصال ناموفق بود";
+        setError(nextError);
+        showToast({ title: "تست اتصال ناموفق بود", description: nextError, tone: "alert" });
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطای تست اتصال");
+      const nextError = err instanceof Error ? err.message : "خطای تست اتصال";
+      setError(nextError);
+      showToast({ title: "تست اتصال ناموفق بود", description: nextError, tone: "alert" });
     } finally {
       setTesting(false);
     }
@@ -226,7 +242,7 @@ export default function RubikaPage() {
                 <p className="mt-1 text-xs leading-5 text-app-muted">اعتبارنامه، مقصد و تست عملیاتی انتشار را از یک صفحه کنترل کنید.</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <StatusToken tone={statusTone(status, dirty)}>{statusLabel(status, dirty)}</StatusToken>
+                <StatusToken tone={statusTone(status, dirty)}>{saving ? "در حال ذخیره تنظیمات" : testing ? "در حال تست اتصال" : statusLabel(status, dirty)}</StatusToken>
                 <StatusToken tone={readyCount === 3 ? "success" : "warning"}>{readyCount}/3 آماده</StatusToken>
                 {botName ? <StatusToken tone="primary">{botName}</StatusToken> : null}
               </div>
@@ -261,7 +277,7 @@ export default function RubikaPage() {
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
             <WorkspacePanel title="اعتبارنامه و مقصد انتشار" description="توکن فقط هنگام جایگزینی لازم است. برای حفظ توکن ذخیره‌شده، فیلد آن را خالی بگذارید.">
               {loading ? (
-                <p className="text-sm text-app-muted">در حال دریافت تنظیمات...</p>
+                <LoadingPanel />
               ) : (
                 <form onSubmit={saveSettings} className="space-y-5">
                   <Field

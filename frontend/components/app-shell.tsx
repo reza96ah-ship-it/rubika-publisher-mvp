@@ -10,6 +10,7 @@ import {
   loadWorkspaceOverview,
   WorkspaceOverview
 } from "../lib/workspace";
+import { CommandPalette } from "./command-palette";
 import { getActiveNav, MobileNav, Sidebar } from "./sidebar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -19,6 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [overview, setOverview] = useState<WorkspaceOverview>({ store: null, rubika: null });
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   useEffect(() => {
     loadWorkspaceOverview()
@@ -29,7 +31,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setAccountMenuOpen(false);
+    setCommandPaletteOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    function handleCommandPalette(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === "k") {
+        event.preventDefault();
+        setCommandPaletteOpen((current) => !current);
+      }
+    }
+    window.addEventListener("keydown", handleCommandPalette);
+    return () => window.removeEventListener("keydown", handleCommandPalette);
+  }, []);
 
   const storeReady = !overviewLoading && isStoreConfigured(overview.store);
   const rubikaReady = !overviewLoading && isRubikaConnected(overview.rubika);
@@ -64,13 +78,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="flex min-w-0 items-center gap-2">
-                <Link
-                  href="/content"
-                    className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md border border-app-border bg-slate-50 px-3 text-xs text-app-muted hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary md:flex md:w-56 xl:w-72"
+                <button
+                  type="button"
+                  onClick={() => setCommandPaletteOpen(true)}
+                  className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md border border-app-border bg-slate-50 px-3 text-xs text-app-muted hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary md:flex md:w-56 xl:w-72"
+                  aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <span className="truncate">جست‌وجوی محتوا و کمپین</span>
-                </Link>
+                  <span className="mr-auto hidden rounded border border-app-border bg-white px-1.5 py-0.5 text-[10px] font-bold text-slate-400 xl:inline">Ctrl K</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCommandPaletteOpen(true)}
+                  className="app-interactive flex h-9 w-9 items-center justify-center rounded-md border border-app-border bg-slate-50 text-app-muted hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary md:hidden"
+                  aria-label="باز کردن جست‌وجو و دسترسی سریع"
+                >
+                  <Search className="h-4 w-4" aria-hidden="true" />
+                </button>
 
                 <Link
                   href="/rubika"
@@ -142,6 +168,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </header>
           <div className="app-enter p-4 pb-24 lg:p-5">{children}</div>
           <MobileNav />
+          <CommandPalette open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
         </section>
       </div>
     </main>

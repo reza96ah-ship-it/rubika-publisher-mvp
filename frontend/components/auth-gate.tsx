@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "./loading-skeleton";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -39,8 +40,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   if (!ready) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-app-background text-app-text">
-        <div className="rounded-2xl border border-app-border bg-app-surface px-6 py-4 text-sm text-app-muted shadow-sm">
-          در حال بررسی نشست کاربری...
+        <div className="w-full max-w-xs rounded-md border border-app-border bg-white p-4 shadow-sm" aria-label="در حال بررسی نشست کاربری">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="mt-3 h-2.5 w-full" />
         </div>
       </main>
     );

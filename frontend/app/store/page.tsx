@@ -15,6 +15,8 @@ import {
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
+import { LoadingPanel } from "../../components/loading-skeleton";
+import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { Field, Input, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
@@ -123,6 +125,7 @@ function ReadinessRow({ item }: { item: ReadinessItem }) {
 }
 
 export default function StorePage() {
+  const { showToast } = useToast();
   const [form, setForm] = useState<StoreForm>(emptyStore);
   const [savedForm, setSavedForm] = useState<StoreForm>(emptyStore);
   const [loading, setLoading] = useState(true);
@@ -193,8 +196,11 @@ export default function StorePage() {
       setForm(nextForm);
       setSavedForm(nextForm);
       setMessage("پروفایل فروشگاه ذخیره شد");
+      showToast({ title: "پروفایل فروشگاه ذخیره شد", description: "متن‌های پایه از این لحظه در composer قابل استفاده‌اند.", tone: "success" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطای ذخیره اطلاعات");
+      const nextError = err instanceof Error ? err.message : "خطای ذخیره اطلاعات";
+      setError(nextError);
+      showToast({ title: "ذخیره پروفایل ناموفق بود", description: nextError, tone: "alert" });
     } finally {
       setSaving(false);
     }
@@ -223,7 +229,7 @@ export default function StorePage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <StatusToken tone={requiredReady ? "success" : "warning"}>{requiredReady ? "حداقل آماده" : "نیازمند تکمیل"}</StatusToken>
-                <StatusToken tone={dirty ? "warning" : "success"}>{dirty ? "تغییرات ذخیره نشده" : "ذخیره شده"}</StatusToken>
+                <StatusToken tone={saving || dirty ? "warning" : "success"}>{saving ? "در حال ذخیره" : dirty ? "تغییرات ذخیره نشده" : "ذخیره شده"}</StatusToken>
               </div>
             </div>
           </section>
@@ -255,7 +261,7 @@ export default function StorePage() {
 
           {loading ? (
             <WorkspacePanel title="پروفایل فروشگاه">
-              <p className="text-sm text-app-muted">در حال دریافت اطلاعات...</p>
+              <LoadingPanel />
             </WorkspacePanel>
           ) : (
             <form onSubmit={saveStore}>

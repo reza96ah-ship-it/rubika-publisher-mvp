@@ -11,6 +11,7 @@ import { RubikaPostPreview } from "../../components/rubika-post-preview";
 import { MediaGalleryPicker } from "../../components/media-gallery-picker";
 import { ComposerSchedulePanel } from "../../components/composer-schedule-panel";
 import { StatusBadge } from "../../components/status-badge";
+import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { Field, Input, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
@@ -55,6 +56,7 @@ const emptyForm = {
 };
 
 function ComposePageContent() {
+  const { showToast } = useToast();
   const searchParams = useSearchParams();
   const editingPostId = searchParams.get("postId");
   const presetScheduledAt = searchParams.get("scheduledAt");
@@ -374,14 +376,17 @@ function ComposePageContent() {
   async function persistPost(action: SaveAction) {
     if (!canSaveDraft) {
       setError("برای ذخیره پست، عنوان داخلی را وارد کنید.");
+      showToast({ title: "عنوان داخلی لازم است", description: "قبل از ذخیره، یک عنوان برای مدیریت محتوا وارد کنید.", tone: "warning" });
       return;
     }
     if (action === "ready" && !canMarkReady) {
       setError("برای آماده‌سازی، کپشن یا تصویر پست را کامل کنید.");
+      showToast({ title: "محتوای پست کامل نیست", description: "برای آماده‌سازی، کپشن یا تصویر اضافه کنید.", tone: "warning" });
       return;
     }
     if (action === "schedule" && !canSchedule) {
       setError(rubikaReady ? "برای زمان‌بندی، زمان انتشار را انتخاب کنید." : "برای زمان‌بندی، ابتدا اتصال روبیکا را تست کنید.");
+      showToast({ title: "زمان‌بندی هنوز آماده نیست", description: rubikaReady ? "یک زمان انتشار انتخاب کنید." : "ابتدا اتصال روبیکا را تست کنید.", tone: "warning" });
       return;
     }
 
@@ -426,9 +431,12 @@ function ComposePageContent() {
             : "پست به عنوان پیش‌نویس ذخیره شد";
 
       setMessage(successMessage);
+      showToast({ title: successMessage, description: action === "schedule" ? "پست در صف انتشار قرار گرفت." : "نسخه جدید در فضای کاری ثبت شد.", tone: "success" });
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطای ذخیره پست");
+      const nextError = err instanceof Error ? err.message : "خطای ذخیره پست";
+      setError(nextError);
+      showToast({ title: "ذخیره پست ناموفق بود", description: nextError, tone: "alert" });
     } finally {
       setSavingAction(null);
     }

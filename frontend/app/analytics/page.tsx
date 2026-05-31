@@ -4,6 +4,7 @@ import { AlertTriangle, CalendarClock, CheckCircle2, FileImage, LineChart, Messa
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
+import { LoadingPanel } from "../../components/loading-skeleton";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel, WorkspaceToolbar } from "../../components/workspace-ui";
@@ -278,7 +279,7 @@ export default function AnalyticsPage() {
                 description="مقایسه تلاش‌های موفق، ناموفق و در حال اجرا در بازه انتخاب‌شده."
                 action={<StatusToken tone="neutral">{trend.length} نقطه زمانی</StatusToken>}
               >
-                {loading ? <p className="text-sm text-app-muted">در حال دریافت تحلیل...</p> : null}
+                {loading ? <LoadingPanel /> : null}
                 {!loading && trend.length === 0 ? (
                   <EmptyState
                     icon={<LineChart className="h-5 w-5" aria-hidden="true" />}

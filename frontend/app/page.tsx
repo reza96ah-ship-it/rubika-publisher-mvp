@@ -5,6 +5,7 @@ import { AlertTriangle, CalendarClock, CheckCircle2, ClipboardList, FileText, Ro
 import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
 import { CountdownBadge } from "../components/countdown-badge";
+import { Skeleton } from "../components/loading-skeleton";
 import { ReadinessJourney } from "../components/readiness-journey";
 import { StatusBadge } from "../components/status-badge";
 import { Button } from "../components/ui/button";
@@ -112,7 +113,7 @@ export default function HomePage() {
           </section>
 
           {error ? <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{error}</div> : null}
-          {loading ? <p className="text-sm text-app-muted">در حال دریافت داشبورد...</p> : null}
+          {loading ? <Skeleton className="h-4 w-44" /> : null}
 
           <ReadinessJourney store={store} rubika={rubika} posts={posts} loading={loading} />
 
