@@ -10,7 +10,7 @@ type SectionCardProps = {
 
 export function SectionCard({ title, description, action, children, className = "" }: SectionCardProps) {
   return (
-    <section className={`rounded-lg bg-app-surface p-4 shadow-hairline ${className}`}>
+    <section className={`app-studio-panel rounded-lg p-4 ${className}`}>
       {title || description || action ? (
         <div className="mb-4 flex flex-col justify-between gap-3 border-b border-app-border pb-3 lg:flex-row lg:items-start">
           <div>
@@ -26,5 +26,5 @@ export function SectionCard({ title, description, action, children, className = 
 }
 
 export function SurfaceCard({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-lg bg-white p-4 shadow-hairline ${className}`}>{children}</div>;
+  return <div className={`app-studio-surface rounded-lg p-4 ${className}`}>{children}</div>;
 }

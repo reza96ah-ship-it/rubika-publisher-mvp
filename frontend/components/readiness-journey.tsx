@@ -38,7 +38,7 @@ export function ReadinessJourney({ store, rubika, posts, loading = false }: Read
 
   return (
     <section className="space-y-4">
-      <div className="overflow-hidden rounded-lg bg-white shadow-hairline">
+      <div className="app-studio-panel overflow-hidden rounded-lg">
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px_240px]">
           <div className="border-b border-app-border px-4 py-4 lg:border-b-0 lg:border-l">
             <div className="flex flex-wrap items-center gap-2">
@@ -56,7 +56,7 @@ export function ReadinessJourney({ store, rubika, posts, loading = false }: Read
             </p>
           </div>
 
-          <div className="border-b border-app-border bg-blue-50/70 p-4 lg:border-b-0 lg:border-l">
+          <div className="app-studio-grid border-b border-app-border bg-teal-50/70 p-4 lg:border-b-0 lg:border-l">
             <div className="flex items-center justify-between text-xs font-black text-app-muted">
               <span>آمادگی انتشار</span>
               <span>{progress}%</span>

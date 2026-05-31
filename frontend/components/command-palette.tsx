@@ -68,7 +68,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-start justify-center bg-slate-900/20 px-4 pt-[12vh] backdrop-blur-sm" role="presentation" onMouseDown={onClose}>
-      <section className="app-popover w-full max-w-2xl overflow-hidden rounded-md border border-app-border bg-white shadow-2xl shadow-slate-900/15" role="dialog" aria-modal="true" aria-label="جست‌وجو و دسترسی سریع" onMouseDown={(event) => event.stopPropagation()}>
+      <section className="app-popover app-studio-panel w-full max-w-2xl overflow-hidden rounded-lg shadow-2xl shadow-slate-900/15" role="dialog" aria-modal="true" aria-label="جست‌وجو و دسترسی سریع" onMouseDown={(event) => event.stopPropagation()}>
         <div className="flex items-center gap-3 border-b border-app-border px-4 py-3">
           <Search className="h-4 w-4 shrink-0 text-app-primary" aria-hidden="true" />
           <input

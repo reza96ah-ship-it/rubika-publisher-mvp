@@ -333,7 +333,7 @@ export default function MediaPage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage>
-          <section className="rounded-lg bg-white px-4 py-3 shadow-hairline">
+          <section className="app-studio-panel rounded-lg px-4 py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
                 <p className="text-[10px] font-black text-app-primary">کتابخانه دارایی‌ها</p>
@@ -354,7 +354,7 @@ export default function MediaPage() {
           {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
-          <section className="grid overflow-hidden rounded-lg bg-white shadow-hairline sm:grid-cols-2 xl:grid-cols-4">
+          <section className="app-studio-surface grid overflow-hidden rounded-lg sm:grid-cols-2 xl:grid-cols-4">
             {mediaSummary.map((item) => {
               const Icon = item.icon;
               const active = item.value === mediaFilter;

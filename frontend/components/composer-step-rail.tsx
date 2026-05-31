@@ -23,7 +23,7 @@ export function ComposerStepRail({ steps }: { steps: ComposerStep[] }) {
   const completed = steps.filter((step) => step.state === "done").length;
 
   return (
-    <section className="rounded-lg bg-white shadow-hairline">
+    <section className="app-studio-panel rounded-lg">
       <div className="flex items-center justify-between border-b border-app-border px-3 py-3">
         <p className="text-sm font-black text-app-text">مسیر تولید</p>
         <span className="rounded bg-slate-100 px-2 py-1 text-[11px] font-black text-slate-600">{completed}/{steps.length}</span>

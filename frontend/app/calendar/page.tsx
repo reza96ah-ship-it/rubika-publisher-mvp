@@ -503,7 +503,7 @@ export default function CalendarPage() {
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <section className="min-w-0 overflow-hidden rounded-lg bg-white shadow-hairline">
+            <section className="app-studio-panel min-w-0 overflow-hidden rounded-lg">
               <div className="border-b border-app-border px-3 py-3">
                 <div className="flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
                   <div className="flex flex-wrap items-center gap-2">

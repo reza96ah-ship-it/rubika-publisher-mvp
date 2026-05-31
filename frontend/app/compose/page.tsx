@@ -538,7 +538,7 @@ function ComposePageContent() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-4">
-          <section className="rounded-lg bg-white px-4 py-3 shadow-hairline">
+          <section className="app-studio-panel rounded-lg px-4 py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
                 <p className="text-[10px] font-black text-app-primary">استودیوی انتشار</p>

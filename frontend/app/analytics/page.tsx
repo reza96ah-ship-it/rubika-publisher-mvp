@@ -304,7 +304,7 @@ export default function AnalyticsPage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage>
-          <section className="rounded-lg bg-white px-4 py-3 shadow-hairline">
+          <section className="app-studio-panel rounded-lg px-4 py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
                 <p className="text-[10px] font-black text-app-primary">تحلیل عملیاتی</p>
@@ -349,7 +349,7 @@ export default function AnalyticsPage() {
 
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
-          <section className="grid overflow-hidden rounded-lg bg-white shadow-hairline sm:grid-cols-2 xl:grid-cols-4">
+          <section className="app-studio-surface grid overflow-hidden rounded-lg sm:grid-cols-2 xl:grid-cols-4">
             {dashboardMetrics.map((metric) => {
               const Icon = metric.icon;
               const deltaIsGood = metric.delta === 0 ? null : metric.positiveIsGood === false ? metric.delta < 0 : metric.delta > 0;
@@ -412,7 +412,7 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="overflow-x-auto pb-2">
                   <div
-                    className="grid h-56 items-end gap-2 border-b border-app-border px-1 pt-3"
+                    className="grid h-56 items-end gap-2 border-b border-app-border px-8 pt-3"
                     style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(28px, 1fr))`, minWidth: trendMinWidth }}
                   >
                     {trend.map((item, index) => (
@@ -422,7 +422,7 @@ export default function AnalyticsPage() {
                         onClick={() => setSelectedTrendKey((current) => current === item.key ? "" : item.key)}
                         data-trend-inspector
                         data-trend-bar
-                        className={`flex h-full min-w-0 flex-col justify-end rounded-t text-center transition hover:bg-blue-50/70 ${selectedTrend?.key === item.key ? "bg-blue-50 ring-1 ring-inset ring-blue-100" : ""}`}
+                        className={`flex h-full min-w-0 flex-col justify-end overflow-visible rounded-t text-center transition hover:bg-blue-50/70 ${selectedTrend?.key === item.key ? "bg-blue-50 ring-1 ring-inset ring-blue-100" : ""}`}
                         title={`${dayLongLabel(item.key)}: ${item.total} تلاش`}
                       >
                         <p className="mb-2 text-[10px] font-black text-app-muted">{item.total || ""}</p>
@@ -437,7 +437,7 @@ export default function AnalyticsPage() {
                             <span className="bg-sky-500" style={{ height: `${percent(item.started, Math.max(1, item.total))}%` }} />
                           </div>
                         </div>
-                        <p className={`mt-2 min-h-4 whitespace-nowrap text-[10px] font-bold ${showTrendTick(index) ? "text-app-muted" : "text-transparent"}`}>
+                        <p className={`mt-2 min-h-4 w-16 self-center whitespace-nowrap text-center text-[10px] font-bold ${showTrendTick(index) ? "text-app-muted" : "text-transparent"}`}>
                           {showTrendTick(index) ? dayLabel(item.key) : "—"}
                         </p>
                       </button>

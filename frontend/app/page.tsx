@@ -132,7 +132,7 @@ export default function HomePage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-4">
-          <section className="overflow-hidden rounded-lg bg-white shadow-hairline">
+          <section className="app-studio-panel overflow-hidden rounded-lg">
             <div className="grid lg:grid-cols-[minmax(0,1fr)_330px]">
               <div className="px-4 py-4 lg:px-5">
                 <div className="flex flex-wrap items-center gap-2">
@@ -158,7 +158,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="border-t border-app-border bg-blue-50/55 p-4 lg:border-r lg:border-t-0">
+              <div className="app-studio-grid border-t border-app-border bg-teal-50/55 p-4 lg:border-r lg:border-t-0">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-black text-app-muted">اولویت امروز</p>
@@ -180,7 +180,7 @@ export default function HomePage() {
           {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
           {loading ? <Skeleton className="h-4 w-44" /> : null}
 
-          <section className="grid overflow-hidden rounded-lg bg-white shadow-hairline sm:grid-cols-2 xl:grid-cols-4">
+          <section className="app-studio-surface grid overflow-hidden rounded-lg sm:grid-cols-2 xl:grid-cols-4">
             {[
               { label: "داخل صف", value: queueTotal, detail: "تمام وضعیت‌های عملیاتی", icon: ListChecks, tone: "text-app-primary" },
               { label: "زمان‌بندی‌شده", value: queueCounts.scheduled, detail: "انتشارهای آینده", icon: CalendarClock, tone: "text-amber-700" },

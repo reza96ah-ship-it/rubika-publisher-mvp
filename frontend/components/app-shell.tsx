@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, BellRing, ChevronDown, ChevronLeft, LogOut, PlugZap, Search, Settings2, UserRound } from "lucide-react";
+import { AlertCircle, BellRing, ChevronDown, ChevronLeft, LogOut, PlugZap, Search, Settings2, Sparkles, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -28,6 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const activeNav = getActiveNav(pathname);
+  const ActiveNavIcon = activeNav.item.icon;
   const [overview, setOverview] = useState<WorkspaceOverview>({ store: null, rubika: null });
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -137,16 +138,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <main className="min-h-screen bg-app-background text-app-text">
+    <main className="app-workspace-bg min-h-screen text-app-text">
       <div className="flex min-h-screen">
         <Sidebar storeName={overview.store?.name || "پروفایل فروشگاه"} ready={shellReady} />
         <section className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-app-border/80 bg-white/90 shadow-[0_4px_18px_rgba(30,41,59,0.035)] backdrop-blur-xl">
-            <div className="flex min-h-16 items-center justify-between gap-3 px-4 py-2 lg:px-6">
+          <header className="sticky top-0 z-20 border-b border-app-border/90 bg-[#F9FCFC]/92 shadow-[0_8px_24px_rgba(38,75,88,0.055)] backdrop-blur-xl">
+            <div className="flex min-h-[68px] items-center justify-between gap-3 px-4 py-2 lg:px-6">
               <div className="flex min-w-0 items-center gap-3">
-                <Link href="/" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-primary text-[10px] font-black text-white lg:hidden">
+                <Link href="/" className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-app-primary text-[10px] font-black text-white shadow-accent lg:hidden">
                   RP
+                  <span className="absolute -bottom-1 -left-1 h-3 w-3 rounded-sm border-2 border-white bg-app-teal" />
                 </Link>
+                <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-app-teal shadow-hairline lg:flex">
+                  <ActiveNavIcon className="h-4 w-4" aria-hidden="true" />
+                </span>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1 text-[10px] font-bold text-app-muted">
                     <span>{activeNav.group.title}</span>
@@ -161,7 +166,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
-                  className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md bg-app-surfaceMuted px-3 text-xs text-app-muted shadow-hairline hover:bg-blue-50 hover:text-app-primary md:flex md:w-56 xl:w-72"
+                  className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md bg-white px-3 text-xs text-app-muted shadow-hairline hover:bg-blue-50 hover:text-app-primary md:flex md:w-56 xl:w-72"
                   aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -172,7 +177,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
-                  className="app-interactive flex h-9 w-9 items-center justify-center rounded-md bg-app-surfaceMuted text-app-muted shadow-hairline hover:bg-blue-50 hover:text-app-primary md:hidden"
+                  className="app-interactive flex h-9 w-9 items-center justify-center rounded-md bg-white text-app-muted shadow-hairline hover:bg-blue-50 hover:text-app-primary md:hidden"
                   aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
@@ -182,7 +187,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   href="/rubika"
                   className={`app-interactive hidden h-9 items-center gap-2 rounded-md px-2.5 text-xs font-bold shadow-hairline sm:flex ${
                     rubikaReady
-                      ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                      ? "bg-teal-50 text-teal-700 hover:bg-teal-100"
                       : "bg-amber-50 text-amber-700 hover:bg-amber-100"
                   }`}
                 >
@@ -203,7 +208,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
                 <Link
                   href="/inbox"
-                  className="app-interactive relative flex h-9 w-9 items-center justify-center rounded-md bg-white text-slate-500 shadow-hairline hover:bg-blue-50 hover:text-app-primary"
+                  className="app-interactive relative flex h-9 w-9 items-center justify-center rounded-md bg-white text-slate-500 shadow-hairline hover:bg-app-coralSoft hover:text-app-coral"
                   aria-label={notificationCount ? `${notificationCount} اعلان عملیاتی خوانده‌نشده` : "صندوق عملیات انتشار"}
                 >
                   <BellRing className="h-4 w-4" aria-hidden="true" />
@@ -223,7 +228,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     aria-label="منوی حساب کاربری"
                     aria-expanded={accountMenuOpen}
                   >
-                    <span className="flex h-6 w-6 items-center justify-center rounded bg-slate-100 text-slate-500">
+                    <span className="flex h-6 w-6 items-center justify-center rounded bg-app-tealSoft text-app-teal">
                       <UserRound className="h-3.5 w-3.5" aria-hidden="true" />
                     </span>
                     <span className="hidden xl:inline">مدیر فضای کاری</span>
@@ -231,9 +236,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </button>
 
                   {accountMenuOpen ? (
-                    <div className="app-popover absolute left-0 top-11 w-64 overflow-hidden rounded-md border border-app-border bg-white shadow-lg shadow-slate-200/70">
+                    <div className="app-popover app-studio-panel absolute left-0 top-11 w-64 overflow-hidden rounded-lg">
                       <div className="border-b border-app-border px-3 py-3">
-                        <p className="text-xs font-black text-app-text">مدیر فضای کاری</p>
+                        <p className="flex items-center gap-1.5 text-xs font-black text-app-text"><Sparkles className="h-3.5 w-3.5 text-app-teal" aria-hidden="true" />مدیر فضای کاری</p>
                         <p className="mt-1 truncate text-[11px] text-app-muted">{overview.store?.name || "Rubika Publisher"}</p>
                       </div>
                       <div className="p-1.5">
@@ -260,7 +265,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </header>
-          <div className="app-enter p-4 pb-24 lg:px-6 lg:py-5">{children}</div>
+          <div className="app-enter relative p-4 pb-24 lg:px-6 lg:py-5">{children}</div>
           <MobileNav />
           <CommandPalette open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
         </section>

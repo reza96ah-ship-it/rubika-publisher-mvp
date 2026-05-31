@@ -148,7 +148,7 @@ export default function InboxPage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage>
-          <section className="rounded-md border border-app-border bg-white px-4 py-3">
+          <section className="app-studio-panel rounded-lg px-4 py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
                 <p className="text-[10px] font-black text-app-primary">مرکز اعلان‌های عملیات</p>

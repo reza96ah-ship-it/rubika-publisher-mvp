@@ -35,10 +35,10 @@ export function PublishingWorkspaceHeader({
   onTabChange
 }: PublishingWorkspaceHeaderProps) {
   return (
-    <section className="overflow-hidden rounded-lg bg-white shadow-hairline">
+    <section className="app-studio-panel overflow-hidden rounded-lg">
       <div className="flex flex-col justify-between gap-3 px-4 py-3 lg:flex-row lg:items-center">
         <div className="min-w-0">
-          <p className="text-[10px] font-black text-app-primary">فضای انتشار</p>
+          <p className="app-section-kicker text-[10px] font-black">فضای انتشار</p>
           <h1 className="mt-1 text-xl font-black text-app-text">{title}</h1>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-app-muted">{description}</p>
         </div>

@@ -115,9 +115,9 @@ const metricToneClasses: Record<NonNullable<MetricTileProps["tone"]>, string> = 
 };
 
 const tokenToneClasses: Record<StatusTokenTone, string> = {
-  neutral: "border-slate-200 bg-slate-50 text-slate-700",
+  neutral: "border-slate-200 bg-slate-50/90 text-slate-700",
   primary: "border-blue-200 bg-blue-50 text-app-primary",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  success: "border-teal-200 bg-teal-50 text-teal-700",
   warning: "border-amber-200 bg-amber-50 text-amber-700",
   alert: "border-rose-200 bg-rose-50 text-rose-700",
   info: "border-sky-200 bg-sky-50 text-sky-700",
@@ -137,10 +137,10 @@ export function WorkspacePage({ children, className = "" }: WorkspacePageProps) 
 
 export function WorkspaceHero({ eyebrow, title, description, actions, meta, aside }: WorkspaceHeroProps) {
   return (
-    <section className="overflow-hidden rounded-lg bg-white shadow-hairline">
+    <section className="app-studio-panel overflow-hidden rounded-lg">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 px-4 py-4 lg:px-5">
-          {eyebrow ? <p className="text-[11px] font-black uppercase text-app-primary">{eyebrow}</p> : null}
+          {eyebrow ? <p className="app-section-kicker text-[11px] font-black uppercase">{eyebrow}</p> : null}
           <div className="mt-2 flex flex-col justify-between gap-4 xl:flex-row xl:items-start">
             <div className="min-w-0">
               <h1 className="text-2xl font-black text-app-text">{title}</h1>
@@ -150,7 +150,7 @@ export function WorkspaceHero({ eyebrow, title, description, actions, meta, asid
           </div>
           {meta ? <div className="mt-4 flex flex-wrap gap-2">{meta}</div> : null}
         </div>
-        {aside ? <div className="border-t border-app-border bg-blue-50/55 p-4 lg:border-r lg:border-t-0">{aside}</div> : null}
+        {aside ? <div className="app-studio-grid border-t border-app-border bg-teal-50/55 p-4 lg:border-r lg:border-t-0">{aside}</div> : null}
       </div>
     </section>
   );
@@ -160,7 +160,7 @@ export function WorkspaceHeader({ eyebrow, title, description, action }: Workspa
   return (
     <header className="flex flex-col justify-between gap-4 border-b border-app-border pb-5 lg:flex-row lg:items-end">
       <div className="min-w-0">
-        {eyebrow ? <p className="text-[11px] font-black uppercase text-app-primary">{eyebrow}</p> : null}
+        {eyebrow ? <p className="app-section-kicker text-[11px] font-black uppercase">{eyebrow}</p> : null}
         <h1 className="mt-1 text-2xl font-black text-app-text">{title}</h1>
         {description ? <p className="mt-1.5 max-w-3xl text-sm leading-6 text-app-muted">{description}</p> : null}
       </div>
@@ -171,7 +171,7 @@ export function WorkspaceHeader({ eyebrow, title, description, action }: Workspa
 
 export function WorkspaceToolbar({ children, meta, className = "" }: WorkspaceToolbarProps) {
   return (
-    <div className={`app-row flex flex-col gap-3 rounded-lg bg-white px-3 py-2.5 shadow-hairline lg:flex-row lg:items-center lg:justify-between ${className}`}>
+    <div className={`app-row app-studio-surface flex flex-col gap-3 rounded-lg px-3 py-2.5 lg:flex-row lg:items-center lg:justify-between ${className}`}>
       <div className="min-w-0">{children}</div>
       {meta ? <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-app-muted">{meta}</div> : null}
     </div>
@@ -194,13 +194,13 @@ export function MetricTile({ label, value, hint, tone = "neutral", icon }: Metri
 }
 
 export function MetricStrip({ children }: { children: ReactNode }) {
-  return <div className="grid overflow-hidden rounded-lg bg-white shadow-hairline divide-y divide-app-border md:grid-cols-2 md:divide-x md:divide-x-reverse xl:grid-cols-4 xl:divide-y-0">{children}</div>;
+  return <div className="app-studio-surface grid overflow-hidden rounded-lg divide-y divide-app-border md:grid-cols-2 md:divide-x md:divide-x-reverse xl:grid-cols-4 xl:divide-y-0">{children}</div>;
 }
 
 export function WorkspacePanel({ title, description, action, children, className = "", bodyClassName = "p-4" }: WorkspacePanelProps) {
   return (
-    <section className={`rounded-lg bg-white shadow-hairline ${className}`}>
-      <div className="flex flex-col justify-between gap-3 border-b border-app-border px-4 py-3 lg:flex-row lg:items-center">
+    <section className={`app-studio-panel rounded-lg ${className}`}>
+      <div className="flex flex-col justify-between gap-3 border-b border-app-border bg-app-canvas/70 px-4 py-3 lg:flex-row lg:items-center">
         <div className="min-w-0">
           <h2 className="text-sm font-black text-app-text">{title}</h2>
           {description ? <p className="mt-1 text-xs leading-5 text-app-muted">{description}</p> : null}
@@ -214,8 +214,8 @@ export function WorkspacePanel({ title, description, action, children, className
 
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="app-enter flex flex-col items-center justify-center rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted px-4 py-8 text-center">
-      {icon ? <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-blue-100 bg-white text-app-primary">{icon}</div> : null}
+    <div className="app-enter app-studio-grid flex flex-col items-center justify-center rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted/80 px-4 py-8 text-center">
+      {icon ? <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-teal-100 bg-white text-app-teal shadow-soft">{icon}</div> : null}
       <p className="text-sm font-black text-app-text">{title}</p>
       {description ? <p className="mt-2 max-w-md text-sm leading-6 text-app-muted">{description}</p> : null}
       {action ? <div className="mt-4">{action}</div> : null}
@@ -236,7 +236,7 @@ export function DetailGrid({ items }: { items: DetailGridItem[] }) {
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       {items.map((item) => (
-        <div key={item.label} className="rounded-md bg-app-surfaceMuted p-3 shadow-hairline">
+        <div key={item.label} className="rounded-md bg-app-surfaceMuted/85 p-3 shadow-hairline">
           <p className="text-[11px] font-black text-app-muted">{item.label}</p>
           <div className="mt-1 text-sm font-black text-app-text">{item.value}</div>
           {item.hint ? <div className="mt-1 text-xs leading-5 text-app-muted">{item.hint}</div> : null}
@@ -248,8 +248,8 @@ export function DetailGrid({ items }: { items: DetailGridItem[] }) {
 
 export function InspectorPanel({ title, description, children, footer }: InspectorPanelProps) {
   return (
-    <aside className="rounded-lg bg-white shadow-lift ring-1 ring-app-border">
-      <div className="border-b border-app-border px-4 py-3">
+    <aside className="app-studio-panel rounded-lg shadow-lift">
+      <div className="border-b border-app-border bg-app-canvas/70 px-4 py-3">
         <h2 className="text-sm font-black text-app-text">{title}</h2>
         {description ? <p className="mt-1 text-xs leading-5 text-app-muted">{description}</p> : null}
       </div>
@@ -302,7 +302,7 @@ const railDotClasses: Record<StatusRailStep["state"], string> = {
 
 export function StatusRail({ steps }: { steps: StatusRailStep[] }) {
   return (
-    <ol className="grid overflow-hidden rounded-lg bg-white shadow-hairline md:grid-cols-2 xl:grid-cols-4">
+    <ol className="app-studio-surface grid overflow-hidden rounded-lg md:grid-cols-2 xl:grid-cols-4">
       {steps.map((step, index) => {
         const content = (
           <>
