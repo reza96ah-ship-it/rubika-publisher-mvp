@@ -113,10 +113,6 @@ a {
 @layer utilities {
   .app-workspace-bg {
     background-color: #eef4f6;
-    background-image:
-      radial-gradient(circle, rgba(96, 125, 139, 0.2) 0.75px, transparent 0.85px),
-      repeating-linear-gradient(90deg, transparent 0, transparent 119px, rgba(146, 171, 181, 0.09) 120px);
-    background-size: 22px 22px, 120px 100%;
   }
 
   .app-studio-surface {
@@ -130,10 +126,7 @@ a {
   }
 
   .app-studio-grid {
-    background-image:
-      linear-gradient(rgba(199, 213, 221, 0.42) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(199, 213, 221, 0.42) 1px, transparent 1px);
-    background-size: 24px 24px;
+    background-color: rgba(242, 249, 249, 0.88);
   }
 
   .app-section-kicker {
@@ -199,12 +192,7 @@ a {
 
   .dashboard-pulse {
     background-color: #f5fbfb;
-    background-image:
-      linear-gradient(rgba(176, 205, 207, 0.34) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(176, 205, 207, 0.34) 1px, transparent 1px),
-      radial-gradient(circle, rgba(15, 118, 110, 0.24) 1px, transparent 1.25px);
-    background-position: 0 0, 0 0, 12px 12px;
-    background-size: 24px 24px, 24px 24px, 24px 24px;
+    box-shadow: inset -3px 0 0 rgba(15, 118, 110, 0.08);
   }
 
   .dashboard-flow-track {
@@ -242,7 +230,6 @@ a {
 
   .dashboard-monitor-head {
     background-color: #f4faf9;
-    background-image: repeating-linear-gradient(90deg, transparent 0, transparent 23px, rgba(15, 118, 110, 0.1) 24px);
   }
 
   .dashboard-alert-rail {
