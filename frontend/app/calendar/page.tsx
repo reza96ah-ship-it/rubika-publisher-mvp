@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Clock3,
   Grid3X3,
+  ImageIcon,
   List,
   Maximize2,
   Minimize2,
@@ -26,7 +27,7 @@ import { PlannerComposerDrawer } from "../../components/planner-composer-drawer"
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
-import { DetailGrid, EmptyState, InspectorPanel, NoticeBanner, StatusToken, WorkspacePage } from "../../components/workspace-ui";
+import { DetailGrid, EmptyState, InspectorPanel, NoticeBanner, StatusToken, Timeline, WorkspacePage } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, type Post } from "../../lib/posts";
 import {
   formatJalaliDate,
@@ -46,6 +47,13 @@ type CalendarDay = {
   date: string;
   key: string;
   day: number;
+};
+
+type MediaAsset = {
+  id: number;
+  post_id: number | null;
+  original_filename: string;
+  content_type: string;
 };
 
 const calendarFilters: Array<{ label: string; value: CalendarFilter }> = [
@@ -157,10 +165,31 @@ function statusCount(posts: Post[], status: CalendarFilter) {
 }
 
 function postTone(status: string) {
-  if (status === "failed") return "border-rose-200 bg-rose-50 text-rose-700";
-  if (status === "published") return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  if (status === "publishing") return "border-sky-200 bg-sky-50 text-sky-700";
-  return "border-blue-200 bg-blue-50 text-blue-700";
+  if (status === "failed") return "bg-rose-50/90 text-rose-800";
+  if (status === "published") return "bg-emerald-50/90 text-emerald-800";
+  if (status === "publishing") return "bg-sky-50/90 text-sky-800";
+  return "bg-blue-50/90 text-blue-800";
+}
+
+function postRailTone(status: string) {
+  if (status === "failed") return "bg-rose-500";
+  if (status === "published") return "bg-emerald-500";
+  if (status === "publishing") return "bg-sky-500";
+  return "bg-blue-500";
+}
+
+function postStatusLabel(status: string) {
+  if (status === "failed") return "انتشار ناموفق";
+  if (status === "published") return "منتشرشده";
+  if (status === "publishing") return "در حال انتشار";
+  return "زمان‌بندی‌شده";
+}
+
+function postTimelineTone(status: string): "primary" | "success" | "warning" | "alert" {
+  if (status === "failed") return "alert";
+  if (status === "published") return "success";
+  if (status === "publishing") return "primary";
+  return "warning";
 }
 
 function dayRangeLabel(days: CalendarDay[]) {
@@ -175,6 +204,8 @@ function visibleCalendarText(post: Post) {
 export default function CalendarPage() {
   const { showToast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [statusFilter, setStatusFilter] = useState<CalendarFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [densityMode, setDensityMode] = useState<DensityMode>("comfortable");
@@ -190,7 +221,11 @@ export default function CalendarPage() {
   const [reschedulingPostId, setReschedulingPostId] = useState<number | null>(null);
 
   const loadPosts = useCallback(async (preservePlannerState = false) => {
-    const response = await fetch(`${apiUrl}/posts`, { headers: authHeaders() });
+    const headers = authHeaders();
+    const [response, mediaResponse] = await Promise.all([
+      fetch(`${apiUrl}/posts`, { headers }),
+      fetch(`${apiUrl}/media`, { headers })
+    ]);
     if (!response.ok) throw new Error("دریافت تقویم انتشار ناموفق بود");
     const data: Post[] = await response.json();
     const sorted = sortByScheduleAsc(data.filter(isCalendarPost));
@@ -199,6 +234,7 @@ export default function CalendarPage() {
       return time !== null && time >= Date.now() && ["scheduled", "publishing"].includes(post.status);
     });
     setPosts(data);
+    if (mediaResponse.ok) setAssets(await mediaResponse.json());
     if (!preservePlannerState) {
       setMonthAnchor(upcoming?.scheduled_at ?? sorted[0]?.scheduled_at ?? new Date().toISOString());
       setSelectedDayKey(upcoming?.scheduled_at ? jalaliDateKey(upcoming.scheduled_at) : sorted[0]?.scheduled_at ? jalaliDateKey(sorted[0].scheduled_at) : jalaliDateKey(new Date().toISOString()));
@@ -213,6 +249,40 @@ export default function CalendarPage() {
       setLoading(false);
     });
   }, [loadPosts]);
+
+  useEffect(() => {
+    const imageAssets = assets.filter((asset) => asset.post_id && asset.content_type.startsWith("image/"));
+    if (imageAssets.length === 0) {
+      setMediaPreviewUrls({});
+      return;
+    }
+
+    let cancelled = false;
+    const createdUrls: string[] = [];
+
+    async function loadPreviews() {
+      const entries = await Promise.all(
+        imageAssets.map(async (asset) => {
+          try {
+            const response = await fetch(`${apiUrl}/media/${asset.id}/file`, { headers: authHeaders() });
+            if (!response.ok) return null;
+            const url = URL.createObjectURL(await response.blob());
+            createdUrls.push(url);
+            return [asset.id, url] as const;
+          } catch {
+            return null;
+          }
+        })
+      );
+      if (!cancelled) setMediaPreviewUrls(Object.fromEntries(entries.filter(Boolean) as Array<[number, string]>));
+    }
+
+    loadPreviews();
+    return () => {
+      cancelled = true;
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [assets]);
 
   const calendarPosts = useMemo(() => sortByScheduleAsc(posts.filter(isCalendarPost)), [posts]);
   const filteredPosts = useMemo(() => {
@@ -239,6 +309,13 @@ export default function CalendarPage() {
     if (!selectedPostId) return null;
     return calendarPosts.find((post) => post.id === selectedPostId) ?? null;
   }, [calendarPosts, selectedPostId]);
+  const assetByPostId = useMemo(() => {
+    const map = new Map<number, MediaAsset>();
+    for (const asset of assets) {
+      if (asset.post_id && !map.has(asset.post_id)) map.set(asset.post_id, asset);
+    }
+    return map;
+  }, [assets]);
 
   const now = Date.now();
   const todayKey = jalaliDateKey(new Date().toISOString());
@@ -261,6 +338,8 @@ export default function CalendarPage() {
   const failedCount = calendarPosts.filter((post) => post.status === "failed").length;
   const visiblePostLimit = viewMode === "week" ? (densityMode === "compact" ? 4 : 6) : densityMode === "compact" ? 2 : 3;
   const calendarCellHeight = densityMode === "compact" ? "min-h-24" : "min-h-36";
+  const selectedPostAsset = selectedPost ? assetByPostId.get(selectedPost.id) : null;
+  const selectedPostPreviewUrl = selectedPostAsset ? mediaPreviewUrls[selectedPostAsset.id] : "";
 
   function selectPost(post: Post) {
     setSelectedPostId(post.id);
@@ -364,6 +443,8 @@ export default function CalendarPage() {
     const selected = selectedPost?.id === post.id;
     const draggable = post.status === "scheduled" && Boolean(post.scheduled_at);
     const rescheduling = reschedulingPostId === post.id;
+    const asset = assetByPostId.get(post.id);
+    const previewUrl = asset ? mediaPreviewUrls[asset.id] : "";
     return (
       <button
         key={post.id}
@@ -372,13 +453,27 @@ export default function CalendarPage() {
         draggable={draggable}
         onDragStart={(event) => startDraggingPost(event, post)}
         onDragEnd={stopDraggingPost}
-        className={`app-interactive w-full rounded-md border px-2 py-1.5 text-right text-[11px] leading-5 hover:border-app-primary ${postTone(post.status)} ${
+        className={`app-interactive relative w-full overflow-hidden rounded-md px-2 py-1.5 text-right text-[11px] leading-5 shadow-hairline hover:shadow-sm ${postTone(post.status)} ${
           selected ? "ring-2 ring-blue-200" : ""
         } ${draggable ? "cursor-grab active:cursor-grabbing" : "cursor-default"} ${rescheduling ? "animate-pulse opacity-70" : ""}`}
         title={draggable ? "برای تغییر روز انتشار، پست را روی روز جدید بکشید." : undefined}
       >
-        <span className="block font-bold">{formatJalaliTime(post.scheduled_at)} · {post.title}</span>
-        {!compact ? <span className="mt-0.5 block truncate opacity-75">{post.caption || "بدون کپشن"}</span> : null}
+        <span className={`absolute inset-y-0 right-0 w-1 ${postRailTone(post.status)}`} />
+        <span className="flex min-w-0 items-center gap-2 pr-1">
+          {!compact ? (
+            previewUrl ? (
+              <img src={previewUrl} alt="" className="h-8 w-8 shrink-0 rounded object-cover ring-1 ring-white/80" />
+            ) : (
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-white/60 text-current">
+                <ImageIcon className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+              </span>
+            )
+          ) : null}
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-bold">{formatJalaliTime(post.scheduled_at)} · {post.title}</span>
+            {!compact ? <span className="mt-0.5 block truncate opacity-75">{post.campaign || post.caption || "بدون کمپین"}</span> : null}
+          </span>
+        </span>
       </button>
     );
   }
@@ -408,7 +503,7 @@ export default function CalendarPage() {
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <section className="min-w-0 overflow-hidden rounded-md border border-app-border bg-white">
+            <section className="min-w-0 overflow-hidden rounded-lg bg-white shadow-hairline">
               <div className="border-b border-app-border px-3 py-3">
                 <div className="flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
                   <div className="flex flex-wrap items-center gap-2">
@@ -419,7 +514,7 @@ export default function CalendarPage() {
                     <StatusToken tone="info">پست زمان‌بندی‌شده را برای تغییر روز بکشید</StatusToken>
                     {reschedulingPostId ? <StatusToken tone="warning">در حال ذخیره جابجایی</StatusToken> : null}
                   </div>
-                  <div className="flex items-center gap-1 rounded-md border border-app-border bg-white p-1">
+                  <div className="flex items-center gap-1 rounded-md bg-app-surfaceMuted p-1 shadow-hairline">
                     <button type="button" onClick={() => movePlannerMonth(1)} className="rounded p-2 text-slate-600 transition hover:bg-slate-100" aria-label="ماه بعد">
                       <ChevronRight className="h-4 w-4" aria-hidden="true" />
                     </button>
@@ -438,7 +533,7 @@ export default function CalendarPage() {
                     onChange={(event) => setSearchTerm(event.target.value)}
                     placeholder="جست‌وجوی عنوان، کپشن، کمپین یا خطا"
                   />
-                  <div className="flex w-fit rounded-md border border-app-border bg-slate-50 p-1">
+                  <div className="flex w-fit rounded-md bg-app-surfaceMuted p-1 shadow-hairline">
                     {viewModes.map((mode) => {
                       const Icon = mode.icon;
                       const active = viewMode === mode.value;
@@ -457,7 +552,7 @@ export default function CalendarPage() {
                       );
                     })}
                   </div>
-                  <div className="flex w-fit rounded-md border border-app-border bg-slate-50 p-1" aria-label="تراکم تقویم">
+                  <div className="flex w-fit rounded-md bg-app-surfaceMuted p-1 shadow-hairline" aria-label="تراکم تقویم">
                     <button
                       type="button"
                       onClick={() => setDensityMode("compact")}
@@ -498,10 +593,25 @@ export default function CalendarPage() {
                       );
                     })}
                   </div>
-                  <Button type="button" onClick={() => openQuickCreate(selectedDayValue)} size="sm">
-                    <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                    پست جدید در {selectedDayLabel}
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="hidden items-center gap-2 text-[11px] font-bold text-app-muted 2xl:flex">
+                      {[
+                        { label: "زمان‌بندی", tone: "bg-blue-500" },
+                        { label: "در انتشار", tone: "bg-sky-500" },
+                        { label: "منتشر", tone: "bg-emerald-500" },
+                        { label: "ناموفق", tone: "bg-rose-500" }
+                      ].map((item) => (
+                        <span key={item.label} className="inline-flex items-center gap-1">
+                          <span className={`h-2 w-2 rounded-full ${item.tone}`} />
+                          {item.label}
+                        </span>
+                      ))}
+                    </div>
+                    <Button type="button" onClick={() => openQuickCreate(selectedDayValue)} size="sm">
+                      <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                      پست جدید در {selectedDayLabel}
+                    </Button>
+                  </div>
                 </div>
               </div>
 
@@ -580,15 +690,28 @@ export default function CalendarPage() {
                     <span>عملیات</span>
                   </div>
                   <div className="divide-y divide-app-border">
-                    {filteredPosts.map((post) => (
-                      <article key={post.id} className="grid gap-3 px-4 py-3 transition hover:bg-slate-50 lg:grid-cols-[150px_minmax(0,1fr)_140px_110px] lg:items-center">
+                    {filteredPosts.map((post) => {
+                      const asset = assetByPostId.get(post.id);
+                      const previewUrl = asset ? mediaPreviewUrls[asset.id] : "";
+                      return (
+                      <article key={post.id} className="relative grid gap-3 overflow-hidden px-4 py-3 transition hover:bg-slate-50 lg:grid-cols-[150px_minmax(0,1fr)_140px_110px] lg:items-center">
+                        <span className={`absolute inset-y-0 right-0 w-1 ${postRailTone(post.status)}`} />
                         <div className="text-xs leading-6 text-app-muted">
                           <p className="font-bold text-app-text">{formatJalaliDate(post.scheduled_at)}</p>
                           <p>{formatJalaliTime(post.scheduled_at)}</p>
                         </div>
-                        <div className="min-w-0">
-                          <p className="truncate font-bold text-app-text">{post.title}</p>
-                          <p className="mt-1 line-clamp-1 text-sm text-app-muted">{post.caption || "بدون کپشن"}</p>
+                        <div className="flex min-w-0 items-center gap-3">
+                          {previewUrl ? (
+                            <img src={previewUrl} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover ring-1 ring-app-border" />
+                          ) : (
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-400 shadow-hairline">
+                              <ImageIcon className="h-4 w-4" aria-hidden="true" />
+                            </span>
+                          )}
+                          <span className="min-w-0">
+                            <span className="block truncate font-bold text-app-text">{post.title}</span>
+                            <span className="mt-1 block truncate text-sm text-app-muted">{post.campaign || post.caption || "بدون کمپین"}</span>
+                          </span>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <StatusBadge status={post.status} />
@@ -598,7 +721,8 @@ export default function CalendarPage() {
                           جزئیات
                         </Button>
                       </article>
-                    ))}
+                    );
+                    })}
                   </div>
                 </div>
               ) : null}
@@ -637,15 +761,19 @@ export default function CalendarPage() {
                       key={post.id}
                       type="button"
                       onClick={() => selectPost(post)}
-                      className={`w-full rounded-md border p-3 text-right transition hover:border-blue-200 hover:bg-blue-50 ${
-                        selectedPost?.id === post.id ? "border-app-primary bg-blue-50 ring-2 ring-blue-100" : "border-app-border bg-white"
+                      className={`relative w-full overflow-hidden rounded-md p-3 text-right shadow-hairline transition hover:bg-blue-50 ${
+                        selectedPost?.id === post.id ? "bg-blue-50 ring-2 ring-blue-100" : "bg-white"
                       }`}
                     >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={post.status} />
-                        <span className="text-xs font-bold text-app-muted">{formatJalaliTime(post.scheduled_at)}</span>
+                      <span className={`absolute inset-y-0 right-0 w-1 ${postRailTone(post.status)}`} />
+                      <div className="pr-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <StatusBadge status={post.status} />
+                          <span className="text-xs font-bold text-app-muted">{formatJalaliTime(post.scheduled_at)}</span>
+                        </div>
+                        <p className="mt-2 truncate text-sm font-black text-app-text">{post.title}</p>
+                        {post.campaign ? <p className="mt-1 truncate text-[11px] font-bold text-app-primary">{post.campaign}</p> : null}
                       </div>
-                      <p className="mt-2 truncate text-sm font-black text-app-text">{post.title}</p>
                     </button>
                   ))}
                 </div>
@@ -654,6 +782,13 @@ export default function CalendarPage() {
                   {selectedPost ? (
                     <div className="space-y-4">
                       <div>
+                        {selectedPostPreviewUrl ? (
+                          <img
+                            src={selectedPostPreviewUrl}
+                            alt={selectedPostAsset?.original_filename ?? ""}
+                            className="mb-3 aspect-video w-full rounded-md object-cover shadow-hairline"
+                          />
+                        ) : null}
                         <div className="flex flex-wrap items-center gap-2">
                           <StatusBadge status={selectedPost.status} />
                           <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
@@ -672,6 +807,32 @@ export default function CalendarPage() {
                           { label: "شناسه", value: `#${selectedPost.id}` }
                         ]}
                       />
+
+                      <div>
+                        <p className="mb-3 text-xs font-black text-app-text">مسیر برنامه‌ریزی</p>
+                        <Timeline
+                          items={[
+                            {
+                              title: "ساخت پست",
+                              description: "رکورد محتوا در فضای کاری ایجاد شده است.",
+                              meta: formatJalaliDateTime(selectedPost.created_at),
+                              tone: "primary"
+                            },
+                            {
+                              title: "زمان برنامه‌ریزی",
+                              description: "زمان ثبت‌شده برای ورود به چرخه انتشار.",
+                              meta: formatJalaliDateTime(selectedPost.scheduled_at),
+                              tone: "warning"
+                            },
+                            {
+                              title: "وضعیت فعلی",
+                              description: selectedPost.last_error || postStatusLabel(selectedPost.status),
+                              meta: `آخرین تغییر: ${formatJalaliDateTime(selectedPost.updated_at)}`,
+                              tone: postTimelineTone(selectedPost.status)
+                            }
+                          ]}
+                        />
+                      </div>
 
                       {selectedPost.last_error ? <NoticeBanner tone="alert">{selectedPost.last_error}</NoticeBanner> : null}
 
