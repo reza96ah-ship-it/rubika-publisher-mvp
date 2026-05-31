@@ -1,12 +1,13 @@
 "use client";
 
-import { AlertTriangle, CalendarClock, CheckCircle2, FileImage, LineChart, MessageSquareText, Target } from "lucide-react";
+import { AlertTriangle, ArrowDownUp, ArrowUpLeft, CalendarClock, CheckCircle2, FileImage, LineChart, MessageSquareText, Search, Target, TrendingDown, TrendingUp } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { LoadingPanel } from "../../components/loading-skeleton";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
+import { DataRow, DataTable } from "../../components/data-view";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel, WorkspaceToolbar } from "../../components/workspace-ui";
 import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
 
@@ -24,13 +25,24 @@ type PublishAttempt = {
   created_at: string;
 };
 
-type TimeRange = "7d" | "30d" | "all";
+type TimeRange = "7d" | "30d" | "90d" | "all";
+type PostFilter = "all" | "failed" | "queued" | "published" | "draft";
+type PostSort = "activity" | "attempts" | "title";
 type ParsedPayload = Record<string, unknown> | null;
 
 const rangeOptions: Array<{ label: string; value: TimeRange }> = [
   { label: "۷ روز", value: "7d" },
   { label: "۳۰ روز", value: "30d" },
+  { label: "۹۰ روز", value: "90d" },
   { label: "همه داده‌ها", value: "all" }
+];
+
+const postFilterOptions: Array<{ label: string; value: PostFilter }> = [
+  { label: "همه", value: "all" },
+  { label: "نیازمند توجه", value: "failed" },
+  { label: "در جریان", value: "queued" },
+  { label: "منتشرشده", value: "published" },
+  { label: "پیش‌نویس", value: "draft" }
 ];
 
 const statusLabels: Record<string, string> = {
@@ -66,8 +78,13 @@ function toTime(value?: string | null) {
 
 function rangeStart(range: TimeRange) {
   if (range === "all") return null;
-  const days = range === "7d" ? 7 : 30;
+  const days = range === "7d" ? 7 : range === "30d" ? 30 : 90;
   return Date.now() - days * 24 * 60 * 60 * 1000;
+}
+
+function rangeDays(range: TimeRange) {
+  if (range === "all") return null;
+  return range === "7d" ? 7 : range === "30d" ? 30 : 90;
 }
 
 function isInRange(value: string | null | undefined, range: TimeRange) {
@@ -75,6 +92,15 @@ function isInRange(value: string | null | undefined, range: TimeRange) {
   if (start === null) return true;
   const time = toTime(value);
   return time !== null && time >= start;
+}
+
+function isInPreviousRange(value: string | null | undefined, range: TimeRange) {
+  const days = rangeDays(range);
+  const time = toTime(value);
+  if (!days || time === null) return false;
+  const duration = days * 24 * 60 * 60 * 1000;
+  const end = Date.now() - duration;
+  return time >= end - duration && time < end;
 }
 
 function postActivityDate(post: Post) {
@@ -97,10 +123,34 @@ function dayLabel(key: string) {
   return new Intl.DateTimeFormat("fa-IR", { month: "short", day: "numeric" }).format(new Date(`${key}T00:00:00Z`));
 }
 
+function dayLongLabel(key: string) {
+  if (key === "unknown") return "نامشخص";
+  return new Intl.DateTimeFormat("fa-IR", { weekday: "long", year: "numeric", month: "long", day: "numeric" }).format(new Date(`${key}T00:00:00Z`));
+}
+
+function deltaPercent(current: number, previous: number) {
+  if (!previous) return current ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
+function summarizeAttempts(source: PublishAttempt[]) {
+  const success = source.filter((attempt) => attempt.status === "success").length;
+  const failed = source.filter((attempt) => attempt.status === "failed").length;
+  const started = source.filter((attempt) => attempt.status === "started").length;
+  const media = source.filter((attempt) => attemptMode(attempt) === "media").length;
+  const text = source.length - media;
+  const completed = success + failed;
+  return { success, failed, started, media, text, completed, successRate: percent(success, completed) };
+}
+
 export default function AnalyticsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [attempts, setAttempts] = useState<PublishAttempt[]>([]);
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
+  const [selectedTrendKey, setSelectedTrendKey] = useState("");
+  const [postFilter, setPostFilter] = useState<PostFilter>("all");
+  const [postSort, setPostSort] = useState<PostSort>("activity");
+  const [postSearch, setPostSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -130,6 +180,8 @@ export default function AnalyticsPage() {
 
   const scopedPosts = useMemo(() => posts.filter((post) => isInRange(postActivityDate(post), timeRange)), [posts, timeRange]);
   const scopedAttempts = useMemo(() => attempts.filter((attempt) => isInRange(attempt.created_at, timeRange)), [attempts, timeRange]);
+  const previousPosts = useMemo(() => posts.filter((post) => isInPreviousRange(postActivityDate(post), timeRange)), [posts, timeRange]);
+  const previousAttempts = useMemo(() => attempts.filter((attempt) => isInPreviousRange(attempt.created_at, timeRange)), [attempts, timeRange]);
 
   const statusCounts = useMemo(() => {
     return scopedPosts.reduce<Record<string, number>>((acc, post) => {
@@ -138,23 +190,14 @@ export default function AnalyticsPage() {
     }, {});
   }, [scopedPosts]);
 
-  const attemptSummary = useMemo(() => {
-    const success = scopedAttempts.filter((attempt) => attempt.status === "success").length;
-    const failed = scopedAttempts.filter((attempt) => attempt.status === "failed").length;
-    const started = scopedAttempts.filter((attempt) => attempt.status === "started").length;
-    const media = scopedAttempts.filter((attempt) => attemptMode(attempt) === "media").length;
-    const text = scopedAttempts.length - media;
-    const completed = success + failed;
-    return {
-      success,
-      failed,
-      started,
-      media,
-      text,
-      completed,
-      successRate: percent(success, completed)
-    };
-  }, [scopedAttempts]);
+  const attemptSummary = useMemo(() => summarizeAttempts(scopedAttempts), [scopedAttempts]);
+  const previousAttemptSummary = useMemo(() => summarizeAttempts(previousAttempts), [previousAttempts]);
+  const previousStatusCounts = useMemo(() => {
+    return previousPosts.reduce<Record<string, number>>((acc, post) => {
+      acc[post.status] = (acc[post.status] ?? 0) + 1;
+      return acc;
+    }, {});
+  }, [previousPosts]);
 
   const trend = useMemo(() => {
     const start = rangeStart(timeRange);
@@ -162,7 +205,7 @@ export default function AnalyticsPage() {
     const keys = new Set<string>();
 
     if (start !== null) {
-      const days = timeRange === "7d" ? 7 : 30;
+      const days = rangeDays(timeRange) ?? 30;
       for (let index = days - 1; index >= 0; index -= 1) {
         keys.add(dayKey(new Date(Date.now() - index * 24 * 60 * 60 * 1000).toISOString()));
       }
@@ -180,11 +223,12 @@ export default function AnalyticsPage() {
   }, [scopedAttempts, timeRange]);
 
   const maxTrendTotal = Math.max(1, ...trend.map((item) => item.total));
-  const trendTickInterval = timeRange === "7d" ? 1 : timeRange === "30d" ? 5 : Math.max(1, Math.ceil(trend.length / 7));
-  const trendMinWidth = timeRange === "7d" ? "560px" : timeRange === "30d" ? "920px" : `${Math.max(560, trend.length * 56)}px`;
+  const trendTickInterval = timeRange === "7d" ? 1 : timeRange === "30d" ? 5 : timeRange === "90d" ? 15 : Math.max(1, Math.ceil(trend.length / 7));
+  const trendMinWidth = timeRange === "7d" ? "560px" : timeRange === "30d" ? "920px" : timeRange === "90d" ? "1320px" : `${Math.max(560, trend.length * 56)}px`;
   function showTrendTick(index: number) {
     return index === 0 || index === trend.length - 1 || index % trendTickInterval === 0;
   }
+  const selectedTrend = trend.find((item) => item.key === selectedTrendKey) ?? trend[trend.length - 1] ?? null;
   const failedPosts = scopedPosts.filter((post) => post.status === "failed" || post.last_error).slice(0, 5);
   const queuedPosts = scopedPosts.filter((post) => ["ready", "scheduled", "publishing"].includes(post.status)).slice(0, 5);
   const highAttemptPosts = useMemo(() => {
@@ -197,11 +241,35 @@ export default function AnalyticsPage() {
   const publishedCount = statusCounts.published ?? 0;
   const failedCount = (statusCounts.failed ?? 0) + attemptSummary.failed;
   const queuedCount = (statusCounts.ready ?? 0) + (statusCounts.scheduled ?? 0) + (statusCounts.publishing ?? 0);
+  const previousPublishedCount = previousStatusCounts.published ?? 0;
+  const previousFailedCount = (previousStatusCounts.failed ?? 0) + previousAttemptSummary.failed;
+  const previousQueuedCount = (previousStatusCounts.ready ?? 0) + (previousStatusCounts.scheduled ?? 0) + (previousStatusCounts.publishing ?? 0);
+  const successRateDelta = attemptSummary.successRate - previousAttemptSummary.successRate;
+  const hasComparison = timeRange !== "all";
+  const drilldownPosts = useMemo(() => {
+    const normalizedSearch = postSearch.trim().toLowerCase();
+    const queuedStatuses = ["ready", "scheduled", "publishing"];
+    return scopedPosts
+      .filter((post) => {
+        const matchesSearch = !normalizedSearch || `${post.title} ${post.caption} ${post.campaign} ${post.status}`.toLowerCase().includes(normalizedSearch);
+        const matchesFilter =
+          postFilter === "all" ||
+          (postFilter === "failed" && (post.status === "failed" || Boolean(post.last_error))) ||
+          (postFilter === "queued" && queuedStatuses.includes(post.status)) ||
+          post.status === postFilter;
+        return matchesSearch && matchesFilter;
+      })
+      .sort((first, second) => {
+        if (postSort === "attempts") return second.attempt_count - first.attempt_count;
+        if (postSort === "title") return first.title.localeCompare(second.title, "fa");
+        return (toTime(postActivityDate(second)) ?? 0) - (toTime(postActivityDate(first)) ?? 0);
+      });
+  }, [postFilter, postSearch, postSort, scopedPosts]);
   const dashboardMetrics = [
-    { label: "منتشرشده", value: publishedCount, detail: "خروجی موفق در بازه", icon: CheckCircle2, tone: "text-emerald-700" },
-    { label: "موفقیت ارسال", value: `${attemptSummary.successRate}%`, detail: `${attemptSummary.success} از ${attemptSummary.completed} تلاش کامل`, icon: Target, tone: attemptSummary.successRate >= 80 ? "text-emerald-700" : "text-amber-700" },
-    { label: "نیازمند توجه", value: failedCount, detail: "پست یا تلاش ناموفق", icon: AlertTriangle, tone: failedCount ? "text-rose-700" : "text-slate-500" },
-    { label: "در جریان", value: queuedCount, detail: "آماده، زمان‌بندی یا ارسال", icon: CalendarClock, tone: "text-app-primary" }
+    { label: "منتشرشده", value: publishedCount, detail: "خروجی موفق در بازه", icon: CheckCircle2, tone: "text-emerald-700", delta: deltaPercent(publishedCount, previousPublishedCount), positiveIsGood: true },
+    { label: "موفقیت ارسال", value: `${attemptSummary.successRate}%`, detail: `${attemptSummary.success} از ${attemptSummary.completed} تلاش کامل`, icon: Target, tone: attemptSummary.successRate >= 80 ? "text-emerald-700" : "text-amber-700", delta: successRateDelta, positiveIsGood: true },
+    { label: "نیازمند توجه", value: failedCount, detail: "پست یا تلاش ناموفق", icon: AlertTriangle, tone: failedCount ? "text-rose-700" : "text-slate-500", delta: deltaPercent(failedCount, previousFailedCount), positiveIsGood: false },
+    { label: "در جریان", value: queuedCount, detail: "آماده، زمان‌بندی یا ارسال", icon: CalendarClock, tone: "text-app-primary", delta: deltaPercent(queuedCount, previousQueuedCount), positiveIsGood: true }
   ];
 
   return (
@@ -228,6 +296,7 @@ export default function AnalyticsPage() {
               <>
                 <StatusToken tone="neutral">{scopedAttempts.length} تلاش در بازه</StatusToken>
                 <StatusToken tone="neutral">{scopedPosts.length} پست مرتبط</StatusToken>
+                {hasComparison ? <StatusToken tone="info">مقایسه با بازه قبلی فعال</StatusToken> : <StatusToken tone="neutral">بدون مقایسه تاریخی</StatusToken>}
               </>
             )}
           >
@@ -255,6 +324,7 @@ export default function AnalyticsPage() {
           <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-2 xl:grid-cols-4">
             {dashboardMetrics.map((metric) => {
               const Icon = metric.icon;
+              const deltaIsGood = metric.delta === 0 ? null : metric.positiveIsGood === false ? metric.delta < 0 : metric.delta > 0;
               return (
                 <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 sm:border-l sm:last:border-l-0 xl:border-b-0">
                   <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${metric.tone}`}>
@@ -266,6 +336,12 @@ export default function AnalyticsPage() {
                       <p className="truncate text-xs font-bold text-app-text">{metric.label}</p>
                     </div>
                     <p className="mt-1 truncate text-[11px] text-app-muted">{metric.detail}</p>
+                    {hasComparison && metric.delta !== null ? (
+                      <p className={`mt-2 inline-flex items-center gap-1 text-[11px] font-black ${deltaIsGood === true ? "text-emerald-700" : deltaIsGood === false ? "text-rose-700" : "text-slate-500"}`}>
+                        {metric.delta > 0 ? <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" /> : metric.delta < 0 ? <TrendingDown className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+                        {metric.delta > 0 ? "+" : ""}{metric.delta}% نسبت به بازه قبل
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               );
@@ -298,13 +374,19 @@ export default function AnalyticsPage() {
                     style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(28px, 1fr))`, minWidth: trendMinWidth }}
                   >
                     {trend.map((item, index) => (
-                      <div key={item.key} className="flex h-full min-w-0 flex-col justify-end text-center" title={`${dayLabel(item.key)}: ${item.total} تلاش`}>
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => setSelectedTrendKey(item.key)}
+                        className={`flex h-full min-w-0 flex-col justify-end rounded-t text-center transition hover:bg-blue-50/70 ${selectedTrend?.key === item.key ? "bg-blue-50 ring-1 ring-inset ring-blue-100" : ""}`}
+                        title={`${dayLongLabel(item.key)}: ${item.total} تلاش`}
+                      >
                         <p className="mb-2 text-[10px] font-black text-app-muted">{item.total || ""}</p>
                         <div className="flex h-40 items-end justify-center">
                           <div
-                            className="flex w-5 flex-col-reverse overflow-hidden rounded-t bg-slate-100"
+                            className={`flex w-5 flex-col-reverse overflow-hidden rounded-t bg-slate-100 transition ${selectedTrend?.key === item.key ? "ring-2 ring-app-primary ring-offset-2" : ""}`}
                             style={{ height: item.total ? `${Math.max(8, percent(item.total, maxTrendTotal))}%` : "0%" }}
-                            title={`${dayLabel(item.key)}: ${item.total} تلاش`}
+                            title={`${dayLongLabel(item.key)}: ${item.total} تلاش`}
                           >
                             <span className="bg-emerald-500" style={{ height: `${percent(item.success, Math.max(1, item.total))}%` }} />
                             <span className="bg-rose-500" style={{ height: `${percent(item.failed, Math.max(1, item.total))}%` }} />
@@ -314,10 +396,22 @@ export default function AnalyticsPage() {
                         <p className={`mt-2 min-h-4 whitespace-nowrap text-[10px] font-bold ${showTrendTick(index) ? "text-app-muted" : "text-transparent"}`}>
                           {showTrendTick(index) ? dayLabel(item.key) : "—"}
                         </p>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
+                {selectedTrend ? (
+                  <div className="mt-4 grid gap-3 rounded-md border border-app-border bg-slate-50 p-3 sm:grid-cols-[minmax(0,1fr)_repeat(4,auto)] sm:items-center">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-black text-app-primary">جزئیات روز انتخاب‌شده</p>
+                      <p className="mt-1 truncate text-sm font-black text-app-text">{dayLongLabel(selectedTrend.key)}</p>
+                    </div>
+                    <div><p className="text-[10px] font-bold text-app-muted">کل تلاش</p><p className="mt-1 text-sm font-black text-app-text">{selectedTrend.total}</p></div>
+                    <div><p className="text-[10px] font-bold text-app-muted">موفق</p><p className="mt-1 text-sm font-black text-emerald-700">{selectedTrend.success}</p></div>
+                    <div><p className="text-[10px] font-bold text-app-muted">ناموفق</p><p className="mt-1 text-sm font-black text-rose-700">{selectedTrend.failed}</p></div>
+                    <div><p className="text-[10px] font-bold text-app-muted">در حال اجرا</p><p className="mt-1 text-sm font-black text-sky-700">{selectedTrend.started}</p></div>
+                  </div>
+                ) : null}
               </WorkspacePanel>
 
               <WorkspacePanel
@@ -358,6 +452,69 @@ export default function AnalyticsPage() {
                     );
                   })}
                 </div>
+              </WorkspacePanel>
+
+              <WorkspacePanel
+                title="جزئیات عملکرد پست‌ها"
+                description="پست‌های بازه را جست‌وجو، مرتب و برای بررسی عملیاتی باز کنید."
+                action={<StatusToken tone="neutral">{drilldownPosts.length} نتیجه</StatusToken>}
+                bodyClassName="p-3"
+              >
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_170px]">
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 ring-app-primary focus-within:ring-2">
+                    <Search className="h-4 w-4 shrink-0 text-app-muted" aria-hidden="true" />
+                    <input
+                      value={postSearch}
+                      onChange={(event) => setPostSearch(event.target.value)}
+                      placeholder="جست‌وجوی عنوان، کمپین یا وضعیت"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                    />
+                  </label>
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
+                    <ArrowDownUp className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <select value={postSort} onChange={(event) => setPostSort(event.target.value as PostSort)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                      <option value="activity">آخرین فعالیت</option>
+                      <option value="attempts">بیشترین تلاش</option>
+                      <option value="title">عنوان پست</option>
+                    </select>
+                  </label>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {postFilterOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setPostFilter(option.value)}
+                      className={`rounded px-2.5 py-1.5 text-xs font-bold transition ${postFilter === option.value ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"}`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <DataTable
+                  columns={["پست", "وضعیت", "تلاش", "آخرین فعالیت", "اقدام"]}
+                  gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_80px_150px_100px]"
+                  empty={drilldownPosts.length === 0 ? <EmptyState title="پستی با این فیلتر پیدا نشد" description="عبارت جست‌وجو یا فیلتر وضعیت را تغییر دهید." /> : null}
+                >
+                  {drilldownPosts.map((post) => (
+                    <DataRow key={post.id} gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_80px_150px_100px]">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black text-app-text">{post.title}</p>
+                        <p className="mt-1 truncate text-xs text-app-muted">{post.campaign || "بدون کمپین"}</p>
+                      </div>
+                      <div><StatusBadge status={post.status} /></div>
+                      <div>
+                        <p className="text-xs font-black text-app-text">{post.attempt_count}</p>
+                        <p className="mt-1 text-[11px] text-app-muted">بار ارسال</p>
+                      </div>
+                      <p className="text-xs leading-5 text-app-muted">{formatDateTime(postActivityDate(post))}</p>
+                      <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm" className="w-full">
+                        <ArrowUpLeft className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                        باز کردن
+                      </Button>
+                    </DataRow>
+                  ))}
+                </DataTable>
               </WorkspacePanel>
             </div>
 
