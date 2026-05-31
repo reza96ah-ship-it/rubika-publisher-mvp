@@ -140,8 +140,15 @@ class MediaResponse(BaseModel):
     stored_filename: str
     content_type: str
     size_bytes: int
+    folder: str
+    tags: str
     url: str
 
 
 class AttachMediaRequest(BaseModel):
     post_id: int | None = None
+
+
+class MediaMetadataRequest(BaseModel):
+    folder: str = ""
+    tags: str = ""
