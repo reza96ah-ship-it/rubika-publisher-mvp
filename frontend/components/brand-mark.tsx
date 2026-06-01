@@ -24,14 +24,19 @@ export function ProductMark({ size = "md", className = "" }: { size?: keyof type
 export function WorkspaceAvatar({
   name,
   size = "md",
-  className = ""
+  className = "",
+  color
 }: {
   name: string;
   size?: keyof typeof sizeClasses;
   className?: string;
+  color?: string;
 }) {
   return (
-    <span className={`relative inline-flex shrink-0 items-center justify-center bg-app-tealSoft text-[10px] font-black text-app-teal shadow-hairline ${sizeClasses[size]} ${className}`}>
+    <span
+      className={`relative inline-flex shrink-0 items-center justify-center bg-app-tealSoft text-[10px] font-black text-app-teal shadow-hairline ${sizeClasses[size]} ${className}`}
+      style={color ? { backgroundColor: `${color}18`, color } : undefined}
+    >
       {initials(name)}
       <span className="absolute -bottom-0.5 -left-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
     </span>

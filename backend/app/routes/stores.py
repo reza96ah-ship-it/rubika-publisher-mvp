@@ -12,6 +12,13 @@ from app.store_scope import find_active_store
 router = APIRouter(prefix="/stores", tags=["stores"])
 
 
+def normalize_color(value: str, fallback: str) -> str:
+    value = value.strip()
+    if len(value) == 7 and value.startswith("#") and all(char in "0123456789abcdefABCDEF" for char in value[1:]):
+        return value.upper()
+    return fallback
+
+
 def make_response(store: Store) -> StoreResponse:
     return StoreResponse(
         id=store.id,
@@ -19,6 +26,11 @@ def make_response(store: Store) -> StoreResponse:
         category=store.category,
         phone=store.phone,
         description=store.description,
+        brand_primary_color=store.brand_primary_color,
+        brand_accent_color=store.brand_accent_color,
+        brand_voice=store.brand_voice,
+        default_cta=store.default_cta,
+        content_guidelines=store.content_guidelines,
         default_hashtags=store.default_hashtags,
         caption_footer=store.caption_footer,
         timezone=store.timezone,
@@ -45,6 +57,11 @@ def save_active_store(payload: StoreUpsertRequest, _current_user: User = Depends
     store.category = payload.category.strip()
     store.phone = payload.phone.strip()
     store.description = payload.description.strip()
+    store.brand_primary_color = normalize_color(payload.brand_primary_color, "#0F766E")
+    store.brand_accent_color = normalize_color(payload.brand_accent_color, "#2563EB")
+    store.brand_voice = payload.brand_voice.strip()
+    store.default_cta = payload.default_cta.strip()
+    store.content_guidelines = payload.content_guidelines.strip()
     store.default_hashtags = payload.default_hashtags.strip()
     store.caption_footer = payload.caption_footer.strip()
     store.timezone = payload.timezone.strip() or "Asia/Tehran"

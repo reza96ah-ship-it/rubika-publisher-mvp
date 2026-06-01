@@ -6,9 +6,11 @@ import {
   CalendarClock,
   Clock3,
   Hash,
-  MessageSquareText,
+  Megaphone,
+  Palette,
   Phone,
   Save,
+  Sparkles,
   Store as StoreIcon,
   Undo2
 } from "lucide-react";
@@ -30,6 +32,11 @@ const emptyStore = {
   category: "",
   phone: "",
   description: "",
+  brand_primary_color: "#0F766E",
+  brand_accent_color: "#2563EB",
+  brand_voice: "",
+  default_cta: "",
+  content_guidelines: "",
   default_hashtags: "",
   caption_footer: "",
   timezone: "Asia/Tehran"
@@ -48,12 +55,21 @@ function trim(value: string) {
   return value.trim();
 }
 
+function isHexColor(value: string) {
+  return /^#[0-9A-Fa-f]{6}$/.test(value);
+}
+
 function normalizeStore(data: Partial<StoreForm> = {}): StoreForm {
   return {
     name: data.name ?? "",
     category: data.category ?? "",
     phone: data.phone ?? "",
     description: data.description ?? "",
+    brand_primary_color: isHexColor(data.brand_primary_color ?? "") ? data.brand_primary_color ?? "#0F766E" : "#0F766E",
+    brand_accent_color: isHexColor(data.brand_accent_color ?? "") ? data.brand_accent_color ?? "#2563EB" : "#2563EB",
+    brand_voice: data.brand_voice ?? "",
+    default_cta: data.default_cta ?? "",
+    content_guidelines: data.content_guidelines ?? "",
     default_hashtags: data.default_hashtags ?? "",
     caption_footer: data.caption_footer ?? "",
     timezone: data.timezone ?? "Asia/Tehran"
@@ -85,6 +101,16 @@ function buildReadiness(form: StoreForm): ReadinessItem[] {
       done: Boolean(trim(form.default_hashtags))
     },
     {
+      label: "لحن برند",
+      detail: "راهنمای نوشتار کپشن و قالب‌های آینده composer.",
+      done: Boolean(trim(form.brand_voice))
+    },
+    {
+      label: "دعوت به اقدام",
+      detail: "CTA ثابت که در پیش‌نمایش و شروع سریع composer استفاده می‌شود.",
+      done: Boolean(trim(form.default_cta))
+    },
+    {
       label: "متن پایانی کپشن",
       detail: "CTA ثابت فروشگاه را به کپشن‌های آماده اضافه می‌کند.",
       done: Boolean(trim(form.caption_footer))
@@ -98,12 +124,13 @@ function readinessScore(items: ReadinessItem[]) {
 }
 
 function defaultCount(form: StoreForm) {
-  return [form.default_hashtags, form.caption_footer, form.description].filter((value) => Boolean(trim(value))).length;
+  return [form.default_hashtags, form.caption_footer, form.description, form.brand_voice, form.default_cta, form.content_guidelines].filter((value) => Boolean(trim(value))).length;
 }
 
 function previewCaption(form: StoreForm) {
   const pieces = [
     form.description || "توضیحات کوتاه فروشگاه اینجا نمایش داده می‌شود.",
+    form.default_cta,
     form.caption_footer,
     form.default_hashtags || "#فروشگاه #خرید_آنلاین"
   ].filter(Boolean);
@@ -240,7 +267,7 @@ export default function StorePage() {
           <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-3">
             {[
               { label: "آمادگی پروفایل", value: `${score}%`, detail: "نام و منطقه زمانی پایه‌های ضروری‌اند", icon: StoreIcon, tone: requiredReady ? "text-emerald-700" : "text-amber-700" },
-              { label: "تنظیمات متن", value: `${defaultCount(form)}/3`, detail: "توضیح، هشتگ و CTA", icon: MessageSquareText, tone: "text-app-primary" },
+              { label: "کیت برند", value: `${defaultCount(form)}/6`, detail: "لحن، CTA، رنگ، هشتگ و قوانین", icon: Palette, tone: "text-app-primary" },
               { label: "وضعیت ویرایش", value: dirty ? "ذخیره نشده" : "به‌روز", detail: dirty ? "نسخه جدید را ثبت کنید" : "آخرین تغییرات ثبت شده است", icon: Save, tone: dirty ? "text-amber-700" : "text-emerald-700" }
             ].map((metric) => {
               const Icon = metric.icon;
@@ -300,6 +327,76 @@ export default function StorePage() {
                     </div>
                   </WorkspacePanel>
 
+                  <WorkspacePanel
+                    title="کیت برند"
+                    description="لحن، رنگ و CTA پیش‌فرض برند را برای composer و پیش‌نمایش انتشار آماده کنید."
+                    action={<Tag tone={form.brand_voice || form.default_cta ? "success" : "warning"}>{form.brand_voice || form.default_cta ? "هویت محتوایی آماده" : "نیازمند تعریف"}</Tag>}
+                  >
+                    <div className="grid gap-5 lg:grid-cols-2">
+                      <Field label="رنگ اصلی برند" hint="در آواتار، پیش‌نمایش و وضعیت‌های برند استفاده می‌شود.">
+                        <div className="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] items-center gap-3">
+                          <Input
+                            type="color"
+                            value={isHexColor(form.brand_primary_color) ? form.brand_primary_color : "#0F766E"}
+                            onChange={(event) => updateField("brand_primary_color", event.target.value)}
+                            className="h-11 w-16 shrink-0 p-1"
+                            aria-label="رنگ اصلی برند"
+                          />
+                          <Input
+                            value={form.brand_primary_color}
+                            onChange={(event) => updateField("brand_primary_color", event.target.value)}
+                            className="text-left uppercase"
+                            dir="ltr"
+                          />
+                        </div>
+                      </Field>
+
+                      <Field label="رنگ مکمل برند" hint="برای تاکیدهای ثانویه، CTA و گزارش‌های آینده.">
+                        <div className="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] items-center gap-3">
+                          <Input
+                            type="color"
+                            value={isHexColor(form.brand_accent_color) ? form.brand_accent_color : "#2563EB"}
+                            onChange={(event) => updateField("brand_accent_color", event.target.value)}
+                            className="h-11 w-16 shrink-0 p-1"
+                            aria-label="رنگ مکمل برند"
+                          />
+                          <Input
+                            value={form.brand_accent_color}
+                            onChange={(event) => updateField("brand_accent_color", event.target.value)}
+                            className="text-left uppercase"
+                            dir="ltr"
+                          />
+                        </div>
+                      </Field>
+
+                      <Field label="لحن برند" hint="مثلاً صمیمی، مطمئن، اقتصادی، لوکس یا آموزشی.">
+                        <Textarea
+                          value={form.brand_voice}
+                          onChange={(event) => updateField("brand_voice", event.target.value)}
+                          placeholder="مثلاً صمیمی، کوتاه، قابل اعتماد و متمرکز بر خرید آسان"
+                        />
+                      </Field>
+
+                      <Field label="دعوت به اقدام پیش‌فرض" hint="CTA کوتاه که در شروع سریع composer و پیش‌نمایش استفاده می‌شود.">
+                        <Textarea
+                          value={form.default_cta}
+                          onChange={(event) => updateField("default_cta", event.target.value)}
+                          placeholder="برای سفارش همین حالا پیام بدهید."
+                        />
+                      </Field>
+
+                      <div className="lg:col-span-2">
+                        <Field label="قوانین محتوایی برند" hint="مواردی که کپشن‌ها باید رعایت کنند یا از آن دوری کنند.">
+                          <Textarea
+                            value={form.content_guidelines}
+                            onChange={(event) => updateField("content_guidelines", event.target.value)}
+                            placeholder="مثلاً قیمت را واضح بنویس، از اغراق زیاد پرهیز کن، همیشه روش سفارش را اضافه کن."
+                          />
+                        </Field>
+                      </div>
+                    </div>
+                  </WorkspacePanel>
+
                   <WorkspacePanel title="پیش‌فرض‌های انتشار" description="متن‌های تکرارشونده را یک‌بار تنظیم کنید تا composer شروع سریع‌تری داشته باشد.">
                     <div className="grid gap-5 lg:grid-cols-2">
                   <Field label="توضیحات کوتاه فروشگاه" hint="یک توضیح کوتاه که شخصیت برند و پیشنهاد اصلی را مشخص کند.">
@@ -350,7 +447,7 @@ export default function StorePage() {
               <WorkspacePanel title="پیش‌نمایش کپشن پایه" description="خروجی پایه‌ای که در کپشن‌ها تکرار می‌شود.">
                 <div className="rounded-md border border-app-border bg-slate-50 p-4">
                   <div className="mb-4 flex items-center gap-3 border-b border-app-border pb-3">
-                    <WorkspaceAvatar name={form.name || "نام فروشگاه"} />
+                    <WorkspaceAvatar name={form.name || "نام فروشگاه"} color={form.brand_primary_color} />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-black text-app-text">{form.name || "نام فروشگاه"}</p>
                       <p className="mt-1 flex items-center gap-1 text-xs text-app-muted">
@@ -362,6 +459,14 @@ export default function StorePage() {
                   <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">{previewCaption(form)}</p>
                 </div>
                 <div className="mt-4 grid gap-3 text-xs text-app-muted">
+                  <p className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                    {form.brand_voice || "لحن برند هنوز تعریف نشده"}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Megaphone className="h-4 w-4" aria-hidden="true" />
+                    {form.default_cta || "CTA پیش‌فرض هنوز خالی است"}
+                  </p>
                   <p className="flex items-center gap-2">
                     <Phone className="h-4 w-4" aria-hidden="true" />
                     {form.phone || "شماره تماس ثبت نشده"}

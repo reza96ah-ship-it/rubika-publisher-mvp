@@ -4,6 +4,7 @@ import { WorkspaceAvatar } from "./brand-mark";
 type ComposerStartPanelProps = {
   storeName: string;
   storeCategory?: string;
+  brandColor?: string;
   mediaPreviewUrls: string[];
   hasDefaults: boolean;
   onStartText: () => void;
@@ -37,7 +38,7 @@ const actions = [
   {
     key: "defaults",
     label: "استفاده از پیش‌فرض برند",
-    description: "هشتگ‌ها و تنظیمات پایه فروشگاه را وارد کنید.",
+    description: "کپشن، CTA و هشتگ‌های پایه برند را وارد کنید.",
     icon: Sparkles,
     tone: "border-amber-100 bg-amber-50/70 text-amber-700"
   }
@@ -46,6 +47,7 @@ const actions = [
 export function ComposerStartPanel({
   storeName,
   storeCategory,
+  brandColor,
   mediaPreviewUrls,
   hasDefaults,
   onStartText,
@@ -65,7 +67,7 @@ export function ComposerStartPanel({
       <div className="grid lg:grid-cols-[minmax(0,1fr)_240px]">
         <div className="p-4 lg:p-5">
           <div className="flex items-center gap-3">
-            <WorkspaceAvatar name={storeName} size="lg" />
+            <WorkspaceAvatar name={storeName} size="lg" color={brandColor} />
             <div>
               <p className="app-section-kicker text-[10px] font-black">شروع سریع استودیو</p>
               <h2 className="mt-1 text-lg font-black text-app-text">پست را از مسیر مناسب شروع کنید</h2>

@@ -65,6 +65,11 @@ def upgrade() -> None:
             sa.Column("category", sa.String(length=255), server_default="", nullable=False),
             sa.Column("phone", sa.String(length=64), server_default="", nullable=False),
             sa.Column("description", sa.Text(), server_default="", nullable=False),
+            sa.Column("brand_primary_color", sa.String(length=32), server_default="#0F766E", nullable=False),
+            sa.Column("brand_accent_color", sa.String(length=32), server_default="#2563EB", nullable=False),
+            sa.Column("brand_voice", sa.Text(), server_default="", nullable=False),
+            sa.Column("default_cta", sa.Text(), server_default="", nullable=False),
+            sa.Column("content_guidelines", sa.Text(), server_default="", nullable=False),
             sa.Column("default_hashtags", sa.Text(), server_default="", nullable=False),
             sa.Column("caption_footer", sa.Text(), server_default="", nullable=False),
             sa.Column("timezone", sa.String(length=64), server_default="Asia/Tehran", nullable=False),
@@ -73,6 +78,12 @@ def upgrade() -> None:
             sa.Column("updated_at", sa.DateTime(), nullable=False),
             sa.PrimaryKeyConstraint("id"),
         )
+    else:
+        add_column_if_missing("stores", sa.Column("brand_primary_color", sa.String(length=32), server_default="#0F766E", nullable=False))
+        add_column_if_missing("stores", sa.Column("brand_accent_color", sa.String(length=32), server_default="#2563EB", nullable=False))
+        add_column_if_missing("stores", sa.Column("brand_voice", sa.Text(), server_default="", nullable=False))
+        add_column_if_missing("stores", sa.Column("default_cta", sa.Text(), server_default="", nullable=False))
+        add_column_if_missing("stores", sa.Column("content_guidelines", sa.Text(), server_default="", nullable=False))
     create_index_if_missing("ix_stores_id", "stores", ["id"])
 
     if not table_exists("rubika_accounts"):

@@ -37,6 +37,11 @@ Current fields:
 - `description`
 - `default_hashtags`
 - `caption_footer`
+- `brand_primary_color`
+- `brand_accent_color`
+- `brand_voice`
+- `default_cta`
+- `content_guidelines`
 - `timezone`
 - `is_active`
 - `created_at`
@@ -45,7 +50,7 @@ Current fields:
 Target direction:
 
 - Keep store as workspace/business identity.
-- Move richer identity fields into `BrandKit` or extend store with a structured brand profile.
+- Keep the first Brand Kit slice on Store, then split into a dedicated `BrandKit` entity when logo/avatar assets, forbidden phrases, and versioned rules need their own lifecycle.
 - Support multiple stores/workspaces later.
 
 ### RubikaAccount

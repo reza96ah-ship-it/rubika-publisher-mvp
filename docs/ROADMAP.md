@@ -21,7 +21,7 @@ Acceptance criteria:
 - No next task is described only as "make UI more professional".
 - Data model direction is clear before migrations.
 
-Status: in progress.
+Status: completed.
 
 ## Phase 2: Brand Kit Pro
 
@@ -49,6 +49,13 @@ Acceptance criteria:
 Risk: medium.
 
 Priority: P0.
+
+Current implementation status:
+
+- Store brand color, accent color, tone of voice, default CTA, and content guidelines persist in the backend.
+- Store settings has a clean Brand Kit panel with color controls and brand copy fields.
+- Composer uses brand defaults for starter captions and preview identity.
+- Logo/avatar media references are still planned for the next Brand Kit slice.
 
 ## Phase 3: Campaign OS
 

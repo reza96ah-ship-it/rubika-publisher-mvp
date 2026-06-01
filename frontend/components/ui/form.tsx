@@ -10,7 +10,7 @@ type FieldProps = {
 
 export function Field({ label, hint, error, required, children }: FieldProps) {
   return (
-    <label className="block text-sm font-semibold text-app-text">
+    <label className="block min-w-0 text-sm font-semibold text-app-text">
       <span className="flex items-center gap-1">
         {label}
         {required ? <span className="text-rose-600">*</span> : null}

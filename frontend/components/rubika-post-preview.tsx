@@ -6,20 +6,22 @@ type RubikaPostPreviewProps = {
   caption: string;
   destination?: string;
   emptyText?: string;
+  brandColor?: string;
 };
 
 export function RubikaPostPreview({
   imageUrl,
   caption,
   destination = "کانال روبیکا",
-  emptyText = "متن نهایی پست اینجا نمایش داده می‌شود."
+  emptyText = "متن نهایی پست اینجا نمایش داده می‌شود.",
+  brandColor
 }: RubikaPostPreviewProps) {
   return (
     <div className="rounded-md bg-app-surfaceMuted p-2 shadow-hairline">
       <div className="overflow-hidden rounded-md bg-white shadow-hairline">
         <div className="flex items-center justify-between border-b border-app-border px-3 py-2.5">
           <div className="flex items-center gap-3">
-            <WorkspaceAvatar name={destination} />
+            <WorkspaceAvatar name={destination} color={brandColor} />
             <div>
               <p className="text-sm font-bold text-app-text">{destination}</p>
               <p className="text-xs text-app-muted">پیش‌نمایش انتشار</p>

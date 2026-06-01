@@ -24,6 +24,11 @@ class StoreUpsertRequest(BaseModel):
     category: str = ""
     phone: str = ""
     description: str = ""
+    brand_primary_color: str = "#0F766E"
+    brand_accent_color: str = "#2563EB"
+    brand_voice: str = ""
+    default_cta: str = ""
+    content_guidelines: str = ""
     default_hashtags: str = ""
     caption_footer: str = ""
     timezone: str = "Asia/Tehran"
@@ -35,6 +40,11 @@ class StoreResponse(BaseModel):
     category: str
     phone: str
     description: str
+    brand_primary_color: str
+    brand_accent_color: str
+    brand_voice: str
+    default_cta: str
+    content_guidelines: str
     default_hashtags: str
     caption_footer: str
     timezone: str

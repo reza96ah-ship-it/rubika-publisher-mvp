@@ -104,10 +104,11 @@ function ComposePageContent() {
   }, [mediaAssets, mediaPreviewUrls]);
 
   const finalPreview = useMemo(() => {
-    return [form.caption, form.caption ? store?.caption_footer : "", form.hashtags]
+    const hasVisiblePostContent = Boolean(form.caption.trim() || previewImageUrl);
+    return [form.caption, hasVisiblePostContent ? store?.default_cta : "", hasVisiblePostContent ? store?.caption_footer : "", form.hashtags]
       .filter(Boolean)
       .join("\n\n");
-  }, [form.caption, form.hashtags, store?.caption_footer]);
+  }, [form.caption, form.hashtags, previewImageUrl, store?.caption_footer, store?.default_cta]);
 
   const captionLength = form.caption.length;
   const hashtagCount = form.hashtags.split(/\s+/).filter((item) => item.startsWith("#")).length;
@@ -144,6 +145,11 @@ function ComposePageContent() {
       label: "زمان انتشار",
       detail: hasSchedule ? "پست می‌تواند وارد صف زمان‌بندی شود." : "بدون زمان انتشار، پست به عنوان پیش‌نویس یا آماده ذخیره می‌شود.",
       done: hasSchedule
+    },
+    {
+      label: "کیت برند",
+      detail: store?.brand_voice || store?.default_cta ? "لحن یا CTA برند برای خروجی آماده است." : "در تنظیمات فروشگاه، لحن و CTA برند را کامل کنید.",
+      done: Boolean(store?.brand_voice || store?.default_cta)
     }
   ];
   const readinessDoneCount = readinessItems.filter((item) => item.done).length;
@@ -347,8 +353,10 @@ function ComposePageContent() {
   }
 
   function applyDefaults() {
+    const defaultCaption = [store?.description, store?.default_cta].filter(Boolean).join("\n\n");
     setForm((current) => ({
       ...current,
+      caption: current.caption || defaultCaption,
       hashtags: store?.default_hashtags || current.hashtags,
       timezone: scheduleTimezone
     }));
@@ -588,8 +596,9 @@ function ComposePageContent() {
             <ComposerStartPanel
               storeName={store?.name || "فضای کاری روبیکا"}
               storeCategory={store?.category}
+              brandColor={store?.brand_primary_color}
               mediaPreviewUrls={readyMediaPreviewUrls}
-              hasDefaults={Boolean(store?.default_hashtags)}
+              hasDefaults={Boolean(store?.default_hashtags || store?.default_cta || store?.description)}
               onStartText={() => openComposerSection("composer-content")}
               onUploadImage={startWithUpload}
               onChooseMedia={() => openComposerSection("composer-media")}
@@ -768,7 +777,7 @@ function ComposePageContent() {
                           <p className="text-xs font-black text-app-text">خروجی مخاطب</p>
                           <StatusToken tone="neutral">Rubika</StatusToken>
                         </div>
-                        <RubikaPostPreview imageUrl={previewImageUrl} caption={finalPreview} destination={store?.name || "کانال روبیکا"} />
+                        <RubikaPostPreview imageUrl={previewImageUrl} caption={finalPreview} destination={store?.name || "کانال روبیکا"} brandColor={store?.brand_primary_color} />
                         <div className="mt-3 grid grid-cols-3 divide-x divide-x-reverse divide-app-border overflow-hidden rounded-md bg-app-surfaceMuted text-center shadow-hairline">
                           <div className="p-2"><p className="text-sm font-black text-app-text">{captionLength}</p><p className="mt-1 text-[10px] text-app-muted">کاراکتر</p></div>
                           <div className="p-2"><p className="text-sm font-black text-app-text">{hashtagCount}</p><p className="mt-1 text-[10px] text-app-muted">هشتگ</p></div>
