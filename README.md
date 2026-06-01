@@ -56,6 +56,19 @@ docker compose exec backend alembic current
 docker compose exec backend alembic upgrade head
 ```
 
+## Product architecture docs
+
+The original README still describes the MVP baseline. The professional rebuild plan now lives in:
+
+- [Product Architecture](docs/PRODUCT_ARCHITECTURE.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Domain Model](docs/DOMAIN_MODEL.md)
+- [UI/UX System](docs/UI_UX_SYSTEM.md)
+
+The Excel roadmap/RFP/backlog artifact is available at:
+
+- [Rubika Publisher Professional Webapp Roadmap RFP Backlog](outputs/pro_roadmap/Rubika_Publisher_Professional_Webapp_Roadmap_RFP_Backlog.xlsx)
+
 ## فاز فعلی
 
 Phase 3 — Composer-Centric Creation and Post Management
