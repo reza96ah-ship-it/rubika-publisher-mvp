@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, AlertTriangle, ArrowDownUp, ArrowUpLeft, CalendarClock, CheckCircle2, FileImage, LineChart, MessageSquareText, Search, Target, TrendingDown, TrendingUp, X } from "lucide-react";
+import { Activity, AlertTriangle, ArrowDownUp, ArrowUpLeft, CalendarClock, CheckCircle2, Clock3, FileImage, ImageIcon, Layers3, LineChart, MessageSquareText, Search, ShieldCheck, Sparkles, Target, TrendingDown, TrendingUp, X, Zap } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
@@ -23,6 +23,17 @@ type PublishAttempt = {
   started_at: string | null;
   finished_at: string | null;
   created_at: string;
+};
+
+type MediaAsset = {
+  id: number;
+  post_id: number | null;
+  original_filename: string;
+  content_type: string;
+  size_bytes: number;
+  folder: string;
+  tags: string;
+  url: string;
 };
 
 type TimeRange = "7d" | "30d" | "90d" | "all";
@@ -130,7 +141,7 @@ function dayKey(value: string) {
 
 function dayLabel(key: string) {
   if (key === "unknown") return "نامشخص";
-  return new Intl.DateTimeFormat("fa-IR", { month: "short", day: "numeric" }).format(new Date(`${key}T00:00:00Z`));
+  return new Intl.DateTimeFormat("fa-IR", { month: "numeric", day: "numeric" }).format(new Date(`${key}T00:00:00Z`));
 }
 
 function dayLongLabel(key: string) {
@@ -153,9 +164,43 @@ function summarizeAttempts(source: PublishAttempt[]) {
   return { success, failed, started, media, text, completed, successRate: percent(success, completed) };
 }
 
+function postHealthScore(post: Post, hasMedia: boolean) {
+  let score = 50;
+  if (post.status === "published") score += 32;
+  if (post.status === "scheduled" || post.status === "ready") score += 16;
+  if (post.status === "failed" || post.last_error) score -= 34;
+  if (hasMedia) score += 10;
+  if (post.caption.trim()) score += 5;
+  if (post.hashtags.trim()) score += 3;
+  score -= Math.min(18, Math.max(0, post.attempt_count - 1) * 6);
+  return Math.max(0, Math.min(100, score));
+}
+
+function hourLabel(hour: number | null) {
+  if (hour === null) return "نامشخص";
+  const date = new Date();
+  date.setHours(hour, 0, 0, 0);
+  return new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit" }).format(date);
+}
+
+function campaignTone(campaign: string) {
+  const tones = [
+    "bg-teal-500",
+    "bg-blue-500",
+    "bg-amber-500",
+    "bg-rose-500",
+    "bg-violet-500",
+    "bg-cyan-500"
+  ];
+  const seed = Array.from(campaign || "بدون کمپین").reduce((total, char) => total + char.charCodeAt(0), 0);
+  return tones[seed % tones.length];
+}
+
 export default function AnalyticsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [attempts, setAttempts] = useState<PublishAttempt[]>([]);
+  const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
+  const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [selectedTrendKey, setSelectedTrendKey] = useState("");
   const [postFilter, setPostFilter] = useState<PostFilter>("all");
@@ -168,9 +213,10 @@ export default function AnalyticsPage() {
     setLoading(true);
     setError("");
     const headers = authHeaders();
-    const [postsResponse, attemptsResponse] = await Promise.all([
+    const [postsResponse, attemptsResponse, mediaResponse] = await Promise.all([
       fetch(`${apiUrl}/posts`, { headers }),
-      fetch(`${apiUrl}/publish-attempts`, { headers })
+      fetch(`${apiUrl}/publish-attempts`, { headers }),
+      fetch(`${apiUrl}/media`, { headers })
     ]);
 
     if (!postsResponse.ok) throw new Error("دریافت پست‌ها برای تحلیل ناموفق بود");
@@ -178,6 +224,7 @@ export default function AnalyticsPage() {
 
     setPosts(await postsResponse.json());
     setAttempts(await attemptsResponse.json());
+    setMediaAssets(mediaResponse.ok ? await mediaResponse.json() : []);
     setLoading(false);
   }, []);
 
@@ -199,10 +246,63 @@ export default function AnalyticsPage() {
     return () => document.removeEventListener("pointerdown", clearSelectedTrend);
   }, [selectedTrendKey]);
 
+  useEffect(() => {
+    if (mediaAssets.length === 0) {
+      setMediaPreviewUrls({});
+      return;
+    }
+
+    let cancelled = false;
+    const createdUrls: string[] = [];
+
+    async function loadPreviews() {
+      const imageAssets = mediaAssets
+        .filter((asset) => asset.post_id && asset.content_type.startsWith("image/"))
+        .slice(0, 36);
+      const entries = await Promise.all(
+        imageAssets.map(async (asset) => {
+          try {
+            const response = await fetch(`${apiUrl}/media/${asset.id}/file`, {
+              headers: authHeaders()
+            });
+            if (!response.ok) return null;
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            createdUrls.push(url);
+            return [asset.id, url] as const;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setMediaPreviewUrls(Object.fromEntries(entries.filter(Boolean) as Array<[number, string]>));
+      } else {
+        createdUrls.forEach((url) => URL.revokeObjectURL(url));
+      }
+    }
+
+    loadPreviews();
+
+    return () => {
+      cancelled = true;
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [mediaAssets]);
+
   const scopedPosts = useMemo(() => posts.filter((post) => isInRange(postActivityDate(post), timeRange)), [posts, timeRange]);
   const scopedAttempts = useMemo(() => attempts.filter((attempt) => isInRange(attempt.created_at, timeRange)), [attempts, timeRange]);
   const previousPosts = useMemo(() => posts.filter((post) => isInPreviousRange(postActivityDate(post), timeRange)), [posts, timeRange]);
   const previousAttempts = useMemo(() => attempts.filter((attempt) => isInPreviousRange(attempt.created_at, timeRange)), [attempts, timeRange]);
+  const mediaByPostId = useMemo(() => {
+    const grouped = new Map<number, MediaAsset[]>();
+    mediaAssets.forEach((asset) => {
+      if (!asset.post_id) return;
+      grouped.set(asset.post_id, [...(grouped.get(asset.post_id) ?? []), asset]);
+    });
+    return grouped;
+  }, [mediaAssets]);
 
   const statusCounts = useMemo(() => {
     return scopedPosts.reduce<Record<string, number>>((acc, post) => {
@@ -245,7 +345,7 @@ export default function AnalyticsPage() {
 
   const maxTrendTotal = Math.max(1, ...trend.map((item) => item.total));
   const trendTickInterval = timeRange === "7d" ? 1 : timeRange === "30d" ? 5 : timeRange === "90d" ? 15 : Math.max(1, Math.ceil(trend.length / 7));
-  const trendMinWidth = timeRange === "7d" ? "560px" : timeRange === "30d" ? "920px" : timeRange === "90d" ? "1320px" : `${Math.max(560, trend.length * 56)}px`;
+  const trendMinWidth = `${Math.max(560, trend.length * 44)}px`;
   function showTrendTick(index: number) {
     return index === 0 || index === trend.length - 1 || index % trendTickInterval === 0;
   }
@@ -265,6 +365,55 @@ export default function AnalyticsPage() {
       .filter((post) => post.attempt_count > 0)
       .slice(0, 5);
   }, [scopedPosts]);
+  const mediaAttachedCount = scopedPosts.filter((post) => (mediaByPostId.get(post.id) ?? []).length > 0).length;
+  const visualReadinessRate = percent(mediaAttachedCount, scopedPosts.length);
+  const bestPublishHour = useMemo(() => {
+    const buckets = new Map<number, number>();
+    scopedAttempts
+      .filter((attempt) => attempt.status === "success")
+      .forEach((attempt) => {
+        const time = toTime(attempt.finished_at || attempt.created_at);
+        if (time === null) return;
+        const hour = new Date(time).getHours();
+        buckets.set(hour, (buckets.get(hour) ?? 0) + 1);
+      });
+    const sorted = Array.from(buckets.entries()).sort((first, second) => second[1] - first[1]);
+    return sorted[0] ? { hour: sorted[0][0], count: sorted[0][1] } : null;
+  }, [scopedAttempts]);
+  const campaignPerformance = useMemo(() => {
+    const grouped = new Map<string, { total: number; published: number; failed: number; queued: number; media: number }>();
+    scopedPosts.forEach((post) => {
+      const campaign = post.campaign.trim() || "بدون کمپین";
+      const current = grouped.get(campaign) ?? { total: 0, published: 0, failed: 0, queued: 0, media: 0 };
+      current.total += 1;
+      if (post.status === "published") current.published += 1;
+      if (post.status === "failed" || post.last_error) current.failed += 1;
+      if (["ready", "scheduled", "publishing"].includes(post.status)) current.queued += 1;
+      if ((mediaByPostId.get(post.id) ?? []).length > 0) current.media += 1;
+      grouped.set(campaign, current);
+    });
+    return Array.from(grouped.entries())
+      .map(([campaign, stats]) => ({
+        campaign,
+        ...stats,
+        score: stats.published * 3 + stats.queued * 1.5 + stats.media - stats.failed * 2
+      }))
+      .sort((first, second) => second.score - first.score || second.total - first.total)
+      .slice(0, 4);
+  }, [mediaByPostId, scopedPosts]);
+  const topOperationalPosts = useMemo(() => {
+    return [...scopedPosts]
+      .map((post) => {
+        const media = mediaByPostId.get(post.id) ?? [];
+        return {
+          post,
+          media,
+          score: postHealthScore(post, media.length > 0)
+        };
+      })
+      .sort((first, second) => second.score - first.score || (toTime(postActivityDate(second.post)) ?? 0) - (toTime(postActivityDate(first.post)) ?? 0))
+      .slice(0, 4);
+  }, [mediaByPostId, scopedPosts]);
   const lastAttempt = scopedAttempts[0] ?? null;
   const publishedCount = statusCounts.published ?? 0;
   const failedCount = (statusCounts.failed ?? 0) + attemptSummary.failed;
@@ -299,22 +448,100 @@ export default function AnalyticsPage() {
     { label: "نیازمند توجه", value: failedCount, detail: "پست یا تلاش ناموفق", icon: AlertTriangle, tone: failedCount ? "text-rose-700" : "text-slate-500", delta: deltaPercent(failedCount, previousFailedCount), positiveIsGood: false },
     { label: "در جریان", value: queuedCount, detail: "آماده، زمان‌بندی یا ارسال", icon: CalendarClock, tone: "text-app-primary", delta: deltaPercent(queuedCount, previousQueuedCount), positiveIsGood: true }
   ];
+  const insightCards = [
+    {
+      title: "بهترین پنجره ارسال",
+      value: bestPublishHour ? hourLabel(bestPublishHour.hour) : "در انتظار داده",
+      detail: bestPublishHour ? `${bestPublishHour.count} ارسال موفق در این ساعت ثبت شده` : "پس از چند ارسال موفق، پنجره پیشنهادی مشخص می‌شود.",
+      icon: Clock3,
+      tone: "text-sky-700",
+      token: bestPublishHour ? "زمان پیشنهادی" : "داده کم"
+    },
+    {
+      title: "آمادگی بصری محتوا",
+      value: `${visualReadinessRate}%`,
+      detail: `${mediaAttachedCount} از ${scopedPosts.length} پست این بازه رسانه متصل دارند.`,
+      icon: ImageIcon,
+      tone: visualReadinessRate >= 60 ? "text-emerald-700" : "text-amber-700",
+      token: visualReadinessRate >= 60 ? "پوشش مناسب" : "نیاز به رسانه"
+    },
+    {
+      title: "کمپین پیشرو",
+      value: campaignPerformance[0]?.campaign ?? "نامشخص",
+      detail: campaignPerformance[0] ? `${campaignPerformance[0].published} منتشرشده، ${campaignPerformance[0].queued} در جریان` : "هنوز کمپین قابل رتبه‌بندی وجود ندارد.",
+      icon: Layers3,
+      tone: "text-app-primary",
+      token: campaignPerformance[0] ? "سیگنال کمپین" : "بدون کمپین"
+    }
+  ];
+
+  function primaryMediaForPost(post: Post) {
+    return (mediaByPostId.get(post.id) ?? [])[0] ?? null;
+  }
+
+  function previewUrlForPost(post: Post) {
+    const asset = primaryMediaForPost(post);
+    return asset ? mediaPreviewUrls[asset.id] ?? "" : "";
+  }
 
   return (
     <AuthGate>
       <AppShell>
         <WorkspacePage>
-          <section className="app-studio-panel rounded-lg px-4 py-3">
-            <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
-              <div>
-                <p className="text-[10px] font-black text-app-primary">تحلیل عملیاتی</p>
-                <h1 className="mt-1 text-xl font-black text-app-text">عملکرد انتشار</h1>
-                <p className="mt-1 text-xs leading-5 text-app-muted">کیفیت ارسال، روند تلاش‌ها و موارد نیازمند اقدام را برای بازه انتخاب‌شده بررسی کنید.</p>
+          <section className="app-studio-panel overflow-hidden rounded-lg">
+            <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="px-4 py-4 lg:px-5">
+                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black text-app-primary">مرکز بینش عملکرد</p>
+                    <h1 className="mt-1 text-2xl font-black text-app-text">تحلیل انتشار و کیفیت محتوا</h1>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-app-muted">روند ارسال، سلامت کمپین‌ها، پوشش رسانه‌ای و پست‌های اثرگذار را در یک نمای تصمیم‌ساز بررسی کنید.</p>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    <StatusToken tone={attemptSummary.failed ? "alert" : "success"}>{attemptSummary.failed ? `${attemptSummary.failed} تلاش ناموفق` : "ارسال پایدار"}</StatusToken>
+                    <StatusToken tone="neutral">{scopedPosts.length} پست مرتبط</StatusToken>
+                    <Button href="/logs" variant="secondary" size="sm">سلامت انتشار</Button>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-2 md:grid-cols-3">
+                  {insightCards.map((insight) => {
+                    const Icon = insight.icon;
+                    return (
+                      <div key={insight.title} className="app-row rounded-md bg-app-surfaceMuted/85 p-3 shadow-hairline">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className={`flex h-8 w-8 items-center justify-center rounded-md bg-white ${insight.tone}`}>
+                            <Icon className="h-4 w-4" aria-hidden="true" />
+                          </span>
+                          <StatusToken tone="neutral" className="text-[10px]">{insight.token}</StatusToken>
+                        </div>
+                        <p className="mt-3 text-[11px] font-black text-app-muted">{insight.title}</p>
+                        <p className={`mt-1 truncate text-base font-black ${insight.tone}`}>{insight.value}</p>
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{insight.detail}</p>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusToken tone={attemptSummary.failed ? "alert" : "success"}>{attemptSummary.failed ? `${attemptSummary.failed} تلاش ناموفق` : "ارسال پایدار"}</StatusToken>
-                <StatusToken tone="neutral">{scopedPosts.length} پست مرتبط</StatusToken>
-                <Button href="/logs" variant="secondary" size="sm">سلامت انتشار</Button>
+              <div className="dashboard-pulse border-t border-app-border p-4 xl:border-r xl:border-t-0">
+                <div className="rounded-lg bg-white/86 p-3 shadow-hairline">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-md bg-teal-50 text-app-primary">
+                      <Sparkles className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <div>
+                      <p className="text-xs font-black text-app-text">سیگنال اجرایی امروز</p>
+                      <p className="mt-1 text-[11px] text-app-muted">اولویت بعدی بر اساس داده همین بازه</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 rounded-md border border-app-border bg-app-surfaceMuted p-3">
+                    <p className="text-sm font-black text-app-text">
+                      {failedCount ? "ابتدا خطاهای انتشار را پاک کنید" : visualReadinessRate < 60 ? "پوشش تصویری پست‌ها را کامل‌تر کنید" : queuedCount ? "صف زمان‌بندی را برای ارسال بعدی بررسی کنید" : "عملکرد بازه فعلی پایدار است"}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-app-muted">
+                      {failedCount ? `${failedCount} مورد نیازمند توجه در پست‌ها یا تلاش‌ها دیده می‌شود.` : visualReadinessRate < 60 ? "پست‌های دارای تصویر در مقایسه با کل محتوا هنوز کم هستند." : queuedCount ? `${queuedCount} پست آماده یا زمان‌بندی‌شده در جریان است.` : "برای رشد بهتر، کمپین بعدی را با رسانه و زمان پیشنهادی بسازید."}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
@@ -413,7 +640,7 @@ export default function AnalyticsPage() {
                 <div className="overflow-x-auto pb-2">
                   <div
                     className="grid h-56 items-end gap-2 border-b border-app-border px-8 pt-3"
-                    style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(28px, 1fr))`, minWidth: trendMinWidth }}
+                    style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(44px, 1fr))`, minWidth: trendMinWidth }}
                   >
                     {trend.map((item, index) => (
                       <button
@@ -437,8 +664,8 @@ export default function AnalyticsPage() {
                             <span className="bg-sky-500" style={{ height: `${percent(item.started, Math.max(1, item.total))}%` }} />
                           </div>
                         </div>
-                        <p className={`mt-2 min-h-4 w-16 self-center whitespace-nowrap text-center text-[10px] font-bold ${showTrendTick(index) ? "text-app-muted" : "text-transparent"}`}>
-                          {showTrendTick(index) ? dayLabel(item.key) : "—"}
+                        <p className={`mt-2 min-h-4 w-11 self-center whitespace-nowrap text-center text-[10px] font-bold ${showTrendTick(index) ? "text-app-muted" : "text-transparent"}`}>
+                          {showTrendTick(index) ? dayLabel(item.key) : ""}
                         </p>
                       </button>
                     ))}
@@ -530,9 +757,21 @@ export default function AnalyticsPage() {
                 >
                   {drilldownPosts.map((post) => (
                     <DataRow key={post.id} gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_80px_150px_100px]">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-black text-app-text">{post.title}</p>
-                        <p className="mt-1 truncate text-xs text-app-muted">{post.campaign || "بدون کمپین"}</p>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
+                          {previewUrlForPost(post) ? (
+                            <img src={previewUrlForPost(post)} alt={primaryMediaForPost(post)?.original_filename ?? post.title} className="h-full w-full object-cover" />
+                          ) : (
+                            <ImageIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-black text-app-text">{post.title}</p>
+                          <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-app-muted">
+                            <span className={`h-2 w-2 shrink-0 rounded-full ${campaignTone(post.campaign)}`} />
+                            {post.campaign || "بدون کمپین"}
+                          </p>
+                        </div>
                       </div>
                       <div><StatusBadge status={post.status} /></div>
                       <div>
@@ -600,6 +839,52 @@ export default function AnalyticsPage() {
                 </WorkspacePanel>
               ) : null}
               <WorkspacePanel
+                title="پست‌های پیشرو"
+                description="محتواهایی که از نظر وضعیت، رسانه و تلاش ارسال آماده‌تر هستند."
+                action={<StatusToken tone="primary">{topOperationalPosts.length} مورد</StatusToken>}
+                bodyClassName="p-3"
+              >
+                {topOperationalPosts.length === 0 ? (
+                  <EmptyState
+                    icon={<ShieldCheck className="h-5 w-5" aria-hidden="true" />}
+                    title="هنوز پست قابل رتبه‌بندی وجود ندارد"
+                    description="پس از ساخت یا انتشار پست، رتبه‌بندی عملکرد اینجا نمایش داده می‌شود."
+                  />
+                ) : null}
+                <div className="space-y-2">
+                  {topOperationalPosts.map(({ post, media, score }) => {
+                    const previewUrl = previewUrlForPost(post);
+                    return (
+                      <article key={post.id} className="app-row overflow-hidden rounded-md border border-app-border bg-white shadow-hairline">
+                        <div className="flex gap-3 p-2.5">
+                          <div className="flex h-16 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
+                            {previewUrl ? (
+                              <img src={previewUrl} alt={media[0]?.original_filename ?? post.title} className="h-full w-full object-cover" />
+                            ) : (
+                              <FileImage className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="line-clamp-2 text-xs font-black leading-5 text-app-text">{post.title}</p>
+                              <StatusToken tone={score >= 75 ? "success" : score >= 50 ? "warning" : "alert"}>{score}</StatusToken>
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                              <StatusBadge status={post.status} />
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-app-muted">
+                                <span className={`h-2 w-2 rounded-full ${campaignTone(post.campaign)}`} />
+                                {post.campaign || "بدون کمپین"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </WorkspacePanel>
+
+              <WorkspacePanel
                 title="اقدام‌های پیشنهادی"
                 description="مواردی که بهتر است اول بررسی شوند."
                 action={<StatusToken tone={failedPosts.length ? "alert" : "success"}>{failedPosts.length ? "رسیدگی" : "پایدار"}</StatusToken>}
@@ -613,12 +898,23 @@ export default function AnalyticsPage() {
                 ) : null}
                 <div className="space-y-2">
                   {failedPosts.map((post) => (
-                    <article key={post.id} className="rounded-md border border-app-border bg-white p-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={post.status} />
-                        <span className="text-xs text-app-muted">تلاش: {post.attempt_count}</span>
+                    <article key={post.id} className="rounded-md border border-app-border bg-white p-3 shadow-hairline">
+                      <div className="flex gap-3">
+                        <div className="flex h-14 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-rose-50 ring-1 ring-rose-100">
+                          {previewUrlForPost(post) ? (
+                            <img src={previewUrlForPost(post)} alt={primaryMediaForPost(post)?.original_filename ?? post.title} className="h-full w-full object-cover" />
+                          ) : (
+                            <AlertTriangle className="h-4 w-4 text-rose-500" aria-hidden="true" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <StatusBadge status={post.status} />
+                            <span className="text-xs text-app-muted">تلاش: {post.attempt_count}</span>
+                          </div>
+                          <h3 className="mt-2 truncate text-sm font-black text-app-text">{post.title}</h3>
+                        </div>
                       </div>
-                      <h3 className="mt-2 truncate text-sm font-black text-app-text">{post.title}</h3>
                       {post.last_error ? <p className="mt-1 line-clamp-2 text-xs leading-6 text-rose-600">{post.last_error}</p> : null}
                       <div className="mt-3 flex gap-2">
                         <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن</Button>
@@ -638,6 +934,31 @@ export default function AnalyticsPage() {
                     { label: "کل تلاش‌ها", value: scopedAttempts.length, hint: "ثبت‌شده در بازه" }
                   ]}
                 />
+                {campaignPerformance.length ? (
+                  <div className="mt-4 rounded-md border border-app-border bg-app-surfaceMuted p-3">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <p className="text-xs font-black text-app-text">رتبه‌بندی کمپین‌ها</p>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {campaignPerformance.map((campaign) => (
+                        <div key={campaign.campaign} className="rounded bg-white p-2 shadow-hairline">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="flex min-w-0 items-center gap-1.5 truncate text-xs font-black text-app-text">
+                              <span className={`h-2 w-2 shrink-0 rounded-full ${campaignTone(campaign.campaign)}`} />
+                              {campaign.campaign}
+                            </p>
+                            <span className="text-[11px] font-black text-app-primary">{campaign.total} پست</span>
+                          </div>
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                            <div className="h-full rounded-full bg-app-primary" style={{ width: `${percent(campaign.published + campaign.queued, Math.max(1, campaign.total))}%` }} />
+                          </div>
+                          <p className="mt-1 text-[11px] text-app-muted">{campaign.published} منتشرشده · {campaign.queued} در جریان · {campaign.media} دارای رسانه</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 <div className="mt-4 divide-y divide-app-border border-t border-app-border">
                   <div className="py-3">
                     <p className="text-[11px] font-black text-app-muted">آخرین تلاش ثبت‌شده</p>
