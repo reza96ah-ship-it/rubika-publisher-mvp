@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CalendarClock, CheckCircle2, ListChecks, RefreshCw, RotateCcw, TimerReset, XCircle } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, ImageIcon, ListChecks, RefreshCw, RotateCcw, TimerReset, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
@@ -15,6 +15,17 @@ import { notifyNotificationsUpdated } from "../../lib/notifications";
 import { apiUrl, authHeaders, formatDateTime, readApiError, recoveryGuidance, type Post } from "../../lib/posts";
 
 type QueueFilter = "all" | "ready" | "scheduled" | "publishing" | "failed";
+
+type MediaAsset = {
+  id: number;
+  post_id: number | null;
+  original_filename: string;
+  content_type: string;
+  size_bytes: number;
+  folder: string;
+  tags: string;
+  url: string;
+};
 
 const queueFilters: Array<{ label: string; value: QueueFilter }> = [
   { label: "همه صف", value: "all" },
@@ -51,9 +62,17 @@ function visibleQueueText(post: Post) {
   return [post.title, post.caption, post.hashtags, post.campaign, post.internal_note, post.last_error].filter(Boolean).join(" ").toLowerCase();
 }
 
+function campaignTone(campaign: string) {
+  const tones = ["bg-teal-500", "bg-blue-500", "bg-amber-500", "bg-rose-500", "bg-violet-500", "bg-cyan-500"];
+  const seed = Array.from(campaign || "بدون کمپین").reduce((total, char) => total + char.charCodeAt(0), 0);
+  return tones[seed % tones.length];
+}
+
 export default function QueuePage() {
   const { showToast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
+  const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [statusFilter, setStatusFilter] = useState<QueueFilter>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
@@ -70,11 +89,16 @@ export default function QueuePage() {
     else setLoading(true);
     setError("");
     try {
-      const response = await fetch(`${apiUrl}/posts`, { headers: authHeaders() });
+      const headers = authHeaders();
+      const [response, mediaResponse] = await Promise.all([
+        fetch(`${apiUrl}/posts`, { headers }),
+        fetch(`${apiUrl}/media`, { headers })
+      ]);
       if (!response.ok) throw new Error("دریافت صف انتشار ناموفق بود");
       const allPosts = (await response.json()) as Post[];
       const queuePosts = sortQueuePosts(allPosts.filter((post) => queueStatuses.has(post.status)));
       setPosts(queuePosts);
+      setMediaAssets(mediaResponse.ok ? await mediaResponse.json() : []);
       setSelectedPostId((current) => current ?? queuePosts[0]?.id ?? null);
       setLastUpdatedAt(new Date());
     } finally {
@@ -89,6 +113,49 @@ export default function QueuePage() {
       setLoading(false);
     });
   }, [loadQueue]);
+
+  useEffect(() => {
+    if (mediaAssets.length === 0) {
+      setMediaPreviewUrls({});
+      return;
+    }
+
+    let cancelled = false;
+    const createdUrls: string[] = [];
+
+    async function loadPreviews() {
+      const imageAssets = mediaAssets
+        .filter((asset) => asset.post_id && asset.content_type.startsWith("image/"))
+        .slice(0, 48);
+      const entries = await Promise.all(
+        imageAssets.map(async (asset) => {
+          try {
+            const response = await fetch(`${apiUrl}/media/${asset.id}/file`, { headers: authHeaders() });
+            if (!response.ok) return null;
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            createdUrls.push(url);
+            return [asset.id, url] as const;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setMediaPreviewUrls(Object.fromEntries(entries.filter(Boolean) as Array<[number, string]>));
+      } else {
+        createdUrls.forEach((url) => URL.revokeObjectURL(url));
+      }
+    }
+
+    loadPreviews();
+
+    return () => {
+      cancelled = true;
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [mediaAssets]);
 
   async function retryPost(post: Post) {
     setMessage("");
@@ -179,6 +246,15 @@ export default function QueuePage() {
     };
   }, [posts]);
 
+  const mediaByPostId = useMemo(() => {
+    const grouped = new Map<number, MediaAsset[]>();
+    mediaAssets.forEach((asset) => {
+      if (!asset.post_id) return;
+      grouped.set(asset.post_id, [...(grouped.get(asset.post_id) ?? []), asset]);
+    });
+    return grouped;
+  }, [mediaAssets]);
+
   const nextScheduled = useMemo(() => {
     const now = Date.now();
     return posts.find((post) => post.status === "scheduled" && scheduleTime(post) >= now);
@@ -220,6 +296,15 @@ export default function QueuePage() {
       tone: counts.failed ? "text-rose-700" : "text-slate-500"
     }
   ];
+
+  function primaryMediaForPost(post: Post) {
+    return (mediaByPostId.get(post.id) ?? [])[0] ?? null;
+  }
+
+  function previewUrlForPost(post: Post) {
+    const asset = primaryMediaForPost(post);
+    return asset ? mediaPreviewUrls[asset.id] ?? "" : "";
+  }
 
   return (
     <AuthGate>
@@ -338,12 +423,33 @@ export default function QueuePage() {
                   </div>
                 ) : null}
               >
-                {filteredPosts.map((post) => (
+                {filteredPosts.map((post) => {
+                  const previewUrl = previewUrlForPost(post);
+                  const media = primaryMediaForPost(post);
+                  return (
                   <DataRow key={post.id} gridClassName={queueRowGrid} selected={selectedPost?.id === post.id}>
-                    <div className="min-w-0">
-                      <h2 className="truncate font-black text-app-text">{post.title}</h2>
-                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-app-muted">{post.caption || "بدون کپشن"}</p>
-                      {post.last_error ? <p className="mt-2 rounded-md border border-rose-100 bg-rose-50 px-3 py-2 text-xs leading-6 text-rose-700">{post.last_error}</p> : null}
+                    <div className="flex min-w-0 gap-3">
+                      <div className="flex h-24 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
+                        {previewUrl ? (
+                          <img src={previewUrl} alt={media?.original_filename ?? post.title} className="h-full w-full object-cover" />
+                        ) : (
+                          <ImageIcon className="h-6 w-6 text-slate-400" aria-hidden="true" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          {post.campaign ? (
+                            <StatusToken tone="neutral">
+                              <span className={`ml-1 inline-flex h-2 w-2 rounded-full ${campaignTone(post.campaign)}`} />
+                              {post.campaign}
+                            </StatusToken>
+                          ) : null}
+                          {media ? <StatusToken tone="success">رسانه آماده</StatusToken> : <StatusToken tone="warning">بدون رسانه</StatusToken>}
+                        </div>
+                        <h2 className="truncate font-black text-app-text">{post.title}</h2>
+                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-app-muted">{post.caption || "بدون کپشن"}</p>
+                        {post.last_error ? <p className="mt-2 rounded-md border border-rose-100 bg-rose-50 px-3 py-2 text-xs leading-6 text-rose-700">{post.last_error}</p> : null}
+                      </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
                       <StatusBadge status={post.status} />
@@ -357,7 +463,8 @@ export default function QueuePage() {
                       <Button type="button" variant={selectedPost?.id === post.id ? "primary" : "secondary"} size="sm" onClick={() => setSelectedPostId(post.id)}>بازبینی</Button>
                     </div>
                   </DataRow>
-                ))}
+                  );
+                })}
               </DataTable>
             </WorkspacePanel>
 
@@ -366,9 +473,20 @@ export default function QueuePage() {
                 <WorkspacePanel title="بازبین صف" description="جزئیات و اقدام‌های پست انتخاب‌شده." bodyClassName="p-4">
                   {selectedPost ? (
                     <div>
+                      <div className="mb-4 overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
+                        {previewUrlForPost(selectedPost) ? (
+                          <img src={previewUrlForPost(selectedPost)} alt={primaryMediaForPost(selectedPost)?.original_filename ?? selectedPost.title} className="aspect-video w-full object-cover" />
+                        ) : (
+                          <div className="flex aspect-video flex-col items-center justify-center gap-2 text-xs text-app-muted">
+                            <ImageIcon className="h-6 w-6 text-slate-400" aria-hidden="true" />
+                            این پست بدون رسانه وارد صف شده است
+                          </div>
+                        )}
+                      </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={selectedPost.status} />
                         <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
+                        {primaryMediaForPost(selectedPost) ? <StatusToken tone="success">رسانه آماده</StatusToken> : <StatusToken tone="warning">نیازمند رسانه</StatusToken>}
                       </div>
                       <h2 className="mt-3 font-black text-app-text">{selectedPost.title}</h2>
                       <p className="mt-2 max-h-44 overflow-auto whitespace-pre-wrap rounded-md border border-app-border bg-slate-50 p-3 text-sm leading-7 text-app-muted">

@@ -141,7 +141,7 @@ function dayKey(value: string) {
 
 function dayLabel(key: string) {
   if (key === "unknown") return "نامشخص";
-  return new Intl.DateTimeFormat("fa-IR", { month: "numeric", day: "numeric" }).format(new Date(`${key}T00:00:00Z`));
+  return new Intl.DateTimeFormat("fa-IR", { month: "short", day: "numeric" }).format(new Date(`${key}T00:00:00Z`));
 }
 
 function dayLongLabel(key: string) {
@@ -345,7 +345,8 @@ export default function AnalyticsPage() {
 
   const maxTrendTotal = Math.max(1, ...trend.map((item) => item.total));
   const trendTickInterval = timeRange === "7d" ? 1 : timeRange === "30d" ? 5 : timeRange === "90d" ? 15 : Math.max(1, Math.ceil(trend.length / 7));
-  const trendMinWidth = `${Math.max(560, trend.length * 44)}px`;
+  const trendColumnWidth = timeRange === "7d" ? 104 : 100;
+  const trendMinWidth = timeRange === "7d" ? "760px" : `${Math.max(860, trend.length * trendColumnWidth)}px`;
   function showTrendTick(index: number) {
     return index === 0 || index === trend.length - 1 || index % trendTickInterval === 0;
   }
@@ -640,7 +641,7 @@ export default function AnalyticsPage() {
                 <div className="overflow-x-auto pb-2">
                   <div
                     className="grid h-56 items-end gap-2 border-b border-app-border px-8 pt-3"
-                    style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(44px, 1fr))`, minWidth: trendMinWidth }}
+                    style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(${trendColumnWidth}px, 1fr))`, minWidth: trendMinWidth }}
                   >
                     {trend.map((item, index) => (
                       <button
@@ -649,7 +650,7 @@ export default function AnalyticsPage() {
                         onClick={() => setSelectedTrendKey((current) => current === item.key ? "" : item.key)}
                         data-trend-inspector
                         data-trend-bar
-                        className={`flex h-full min-w-0 flex-col justify-end overflow-visible rounded-t text-center transition hover:bg-blue-50/70 ${selectedTrend?.key === item.key ? "bg-blue-50 ring-1 ring-inset ring-blue-100" : ""}`}
+                        className={`relative flex h-full min-w-0 flex-col justify-end overflow-visible rounded-t pb-6 text-center transition hover:bg-blue-50/70 ${selectedTrend?.key === item.key ? "bg-blue-50 ring-1 ring-inset ring-blue-100" : ""}`}
                         title={`${dayLongLabel(item.key)}: ${item.total} تلاش`}
                       >
                         <p className="mb-2 text-[10px] font-black text-app-muted">{item.total || ""}</p>
@@ -664,7 +665,7 @@ export default function AnalyticsPage() {
                             <span className="bg-sky-500" style={{ height: `${percent(item.started, Math.max(1, item.total))}%` }} />
                           </div>
                         </div>
-                        <p className={`mt-2 min-h-4 w-11 self-center whitespace-nowrap text-center text-[10px] font-bold ${showTrendTick(index) ? "text-app-muted" : "text-transparent"}`}>
+                        <p className={`absolute bottom-0 left-1/2 min-h-4 w-24 -translate-x-1/2 whitespace-nowrap text-center text-[10px] font-bold ${showTrendTick(index) ? "text-app-muted" : "text-transparent"}`}>
                           {showTrendTick(index) ? dayLabel(item.key) : ""}
                         </p>
                       </button>

@@ -8,6 +8,7 @@ import {
   CheckSquare2,
   Clock3,
   FileText,
+  ImageIcon,
   Pencil,
   RefreshCw,
   RotateCcw,
@@ -32,6 +33,17 @@ type Metric = {
   hint: string;
   icon: typeof FileText;
   tone: "neutral" | "primary" | "success" | "warning" | "alert" | "info";
+};
+
+type MediaAsset = {
+  id: number;
+  post_id: number | null;
+  original_filename: string;
+  content_type: string;
+  size_bytes: number;
+  folder: string;
+  tags: string;
+  url: string;
 };
 
 type SortMode = "priority" | "updated" | "schedule" | "title";
@@ -61,9 +73,17 @@ function visiblePostText(post: Post) {
   return searchableFields.map((field) => post[field] ?? "").join(" ").toLowerCase();
 }
 
+function campaignTone(campaign: string) {
+  const tones = ["bg-teal-500", "bg-blue-500", "bg-amber-500", "bg-rose-500", "bg-violet-500", "bg-cyan-500"];
+  const seed = Array.from(campaign || "بدون کمپین").reduce((total, char) => total + char.charCodeAt(0), 0);
+  return tones[seed % tones.length];
+}
+
 export default function ContentWorkspacePage() {
   const { showToast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
+  const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [activeStatus, setActiveStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [campaignFilter, setCampaignFilter] = useState("all");
@@ -82,10 +102,15 @@ export default function ContentWorkspacePage() {
     else setLoading(true);
     setError("");
     try {
-      const response = await fetch(`${apiUrl}/posts`, { headers: authHeaders() });
+      const headers = authHeaders();
+      const [response, mediaResponse] = await Promise.all([
+        fetch(`${apiUrl}/posts`, { headers }),
+        fetch(`${apiUrl}/media`, { headers })
+      ]);
       if (!response.ok) throw new Error("دریافت پست‌ها ناموفق بود");
       const data: Post[] = await response.json();
       setPosts(data);
+      setMediaAssets(mediaResponse.ok ? await mediaResponse.json() : []);
       setSelectedPostId((current) => current ?? data[0]?.id ?? null);
       setSelectedIds((current) => new Set([...current].filter((id) => data.some((post) => post.id === id))));
       setLastUpdatedAt(new Date());
@@ -101,6 +126,49 @@ export default function ContentWorkspacePage() {
       setLoading(false);
     });
   }, [loadPosts]);
+
+  useEffect(() => {
+    if (mediaAssets.length === 0) {
+      setMediaPreviewUrls({});
+      return;
+    }
+
+    let cancelled = false;
+    const createdUrls: string[] = [];
+
+    async function loadPreviews() {
+      const imageAssets = mediaAssets
+        .filter((asset) => asset.post_id && asset.content_type.startsWith("image/"))
+        .slice(0, 48);
+      const entries = await Promise.all(
+        imageAssets.map(async (asset) => {
+          try {
+            const response = await fetch(`${apiUrl}/media/${asset.id}/file`, { headers: authHeaders() });
+            if (!response.ok) return null;
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            createdUrls.push(url);
+            return [asset.id, url] as const;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      if (!cancelled) {
+        setMediaPreviewUrls(Object.fromEntries(entries.filter(Boolean) as Array<[number, string]>));
+      } else {
+        createdUrls.forEach((url) => URL.revokeObjectURL(url));
+      }
+    }
+
+    loadPreviews();
+
+    return () => {
+      cancelled = true;
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [mediaAssets]);
 
   useEffect(() => {
     const requestedStatus = new URLSearchParams(window.location.search).get("status");
@@ -128,6 +196,15 @@ export default function ContentWorkspacePage() {
   const campaigns = useMemo(() => {
     return [...new Set(posts.map((post) => post.campaign.trim()).filter(Boolean))].sort((first, second) => first.localeCompare(second, "fa"));
   }, [posts]);
+
+  const mediaByPostId = useMemo(() => {
+    const grouped = new Map<number, MediaAsset[]>();
+    mediaAssets.forEach((asset) => {
+      if (!asset.post_id) return;
+      grouped.set(asset.post_id, [...(grouped.get(asset.post_id) ?? []), asset]);
+    });
+    return grouped;
+  }, [mediaAssets]);
 
   const selectedPost = useMemo(() => {
     if (selectedPostId) {
@@ -298,6 +375,15 @@ export default function ContentWorkspacePage() {
     setSelectedPostId(post.id);
   }
 
+  function primaryMediaForPost(post: Post) {
+    return (mediaByPostId.get(post.id) ?? [])[0] ?? null;
+  }
+
+  function previewUrlForPost(post: Post) {
+    const asset = primaryMediaForPost(post);
+    return asset ? mediaPreviewUrls[asset.id] ?? "" : "";
+  }
+
   return (
     <AuthGate>
       <AppShell>
@@ -459,25 +545,42 @@ export default function ContentWorkspacePage() {
               >
                 {filteredPosts.map((post) => {
                   const selected = selectedPost?.id === post.id;
+                  const previewUrl = previewUrlForPost(post);
+                  const media = primaryMediaForPost(post);
                   return (
                     <DataRow key={post.id} gridClassName={contentRowGrid} selected={selected}>
-                      <div className="min-w-0">
-                        <label className="mb-3 inline-flex items-center gap-2 text-xs font-bold text-app-muted">
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(post.id)}
-                            onChange={() => toggleSelected(post.id)}
-                            className="h-4 w-4 rounded border-app-border accent-blue-600"
-                          />
-                          انتخاب برای عملیات گروهی
-                        </label>
-                        <div className="flex flex-wrap items-center gap-2">
-                          {post.campaign ? <StatusToken tone="neutral">{post.campaign}</StatusToken> : null}
-                          {post.hashtags ? <StatusToken tone="primary" className="max-w-full truncate">{post.hashtags}</StatusToken> : null}
+                      <div className="flex min-w-0 gap-3">
+                        <div className="flex h-24 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
+                          {previewUrl ? (
+                            <img src={previewUrl} alt={media?.original_filename ?? post.title} className="h-full w-full object-cover" />
+                          ) : (
+                            <ImageIcon className="h-6 w-6 text-slate-400" aria-hidden="true" />
+                          )}
                         </div>
-                        <h2 className="mt-3 truncate text-base font-black text-app-text">{post.title}</h2>
-                        <p className="mt-2 line-clamp-2 text-sm leading-7 text-app-muted">{post.caption || "بدون کپشن"}</p>
-                        {post.last_error ? <p className="mt-3 rounded bg-rose-50 px-3 py-2 text-xs leading-6 text-rose-700">{post.last_error}</p> : null}
+                        <div className="min-w-0 flex-1">
+                          <label className="mb-2 inline-flex items-center gap-2 text-xs font-bold text-app-muted">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(post.id)}
+                              onChange={() => toggleSelected(post.id)}
+                              className="h-4 w-4 rounded border-app-border accent-blue-600"
+                            />
+                            انتخاب برای عملیات گروهی
+                          </label>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {post.campaign ? (
+                              <StatusToken tone="neutral">
+                                <span className={`ml-1 inline-flex h-2 w-2 rounded-full ${campaignTone(post.campaign)}`} />
+                                {post.campaign}
+                              </StatusToken>
+                            ) : null}
+                            {media ? <StatusToken tone="success">دارای رسانه</StatusToken> : <StatusToken tone="warning">بدون رسانه</StatusToken>}
+                            {post.hashtags ? <StatusToken tone="primary" className="max-w-full truncate">{post.hashtags}</StatusToken> : null}
+                          </div>
+                          <h2 className="mt-3 truncate text-base font-black text-app-text">{post.title}</h2>
+                          <p className="mt-2 line-clamp-2 text-sm leading-7 text-app-muted">{post.caption || "بدون کپشن"}</p>
+                          {post.last_error ? <p className="mt-3 rounded bg-rose-50 px-3 py-2 text-xs leading-6 text-rose-700">{post.last_error}</p> : null}
+                        </div>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
@@ -513,10 +616,21 @@ export default function ContentWorkspacePage() {
               >
                 {selectedPost ? (
                   <div className="space-y-4">
+                    <div className="overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
+                      {previewUrlForPost(selectedPost) ? (
+                        <img src={previewUrlForPost(selectedPost)} alt={primaryMediaForPost(selectedPost)?.original_filename ?? selectedPost.title} className="aspect-video w-full object-cover" />
+                      ) : (
+                        <div className="flex aspect-video flex-col items-center justify-center gap-2 text-xs text-app-muted">
+                          <ImageIcon className="h-6 w-6 text-slate-400" aria-hidden="true" />
+                          رسانه‌ای برای این پست متصل نشده است
+                        </div>
+                      )}
+                    </div>
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={selectedPost.status} />
                         <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
+                        {primaryMediaForPost(selectedPost) ? <StatusToken tone="success">رسانه آماده</StatusToken> : <StatusToken tone="warning">نیازمند رسانه</StatusToken>}
                       </div>
                       <h3 className="mt-3 text-lg font-black text-app-text">{selectedPost.title}</h3>
                       <p className="mt-2 text-xs leading-6 text-app-muted">شناسه پست #{selectedPost.id}</p>
