@@ -141,6 +141,11 @@ Scope:
 - Best-time suggestions v1.
 - Bulk scheduling.
 
+Current implementation status:
+
+- Calendar has month, week, and list views with drag-and-drop rescheduling.
+- Calendar planning now exposes campaign workload, campaign-colored post rails, campaign-aware quick-create, and a direct Campaign Manager action.
+
 Acceptance criteria:
 
 - Scheduled posts can be moved safely.

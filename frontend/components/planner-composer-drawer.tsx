@@ -12,6 +12,7 @@ import { NoticeBanner, StatusToken } from "./workspace-ui";
 
 type PlannerComposerDrawerProps = {
   scheduledAt: string | null;
+  defaultCampaign?: string;
   onClose: () => void;
   onCreated: () => Promise<void>;
 };
@@ -24,7 +25,7 @@ function pad(value: number) {
   return String(value).padStart(2, "0");
 }
 
-export function PlannerComposerDrawer({ scheduledAt, onClose, onCreated }: PlannerComposerDrawerProps) {
+export function PlannerComposerDrawer({ scheduledAt, defaultCampaign = "", onClose, onCreated }: PlannerComposerDrawerProps) {
   const { showToast } = useToast();
   const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
@@ -39,12 +40,12 @@ export function PlannerComposerDrawer({ scheduledAt, onClose, onCreated }: Plann
     setTitle("");
     setCaption("");
     setHashtags("");
-    setCampaign("");
+    setCampaign(defaultCampaign);
     setSchedule(scheduledAt ?? "");
     setDraftPostId(null);
     setSavingAction(null);
     setError("");
-  }, [scheduledAt]);
+  }, [defaultCampaign, scheduledAt]);
 
   const scheduleParts = useMemo(() => getJalaliPickerParts(schedule || scheduledAt, timezone), [schedule, scheduledAt]);
   const hasTitle = Boolean(title.trim());
@@ -142,6 +143,7 @@ export function PlannerComposerDrawer({ scheduledAt, onClose, onCreated }: Plann
               <StatusToken tone="primary">روبیکا</StatusToken>
               <StatusToken tone="warning">ذخیره سریع</StatusToken>
               <StatusToken tone="neutral">پیش‌فرض ۰۹:۰۰</StatusToken>
+              {defaultCampaign ? <StatusToken tone="info">کمپین: {defaultCampaign}</StatusToken> : null}
             </div>
 
             <Field label="عنوان داخلی پست" required hint="برای مدیریت صف و پیدا کردن سریع این پست.">

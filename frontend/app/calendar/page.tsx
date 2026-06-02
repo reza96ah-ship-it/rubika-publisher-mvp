@@ -299,6 +299,7 @@ export default function CalendarPage() {
   }, [calendarPosts, campaignFilter, searchTerm, statusFilter]);
 
   const campaignOptions = useMemo(() => buildCampaignFilterOptions(calendarPosts, campaigns), [calendarPosts, campaigns]);
+  const selectedCampaignOption = useMemo(() => campaignOptions.find((option) => option.value === campaignFilter) ?? null, [campaignFilter, campaignOptions]);
 
   const postsByDay = useMemo(() => {
     const map = new Map<string, Post[]>();
@@ -313,6 +314,8 @@ export default function CalendarPage() {
   const monthDays = useMemo(() => buildMonthDays(monthAnchor), [monthAnchor]);
   const monthGrid = useMemo(() => buildMonthGrid(monthDays), [monthDays]);
   const activeWeekDays = useMemo(() => buildWeekDays(monthAnchor), [monthAnchor]);
+  const activeRangeDays = viewMode === "week" ? activeWeekDays : monthDays;
+  const activeRangeDayKeys = useMemo(() => new Set(activeRangeDays.map((day) => day.key)), [activeRangeDays]);
   const selectedPost = useMemo(() => {
     if (!selectedPostId) return null;
     return calendarPosts.find((post) => post.id === selectedPostId) ?? null;
@@ -348,6 +351,19 @@ export default function CalendarPage() {
   const calendarCellHeight = densityMode === "compact" ? "min-h-24" : "min-h-36";
   const selectedPostAsset = selectedPost ? assetByPostId.get(selectedPost.id) : null;
   const selectedPostPreviewUrl = selectedPostAsset ? mediaPreviewUrls[selectedPostAsset.id] : "";
+  const selectedCampaignWorkload = useMemo(() => {
+    if (!selectedCampaignOption) return null;
+    const rangePosts = calendarPosts
+      .filter((post) => campaignKeyForPost(post) === selectedCampaignOption.value)
+      .filter((post) => post.scheduled_at && activeRangeDayKeys.has(jalaliDateKey(post.scheduled_at)));
+    return {
+      total: rangePosts.length,
+      scheduled: rangePosts.filter((post) => post.status === "scheduled").length,
+      publishing: rangePosts.filter((post) => post.status === "publishing").length,
+      published: rangePosts.filter((post) => post.status === "published").length,
+      failed: rangePosts.filter((post) => post.status === "failed").length
+    };
+  }, [activeRangeDayKeys, calendarPosts, selectedCampaignOption]);
 
   function selectPost(post: Post) {
     setSelectedPostId(post.id);
@@ -466,7 +482,7 @@ export default function CalendarPage() {
         } ${draggable ? "cursor-grab active:cursor-grabbing" : "cursor-default"} ${rescheduling ? "animate-pulse opacity-70" : ""}`}
         title={draggable ? "برای تغییر روز انتشار، پست را روی روز جدید بکشید." : undefined}
       >
-        <span className={`absolute inset-y-0 right-0 w-1 ${postRailTone(post.status)}`} />
+        <span className="absolute inset-y-0 right-0 w-1" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
         <span className="flex min-w-0 items-center gap-2 pr-1">
           {previewUrl ? (
             <img src={previewUrl} alt="" className={`${compact ? "h-6 w-6" : "h-9 w-9"} shrink-0 rounded object-cover ring-1 ring-white/80`} />
@@ -480,7 +496,7 @@ export default function CalendarPage() {
           <span className="min-w-0 flex-1">
             <span className="block truncate font-bold">{formatJalaliTime(post.scheduled_at)} · {post.title}</span>
             <span className="mt-0.5 flex items-center gap-1 truncate opacity-75">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
+              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${postRailTone(post.status)}`} />
               <span className="truncate">{campaignKeyForPost(post) !== "none" ? campaignLabelForPost(post, campaigns) : (!compact ? post.caption : "") || "بدون کمپین"}</span>
             </span>
           </span>
@@ -627,10 +643,25 @@ export default function CalendarPage() {
                     </div>
                     <Button type="button" onClick={() => openQuickCreate(selectedDayValue)} size="sm">
                       <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                      پست جدید در {selectedDayLabel}
+                      {selectedCampaignOption ? `پست جدید برای ${selectedCampaignOption.label}` : `پست جدید در ${selectedDayLabel}`}
                     </Button>
                   </div>
                 </div>
+
+                {selectedCampaignOption && selectedCampaignWorkload ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-app-border bg-white px-3 py-2 shadow-hairline">
+                    <span className="inline-flex items-center gap-2 text-xs font-black text-app-text">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: selectedCampaignOption.color }} />
+                      برنامه کمپین: {selectedCampaignOption.label}
+                    </span>
+                    <StatusToken tone="neutral">{selectedCampaignWorkload.total} در بازه</StatusToken>
+                    <StatusToken tone="warning">{selectedCampaignWorkload.scheduled} زمان‌بندی</StatusToken>
+                    <StatusToken tone="primary">{selectedCampaignWorkload.publishing} در انتشار</StatusToken>
+                    <StatusToken tone="success">{selectedCampaignWorkload.published} منتشر</StatusToken>
+                    <StatusToken tone={selectedCampaignWorkload.failed ? "alert" : "success"}>{selectedCampaignWorkload.failed} خطا</StatusToken>
+                    <Button href="/campaigns" variant="ghost" size="sm">مدیر کمپین</Button>
+                  </div>
+                ) : null}
               </div>
 
               {loading ? <LoadingRows rows={5} /> : null}
@@ -713,7 +744,7 @@ export default function CalendarPage() {
                       const previewUrl = asset ? mediaPreviewUrls[asset.id] : "";
                       return (
                       <article key={post.id} className="relative grid gap-3 overflow-hidden px-4 py-3 transition hover:bg-slate-50 lg:grid-cols-[150px_minmax(0,1fr)_140px_110px] lg:items-center">
-                        <span className={`absolute inset-y-0 right-0 w-1 ${postRailTone(post.status)}`} />
+                        <span className="absolute inset-y-0 right-0 w-1" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
                         <div className="text-xs leading-6 text-app-muted">
                           <p className="font-bold text-app-text">{formatJalaliDate(post.scheduled_at)}</p>
                           <p>{formatJalaliTime(post.scheduled_at)}</p>
@@ -786,7 +817,7 @@ export default function CalendarPage() {
                           selectedPost?.id === post.id ? "bg-blue-50 ring-2 ring-blue-100" : "bg-white"
                         }`}
                       >
-                        <span className={`absolute inset-y-0 right-0 w-1 ${postRailTone(post.status)}`} />
+                        <span className="absolute inset-y-0 right-0 w-1" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
                         <div className="flex min-w-0 items-center gap-3 pr-1">
                           {previewUrl ? (
                             <img src={previewUrl} alt="" className="h-12 w-12 shrink-0 rounded-md object-cover ring-1 ring-app-border" />
@@ -876,6 +907,7 @@ export default function CalendarPage() {
 
                       <div className="grid gap-2">
                         <Button href={`/compose?postId=${selectedPost.id}`}>ویرایش پست</Button>
+                        <Button href="/campaigns" variant="secondary">باز کردن مدیر کمپین</Button>
                         <Button href="/queue" variant="secondary">باز کردن صف انتشار</Button>
                       </div>
                     </div>
@@ -901,7 +933,7 @@ export default function CalendarPage() {
               </InspectorPanel>
             </div>
           </section>
-          <PlannerComposerDrawer scheduledAt={quickCreateAt} onClose={() => setQuickCreateAt(null)} onCreated={() => loadPosts(true)} />
+          <PlannerComposerDrawer scheduledAt={quickCreateAt} defaultCampaign={selectedCampaignOption?.label ?? ""} onClose={() => setQuickCreateAt(null)} onCreated={() => loadPosts(true)} />
         </WorkspacePage>
       </AppShell>
     </AuthGate>
