@@ -24,6 +24,8 @@ class StoreUpsertRequest(BaseModel):
     category: str = ""
     phone: str = ""
     description: str = ""
+    logo_asset_id: int | None = None
+    avatar_asset_id: int | None = None
     brand_primary_color: str = "#0F766E"
     brand_accent_color: str = "#2563EB"
     brand_voice: str = ""
@@ -40,6 +42,8 @@ class StoreResponse(BaseModel):
     category: str
     phone: str
     description: str
+    logo_asset_id: int | None
+    avatar_asset_id: int | None
     brand_primary_color: str
     brand_accent_color: str
     brand_voice: str

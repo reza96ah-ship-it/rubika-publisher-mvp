@@ -102,6 +102,7 @@ function ComposePageContent() {
       .filter(Boolean)
       .slice(0, 3);
   }, [mediaAssets, mediaPreviewUrls]);
+  const brandAvatarUrl = store?.avatar_asset_id ? mediaPreviewUrls[store.avatar_asset_id] : store?.logo_asset_id ? mediaPreviewUrls[store.logo_asset_id] : "";
 
   const finalPreview = useMemo(() => {
     const hasVisiblePostContent = Boolean(form.caption.trim() || previewImageUrl);
@@ -597,6 +598,7 @@ function ComposePageContent() {
               storeName={store?.name || "فضای کاری روبیکا"}
               storeCategory={store?.category}
               brandColor={store?.brand_primary_color}
+              avatarUrl={brandAvatarUrl}
               mediaPreviewUrls={readyMediaPreviewUrls}
               hasDefaults={Boolean(store?.default_hashtags || store?.default_cta || store?.description)}
               onStartText={() => openComposerSection("composer-content")}
@@ -777,7 +779,7 @@ function ComposePageContent() {
                           <p className="text-xs font-black text-app-text">خروجی مخاطب</p>
                           <StatusToken tone="neutral">Rubika</StatusToken>
                         </div>
-                        <RubikaPostPreview imageUrl={previewImageUrl} caption={finalPreview} destination={store?.name || "کانال روبیکا"} brandColor={store?.brand_primary_color} />
+                        <RubikaPostPreview imageUrl={previewImageUrl} caption={finalPreview} destination={store?.name || "کانال روبیکا"} brandColor={store?.brand_primary_color} avatarUrl={brandAvatarUrl} />
                         <div className="mt-3 grid grid-cols-3 divide-x divide-x-reverse divide-app-border overflow-hidden rounded-md bg-app-surfaceMuted text-center shadow-hairline">
                           <div className="p-2"><p className="text-sm font-black text-app-text">{captionLength}</p><p className="mt-1 text-[10px] text-app-muted">کاراکتر</p></div>
                           <div className="p-2"><p className="text-sm font-black text-app-text">{hashtagCount}</p><p className="mt-1 text-[10px] text-app-muted">هشتگ</p></div>

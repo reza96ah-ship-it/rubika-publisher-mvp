@@ -24,6 +24,8 @@ def add_column_if_missing(table_name: str, column: sa.Column) -> None:
 
 
 def upgrade() -> None:
+    add_column_if_missing("stores", sa.Column("logo_asset_id", sa.Integer(), nullable=True))
+    add_column_if_missing("stores", sa.Column("avatar_asset_id", sa.Integer(), nullable=True))
     add_column_if_missing("stores", sa.Column("brand_primary_color", sa.String(length=32), server_default="#0F766E", nullable=False))
     add_column_if_missing("stores", sa.Column("brand_accent_color", sa.String(length=32), server_default="#2563EB", nullable=False))
     add_column_if_missing("stores", sa.Column("brand_voice", sa.Text(), server_default="", nullable=False))
@@ -33,6 +35,6 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     columns = column_names("stores")
-    for name in ["content_guidelines", "default_cta", "brand_voice", "brand_accent_color", "brand_primary_color"]:
+    for name in ["avatar_asset_id", "logo_asset_id", "content_guidelines", "default_cta", "brand_voice", "brand_accent_color", "brand_primary_color"]:
         if name in columns:
             op.drop_column("stores", name)

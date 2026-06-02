@@ -6,13 +6,16 @@ import {
   CalendarClock,
   Clock3,
   Hash,
+  ImageIcon,
   Megaphone,
   Palette,
   Phone,
   Save,
   Sparkles,
   Store as StoreIcon,
-  Undo2
+  Undo2,
+  UploadCloud,
+  X
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
@@ -27,11 +30,42 @@ import { WorkspaceAvatar } from "../../components/brand-mark";
 import { apiUrl, authHeaders } from "../../lib/posts";
 import { notifyWorkspaceUpdated } from "../../lib/workspace";
 
-const emptyStore = {
+type StoreForm = {
+  name: string;
+  category: string;
+  phone: string;
+  description: string;
+  logo_asset_id: number | null;
+  avatar_asset_id: number | null;
+  brand_primary_color: string;
+  brand_accent_color: string;
+  brand_voice: string;
+  default_cta: string;
+  content_guidelines: string;
+  default_hashtags: string;
+  caption_footer: string;
+  timezone: string;
+};
+
+type MediaAsset = {
+  id: number;
+  post_id: number | null;
+  original_filename: string;
+  content_type: string;
+  size_bytes: number;
+  folder: string;
+  tags: string;
+};
+
+type BrandAssetKind = "logo_asset_id" | "avatar_asset_id";
+
+const emptyStore: StoreForm = {
   name: "",
   category: "",
   phone: "",
   description: "",
+  logo_asset_id: null,
+  avatar_asset_id: null,
   brand_primary_color: "#0F766E",
   brand_accent_color: "#2563EB",
   brand_voice: "",
@@ -41,8 +75,6 @@ const emptyStore = {
   caption_footer: "",
   timezone: "Asia/Tehran"
 };
-
-type StoreForm = typeof emptyStore;
 
 type ReadinessItem = {
   label: string;
@@ -65,6 +97,8 @@ function normalizeStore(data: Partial<StoreForm> = {}): StoreForm {
     category: data.category ?? "",
     phone: data.phone ?? "",
     description: data.description ?? "",
+    logo_asset_id: typeof data.logo_asset_id === "number" ? data.logo_asset_id : null,
+    avatar_asset_id: typeof data.avatar_asset_id === "number" ? data.avatar_asset_id : null,
     brand_primary_color: isHexColor(data.brand_primary_color ?? "") ? data.brand_primary_color ?? "#0F766E" : "#0F766E",
     brand_accent_color: isHexColor(data.brand_accent_color ?? "") ? data.brand_accent_color ?? "#2563EB" : "#2563EB",
     brand_voice: data.brand_voice ?? "",
@@ -96,6 +130,11 @@ function buildReadiness(form: StoreForm): ReadinessItem[] {
       required: true
     },
     {
+      label: "لوگو یا آواتار",
+      detail: "برای تبدیل پیش‌نمایش‌ها و گزارش‌ها از حالت متنی به هویت واقعی برند.",
+      done: Boolean(form.logo_asset_id || form.avatar_asset_id)
+    },
+    {
       label: "هشتگ‌های پیش‌فرض",
       detail: "برای شروع سریع‌تر composer و استانداردسازی خروجی.",
       done: Boolean(trim(form.default_hashtags))
@@ -124,7 +163,7 @@ function readinessScore(items: ReadinessItem[]) {
 }
 
 function defaultCount(form: StoreForm) {
-  return [form.default_hashtags, form.caption_footer, form.description, form.brand_voice, form.default_cta, form.content_guidelines].filter((value) => Boolean(trim(value))).length;
+  return [form.logo_asset_id, form.avatar_asset_id, form.default_hashtags, form.caption_footer, form.description, form.brand_voice, form.default_cta, form.content_guidelines].filter(Boolean).length;
 }
 
 function previewCaption(form: StoreForm) {
@@ -153,6 +192,98 @@ function ReadinessRow({ item }: { item: ReadinessItem }) {
   );
 }
 
+function BrandAssetPicker({
+  title,
+  description,
+  selectedId,
+  previewUrl,
+  assets,
+  previewUrls,
+  uploading,
+  onUpload,
+  onSelect,
+  onClear
+}: {
+  title: string;
+  description: string;
+  selectedId: number | null;
+  previewUrl: string;
+  assets: MediaAsset[];
+  previewUrls: Record<number, string>;
+  uploading: boolean;
+  onUpload: (file: File | undefined) => void;
+  onSelect: (assetId: number | null) => void;
+  onClear: () => void;
+}) {
+  const selectedAsset = assets.find((asset) => asset.id === selectedId);
+
+  return (
+    <div className="rounded-md border border-app-border bg-white p-3 shadow-hairline">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-black text-app-text">{title}</p>
+          <p className="mt-1 text-xs leading-5 text-app-muted">{description}</p>
+        </div>
+        {selectedId ? (
+          <button type="button" onClick={onClear} className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-50 hover:text-rose-600" aria-label={`حذف ${title}`}>
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-[96px_minmax(0,1fr)]">
+        <div className="flex aspect-square items-center justify-center overflow-hidden rounded-md border border-app-border bg-app-surfaceMuted">
+          {previewUrl ? (
+            <img src={previewUrl} alt={title} className="h-full w-full object-cover" />
+          ) : (
+            <ImageIcon className="h-7 w-7 text-slate-400" aria-hidden="true" />
+          )}
+        </div>
+
+        <div className="min-w-0 space-y-2">
+          <label className="app-interactive flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted px-3 py-2 text-xs font-black text-app-text hover:border-blue-300 hover:bg-blue-50">
+            <UploadCloud className="h-4 w-4" aria-hidden="true" />
+            {uploading ? "در حال آپلود..." : "آپلود تصویر"}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              disabled={uploading}
+              onChange={(event) => {
+                onUpload(event.target.files?.[0]);
+                event.currentTarget.value = "";
+              }}
+            />
+          </label>
+
+          <select
+            value={selectedId ?? ""}
+            onChange={(event) => onSelect(event.target.value ? Number(event.target.value) : null)}
+            className="min-h-11 w-full rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-text outline-none transition focus:border-app-primary focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="">انتخاب از کتابخانه رسانه</option>
+            {assets.map((asset) => (
+              <option key={asset.id} value={asset.id}>
+                {asset.original_filename}
+              </option>
+            ))}
+          </select>
+
+          {selectedAsset ? (
+            <p className="truncate text-[11px] text-app-muted">
+              {selectedAsset.folder || "بدون پوشه"} · {selectedAsset.content_type}
+            </p>
+          ) : (
+            <p className="text-[11px] leading-5 text-app-muted">{assets.length ? "یا یکی از تصاویر موجود را انتخاب کنید." : "هنوز تصویر آماده‌ای در کتابخانه نیست."}</p>
+          )}
+
+          {selectedId && !previewUrls[selectedId] ? <p className="text-[11px] text-amber-700">پیش‌نمایش این دارایی در دسترس نیست.</p> : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function StorePage() {
   const { showToast } = useToast();
   const [form, setForm] = useState<StoreForm>(emptyStore);
@@ -161,14 +292,23 @@ export default function StorePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
+  const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
+  const [uploadingAsset, setUploadingAsset] = useState<BrandAssetKind | null>(null);
 
   useEffect(() => {
     async function loadStore() {
-      const response = await fetch(`${apiUrl}/stores/active`, { headers: authHeaders() });
+      const [response, mediaResponse] = await Promise.all([
+        fetch(`${apiUrl}/stores/active`, { headers: authHeaders() }),
+        fetch(`${apiUrl}/media`, { headers: authHeaders() })
+      ]);
 
       if (!response.ok) throw new Error("خطا در دریافت اطلاعات فروشگاه");
 
       const data = await response.json();
+      if (mediaResponse.ok) {
+        setMediaAssets(await mediaResponse.json());
+      }
       if (data) {
         const nextForm = normalizeStore(data);
         setForm(nextForm);
@@ -188,10 +328,85 @@ export default function StorePage() {
   const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm]);
   const score = readinessScore(readinessItems);
   const requiredReady = readinessItems.filter((item) => item.required).every((item) => item.done);
+  const imageAssets = useMemo(() => mediaAssets.filter((asset) => asset.content_type.startsWith("image/")), [mediaAssets]);
+  const logoUrl = form.logo_asset_id ? mediaPreviewUrls[form.logo_asset_id] : "";
+  const avatarUrl = form.avatar_asset_id ? mediaPreviewUrls[form.avatar_asset_id] : "";
 
-  function updateField(field: keyof StoreForm, value: string) {
+  useEffect(() => {
+    if (mediaAssets.length === 0) {
+      setMediaPreviewUrls({});
+      return;
+    }
+
+    let cancelled = false;
+    const createdUrls: string[] = [];
+
+    async function loadPreviews() {
+      const entries = await Promise.all(
+        mediaAssets
+          .filter((asset) => asset.content_type.startsWith("image/"))
+          .map(async (asset) => {
+            try {
+              const response = await fetch(`${apiUrl}/media/${asset.id}/file`, { headers: authHeaders() });
+              if (!response.ok) return null;
+              const blob = await response.blob();
+              const url = URL.createObjectURL(blob);
+              createdUrls.push(url);
+              return [asset.id, url] as const;
+            } catch {
+              return null;
+            }
+          })
+      );
+
+      if (!cancelled) {
+        setMediaPreviewUrls(Object.fromEntries(entries.filter(Boolean) as Array<[number, string]>));
+      } else {
+        createdUrls.forEach((url) => URL.revokeObjectURL(url));
+      }
+    }
+
+    loadPreviews();
+
+    return () => {
+      cancelled = true;
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [mediaAssets]);
+
+  function updateField(field: keyof StoreForm, value: StoreForm[keyof StoreForm]) {
     setMessage("");
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  async function uploadBrandAsset(kind: BrandAssetKind, file: File | undefined) {
+    if (!file) return;
+    setMessage("");
+    setError("");
+    setUploadingAsset(kind);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "brand");
+      formData.append("tags", kind === "logo_asset_id" ? "brand,logo" : "brand,avatar");
+      const response = await fetch(`${apiUrl}/media`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: formData
+      });
+      if (!response.ok) throw new Error("آپلود دارایی برند ناموفق بود");
+      const asset = (await response.json()) as MediaAsset;
+      setMediaAssets((current) => [asset, ...current.filter((item) => item.id !== asset.id)]);
+      updateField(kind, asset.id);
+      showToast({ title: "دارایی برند آپلود شد", description: kind === "logo_asset_id" ? "لوگوی برند انتخاب شد." : "آواتار برند انتخاب شد.", tone: "success" });
+    } catch (err) {
+      const nextError = err instanceof Error ? err.message : "خطای آپلود دارایی برند";
+      setError(nextError);
+      showToast({ title: "آپلود ناموفق بود", description: nextError, tone: "alert" });
+    } finally {
+      setUploadingAsset(null);
+    }
   }
 
   function resetChanges() {
@@ -267,7 +482,7 @@ export default function StorePage() {
           <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-3">
             {[
               { label: "آمادگی پروفایل", value: `${score}%`, detail: "نام و منطقه زمانی پایه‌های ضروری‌اند", icon: StoreIcon, tone: requiredReady ? "text-emerald-700" : "text-amber-700" },
-              { label: "کیت برند", value: `${defaultCount(form)}/6`, detail: "لحن، CTA، رنگ، هشتگ و قوانین", icon: Palette, tone: "text-app-primary" },
+              { label: "کیت برند", value: `${defaultCount(form)}/8`, detail: "لوگو، آواتار، لحن، CTA و قوانین", icon: Palette, tone: "text-app-primary" },
               { label: "وضعیت ویرایش", value: dirty ? "ذخیره نشده" : "به‌روز", detail: dirty ? "نسخه جدید را ثبت کنید" : "آخرین تغییرات ثبت شده است", icon: Save, tone: dirty ? "text-amber-700" : "text-emerald-700" }
             ].map((metric) => {
               const Icon = metric.icon;
@@ -324,6 +539,40 @@ export default function StorePage() {
                           <Clock3 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
                         </div>
                       </Field>
+                    </div>
+                  </WorkspacePanel>
+
+                  <WorkspacePanel
+                    title="هویت بصری برند"
+                    description="لوگو و آواتار را از کتابخانه رسانه انتخاب کنید یا مستقیم همین‌جا آپلود کنید."
+                    action={<Tag tone={form.logo_asset_id || form.avatar_asset_id ? "success" : "warning"}>{form.logo_asset_id || form.avatar_asset_id ? "دارایی بصری آماده" : "بدون تصویر برند"}</Tag>}
+                  >
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <BrandAssetPicker
+                        title="لوگوی برند"
+                        description="برای کارت‌های برند، گزارش‌ها و فضاهای رسمی‌تر استفاده می‌شود."
+                        selectedId={form.logo_asset_id}
+                        previewUrl={logoUrl}
+                        assets={imageAssets}
+                        previewUrls={mediaPreviewUrls}
+                        uploading={uploadingAsset === "logo_asset_id"}
+                        onUpload={(file) => void uploadBrandAsset("logo_asset_id", file)}
+                        onSelect={(assetId) => updateField("logo_asset_id", assetId)}
+                        onClear={() => updateField("logo_asset_id", null)}
+                      />
+
+                      <BrandAssetPicker
+                        title="آواتار انتشار"
+                        description="در پیش‌نمایش روبیکا، composer و هویت سریع workspace دیده می‌شود."
+                        selectedId={form.avatar_asset_id}
+                        previewUrl={avatarUrl}
+                        assets={imageAssets}
+                        previewUrls={mediaPreviewUrls}
+                        uploading={uploadingAsset === "avatar_asset_id"}
+                        onUpload={(file) => void uploadBrandAsset("avatar_asset_id", file)}
+                        onSelect={(assetId) => updateField("avatar_asset_id", assetId)}
+                        onClear={() => updateField("avatar_asset_id", null)}
+                      />
                     </div>
                   </WorkspacePanel>
 
@@ -447,7 +696,7 @@ export default function StorePage() {
               <WorkspacePanel title="پیش‌نمایش کپشن پایه" description="خروجی پایه‌ای که در کپشن‌ها تکرار می‌شود.">
                 <div className="rounded-md border border-app-border bg-slate-50 p-4">
                   <div className="mb-4 flex items-center gap-3 border-b border-app-border pb-3">
-                    <WorkspaceAvatar name={form.name || "نام فروشگاه"} color={form.brand_primary_color} />
+                    <WorkspaceAvatar name={form.name || "نام فروشگاه"} color={form.brand_primary_color} imageUrl={avatarUrl || logoUrl} />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-black text-app-text">{form.name || "نام فروشگاه"}</p>
                       <p className="mt-1 flex items-center gap-1 text-xs text-app-muted">
@@ -457,6 +706,12 @@ export default function StorePage() {
                     </div>
                   </div>
                   <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">{previewCaption(form)}</p>
+                  {logoUrl ? (
+                    <div className="mt-4 rounded-md border border-app-border bg-white p-3">
+                      <p className="mb-2 text-[11px] font-black text-app-muted">لوگوی ثبت‌شده</p>
+                      <img src={logoUrl} alt="لوگوی برند" className="max-h-20 max-w-full rounded object-contain" />
+                    </div>
+                  ) : null}
                 </div>
                 <div className="mt-4 grid gap-3 text-xs text-app-muted">
                   <p className="flex items-center gap-2">

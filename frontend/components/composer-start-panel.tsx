@@ -5,6 +5,7 @@ type ComposerStartPanelProps = {
   storeName: string;
   storeCategory?: string;
   brandColor?: string;
+  avatarUrl?: string;
   mediaPreviewUrls: string[];
   hasDefaults: boolean;
   onStartText: () => void;
@@ -48,6 +49,7 @@ export function ComposerStartPanel({
   storeName,
   storeCategory,
   brandColor,
+  avatarUrl,
   mediaPreviewUrls,
   hasDefaults,
   onStartText,
@@ -67,7 +69,7 @@ export function ComposerStartPanel({
       <div className="grid lg:grid-cols-[minmax(0,1fr)_240px]">
         <div className="p-4 lg:p-5">
           <div className="flex items-center gap-3">
-            <WorkspaceAvatar name={storeName} size="lg" color={brandColor} />
+            <WorkspaceAvatar name={storeName} size="lg" color={brandColor} imageUrl={avatarUrl} />
             <div>
               <p className="app-section-kicker text-[10px] font-black">شروع سریع استودیو</p>
               <h2 className="mt-1 text-lg font-black text-app-text">پست را از مسیر مناسب شروع کنید</h2>

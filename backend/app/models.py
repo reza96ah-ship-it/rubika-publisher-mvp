@@ -25,6 +25,8 @@ class Store(Base):
     category: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     phone: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     description: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    logo_asset_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    avatar_asset_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     brand_primary_color: Mapped[str] = mapped_column(String(32), nullable=False, default="#0F766E")
     brand_accent_color: Mapped[str] = mapped_column(String(32), nullable=False, default="#2563EB")
     brand_voice: Mapped[str] = mapped_column(Text, nullable=False, default="")

@@ -53,9 +53,10 @@ Priority: P0.
 Current implementation status:
 
 - Store brand color, accent color, tone of voice, default CTA, and content guidelines persist in the backend.
+- Store logo and avatar can reference existing media assets or freshly uploaded brand images.
 - Store settings has a clean Brand Kit panel with color controls and brand copy fields.
-- Composer uses brand defaults for starter captions and preview identity.
-- Logo/avatar media references are still planned for the next Brand Kit slice.
+- Composer uses brand defaults, brand color, and brand avatar/logo for starter panels and preview identity.
+- The next Brand Kit slice should apply the same visual identity to dashboard, shell, reports, and exportable artifacts.
 
 ## Phase 3: Campaign OS
 

@@ -35,6 +35,8 @@ Current fields:
 - `category`
 - `phone`
 - `description`
+- `logo_asset_id`
+- `avatar_asset_id`
 - `default_hashtags`
 - `caption_footer`
 - `brand_primary_color`
@@ -50,7 +52,8 @@ Current fields:
 Target direction:
 
 - Keep store as workspace/business identity.
-- Keep the first Brand Kit slice on Store, then split into a dedicated `BrandKit` entity when logo/avatar assets, forbidden phrases, and versioned rules need their own lifecycle.
+- Keep the first Brand Kit slice on Store, with logo/avatar references pointing at `MediaAsset`.
+- Split into a dedicated `BrandKit` entity when forbidden phrases, versioned rules, or multiple brand variants need their own lifecycle.
 - Support multiple stores/workspaces later.
 
 ### RubikaAccount

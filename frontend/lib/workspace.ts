@@ -8,6 +8,8 @@ export type StoreProfile = {
   category: string;
   phone: string;
   description: string;
+  logo_asset_id: number | null;
+  avatar_asset_id: number | null;
   brand_primary_color: string;
   brand_accent_color: string;
   brand_voice: string;
