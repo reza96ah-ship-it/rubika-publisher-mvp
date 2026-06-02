@@ -96,7 +96,8 @@ Current implementation status:
 - Campaign details now include a compact performance funnel for media coverage, queue, successful publishing, and active risk.
 - Campaign Center now supports bulk assigning posts to the selected campaign and removing linked posts from that campaign.
 - Campaign Center now includes selected-campaign analytics for delivery rate, media coverage, attempt success, weekly risk, activity trend, status mix, and priority posts.
-- The next Campaign OS slice should add campaign-level export/reporting and deeper benchmark comparisons.
+- Campaign Center can export the selected campaign as CSV or a print-ready HTML report with metrics, trend, risks, and linked posts.
+- The next Campaign OS slice should add deeper benchmark comparisons and report scheduling.
 
 ## Phase 4: Composer Studio Pro
 

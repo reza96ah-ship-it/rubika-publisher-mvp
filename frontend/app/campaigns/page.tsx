@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, BarChart3, CheckCircle2, CheckSquare2, FileImage, ImageIcon, PieChart, Plus, RefreshCw, Target, TimerReset, TrendingUp, XCircle, Zap } from "lucide-react";
+import { AlertTriangle, BarChart3, CheckCircle2, CheckSquare2, Download, FileImage, ImageIcon, PieChart, Plus, Printer, RefreshCw, Target, TimerReset, TrendingUp, XCircle, Zap } from "lucide-react";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "../../components/app-shell";
@@ -73,6 +73,16 @@ const statusLabels: Record<string, string> = {
   paused: "متوقف",
   completed: "تکمیل‌شده",
   archived: "آرشیوشده"
+};
+
+const postStatusLabels: Record<string, string> = {
+  draft: "پیش‌نویس",
+  ready: "آماده",
+  scheduled: "زمان‌بندی‌شده",
+  publishing: "در حال انتشار",
+  published: "منتشرشده",
+  failed: "ناموفق",
+  cancelled: "لغوشده"
 };
 
 const campaignStatusOptions: Array<{ value: CampaignStatus; label: string }> = [
@@ -319,6 +329,37 @@ function formatBytes(value: number) {
 function percent(value: number, total: number) {
   if (!total) return 0;
   return Math.round((value / total) * 100);
+}
+
+function csvCell(value: string | number | null | undefined) {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+function toCsv(rows: Array<Array<string | number | null | undefined>>) {
+  return rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
+}
+
+function safeFileName(value: string) {
+  return value.trim().replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, "-").slice(0, 64) || "campaign";
+}
+
+function downloadTextFile(filename: string, content: string, type: string) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function escapeHtml(value: string | number | null | undefined) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 export default function CampaignsPage() {
@@ -691,6 +732,127 @@ export default function CampaignsPage() {
     }
   }
 
+  function buildCampaignReportRows() {
+    if (!selectedRow) return [];
+    const campaign = selectedRow.campaign;
+    return [
+      ["گزارش کمپین", campaign.name],
+      ["تاریخ خروجی", formatDateTime(new Date().toISOString())],
+      ["وضعیت", statusLabels[campaign.status] ?? campaign.status],
+      ["مالک", campaign.owner || "تعریف نشده"],
+      ["بازه", `${formatDateTime(campaign.starts_at)} تا ${formatDateTime(campaign.ends_at)}`],
+      ["هدف", campaign.goal || campaign.notes || "تعریف نشده"],
+      [],
+      ["شاخص", "مقدار"],
+      ["سلامت کمپین", `${selectedRow.stats.health}%`],
+      ["نرخ تحویل", `${campaignInsights.deliveryRate}%`],
+      ["پوشش رسانه", `${campaignInsights.mediaCoverage}%`],
+      ["موفقیت تلاش‌ها", `${campaignInsights.attemptSuccessRate}%`],
+      ["انتشار در ۷ روز", campaignInsights.recentPublished],
+      ["ریسک هفته", campaignInsights.recentFailed],
+      ["پست‌های متصل", selectedPosts.length],
+      ["دارایی‌های متصل", selectedAssets.length],
+      ["تلاش‌های انتشار", selectedAttempts.length],
+      [],
+      ["ترکیب وضعیت", "تعداد"],
+      ...campaignInsights.statusMix.map((item) => [item.label, item.value]),
+      [],
+      ["روند ۱۰ روزه", "فعالیت", "منتشر", "خطا"],
+      ...campaignInsights.trend.map((point) => [point.label, point.activity, point.published, point.failed]),
+      [],
+      ["پست‌های اولویت‌دار", "امتیاز ریسک", "وضعیت", "خطا/یادداشت"],
+      ...(campaignInsights.riskPosts.length
+        ? campaignInsights.riskPosts.map(({ post, score }) => [post.title, `${score}%`, postStatusLabels[post.status] ?? post.status, post.last_error || `${post.attempt_count} تلاش ثبت‌شده`])
+        : [["ریسک فعالی دیده نمی‌شود", "0%", "", ""]]),
+      [],
+      ["پست‌های متصل", "شناسه", "وضعیت", "زمان", "تلاش", "رسانه", "خطا"],
+      ...selectedPosts.map((post) => [
+        post.title,
+        post.id,
+        postStatusLabels[post.status] ?? post.status,
+        formatDateTime(post.scheduled_at || post.published_at || post.failed_at || post.updated_at),
+        post.attempt_count,
+        (mediaByPostId.get(post.id) ?? []).length,
+        post.last_error
+      ])
+    ];
+  }
+
+  function exportCampaignCsv() {
+    if (!selectedRow) return;
+    const filename = `${safeFileName(selectedRow.campaign.name)}-campaign-report.csv`;
+    downloadTextFile(filename, `\ufeff${toCsv(buildCampaignReportRows())}`, "text/csv;charset=utf-8");
+    showToast({ title: "گزارش CSV آماده شد", description: selectedRow.campaign.name, tone: "success" });
+  }
+
+  function exportCampaignHtml() {
+    if (!selectedRow) return;
+    const campaign = selectedRow.campaign;
+    const filename = `${safeFileName(campaign.name)}-campaign-report.html`;
+    const statusRows = campaignInsights.statusMix.map((item) => `
+      <tr><td><span class="dot" style="background:${item.color}"></span>${escapeHtml(item.label)}</td><td>${item.value}</td><td>${percent(item.value, selectedPosts.length)}%</td></tr>
+    `).join("");
+    const trendRows = campaignInsights.trend.map((point) => `
+      <tr><td>${escapeHtml(point.label)}</td><td>${point.activity}</td><td>${point.published}</td><td>${point.failed}</td></tr>
+    `).join("");
+    const priorityRows = (campaignInsights.riskPosts.length
+      ? campaignInsights.riskPosts.map(({ post, score }) => `
+        <tr><td>${escapeHtml(post.title)}</td><td>${score}%</td><td>${escapeHtml(postStatusLabels[post.status] ?? post.status)}</td><td>${escapeHtml(post.last_error || `${post.attempt_count} تلاش ثبت‌شده`)}</td></tr>
+      `)
+      : [`<tr><td colspan="4">ریسک فعالی برای پست‌های این کمپین دیده نمی‌شود.</td></tr>`]).join("");
+    const postRows = selectedPosts.map((post) => `
+      <tr>
+        <td>${escapeHtml(post.title)}</td>
+        <td>${escapeHtml(postStatusLabels[post.status] ?? post.status)}</td>
+        <td>${escapeHtml(formatDateTime(post.scheduled_at || post.published_at || post.failed_at || post.updated_at))}</td>
+        <td>${post.attempt_count}</td>
+        <td>${(mediaByPostId.get(post.id) ?? []).length}</td>
+        <td>${escapeHtml(post.last_error)}</td>
+      </tr>
+    `).join("");
+    const html = `<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(campaign.name)} - گزارش کمپین</title>
+  <style>
+    body{margin:0;background:#f3f7f8;color:#172332;font-family:Tahoma,Arial,sans-serif;line-height:1.7}
+    main{max-width:1080px;margin:0 auto;padding:32px}
+    header,.panel{background:#fff;border:1px solid #d8e5e8;border-radius:12px;box-shadow:0 12px 32px rgba(33,61,75,.07)}
+    header{padding:24px;border-top:5px solid ${campaign.color || "#0F766E"}}
+    h1{margin:0 0 8px;font-size:26px} h2{margin:0 0 12px;font-size:17px}
+    .muted{color:#65758a}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.metric{background:#f6fafb;border:1px solid #e1eaed;border-radius:10px;padding:14px}
+    .metric b{display:block;font-size:24px;color:#0f766e}.panel{padding:18px;margin-top:16px}
+    table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px solid #e5edf0;padding:9px;text-align:right;vertical-align:top}th{background:#f6fafb;color:#526274}
+    .dot{display:inline-block;width:8px;height:8px;border-radius:999px;margin-left:8px}
+    @media print{body{background:white}main{padding:0}header,.panel{box-shadow:none;break-inside:avoid}}
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="muted">گزارش کمپین · ${escapeHtml(formatDateTime(new Date().toISOString()))}</p>
+      <h1>${escapeHtml(campaign.name)}</h1>
+      <p>${escapeHtml(campaign.goal || campaign.notes || "هدف کمپین تعریف نشده است.")}</p>
+      <p class="muted">وضعیت: ${escapeHtml(statusLabels[campaign.status] ?? campaign.status)} · مالک: ${escapeHtml(campaign.owner || "تعریف نشده")} · بازه: ${escapeHtml(formatDateTime(campaign.starts_at))} تا ${escapeHtml(formatDateTime(campaign.ends_at))}</p>
+    </header>
+    <section class="grid">
+      <div class="metric"><span>سلامت</span><b>${selectedRow.stats.health}%</b></div>
+      <div class="metric"><span>نرخ تحویل</span><b>${campaignInsights.deliveryRate}%</b></div>
+      <div class="metric"><span>پوشش رسانه</span><b>${campaignInsights.mediaCoverage}%</b></div>
+      <div class="metric"><span>موفقیت تلاش‌ها</span><b>${campaignInsights.attemptSuccessRate}%</b></div>
+    </section>
+    <section class="panel"><h2>ترکیب وضعیت</h2><table><thead><tr><th>وضعیت</th><th>تعداد</th><th>سهم</th></tr></thead><tbody>${statusRows}</tbody></table></section>
+    <section class="panel"><h2>روند ۱۰ روزه</h2><table><thead><tr><th>روز</th><th>فعالیت</th><th>منتشر</th><th>خطا</th></tr></thead><tbody>${trendRows}</tbody></table></section>
+    <section class="panel"><h2>اولویت‌های رسیدگی</h2><table><thead><tr><th>پست</th><th>ریسک</th><th>وضعیت</th><th>جزئیات</th></tr></thead><tbody>${priorityRows}</tbody></table></section>
+    <section class="panel"><h2>پست‌های متصل</h2><table><thead><tr><th>پست</th><th>وضعیت</th><th>زمان</th><th>تلاش</th><th>رسانه</th><th>خطا</th></tr></thead><tbody>${postRows}</tbody></table></section>
+  </main>
+</body>
+</html>`;
+    downloadTextFile(filename, html, "text/html;charset=utf-8");
+    showToast({ title: "گزارش HTML آماده شد", description: "فایل را می‌توانید چاپ یا ارسال کنید.", tone: "success" });
+  }
+
   return (
     <AuthGate>
       <AppShell>
@@ -968,7 +1130,19 @@ export default function CampaignsPage() {
               <WorkspacePanel
                 title="تحلیل کمپین"
                 description="خلاصه عملکرد، پوشش رسانه، روند فعالیت و ریسک‌های عملیاتی کمپین انتخاب‌شده."
-                action={<StatusToken tone={campaignInsights.recentFailed ? "alert" : "success"}>{campaignInsights.recentPublished} انتشار در ۷ روز</StatusToken>}
+                action={(
+                  <div className="flex flex-wrap gap-2">
+                    <StatusToken tone={campaignInsights.recentFailed ? "alert" : "success"}>{campaignInsights.recentPublished} انتشار در ۷ روز</StatusToken>
+                    <Button type="button" variant="secondary" size="sm" onClick={exportCampaignCsv}>
+                      <Download className="ml-2 h-4 w-4" aria-hidden="true" />
+                      CSV
+                    </Button>
+                    <Button type="button" variant="secondary" size="sm" onClick={exportCampaignHtml}>
+                      <Printer className="ml-2 h-4 w-4" aria-hidden="true" />
+                      گزارش
+                    </Button>
+                  </div>
+                )}
                 bodyClassName="p-4"
                 className="xl:col-span-2"
               >
