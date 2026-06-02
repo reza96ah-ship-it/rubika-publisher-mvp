@@ -30,6 +30,7 @@ import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, InspectorPanel, NoticeBanner, StatusToken, Timeline, WorkspacePage } from "../../components/workspace-ui";
 import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { apiUrl, authHeaders, type Post } from "../../lib/posts";
+import { isRubikaConnected, rubikaStatusLabel, type RubikaSettings } from "../../lib/workspace";
 import {
   formatJalaliDate,
   formatJalaliDateTime,
@@ -214,6 +215,7 @@ export default function CalendarPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [rubikaSettings, setRubikaSettings] = useState<RubikaSettings | null>(null);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [statusFilter, setStatusFilter] = useState<CalendarFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("month");
@@ -232,10 +234,11 @@ export default function CalendarPage() {
 
   const loadPosts = useCallback(async (preservePlannerState = false) => {
     const headers = authHeaders();
-    const [response, campaignsResponse, mediaResponse] = await Promise.all([
+    const [response, campaignsResponse, mediaResponse, rubikaResponse] = await Promise.all([
       fetch(`${apiUrl}/posts`, { headers }),
       loadCampaigns(),
-      fetch(`${apiUrl}/media`, { headers })
+      fetch(`${apiUrl}/media`, { headers }),
+      fetch(`${apiUrl}/rubika/settings`, { headers })
     ]);
     if (!response.ok) throw new Error("دریافت تقویم انتشار ناموفق بود");
     const data: Post[] = await response.json();
@@ -247,6 +250,7 @@ export default function CalendarPage() {
     setPosts(data);
     setCampaigns(campaignsResponse);
     if (mediaResponse.ok) setAssets(await mediaResponse.json());
+    if (rubikaResponse.ok) setRubikaSettings(await rubikaResponse.json());
     if (!preservePlannerState) {
       setMonthAnchor(upcoming?.scheduled_at ?? sorted[0]?.scheduled_at ?? new Date().toISOString());
       setSelectedDayKey(upcoming?.scheduled_at ? jalaliDateKey(upcoming.scheduled_at) : sorted[0]?.scheduled_at ? jalaliDateKey(sorted[0].scheduled_at) : jalaliDateKey(new Date().toISOString()));
@@ -382,13 +386,15 @@ export default function CalendarPage() {
     });
     const missingMedia = sortedDayPosts.filter((post) => !assetByPostId.has(post.id));
     const failed = sortedDayPosts.filter((post) => post.status === "failed" || post.last_error);
+    const publishablePosts = sortedDayPosts.filter((post) => ["scheduled", "publishing"].includes(post.status));
+    const rubikaBlocked = publishablePosts.length > 0 && !isRubikaConnected(rubikaSettings);
     const busyHours = new Set(sortedDayPosts.map((post) => getJalaliPickerParts(post.scheduled_at, scheduleTimezone).hour));
     const suggestedSlots = [9, 12, 15, 18, 21]
       .filter((hour) => !busyHours.has(hour))
       .slice(0, 3)
       .map((hour) => ({ hour, label: `${String(hour).padStart(2, "0")}:00` }));
-    return { conflicts, missingMedia, failed, suggestedSlots };
-  }, [assetByPostId, selectedDayPosts]);
+    return { conflicts, missingMedia, failed, publishablePosts, rubikaBlocked, suggestedSlots };
+  }, [assetByPostId, rubikaSettings, selectedDayPosts]);
 
   function selectPost(post: Post) {
     setSelectedPostId(post.id);
@@ -831,12 +837,22 @@ export default function CalendarPage() {
                 <div className="mb-4 rounded-lg border border-app-border bg-app-surfaceMuted p-3 shadow-hairline">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-xs font-black text-app-text">هوشمندی برنامه‌ریزی</p>
-                    <StatusToken tone={selectedDayInsights.conflicts.length || selectedDayInsights.failed.length ? "alert" : selectedDayInsights.missingMedia.length ? "warning" : "success"}>
-                      {selectedDayInsights.conflicts.length || selectedDayInsights.failed.length ? "نیازمند توجه" : selectedDayInsights.missingMedia.length ? "قابل بهبود" : "پایدار"}
+                    <StatusToken tone={selectedDayInsights.conflicts.length || selectedDayInsights.failed.length || selectedDayInsights.rubikaBlocked ? "alert" : selectedDayInsights.missingMedia.length ? "warning" : "success"}>
+                      {selectedDayInsights.conflicts.length || selectedDayInsights.failed.length || selectedDayInsights.rubikaBlocked ? "نیازمند توجه" : selectedDayInsights.missingMedia.length ? "قابل بهبود" : "پایدار"}
                     </StatusToken>
                   </div>
 
                   <div className="mt-3 space-y-2">
+                    {selectedDayInsights.rubikaBlocked ? (
+                      <div className="rounded-md border border-rose-200 bg-rose-50 p-2 text-[11px] font-bold leading-5 text-rose-800">
+                        <p>
+                          اتصال روبیکا برای {selectedDayInsights.publishablePosts.length} پست آماده نیست: {rubikaStatusLabel(rubikaSettings)}.
+                        </p>
+                        <Button href="/rubika" variant="secondary" size="sm" className="mt-2">
+                          بررسی اتصال روبیکا
+                        </Button>
+                      </div>
+                    ) : null}
                     {selectedDayInsights.conflicts.slice(0, 2).map((conflict) => (
                       <div key={`${conflict.first.id}-${conflict.second.id}`} className="rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] font-bold leading-5 text-amber-800">
                         فاصله کم: {conflict.first.title} و {conflict.second.title} فقط {conflict.gap} دقیقه فاصله دارند.
@@ -852,7 +868,7 @@ export default function CalendarPage() {
                         {selectedDayInsights.missingMedia.length} پست بدون رسانه است؛ برای پست فروشگاهی بهتر است رسانه اضافه شود.
                       </div>
                     ) : null}
-                    {!selectedDayInsights.conflicts.length && !selectedDayInsights.failed.length && !selectedDayInsights.missingMedia.length ? (
+                    {!selectedDayInsights.conflicts.length && !selectedDayInsights.failed.length && !selectedDayInsights.missingMedia.length && !selectedDayInsights.rubikaBlocked ? (
                       <div className="rounded-md border border-emerald-200 bg-emerald-50 p-2 text-[11px] font-bold leading-5 text-emerald-800">
                         فاصله‌بندی، وضعیت و رسانه‌های این روز خوب به نظر می‌رسند.
                       </div>
