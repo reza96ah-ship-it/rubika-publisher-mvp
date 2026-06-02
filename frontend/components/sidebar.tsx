@@ -14,7 +14,8 @@ import {
   Plug,
   ScrollText,
   Settings2,
-  Store
+  Store,
+  Target
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -70,6 +71,7 @@ const settingsNavItems: NavItem[] = [
 const composeNavItem: NavItem = { label: "پست جدید", href: "/compose", icon: PenLine };
 const publishingRouteItems: NavItem[] = [
   { label: "پلنر انتشار", href: "/calendar", icon: CalendarDays },
+  { label: "کمپین‌ها", href: "/campaigns", icon: Target },
   { label: "لیست محتوا", href: "/content", icon: FileText },
   { label: "صف انتشار", href: "/queue", icon: ListChecks }
 ];

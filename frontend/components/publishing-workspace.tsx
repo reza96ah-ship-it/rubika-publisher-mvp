@@ -1,10 +1,10 @@
 "use client";
 
-import { AlertTriangle, CalendarDays, CheckCircle2, FileText, ListChecks, Rows3 } from "lucide-react";
+import { AlertTriangle, CalendarDays, CheckCircle2, FileText, ListChecks, Rows3, Target } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-export type PublishingTab = "calendar" | "content" | "queue" | "draft" | "published" | "failed";
+export type PublishingTab = "calendar" | "campaigns" | "content" | "queue" | "draft" | "published" | "failed";
 
 type PublishingWorkspaceHeaderProps = {
   activeTab: PublishingTab;
@@ -18,6 +18,7 @@ type PublishingWorkspaceHeaderProps = {
 
 const tabs = [
   { key: "calendar" as const, label: "تقویم", href: "/calendar", icon: CalendarDays },
+  { key: "campaigns" as const, label: "کمپین‌ها", href: "/campaigns", icon: Target },
   { key: "content" as const, label: "لیست محتوا", href: "/content", icon: Rows3 },
   { key: "queue" as const, label: "صف انتشار", href: "/queue", icon: ListChecks },
   { key: "draft" as const, label: "پیش‌نویس", href: "/content?status=draft", icon: FileText },
