@@ -139,6 +139,13 @@ Acceptance criteria:
 - Users can reliably manage designs with at least 20 layers.
 - Layer ordering and visibility match the exported image.
 
+Current implementation status:
+
+- The editor now has a real layer rail with editable names, selection state, and stack ordering.
+- Layers can be reordered with drag-and-drop or explicit forward/back controls.
+- Visibility, lock, duplicate, delete, opacity, group, ungroup, and center alignment controls are available.
+- Hidden layers are excluded from export, and locked layers are protected from canvas edits.
+
 Priority: **P0**.
 
 ### Editor Phase 3: Social Crop And Variant Studio

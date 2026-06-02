@@ -1,6 +1,6 @@
 "use client";
 
-import { AlignCenter, AlignLeft, AlignRight, Copy, ImagePlus, Maximize2, Minus, Palette, Plus, Redo2, RotateCcw, RotateCw, Save, ShieldCheck, SmilePlus, Trash2, Type, Undo2, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Copy, Eye, EyeOff, GripVertical, Group, ImagePlus, Layers3, Lock, Maximize2, Minus, Palette, Plus, Redo2, RotateCcw, RotateCw, Save, ShieldCheck, SmilePlus, Trash2, Type, Undo2, Ungroup, Unlock, X } from "lucide-react";
 import { PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "./ui/button";
@@ -17,6 +17,11 @@ type EditorLayer = {
   fontSize: number;
   align: "left" | "center" | "right";
   rotation: number;
+  name: string;
+  visible: boolean;
+  locked: boolean;
+  opacity: number;
+  groupId?: string;
 };
 
 type ImageAdjustments = {
@@ -86,8 +91,10 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const imageRef = useRef<HTMLImageElement | null>(null);
   const dragRef = useRef<{ layerId: string; offsetX: number; offsetY: number } | null>(null);
   const transformRef = useRef<ActiveTransform | null>(null);
+  const layerDragRef = useRef<string | null>(null);
   const [layers, setLayers] = useState<EditorLayer[]>([]);
   const [selectedLayerId, setSelectedLayerId] = useState("");
+  const [selectedLayerIds, setSelectedLayerIds] = useState<string[]>([]);
   const [draftText, setDraftText] = useState("متن جدید");
   const [adjustments, setAdjustments] = useState<ImageAdjustments>(initialAdjustments);
   const [past, setPast] = useState<EditorSnapshot[]>([]);
@@ -100,7 +107,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const [error, setError] = useState("");
 
   const selectedLayer = useMemo(() => layers.find((layer) => layer.id === selectedLayerId) ?? null, [layers, selectedLayerId]);
-  const selectedBounds = selectedLayer ? layerBounds(selectedLayer) : null;
+  const selectedBounds = selectedLayer?.visible ? layerBounds(selectedLayer) : null;
 
   const snapshot = useCallback((): EditorSnapshot => ({
     layers: cloneLayers(layers),
@@ -125,10 +132,11 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     context.restore();
 
-    layers.forEach((layer) => {
+    layers.filter((layer) => layer.visible).forEach((layer) => {
       context.save();
       context.translate(layer.x, layer.y);
       context.rotate((layer.rotation * Math.PI) / 180);
+      context.globalAlpha = layer.opacity / 100;
       context.textAlign = layer.align;
       context.textBaseline = "middle";
       context.direction = "rtl";
@@ -177,6 +185,11 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     if (imageReady) renderCanvas();
   }, [imageReady, renderCanvas]);
 
+  useEffect(() => {
+    setSelectedLayerIds((current) => current.filter((id) => layers.some((layer) => layer.id === id)));
+    setSelectedLayerId((current) => layers.some((layer) => layer.id === current) ? current : "");
+  }, [layers]);
+
   function canvasPointFromClient(clientX: number, clientY: number) {
     const artboard = artboardRef.current;
     if (!artboard) return { x: 0, y: 0 };
@@ -217,6 +230,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
   function hitLayer(point: { x: number; y: number }) {
     return [...layers].reverse().find((layer) => {
+      if (!layer.visible || layer.locked) return false;
       const bounds = layerBounds(layer);
       return point.x >= bounds.left - 16 && point.x <= bounds.left + bounds.width + 16 && point.y >= bounds.top - 16 && point.y <= bounds.top + bounds.height + 16;
     }) ?? null;
@@ -227,10 +241,12 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     const layer = hitLayer(point);
     if (!layer) {
       setSelectedLayerId("");
+      setSelectedLayerIds([]);
       return;
     }
     event.currentTarget.setPointerCapture(event.pointerId);
     setSelectedLayerId(layer.id);
+    setSelectedLayerIds((current) => current.includes(layer.id) ? current : [layer.id]);
     remember();
     dragRef.current = { layerId: layer.id, offsetX: point.x - layer.x, offsetY: point.y - layer.y };
   }
@@ -249,7 +265,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   }
 
   function startTransform(event: PointerEvent<HTMLButtonElement>, mode: ActiveTransform["mode"]) {
-    if (!selectedLayer) return;
+    if (!selectedLayer || selectedLayer.locked) return;
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
     const point = canvasPoint(event);
@@ -270,7 +286,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     const transform = transformRef.current;
     if (!transform) return;
     const layer = layers.find((item) => item.id === transform.layerId);
-    if (!layer) return;
+    if (!layer || layer.locked) return;
     const point = canvasPoint(event);
     const deltaX = point.x - layer.x;
     const deltaY = point.y - layer.y;
@@ -294,6 +310,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setLayers(cloneLayers(next.layers));
     setAdjustments({ ...next.adjustments });
     setSelectedLayerId((current) => next.layers.some((layer) => layer.id === current) ? current : "");
+    setSelectedLayerIds((current) => current.filter((id) => next.layers.some((layer) => layer.id === id)));
   }, []);
 
   const undo = useCallback(() => {
@@ -325,11 +342,16 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       fontFamily: "Vazirmatn",
       fontSize: Math.max(28, Math.round(canvas.width / 18)),
       align: "center",
-      rotation: 0
+      rotation: 0,
+      name: `متن ${layers.filter((item) => item.type === "text").length + 1}`,
+      visible: true,
+      locked: false,
+      opacity: 100
     };
     remember();
     setLayers((current) => [...current, layer]);
     setSelectedLayerId(layer.id);
+    setSelectedLayerIds([layer.id]);
   }
 
   function addSticker(value: string) {
@@ -345,38 +367,47 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       fontFamily: "Arial",
       fontSize: Math.max(36, Math.round(canvas.width / 14)),
       align: "center",
-      rotation: 0
+      rotation: 0,
+      name: `استیکر ${layers.filter((item) => item.type === "sticker").length + 1}`,
+      visible: true,
+      locked: false,
+      opacity: 100
     };
     remember();
     setLayers((current) => [...current, layer]);
     setSelectedLayerId(layer.id);
+    setSelectedLayerIds([layer.id]);
   }
 
   function updateSelectedLayer(patch: Partial<EditorLayer>) {
-    if (!selectedLayerId) return;
+    if (!selectedLayerId || selectedLayer?.locked) return;
     remember();
     setLayers((current) => current.map((layer) => layer.id === selectedLayerId ? { ...layer, ...patch } : layer));
   }
 
   const removeSelectedLayer = useCallback(() => {
-    if (!selectedLayerId) return;
+    if (!selectedLayerIds.length) return;
     remember();
-    setLayers((current) => current.filter((layer) => layer.id !== selectedLayerId));
+    setLayers((current) => current.filter((layer) => !selectedLayerIds.includes(layer.id) || layer.locked));
     setSelectedLayerId("");
-  }, [remember, selectedLayerId]);
+    setSelectedLayerIds([]);
+  }, [remember, selectedLayerIds]);
 
   const duplicateSelectedLayer = useCallback(() => {
-    if (!selectedLayer) return;
-    const duplicate = { ...selectedLayer, id: createLayerId(), x: selectedLayer.x + 24, y: selectedLayer.y + 24 };
+    const selectedLayers = layers.filter((layer) => selectedLayerIds.includes(layer.id));
+    if (!selectedLayers.length) return;
+    const duplicates = selectedLayers.map((layer) => ({ ...layer, id: createLayerId(), name: `${layer.name} کپی`, x: layer.x + 24, y: layer.y + 24, groupId: undefined }));
     remember();
-    setLayers((current) => [...current, duplicate]);
-    setSelectedLayerId(duplicate.id);
-  }, [remember, selectedLayer]);
+    setLayers((current) => [...current, ...duplicates]);
+    setSelectedLayerId(duplicates[duplicates.length - 1].id);
+    setSelectedLayerIds(duplicates.map((layer) => layer.id));
+  }, [layers, remember, selectedLayerIds]);
 
   function resetEditor() {
     if (layers.length || adjustments.brightness !== 100 || adjustments.contrast !== 100 || adjustments.saturation !== 100) remember();
     setLayers([]);
     setSelectedLayerId("");
+    setSelectedLayerIds([]);
     setAdjustments(initialAdjustments);
     setError("");
   }
@@ -384,6 +415,79 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   function updateAdjustment(field: keyof ImageAdjustments, value: number) {
     remember();
     setAdjustments((current) => ({ ...current, [field]: value }));
+  }
+
+  function selectLayer(layerId: string, additive = false) {
+    setSelectedLayerId(layerId);
+    setSelectedLayerIds((current) => {
+      if (!additive) return [layerId];
+      return current.includes(layerId) ? current.filter((id) => id !== layerId) : [...current, layerId];
+    });
+  }
+
+  function updateLayer(layerId: string, patch: Partial<EditorLayer>, withHistory = true) {
+    const layer = layers.find((item) => item.id === layerId);
+    if (!layer) return;
+    if (withHistory) remember();
+    setLayers((current) => current.map((item) => item.id === layerId ? { ...item, ...patch } : item));
+  }
+
+  function moveLayer(layerId: string, direction: "up" | "down") {
+    const index = layers.findIndex((layer) => layer.id === layerId);
+    if (index < 0) return;
+    const nextIndex = direction === "up" ? index + 1 : index - 1;
+    if (nextIndex < 0 || nextIndex >= layers.length) return;
+    remember();
+    setLayers((current) => {
+      const next = [...current];
+      const [layer] = next.splice(index, 1);
+      next.splice(nextIndex, 0, layer);
+      return next;
+    });
+  }
+
+  function reorderLayer(sourceId: string, targetId: string) {
+    if (sourceId === targetId) return;
+    const sourceIndex = layers.findIndex((layer) => layer.id === sourceId);
+    const targetIndex = layers.findIndex((layer) => layer.id === targetId);
+    if (sourceIndex < 0 || targetIndex < 0) return;
+    remember();
+    setLayers((current) => {
+      const next = [...current];
+      const [layer] = next.splice(sourceIndex, 1);
+      next.splice(targetIndex, 0, layer);
+      return next;
+    });
+  }
+
+  function alignSelected(mode: "left" | "centerX" | "right" | "top" | "centerY" | "bottom") {
+    if (!selectedLayerIds.length) return;
+    const selected = layers.filter((layer) => selectedLayerIds.includes(layer.id) && !layer.locked);
+    if (!selected.length) return;
+    remember();
+    setLayers((current) => current.map((layer) => {
+      if (!selectedLayerIds.includes(layer.id) || layer.locked) return layer;
+      const bounds = layerBounds(layer);
+      if (mode === "left") return { ...layer, x: layer.x - bounds.left };
+      if (mode === "centerX") return { ...layer, x: canvasSize.width / 2 };
+      if (mode === "right") return { ...layer, x: layer.x + (canvasSize.width - (bounds.left + bounds.width)) };
+      if (mode === "top") return { ...layer, y: layer.y - bounds.top };
+      if (mode === "centerY") return { ...layer, y: canvasSize.height / 2 };
+      return { ...layer, y: layer.y + (canvasSize.height - (bounds.top + bounds.height)) };
+    }));
+  }
+
+  function groupSelected() {
+    if (selectedLayerIds.length < 2) return;
+    const groupId = `group-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    remember();
+    setLayers((current) => current.map((layer) => selectedLayerIds.includes(layer.id) ? { ...layer, groupId } : layer));
+  }
+
+  function ungroupSelected() {
+    if (!selectedLayerIds.length) return;
+    remember();
+    setLayers((current) => current.map((layer) => selectedLayerIds.includes(layer.id) ? { ...layer, groupId: undefined } : layer));
   }
 
   useEffect(() => {
@@ -402,12 +506,12 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
         duplicateSelectedLayer();
         return;
       }
-      if ((event.key === "Delete" || event.key === "Backspace") && selectedLayer) {
+      if ((event.key === "Delete" || event.key === "Backspace") && selectedLayerIds.length) {
         event.preventDefault();
         removeSelectedLayer();
         return;
       }
-      if (!selectedLayer || !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      if (!selectedLayer || selectedLayer.locked || !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
       event.preventDefault();
       const distance = event.shiftKey ? 10 : 1;
       const patch = {
@@ -420,7 +524,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canvasSize.height, canvasSize.width, duplicateSelectedLayer, redo, remember, removeSelectedLayer, selectedLayer, undo]);
+  }, [canvasSize.height, canvasSize.width, duplicateSelectedLayer, redo, remember, removeSelectedLayer, selectedLayer, selectedLayerIds.length, undo]);
 
   async function saveEditedImage() {
     const canvas = canvasRef.current;
@@ -470,7 +574,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 overflow-auto lg:grid-cols-[240px_minmax(320px,1fr)_240px]">
+        <div className="grid min-h-0 flex-1 overflow-auto lg:grid-cols-[240px_minmax(320px,1fr)_300px]">
           <aside className="space-y-4 border-b border-app-border bg-white p-4 lg:border-b-0 lg:border-l">
             <section>
               <div className="flex items-center gap-2">
@@ -588,84 +692,164 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
             </div>
           </div>
 
-          <aside className="border-t border-app-border bg-white p-4 lg:border-r lg:border-t-0">
-            <div className="flex items-center gap-2">
-              <Redo2 className="h-4 w-4 text-app-primary" aria-hidden="true" />
-              <h3 className="text-xs font-black text-app-text">تنظیم لایه</h3>
-            </div>
-            {selectedLayer ? (
-              <div className="mt-3 space-y-4">
-                {selectedLayer.type === "text" ? (
-                  <>
-                    <label className="block text-xs font-bold text-app-muted">
-                      متن
-                      <textarea value={selectedLayer.value} onChange={(event) => updateSelectedLayer({ value: event.target.value })} className="mt-2 min-h-20 w-full resize-y rounded-md border border-app-border bg-app-canvas px-3 py-2 text-sm leading-6 text-app-text outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100" dir="rtl" />
-                    </label>
-                    <label className="block text-xs font-bold text-app-muted">
-                      فونت فارسی
-                      <select value={selectedLayer.fontFamily} onChange={(event) => updateSelectedLayer({ fontFamily: event.target.value })} className="mt-2 w-full rounded-md border border-app-border bg-white px-3 py-2 text-sm text-app-text outline-none focus:border-blue-300">
-                        {fontOptions.map((font) => <option key={font.value} value={font.value}>{font.label}</option>)}
-                      </select>
-                    </label>
-                  </>
-                ) : (
-                  <div className="rounded-md bg-app-surfaceMuted p-3 text-center text-4xl shadow-hairline">{selectedLayer.value}</div>
-                )}
-
-                <label className="block text-xs font-bold text-app-muted">
-                  اندازه · {selectedLayer.fontSize}px
-                  <input type="range" min="20" max="180" value={selectedLayer.fontSize} onChange={(event) => updateSelectedLayer({ fontSize: Number(event.target.value) })} className="mt-2 w-full accent-blue-600" />
-                </label>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Button type="button" variant="secondary" size="sm" onClick={duplicateSelectedLayer}>
-                    <Copy className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                    تکثیر
-                  </Button>
-                  <div className="flex items-center justify-center rounded-md bg-app-surfaceMuted px-2 text-xs font-black text-app-muted shadow-hairline">
-                    {Math.round(selectedLayer.rotation)}°
+          <aside className="min-h-0 border-t border-app-border bg-white lg:border-r lg:border-t-0">
+            <div className="max-h-full overflow-auto p-4">
+              <section>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Layers3 className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                    <h3 className="text-xs font-black text-app-text">لایه‌ها</h3>
                   </div>
+                  <StatusToken tone={selectedLayerIds.length > 1 ? "primary" : "neutral"}>{selectedLayerIds.length || 0} انتخاب</StatusToken>
                 </div>
 
-                {selectedLayer.type === "text" ? (
-                  <div>
-                    <p className="text-xs font-bold text-app-muted">رنگ متن</p>
-                    <div className="mt-2 grid grid-cols-4 gap-2">
-                      {colorSwatches.map((color) => (
-                        <button key={color} type="button" onClick={() => updateSelectedLayer({ color })} className={`aspect-square rounded-md border shadow-hairline ${selectedLayer.color === color ? "ring-2 ring-app-primary ring-offset-2" : "border-app-border"}`} style={{ backgroundColor: color }} aria-label={`انتخاب رنگ ${color}`} title={color} />
-                      ))}
-                    </div>
-                    <label className="mt-3 flex items-center justify-between gap-3 rounded-md bg-app-surfaceMuted px-3 py-2 text-xs font-bold text-app-muted shadow-hairline">
-                      رنگ دلخواه
-                      <input type="color" value={selectedLayer.color} onChange={(event) => updateSelectedLayer({ color: event.target.value })} className="h-7 w-12 cursor-pointer rounded border-0 bg-transparent p-0" />
-                    </label>
-                    <div className="mt-3 grid grid-cols-3 gap-2">
-                      {([
-                        { value: "right", icon: AlignRight, label: "راست‌چین" },
-                        { value: "center", icon: AlignCenter, label: "وسط‌چین" },
-                        { value: "left", icon: AlignLeft, label: "چپ‌چین" }
-                      ] as const).map((option) => {
-                        const Icon = option.icon;
-                        return (
-                          <button key={option.value} type="button" onClick={() => updateSelectedLayer({ align: option.value })} className={`app-interactive flex items-center justify-center rounded-md p-2 ${selectedLayer.align === option.value ? "bg-blue-50 text-app-primary ring-1 ring-blue-200" : "bg-app-surfaceMuted text-slate-500"}`} aria-label={option.label} title={option.label}>
-                            <Icon className="h-4 w-4" aria-hidden="true" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : null}
+                <div className="mt-3 flex items-center gap-1 rounded-md bg-app-surfaceMuted p-1 shadow-hairline">
+                  <button type="button" onClick={() => alignSelected("centerX")} disabled={!selectedLayerIds.length} className="app-interactive flex h-8 flex-1 items-center justify-center rounded text-slate-600 hover:bg-white hover:text-app-primary disabled:pointer-events-none disabled:opacity-40" aria-label="تراز افقی وسط" title="تراز افقی وسط">
+                    <AlignCenter className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button type="button" onClick={() => alignSelected("centerY")} disabled={!selectedLayerIds.length} className="app-interactive flex h-8 flex-1 items-center justify-center rounded text-slate-600 hover:bg-white hover:text-app-primary disabled:pointer-events-none disabled:opacity-40" aria-label="تراز عمودی وسط" title="تراز عمودی وسط">
+                    <AlignCenter className="h-4 w-4 rotate-90" aria-hidden="true" />
+                  </button>
+                  <button type="button" onClick={groupSelected} disabled={selectedLayerIds.length < 2} className="app-interactive flex h-8 flex-1 items-center justify-center rounded text-slate-600 hover:bg-white hover:text-app-primary disabled:pointer-events-none disabled:opacity-40" aria-label="گروه کردن" title="گروه کردن">
+                    <Group className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button type="button" onClick={ungroupSelected} disabled={!selectedLayerIds.length} className="app-interactive flex h-8 flex-1 items-center justify-center rounded text-slate-600 hover:bg-white hover:text-app-primary disabled:pointer-events-none disabled:opacity-40" aria-label="خروج از گروه" title="خروج از گروه">
+                    <Ungroup className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
 
-                <Button type="button" variant="danger" size="sm" className="w-full" onClick={removeSelectedLayer}>
-                  <Trash2 className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                  حذف لایه
-                </Button>
-              </div>
-            ) : (
-              <div className="mt-3 rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted p-4 text-xs leading-6 text-app-muted">
-                یک متن یا استیکر اضافه کنید، سپس آن را روی تصویر بکشید تا مکان دقیقش تنظیم شود.
-              </div>
-            )}
+                <div className="mt-3 space-y-2">
+                  {[...layers].reverse().map((layer) => {
+                    const active = selectedLayerIds.includes(layer.id);
+                    const groupIndex = layer.groupId ? layers.filter((item) => item.groupId === layer.groupId).findIndex((item) => item.id === layer.id) + 1 : 0;
+                    return (
+                      <div
+                        key={layer.id}
+                        draggable
+                        onDragStart={() => {
+                          layerDragRef.current = layer.id;
+                        }}
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={() => {
+                          if (layerDragRef.current) reorderLayer(layerDragRef.current, layer.id);
+                          layerDragRef.current = null;
+                        }}
+                        className={`rounded-md border p-2 shadow-hairline transition ${active ? "border-blue-300 bg-blue-50/70" : "border-app-border bg-white hover:bg-app-surfaceMuted"} ${layer.visible ? "" : "opacity-60"}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <button type="button" onClick={() => selectLayer(layer.id, true)} className={`app-interactive flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${active ? "bg-blue-600 text-white" : "bg-app-surfaceMuted text-slate-500"}`} aria-label="انتخاب لایه" title="انتخاب لایه">
+                            <GripVertical className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                          <button type="button" onClick={() => selectLayer(layer.id)} className="min-w-0 flex-1 text-right" title={layer.name}>
+                            <span className="block truncate text-xs font-black text-app-text">{layer.name}</span>
+                            <span className="mt-0.5 block truncate text-[10px] font-bold text-app-muted">{layer.type === "text" ? layer.value : "استیکر"}{layer.groupId ? ` · گروه ${groupIndex}` : ""}</span>
+                          </button>
+                          <button type="button" onClick={() => updateLayer(layer.id, { visible: !layer.visible })} className="app-interactive flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-600 hover:bg-white hover:text-app-primary" aria-label={layer.visible ? "پنهان کردن لایه" : "نمایش لایه"} title={layer.visible ? "پنهان کردن" : "نمایش"}>
+                            {layer.visible ? <Eye className="h-4 w-4" aria-hidden="true" /> : <EyeOff className="h-4 w-4" aria-hidden="true" />}
+                          </button>
+                          <button type="button" onClick={() => updateLayer(layer.id, { locked: !layer.locked })} className="app-interactive flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-600 hover:bg-white hover:text-app-primary" aria-label={layer.locked ? "باز کردن قفل لایه" : "قفل کردن لایه"} title={layer.locked ? "باز کردن قفل" : "قفل کردن"}>
+                            {layer.locked ? <Lock className="h-4 w-4" aria-hidden="true" /> : <Unlock className="h-4 w-4" aria-hidden="true" />}
+                          </button>
+                        </div>
+                        <div className="mt-2 grid grid-cols-[1fr_auto_auto] gap-1">
+                          <input value={layer.name} onFocus={() => remember()} onChange={(event) => updateLayer(layer.id, { name: event.target.value }, false)} className="h-8 rounded-md border border-app-border bg-white px-2 text-xs font-bold text-app-text outline-none focus:border-blue-300" aria-label="نام لایه" />
+                          <button type="button" onClick={() => moveLayer(layer.id, "up")} className="app-interactive flex h-8 w-8 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-600 hover:bg-white hover:text-app-primary" aria-label="انتقال لایه به جلو" title="انتقال به جلو">
+                            <ArrowUp className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                          <button type="button" onClick={() => moveLayer(layer.id, "down")} className="app-interactive flex h-8 w-8 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-600 hover:bg-white hover:text-app-primary" aria-label="انتقال لایه به عقب" title="انتقال به عقب">
+                            <ArrowDown className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section className="mt-5 border-t border-app-border pt-4">
+                <div className="flex items-center gap-2">
+                  <Redo2 className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                  <h3 className="text-xs font-black text-app-text">تنظیم لایه</h3>
+                </div>
+                {selectedLayer ? (
+                  <div className="mt-3 space-y-4">
+                    {selectedLayer.type === "text" ? (
+                      <>
+                        <label className="block text-xs font-bold text-app-muted">
+                          متن
+                          <textarea value={selectedLayer.value} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ value: event.target.value })} className="mt-2 min-h-20 w-full resize-y rounded-md border border-app-border bg-app-canvas px-3 py-2 text-sm leading-6 text-app-text outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60" dir="rtl" />
+                        </label>
+                        <label className="block text-xs font-bold text-app-muted">
+                          فونت فارسی
+                          <select value={selectedLayer.fontFamily} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ fontFamily: event.target.value })} className="mt-2 w-full rounded-md border border-app-border bg-white px-3 py-2 text-sm text-app-text outline-none focus:border-blue-300 disabled:opacity-60">
+                            {fontOptions.map((font) => <option key={font.value} value={font.value}>{font.label}</option>)}
+                          </select>
+                        </label>
+                      </>
+                    ) : (
+                      <div className="rounded-md bg-app-surfaceMuted p-3 text-center text-4xl shadow-hairline">{selectedLayer.value}</div>
+                    )}
+
+                    <label className="block text-xs font-bold text-app-muted">
+                      شفافیت · {selectedLayer.opacity}%
+                      <input type="range" min="10" max="100" value={selectedLayer.opacity} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ opacity: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                    </label>
+                    <label className="block text-xs font-bold text-app-muted">
+                      اندازه · {selectedLayer.fontSize}px
+                      <input type="range" min="20" max="180" value={selectedLayer.fontSize} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ fontSize: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                    </label>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button type="button" variant="secondary" size="sm" onClick={duplicateSelectedLayer}>
+                        <Copy className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                        تکثیر
+                      </Button>
+                      <div className="flex items-center justify-center rounded-md bg-app-surfaceMuted px-2 text-xs font-black text-app-muted shadow-hairline">
+                        {Math.round(selectedLayer.rotation)}°
+                      </div>
+                    </div>
+
+                    {selectedLayer.type === "text" ? (
+                      <div>
+                        <p className="text-xs font-bold text-app-muted">رنگ متن</p>
+                        <div className="mt-2 grid grid-cols-4 gap-2">
+                          {colorSwatches.map((color) => (
+                            <button key={color} type="button" disabled={selectedLayer.locked} onClick={() => updateSelectedLayer({ color })} className={`aspect-square rounded-md border shadow-hairline disabled:opacity-50 ${selectedLayer.color === color ? "ring-2 ring-app-primary ring-offset-2" : "border-app-border"}`} style={{ backgroundColor: color }} aria-label={`انتخاب رنگ ${color}`} title={color} />
+                          ))}
+                        </div>
+                        <label className="mt-3 flex items-center justify-between gap-3 rounded-md bg-app-surfaceMuted px-3 py-2 text-xs font-bold text-app-muted shadow-hairline">
+                          رنگ دلخواه
+                          <input type="color" value={selectedLayer.color} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ color: event.target.value })} className="h-7 w-12 cursor-pointer rounded border-0 bg-transparent p-0 disabled:opacity-50" />
+                        </label>
+                        <div className="mt-3 grid grid-cols-3 gap-2">
+                          {([
+                            { value: "right", icon: AlignRight, label: "راست‌چین" },
+                            { value: "center", icon: AlignCenter, label: "وسط‌چین" },
+                            { value: "left", icon: AlignLeft, label: "چپ‌چین" }
+                          ] as const).map((option) => {
+                            const Icon = option.icon;
+                            return (
+                              <button key={option.value} type="button" disabled={selectedLayer.locked} onClick={() => updateSelectedLayer({ align: option.value })} className={`app-interactive flex items-center justify-center rounded-md p-2 disabled:opacity-50 ${selectedLayer.align === option.value ? "bg-blue-50 text-app-primary ring-1 ring-blue-200" : "bg-app-surfaceMuted text-slate-500"}`} aria-label={option.label} title={option.label}>
+                                <Icon className="h-4 w-4" aria-hidden="true" />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <Button type="button" variant="danger" size="sm" className="w-full" onClick={removeSelectedLayer}>
+                      <Trash2 className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                      حذف لایه
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="mt-3 rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted p-4 text-xs leading-6 text-app-muted">
+                    یک متن یا استیکر اضافه کنید، سپس آن را روی تصویر بکشید تا مکان دقیقش تنظیم شود.
+                  </div>
+                )}
+              </section>
+            </div>
           </aside>
         </div>
       </section>
