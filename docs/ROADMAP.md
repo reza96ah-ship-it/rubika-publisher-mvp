@@ -184,6 +184,7 @@ Current implementation status:
 
 - Media library supports folders, tags, grid/list views, and attaching assets to posts.
 - Media inspector now exposes a usage map and safe delete flow; attached assets are blocked by the backend unless deletion is explicitly forced after confirmation.
+- Media Library can filter attached assets by campaign, and Campaign Center opens the library already scoped to the selected campaign.
 
 Risk: medium.
 

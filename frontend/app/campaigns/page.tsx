@@ -1382,15 +1382,20 @@ export default function CampaignsPage() {
               <WorkspacePanel
                 title="دارایی‌های متصل"
                 description="رسانه‌هایی که در پست‌های این کمپین استفاده شده‌اند."
-                action={<StatusToken tone="neutral">{selectedAssets.length} فایل</StatusToken>}
+                action={(
+                  <div className="flex flex-wrap gap-2">
+                    <StatusToken tone="neutral">{selectedAssets.length} فایل</StatusToken>
+                    <Button href={`/media?campaignId=${selectedRow.campaign.id}`} variant="secondary" size="sm">نمای رسانه‌ها</Button>
+                  </div>
+                )}
                 bodyClassName="p-3"
               >
                 {selectedAssets.length === 0 ? (
-                  <EmptyState icon={<FileImage className="h-5 w-5" aria-hidden="true" />} title="دارایی رسانه‌ای متصل نیست" description="برای حرفه‌ای‌تر شدن کمپین، رسانه‌های مرتبط را به پست‌ها وصل کنید." action={<Button href="/media" variant="secondary">رفتن به رسانه‌ها</Button>} />
+                  <EmptyState icon={<FileImage className="h-5 w-5" aria-hidden="true" />} title="دارایی رسانه‌ای متصل نیست" description="برای حرفه‌ای‌تر شدن کمپین، رسانه‌های مرتبط را به پست‌ها وصل کنید." action={<Button href={`/media?campaignId=${selectedRow.campaign.id}`} variant="secondary">رفتن به رسانه‌ها</Button>} />
                 ) : (
                   <div className="grid gap-2">
                     {selectedAssets.slice(0, 8).map((asset) => (
-                      <Link key={asset.id} href="/media" className="app-row flex items-center gap-3 rounded-md border border-app-border bg-white p-2 hover:bg-blue-50/50">
+                      <Link key={asset.id} href={`/media?campaignId=${selectedRow.campaign.id}`} className="app-row flex items-center gap-3 rounded-md border border-app-border bg-white p-2 hover:bg-blue-50/50">
                         <div className="flex h-14 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
                           {mediaPreviewUrls[asset.id] ? <img src={mediaPreviewUrls[asset.id]} alt={asset.original_filename} className="h-full w-full object-cover" /> : <FileImage className="h-4 w-4 text-slate-400" aria-hidden="true" />}
                         </div>

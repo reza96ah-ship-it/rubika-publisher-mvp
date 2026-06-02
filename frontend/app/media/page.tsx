@@ -11,6 +11,7 @@ import { Button } from "../../components/ui/button";
 import { Field, Input } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel, WorkspaceToolbar } from "../../components/workspace-ui";
+import { campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -30,6 +31,8 @@ type PostOption = {
   id: number;
   title: string;
   status: string;
+  campaign_id: number | null;
+  campaign: string;
 };
 
 type MediaFilter = "all" | "attached" | "unused";
@@ -50,6 +53,7 @@ export default function MediaPage() {
   const { showToast } = useToast();
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [posts, setPosts] = useState<PostOption[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [selectedAssetId, setSelectedAssetId] = useState("");
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
@@ -62,6 +66,7 @@ export default function MediaPage() {
   const [uploadFolder, setUploadFolder] = useState("");
   const [uploadTags, setUploadTags] = useState("");
   const [folderFilter, setFolderFilter] = useState("all");
+  const [campaignFilter, setCampaignFilter] = useState("all");
   const [mediaView, setMediaView] = useState<MediaView>("grid");
   const [inspectorTab, setInspectorTab] = useState<InspectorTab>("details");
   const [metadataFolder, setMetadataFolder] = useState("");
@@ -83,6 +88,7 @@ export default function MediaPage() {
     const headers = { Authorization: `Bearer ${token()}` };
     const mediaResponse = await fetch(`${apiUrl}/media`, { headers });
     const postsResponse = await fetch(`${apiUrl}/posts`, { headers });
+    const campaignsResponse = await loadCampaigns();
     if (mediaResponse.ok) {
       const loadedAssets = (await mediaResponse.json()) as MediaAsset[];
       setAssets(loadedAssets);
@@ -92,6 +98,7 @@ export default function MediaPage() {
       });
     }
     if (postsResponse.ok) setPosts(await postsResponse.json());
+    setCampaigns(campaignsResponse);
     setLoading(false);
   }, []);
 
@@ -101,6 +108,13 @@ export default function MediaPage() {
       setLoading(false);
     });
   }, [loadData]);
+
+  useEffect(() => {
+    const campaignId = new URLSearchParams(window.location.search).get("campaignId");
+    if (!campaignId) return;
+    setCampaignFilter(`id:${campaignId}`);
+    setMediaFilter("attached");
+  }, []);
 
   useEffect(() => {
     if (files.length === 0) {
@@ -331,10 +345,23 @@ export default function MediaPage() {
   }, [selectedAsset]);
 
   const selectedLinkedPost = selectedAsset?.post_id ? postById.get(selectedAsset.post_id) ?? null : null;
+  const selectedLinkedCampaign = selectedLinkedPost ? campaignLabelForPost(selectedLinkedPost, campaigns) : "";
   const attachedCount = assets.filter((asset) => asset.post_id).length;
   const unusedCount = assets.length - attachedCount;
   const totalSizeBytes = assets.reduce((total, asset) => total + asset.size_bytes, 0);
   const folders = useMemo(() => Array.from(new Set(assets.map((asset) => asset.folder.trim()).filter(Boolean))).sort(), [assets]);
+  const campaignAssetOptions = useMemo(() => {
+    return campaigns
+      .map((campaign) => {
+        const count = assets.filter((asset) => {
+          const linkedPost = asset.post_id ? postById.get(asset.post_id) : null;
+          return linkedPost?.campaign_id === campaign.id;
+        }).length;
+        return { campaign, count };
+      })
+      .filter((option) => option.count > 0)
+      .sort((first, second) => second.count - first.count || first.campaign.name.localeCompare(second.campaign.name, "fa"));
+  }, [assets, campaigns, postById]);
   const mediaSummary = [
     { label: "همه رسانه‌ها", detail: "دارایی‌های فضای کاری", value: "all" as const, count: assets.length, icon: Images, tone: "text-app-primary" },
     { label: "رسانه آزاد", detail: "آماده استفاده در پست", value: "unused" as const, count: unusedCount, icon: FileImage, tone: unusedCount ? "text-emerald-700" : "text-slate-500" },
@@ -351,17 +378,19 @@ export default function MediaPage() {
         (mediaFilter === "unused" && !asset.post_id);
       const matchesFolder = folderFilter === "all" || asset.folder === folderFilter;
       const linkedPost = asset.post_id ? postById.get(asset.post_id) : null;
+      const matchesCampaign = campaignFilter === "all" || (linkedPost?.campaign_id ? campaignFilter === `id:${linkedPost.campaign_id}` : false);
       const searchableText = `${asset.original_filename} ${asset.content_type} ${asset.folder} ${asset.tags} ${linkedPost?.title ?? ""}`.toLowerCase();
-      return matchesFilter && matchesFolder && (!normalizedSearch || searchableText.includes(normalizedSearch));
+      return matchesFilter && matchesFolder && matchesCampaign && (!normalizedSearch || searchableText.includes(normalizedSearch));
     });
-  }, [assets, folderFilter, mediaFilter, postById, searchTerm]);
+  }, [assets, campaignFilter, folderFilter, mediaFilter, postById, searchTerm]);
 
   const selectedPreviewUrl = selectedAsset ? mediaPreviewUrls[selectedAsset.id] : "";
-  const hasActiveFilters = mediaFilter !== "all" || folderFilter !== "all" || Boolean(searchTerm.trim());
+  const hasActiveFilters = mediaFilter !== "all" || folderFilter !== "all" || campaignFilter !== "all" || Boolean(searchTerm.trim());
 
   function clearFilters() {
     setMediaFilter("all");
     setFolderFilter("all");
+    setCampaignFilter("all");
     setSearchTerm("");
   }
 
@@ -570,6 +599,34 @@ export default function MediaPage() {
                     ))}
                   </div>
                 ) : null}
+                {campaignAssetOptions.length ? (
+                  <div className="mb-4 rounded-lg border border-app-border bg-app-surfaceMuted p-3">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-black text-app-text">فیلتر کمپین</p>
+                      <StatusToken tone={campaignFilter === "all" ? "neutral" : "primary"}>{campaignFilter === "all" ? "همه کمپین‌ها" : "کمپین انتخاب‌شده"}</StatusToken>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" onClick={() => setCampaignFilter("all")} className={`app-interactive rounded px-2.5 py-1.5 text-xs font-bold ${campaignFilter === "all" ? "bg-app-primary text-white" : "bg-white text-slate-600 shadow-hairline hover:bg-blue-50 hover:text-app-primary"}`}>
+                        همه کمپین‌ها
+                      </button>
+                      {campaignAssetOptions.map(({ campaign, count }) => (
+                        <button
+                          key={campaign.id}
+                          type="button"
+                          onClick={() => {
+                            setCampaignFilter(`id:${campaign.id}`);
+                            setMediaFilter("attached");
+                          }}
+                          className={`app-interactive inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-bold ${campaignFilter === `id:${campaign.id}` ? "bg-app-primary text-white" : "bg-white text-slate-600 shadow-hairline hover:bg-blue-50 hover:text-app-primary"}`}
+                        >
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: campaign.color }} />
+                          {campaign.name}
+                          <span className="opacity-75">({count})</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 {loading ? <LoadingRows rows={3} /> : null}
                 {!loading && assets.length === 0 ? (
                   <EmptyState
@@ -752,6 +809,7 @@ export default function MediaPage() {
                       {selectedLinkedPost ? (
                         <div className="mt-3 rounded-md bg-white p-3 text-xs leading-6 shadow-hairline">
                           <p className="font-black text-app-text">{selectedLinkedPost.title}</p>
+                          <p className="mt-1 text-app-muted">کمپین: {selectedLinkedCampaign}</p>
                           <p className="mt-1 text-app-muted">این رسانه در پست #{selectedLinkedPost.id} استفاده می‌شود. حذف آن بعد از تایید، رسانه را از کتابخانه حذف می‌کند و پست بدون رسانه می‌ماند.</p>
                         </div>
                       ) : (
