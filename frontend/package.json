@@ -13,6 +13,8 @@
     "check": "npm run lint && npm run typecheck && npm run test && npm run build:check"
   },
   "dependencies": {
+    "@fontsource/lalezar": "^5.2.7",
+    "@fontsource/noto-naskh-arabic": "^5.2.11",
     "@fontsource/vazirmatn": "^5.1.0",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",

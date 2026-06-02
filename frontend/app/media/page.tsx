@@ -1,10 +1,11 @@
 "use client";
 
 import { DragEvent, FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Crop, FileImage, Folder, Grid2X2, Hash, ImageIcon, Images, Link2, List, Save, Search, SlidersHorizontal, Trash2, UploadCloud, X, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Crop, FileImage, Folder, Grid2X2, Hash, ImageIcon, Images, Link2, List, PencilLine, Save, Search, SlidersHorizontal, Trash2, UploadCloud, X, XCircle } from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { LoadingRows } from "../../components/loading-skeleton";
+import { MediaImageEditor } from "../../components/media-image-editor";
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
@@ -90,6 +91,8 @@ export default function MediaPage() {
   const [confirmDeleteAssetId, setConfirmDeleteAssetId] = useState<number | null>(null);
   const [draggingAssetId, setDraggingAssetId] = useState<number | null>(null);
   const [dropTargetPostId, setDropTargetPostId] = useState<number | null>(null);
+  const [editingAsset, setEditingAsset] = useState<MediaAsset | null>(null);
+  const [savingEditedImage, setSavingEditedImage] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -343,6 +346,40 @@ export default function MediaPage() {
     }
   }
 
+  async function saveEditedImage(file: File) {
+    if (!editingAsset) return;
+    setSavingEditedImage(true);
+    setMessage("");
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", editingAsset.folder);
+      formData.append("tags", [editingAsset.tags, "edited"].filter(Boolean).join(", "));
+      const response = await fetch(`${apiUrl}/media`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token()}` },
+        body: formData
+      });
+      if (!response.ok) throw new Error("ذخیره نسخه ویرایش‌شده ناموفق بود");
+      const savedAsset = (await response.json()) as MediaAsset;
+      setEditingAsset(null);
+      setSelectedAssetId(String(savedAsset.id));
+      setMediaFilter("all");
+      setFolderFilter("all");
+      setSearchTerm("");
+      setMessage("نسخه ویرایش‌شده به کتابخانه رسانه اضافه شد");
+      showToast({ title: "نسخه جدید ذخیره شد", description: savedAsset.original_filename, tone: "success" });
+      await loadData();
+    } catch (err) {
+      const nextError = err instanceof Error ? err.message : "خطای ذخیره نسخه ویرایش‌شده";
+      setError(nextError);
+      showToast({ title: "ذخیره نسخه جدید ناموفق بود", description: nextError, tone: "alert" });
+    } finally {
+      setSavingEditedImage(false);
+    }
+  }
+
   const postById = useMemo(() => {
     return new Map(posts.map((post) => [post.id, post]));
   }, [posts]);
@@ -435,6 +472,15 @@ export default function MediaPage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage>
+          {editingAsset && mediaPreviewUrls[editingAsset.id] ? (
+            <MediaImageEditor
+              imageUrl={mediaPreviewUrls[editingAsset.id]}
+              filename={editingAsset.original_filename}
+              saving={savingEditedImage}
+              onClose={() => setEditingAsset(null)}
+              onSave={saveEditedImage}
+            />
+          ) : null}
           <section className="app-studio-panel rounded-lg px-4 py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
@@ -895,6 +941,12 @@ export default function MediaPage() {
                     </div>
 
                     <div className="mt-4 flex flex-wrap gap-2">
+                      {selectedPreviewUrl ? (
+                        <Button type="button" size="sm" onClick={() => setEditingAsset(selectedAsset)}>
+                          <PencilLine className="ml-2 h-4 w-4" aria-hidden="true" />
+                          ویرایش تصویر
+                        </Button>
+                      ) : null}
                       {selectedLinkedPost ? (
                         <Button type="button" variant="ghost" size="sm" onClick={() => void attachToPost(selectedAsset.id, "")}>
                           <XCircle className="ml-2 h-4 w-4" aria-hidden="true" />

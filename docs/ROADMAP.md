@@ -188,6 +188,7 @@ Current implementation status:
 - Composer media picker now filters reusable assets by folder and campaign, defaulting to the post's selected campaign when available.
 - Media inspector now detects selected image dimensions and scores square, landscape, vertical, and portrait variant readiness.
 - Media file persistence now goes through a local storage service, preparing the backend for later S3/MinIO/CDN storage adapters.
+- Media inspector now opens a non-destructive image editor with movable Persian text layers, bundled Persian fonts, color controls, stickers, emojis, image adjustments, and save-as-new-version output.
 
 Risk: medium.
 
