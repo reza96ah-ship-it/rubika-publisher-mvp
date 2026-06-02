@@ -10,6 +10,7 @@ import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
 import { DataRow, DataTable } from "../../components/data-view";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel, WorkspaceToolbar } from "../../components/workspace-ui";
+import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { useMediaPreviewUrl } from "../../lib/media-preview";
 import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
 import { loadWorkspaceOverview, type StoreProfile } from "../../lib/workspace";
@@ -186,26 +187,15 @@ function hourLabel(hour: number | null) {
   return new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit" }).format(date);
 }
 
-function campaignTone(campaign: string) {
-  const tones = [
-    "bg-teal-500",
-    "bg-blue-500",
-    "bg-amber-500",
-    "bg-rose-500",
-    "bg-violet-500",
-    "bg-cyan-500"
-  ];
-  const seed = Array.from(campaign || "بدون کمپین").reduce((total, char) => total + char.charCodeAt(0), 0);
-  return tones[seed % tones.length];
-}
-
 export default function AnalyticsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [attempts, setAttempts] = useState<PublishAttempt[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [store, setStore] = useState<StoreProfile | null>(null);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
+  const [campaignFilter, setCampaignFilter] = useState("all");
   const [selectedTrendKey, setSelectedTrendKey] = useState("");
   const [postFilter, setPostFilter] = useState<PostFilter>("all");
   const [postSort, setPostSort] = useState<PostSort>("activity");
@@ -217,9 +207,10 @@ export default function AnalyticsPage() {
     setLoading(true);
     setError("");
     const headers = authHeaders();
-    const [postsResponse, attemptsResponse, mediaResponse, overview] = await Promise.all([
+    const [postsResponse, attemptsResponse, campaignsResponse, mediaResponse, overview] = await Promise.all([
       fetch(`${apiUrl}/posts`, { headers }),
       fetch(`${apiUrl}/publish-attempts`, { headers }),
+      loadCampaigns(),
       fetch(`${apiUrl}/media`, { headers }),
       loadWorkspaceOverview()
     ]);
@@ -229,6 +220,7 @@ export default function AnalyticsPage() {
 
     setPosts(await postsResponse.json());
     setAttempts(await attemptsResponse.json());
+    setCampaigns(campaignsResponse);
     setMediaAssets(mediaResponse.ok ? await mediaResponse.json() : []);
     setStore(overview.store);
     setLoading(false);
@@ -297,10 +289,23 @@ export default function AnalyticsPage() {
     };
   }, [mediaAssets]);
 
-  const scopedPosts = useMemo(() => posts.filter((post) => isInRange(postActivityDate(post), timeRange)), [posts, timeRange]);
-  const scopedAttempts = useMemo(() => attempts.filter((attempt) => isInRange(attempt.created_at, timeRange)), [attempts, timeRange]);
-  const previousPosts = useMemo(() => posts.filter((post) => isInPreviousRange(postActivityDate(post), timeRange)), [posts, timeRange]);
-  const previousAttempts = useMemo(() => attempts.filter((attempt) => isInPreviousRange(attempt.created_at, timeRange)), [attempts, timeRange]);
+  const rangePosts = useMemo(() => posts.filter((post) => isInRange(postActivityDate(post), timeRange)), [posts, timeRange]);
+  const previousRangePosts = useMemo(() => posts.filter((post) => isInPreviousRange(postActivityDate(post), timeRange)), [posts, timeRange]);
+  const campaignOptions = useMemo(() => buildCampaignFilterOptions(rangePosts, campaigns), [campaigns, rangePosts]);
+  const scopedPosts = useMemo(() => {
+    return rangePosts.filter((post) => campaignFilter === "all" || campaignKeyForPost(post) === campaignFilter);
+  }, [campaignFilter, rangePosts]);
+  const scopedPostIds = useMemo(() => new Set(scopedPosts.map((post) => post.id)), [scopedPosts]);
+  const scopedAttempts = useMemo(() => {
+    return attempts.filter((attempt) => isInRange(attempt.created_at, timeRange) && (campaignFilter === "all" || scopedPostIds.has(attempt.post_id)));
+  }, [attempts, campaignFilter, scopedPostIds, timeRange]);
+  const previousPosts = useMemo(() => {
+    return previousRangePosts.filter((post) => campaignFilter === "all" || campaignKeyForPost(post) === campaignFilter);
+  }, [campaignFilter, previousRangePosts]);
+  const previousPostIds = useMemo(() => new Set(previousPosts.map((post) => post.id)), [previousPosts]);
+  const previousAttempts = useMemo(() => {
+    return attempts.filter((attempt) => isInPreviousRange(attempt.created_at, timeRange) && (campaignFilter === "all" || previousPostIds.has(attempt.post_id)));
+  }, [attempts, campaignFilter, previousPostIds, timeRange]);
   const mediaByPostId = useMemo(() => {
     const grouped = new Map<number, MediaAsset[]>();
     mediaAssets.forEach((asset) => {
@@ -388,10 +393,10 @@ export default function AnalyticsPage() {
     return sorted[0] ? { hour: sorted[0][0], count: sorted[0][1] } : null;
   }, [scopedAttempts]);
   const campaignPerformance = useMemo(() => {
-    const grouped = new Map<string, { total: number; published: number; failed: number; queued: number; media: number }>();
+    const grouped = new Map<string, { label: string; color: string; total: number; published: number; failed: number; queued: number; media: number }>();
     scopedPosts.forEach((post) => {
-      const campaign = post.campaign.trim() || "بدون کمپین";
-      const current = grouped.get(campaign) ?? { total: 0, published: 0, failed: 0, queued: 0, media: 0 };
+      const campaign = campaignKeyForPost(post);
+      const current = grouped.get(campaign) ?? { label: campaignLabelForPost(post, campaigns), color: campaignColorForPost(post, campaigns), total: 0, published: 0, failed: 0, queued: 0, media: 0 };
       current.total += 1;
       if (post.status === "published") current.published += 1;
       if (post.status === "failed" || post.last_error) current.failed += 1;
@@ -400,14 +405,14 @@ export default function AnalyticsPage() {
       grouped.set(campaign, current);
     });
     return Array.from(grouped.entries())
-      .map(([campaign, stats]) => ({
-        campaign,
+      .map(([campaignKey, stats]) => ({
+        campaignKey,
         ...stats,
         score: stats.published * 3 + stats.queued * 1.5 + stats.media - stats.failed * 2
       }))
       .sort((first, second) => second.score - first.score || second.total - first.total)
       .slice(0, 4);
-  }, [mediaByPostId, scopedPosts]);
+  }, [campaigns, mediaByPostId, scopedPosts]);
   const topOperationalPosts = useMemo(() => {
     return [...scopedPosts]
       .map((post) => {
@@ -439,7 +444,7 @@ export default function AnalyticsPage() {
     const queuedStatuses = ["ready", "scheduled", "publishing"];
     return scopedPosts
       .filter((post) => {
-        const matchesSearch = !normalizedSearch || `${post.title} ${post.caption} ${post.campaign} ${post.status}`.toLowerCase().includes(normalizedSearch);
+        const matchesSearch = !normalizedSearch || `${post.title} ${post.caption} ${campaignLabelForPost(post, campaigns)} ${post.status}`.toLowerCase().includes(normalizedSearch);
         const matchesFilter =
           postFilter === "all" ||
           (postFilter === "failed" && (post.status === "failed" || Boolean(post.last_error))) ||
@@ -452,7 +457,7 @@ export default function AnalyticsPage() {
         if (postSort === "title") return first.title.localeCompare(second.title, "fa");
         return (toTime(postActivityDate(second)) ?? 0) - (toTime(postActivityDate(first)) ?? 0);
       });
-  }, [postFilter, postSearch, postSort, scopedPosts]);
+  }, [campaigns, postFilter, postSearch, postSort, scopedPosts]);
   const dashboardMetrics = [
     { label: "منتشرشده", value: publishedCount, detail: "خروجی موفق در بازه", icon: CheckCircle2, tone: "text-emerald-700", delta: deltaPercent(publishedCount, previousPublishedCount), positiveIsGood: true },
     { label: "موفقیت ارسال", value: `${attemptSummary.successRate}%`, detail: `${attemptSummary.success} از ${attemptSummary.completed} تلاش کامل`, icon: Target, tone: attemptSummary.successRate >= 80 ? "text-emerald-700" : "text-amber-700", delta: successRateDelta, positiveIsGood: true },
@@ -478,7 +483,7 @@ export default function AnalyticsPage() {
     },
     {
       title: "کمپین پیشرو",
-      value: campaignPerformance[0]?.campaign ?? "نامشخص",
+      value: campaignPerformance[0]?.label ?? "نامشخص",
       detail: campaignPerformance[0] ? `${campaignPerformance[0].published} منتشرشده، ${campaignPerformance[0].queued} در جریان` : "هنوز کمپین قابل رتبه‌بندی وجود ندارد.",
       icon: Layers3,
       tone: "text-app-primary",
@@ -571,6 +576,7 @@ export default function AnalyticsPage() {
               <>
                 <StatusToken tone="neutral">{scopedAttempts.length} تلاش در بازه</StatusToken>
                 <StatusToken tone="neutral">{scopedPosts.length} پست مرتبط</StatusToken>
+                {campaignFilter !== "all" ? <StatusToken tone="primary">فیلتر کمپین فعال</StatusToken> : null}
                 {hasComparison ? <StatusToken tone="info">مقایسه با بازه قبلی فعال</StatusToken> : <StatusToken tone="neutral">بدون مقایسه تاریخی</StatusToken>}
               </>
             )}
@@ -591,6 +597,13 @@ export default function AnalyticsPage() {
                   </button>
                 );
               })}
+              <label className="flex min-w-[190px] items-center gap-2 rounded-md border border-app-border bg-white px-3 py-1.5 text-xs font-bold text-app-muted shadow-hairline">
+                <Layers3 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                  <option value="all">همه کمپین‌ها</option>
+                  {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
+                </select>
+              </label>
             </div>
           </WorkspaceToolbar>
 
@@ -788,8 +801,8 @@ export default function AnalyticsPage() {
                         <div className="min-w-0">
                           <p className="truncate text-sm font-black text-app-text">{post.title}</p>
                           <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-app-muted">
-                            <span className={`h-2 w-2 shrink-0 rounded-full ${campaignTone(post.campaign)}`} />
-                            {post.campaign || "بدون کمپین"}
+                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
+                            {campaignLabelForPost(post, campaigns)}
                           </p>
                         </div>
                       </div>
@@ -925,8 +938,8 @@ export default function AnalyticsPage() {
                             <div className="mt-2 flex flex-wrap items-center gap-1.5">
                               <StatusBadge status={post.status} />
                               <span className="inline-flex items-center gap-1 text-[11px] font-bold text-app-muted">
-                                <span className={`h-2 w-2 rounded-full ${campaignTone(post.campaign)}`} />
-                                {post.campaign || "بدون کمپین"}
+                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
+                                {campaignLabelForPost(post, campaigns)}
                               </span>
                             </div>
                           </div>
@@ -995,11 +1008,11 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="mt-3 space-y-2">
                       {campaignPerformance.map((campaign) => (
-                        <div key={campaign.campaign} className="rounded bg-white p-2 shadow-hairline">
+                        <div key={campaign.campaignKey} className="rounded bg-white p-2 shadow-hairline">
                           <div className="flex items-center justify-between gap-3">
                             <p className="flex min-w-0 items-center gap-1.5 truncate text-xs font-black text-app-text">
-                              <span className={`h-2 w-2 shrink-0 rounded-full ${campaignTone(campaign.campaign)}`} />
-                              {campaign.campaign}
+                              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: campaign.color }} />
+                              {campaign.label}
                             </p>
                             <span className="text-[11px] font-black text-app-primary">{campaign.total} پست</span>
                           </div>

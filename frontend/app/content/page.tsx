@@ -24,6 +24,7 @@ import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { notifyNotificationsUpdated } from "../../lib/notifications";
 import { apiUrl, authHeaders, formatDateTime, Post, postFinalText, readApiError, workflowTabs } from "../../lib/posts";
 
@@ -73,15 +74,10 @@ function visiblePostText(post: Post) {
   return searchableFields.map((field) => post[field] ?? "").join(" ").toLowerCase();
 }
 
-function campaignTone(campaign: string) {
-  const tones = ["bg-teal-500", "bg-blue-500", "bg-amber-500", "bg-rose-500", "bg-violet-500", "bg-cyan-500"];
-  const seed = Array.from(campaign || "بدون کمپین").reduce((total, char) => total + char.charCodeAt(0), 0);
-  return tones[seed % tones.length];
-}
-
 export default function ContentWorkspacePage() {
   const { showToast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [activeStatus, setActiveStatus] = useState("all");
@@ -103,13 +99,15 @@ export default function ContentWorkspacePage() {
     setError("");
     try {
       const headers = authHeaders();
-      const [response, mediaResponse] = await Promise.all([
+      const [response, campaignsResponse, mediaResponse] = await Promise.all([
         fetch(`${apiUrl}/posts`, { headers }),
+        loadCampaigns(),
         fetch(`${apiUrl}/media`, { headers })
       ]);
       if (!response.ok) throw new Error("دریافت پست‌ها ناموفق بود");
       const data: Post[] = await response.json();
       setPosts(data);
+      setCampaigns(campaignsResponse);
       setMediaAssets(mediaResponse.ok ? await mediaResponse.json() : []);
       setSelectedPostId((current) => current ?? data[0]?.id ?? null);
       setSelectedIds((current) => new Set([...current].filter((id) => data.some((post) => post.id === id))));
@@ -181,7 +179,7 @@ export default function ContentWorkspacePage() {
     const query = search.trim().toLowerCase();
     return posts
       .filter((post) => activeStatus === "all" || post.status === activeStatus)
-      .filter((post) => campaignFilter === "all" || post.campaign === campaignFilter)
+      .filter((post) => campaignFilter === "all" || campaignKeyForPost(post) === campaignFilter)
       .filter((post) => !query || visiblePostText(post).includes(query))
       .sort((a, b) => {
         if (sortMode === "updated") return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
@@ -193,9 +191,7 @@ export default function ContentWorkspacePage() {
       });
   }, [activeStatus, campaignFilter, posts, search, sortMode]);
 
-  const campaigns = useMemo(() => {
-    return [...new Set(posts.map((post) => post.campaign.trim()).filter(Boolean))].sort((first, second) => first.localeCompare(second, "fa"));
-  }, [posts]);
+  const campaignOptions = useMemo(() => buildCampaignFilterOptions(posts, campaigns), [campaigns, posts]);
 
   const mediaByPostId = useMemo(() => {
     const grouped = new Map<number, MediaAsset[]>();
@@ -477,7 +473,7 @@ export default function ContentWorkspacePage() {
                     <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
                       <option value="all">همه کمپین‌ها</option>
-                      {campaigns.map((campaign) => <option key={campaign} value={campaign}>{campaign}</option>)}
+                      {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
                     </select>
                   </label>
                   <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
@@ -568,10 +564,10 @@ export default function ContentWorkspacePage() {
                             انتخاب برای عملیات گروهی
                           </label>
                           <div className="flex flex-wrap items-center gap-2">
-                            {post.campaign ? (
+                            {campaignKeyForPost(post) !== "none" ? (
                               <StatusToken tone="neutral">
-                                <span className={`ml-1 inline-flex h-2 w-2 rounded-full ${campaignTone(post.campaign)}`} />
-                                {post.campaign}
+                                <span className="ml-1 inline-flex h-2 w-2 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
+                                {campaignLabelForPost(post, campaigns)}
                               </StatusToken>
                             ) : null}
                             {media ? <StatusToken tone="success">دارای رسانه</StatusToken> : <StatusToken tone="warning">بدون رسانه</StatusToken>}
@@ -643,7 +639,7 @@ export default function ContentWorkspacePage() {
                     <DetailGrid
                       items={[
                         { label: "زمان‌بندی", value: formatDateTime(selectedPost.scheduled_at), hint: "زمان برنامه‌ریزی انتشار" },
-                        { label: "کمپین", value: selectedPost.campaign || "بدون کمپین", hint: "برچسب عملیاتی محتوا" },
+                        { label: "کمپین", value: campaignLabelForPost(selectedPost, campaigns), hint: "برچسب عملیاتی محتوا" },
                         { label: "تلاش انتشار", value: selectedPost.attempt_count, hint: "تعداد تلاش‌های ثبت‌شده" },
                         { label: "به‌روزرسانی", value: formatDateTime(selectedPost.updated_at), hint: "آخرین تغییر پست" }
                       ]}

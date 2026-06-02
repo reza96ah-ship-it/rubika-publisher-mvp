@@ -90,7 +90,8 @@ Current implementation status:
 - Posts can reference `campaign_id` while the legacy free-text `campaign` field remains supported.
 - Existing free-text campaign names are backfilled into Campaign records during migration.
 - Composer can now load campaigns, attach a post to a real campaign, and quick-create a campaign without leaving the studio.
-- The next Campaign OS slice should add campaign filters in content, queue, calendar, and analytics.
+- Content, queue, calendar, and analytics now share campaign-aware filters that understand `campaign_id` and legacy text campaigns.
+- The next Campaign OS slice should add a dedicated campaign detail workspace with campaign health, timeline, and linked assets.
 
 ## Phase 4: Composer Studio Pro
 

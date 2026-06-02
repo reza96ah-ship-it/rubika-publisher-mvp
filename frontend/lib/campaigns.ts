@@ -1,4 +1,5 @@
 import { apiUrl, authHeaders } from "./posts";
+import type { Post } from "./posts";
 
 export type CampaignStatus = "active" | "paused" | "completed" | "archived";
 
@@ -28,6 +29,63 @@ export type CampaignInput = {
   ends_at?: string | null;
   notes?: string;
 };
+
+export type CampaignFilterOption = {
+  value: string;
+  label: string;
+  color: string;
+  count: number;
+};
+
+export function campaignKeyForPost(post: Pick<Post, "campaign_id" | "campaign">) {
+  if (post.campaign_id) return `id:${post.campaign_id}`;
+  const label = post.campaign?.trim();
+  return label ? `legacy:${label}` : "none";
+}
+
+export function campaignLabelForPost(post: Pick<Post, "campaign_id" | "campaign">, campaigns: Campaign[]) {
+  if (post.campaign_id) {
+    return campaigns.find((campaign) => campaign.id === post.campaign_id)?.name ?? post.campaign?.trim() ?? "کمپین حذف‌شده";
+  }
+  return post.campaign?.trim() || "بدون کمپین";
+}
+
+export function campaignColorForPost(post: Pick<Post, "campaign_id" | "campaign">, campaigns: Campaign[]) {
+  if (post.campaign_id) return campaigns.find((campaign) => campaign.id === post.campaign_id)?.color ?? "#64748B";
+  return "#94A3B8";
+}
+
+export function buildCampaignFilterOptions(posts: Array<Pick<Post, "campaign_id" | "campaign">>, campaigns: Campaign[]): CampaignFilterOption[] {
+  const options = new Map<string, CampaignFilterOption>();
+  campaigns.forEach((campaign) => {
+    options.set(`id:${campaign.id}`, {
+      value: `id:${campaign.id}`,
+      label: campaign.name,
+      color: campaign.color,
+      count: 0
+    });
+  });
+
+  posts.forEach((post) => {
+    const value = campaignKeyForPost(post);
+    if (value === "none") return;
+    const existing = options.get(value);
+    if (existing) {
+      existing.count += 1;
+      return;
+    }
+    options.set(value, {
+      value,
+      label: campaignLabelForPost(post, campaigns),
+      color: campaignColorForPost(post, campaigns),
+      count: 1
+    });
+  });
+
+  return Array.from(options.values())
+    .filter((option) => option.count > 0)
+    .sort((first, second) => first.label.localeCompare(second.label, "fa"));
+}
 
 export async function loadCampaigns(status = "all"): Promise<Campaign[]> {
   const response = await fetch(`${apiUrl}/campaigns?status=${encodeURIComponent(status)}`, { headers: authHeaders() });

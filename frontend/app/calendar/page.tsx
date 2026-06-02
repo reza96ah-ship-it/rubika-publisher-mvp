@@ -28,6 +28,7 @@ import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, InspectorPanel, NoticeBanner, StatusToken, Timeline, WorkspacePage } from "../../components/workspace-ui";
+import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { apiUrl, authHeaders, type Post } from "../../lib/posts";
 import {
   formatJalaliDate,
@@ -178,14 +179,6 @@ function postRailTone(status: string) {
   return "bg-blue-500";
 }
 
-const campaignMarkerTones = ["bg-violet-500", "bg-amber-500", "bg-teal-500", "bg-rose-500", "bg-sky-500"];
-
-function campaignMarkerTone(campaign?: string | null) {
-  if (!campaign?.trim()) return "bg-slate-300";
-  const score = Array.from(campaign).reduce((total, character) => total + character.charCodeAt(0), 0);
-  return campaignMarkerTones[score % campaignMarkerTones.length];
-}
-
 function postStatusLabel(status: string) {
   if (status === "failed") return "انتشار ناموفق";
   if (status === "published") return "منتشرشده";
@@ -212,12 +205,14 @@ function visibleCalendarText(post: Post) {
 export default function CalendarPage() {
   const { showToast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [statusFilter, setStatusFilter] = useState<CalendarFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [densityMode, setDensityMode] = useState<DensityMode>("comfortable");
   const [monthAnchor, setMonthAnchor] = useState(new Date().toISOString());
+  const [campaignFilter, setCampaignFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
@@ -230,8 +225,9 @@ export default function CalendarPage() {
 
   const loadPosts = useCallback(async (preservePlannerState = false) => {
     const headers = authHeaders();
-    const [response, mediaResponse] = await Promise.all([
+    const [response, campaignsResponse, mediaResponse] = await Promise.all([
       fetch(`${apiUrl}/posts`, { headers }),
+      loadCampaigns(),
       fetch(`${apiUrl}/media`, { headers })
     ]);
     if (!response.ok) throw new Error("دریافت تقویم انتشار ناموفق بود");
@@ -242,6 +238,7 @@ export default function CalendarPage() {
       return time !== null && time >= Date.now() && ["scheduled", "publishing"].includes(post.status);
     });
     setPosts(data);
+    setCampaigns(campaignsResponse);
     if (mediaResponse.ok) setAssets(await mediaResponse.json());
     if (!preservePlannerState) {
       setMonthAnchor(upcoming?.scheduled_at ?? sorted[0]?.scheduled_at ?? new Date().toISOString());
@@ -297,8 +294,11 @@ export default function CalendarPage() {
     const query = searchTerm.trim().toLowerCase();
     return calendarPosts
       .filter((post) => statusFilter === "all" || post.status === statusFilter)
+      .filter((post) => campaignFilter === "all" || campaignKeyForPost(post) === campaignFilter)
       .filter((post) => !query || visibleCalendarText(post).includes(query));
-  }, [calendarPosts, searchTerm, statusFilter]);
+  }, [calendarPosts, campaignFilter, searchTerm, statusFilter]);
+
+  const campaignOptions = useMemo(() => buildCampaignFilterOptions(calendarPosts, campaigns), [calendarPosts, campaigns]);
 
   const postsByDay = useMemo(() => {
     const map = new Map<string, Post[]>();
@@ -480,8 +480,8 @@ export default function CalendarPage() {
           <span className="min-w-0 flex-1">
             <span className="block truncate font-bold">{formatJalaliTime(post.scheduled_at)} · {post.title}</span>
             <span className="mt-0.5 flex items-center gap-1 truncate opacity-75">
-              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${campaignMarkerTone(post.campaign)}`} />
-              <span className="truncate">{post.campaign || (!compact ? post.caption : "") || "بدون کمپین"}</span>
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
+              <span className="truncate">{campaignKeyForPost(post) !== "none" ? campaignLabelForPost(post, campaigns) : (!compact ? post.caption : "") || "بدون کمپین"}</span>
             </span>
           </span>
         </span>
@@ -538,12 +538,19 @@ export default function CalendarPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 grid gap-2 2xl:grid-cols-[minmax(220px,1fr)_auto_auto] 2xl:items-center">
+                <div className="mt-3 grid gap-2 2xl:grid-cols-[minmax(220px,1fr)_190px_auto_auto] 2xl:items-center">
                   <DataSearchField
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
                     placeholder="جست‌وجوی عنوان، کپشن، کمپین یا خطا"
                   />
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted shadow-hairline">
+                    <CalendarDays className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                      <option value="all">همه کمپین‌ها</option>
+                      {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
+                    </select>
+                  </label>
                   <div className="flex w-fit rounded-md bg-app-surfaceMuted p-1 shadow-hairline">
                     {viewModes.map((mode) => {
                       const Icon = mode.icon;
@@ -721,7 +728,7 @@ export default function CalendarPage() {
                           )}
                           <span className="min-w-0">
                             <span className="block truncate font-bold text-app-text">{post.title}</span>
-                            <span className="mt-1 block truncate text-sm text-app-muted">{post.campaign || post.caption || "بدون کمپین"}</span>
+                            <span className="mt-1 block truncate text-sm text-app-muted">{campaignKeyForPost(post) !== "none" ? campaignLabelForPost(post, campaigns) : post.caption || "بدون کمپین"}</span>
                           </span>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -795,8 +802,8 @@ export default function CalendarPage() {
                             </span>
                             <span className="mt-2 block truncate text-sm font-black text-app-text">{post.title}</span>
                             <span className="mt-1 flex items-center gap-1 truncate text-[11px] font-bold text-app-primary">
-                              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${campaignMarkerTone(post.campaign)}`} />
-                              <span className="truncate">{post.campaign || "بدون کمپین"}</span>
+                              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
+                              <span className="truncate">{campaignLabelForPost(post, campaigns)}</span>
                             </span>
                           </span>
                         </div>
@@ -820,8 +827,8 @@ export default function CalendarPage() {
                           <StatusBadge status={selectedPost.status} />
                           <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
                           <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1 text-[11px] font-black text-slate-600">
-                            <span className={`h-1.5 w-1.5 rounded-full ${campaignMarkerTone(selectedPost.campaign)}`} />
-                            {selectedPost.campaign || "بدون کمپین"}
+                            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: campaignColorForPost(selectedPost, campaigns) }} />
+                            {campaignLabelForPost(selectedPost, campaigns)}
                           </span>
                         </div>
                         <h3 className="mt-3 text-base font-black text-app-text">{selectedPost.title}</h3>
@@ -833,7 +840,7 @@ export default function CalendarPage() {
                       <DetailGrid
                         items={[
                           { label: "زمان", value: formatJalaliDateTime(selectedPost.scheduled_at) },
-                          { label: "کمپین", value: selectedPost.campaign || "بدون کمپین" },
+                          { label: "کمپین", value: campaignLabelForPost(selectedPost, campaigns) },
                           { label: "تلاش", value: `${selectedPost.attempt_count}` },
                           { label: "شناسه", value: `#${selectedPost.id}` }
                         ]}
