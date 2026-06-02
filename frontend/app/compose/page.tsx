@@ -2,7 +2,7 @@
 
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CalendarClock, ChevronDown, Cloud, Eye, FileText, ImagePlus, Images, Plus, Send, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { CalendarClock, ChevronDown, Cloud, Eye, FileText, ImagePlus, Images, PencilLine, Plus, Send, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ApprovalBadge } from "../../components/approval-badge";
@@ -10,6 +10,7 @@ import { ComposerActionFooter } from "../../components/composer-action-footer";
 import { ComposerReadinessChecks } from "../../components/composer-readiness-checks";
 import { RubikaPostPreview } from "../../components/rubika-post-preview";
 import { MediaGalleryPicker } from "../../components/media-gallery-picker";
+import { MediaImageEditor } from "../../components/media-image-editor";
 import { ComposerSchedulePanel } from "../../components/composer-schedule-panel";
 import { ComposerStepRail, type ComposerStep } from "../../components/composer-step-rail";
 import { ComposerStartPanel } from "../../components/composer-start-panel";
@@ -40,6 +41,12 @@ type MediaAsset = {
 type SaveAction = "draft" | "ready" | "schedule";
 type AutosaveState = "idle" | "dirty" | "saved" | "restored";
 type StudioPanel = "preview" | "schedule" | "review";
+type ComposerImageEditSource = {
+  imageUrl: string;
+  filename: string;
+  folder: string;
+  tags: string;
+};
 
 type Post = {
   id: number;
@@ -90,6 +97,7 @@ function ComposePageContent() {
   const [selectedMediaId, setSelectedMediaId] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFilePreviewUrl, setSelectedFilePreviewUrl] = useState("");
+  const [editingImageSource, setEditingImageSource] = useState<ComposerImageEditSource | null>(null);
   const [loading, setLoading] = useState(true);
   const [showOptionalDetails, setShowOptionalDetails] = useState(false);
   const [savingAction, setSavingAction] = useState<SaveAction | null>(null);
@@ -100,6 +108,7 @@ function ComposePageContent() {
   const [showComposerEntry, setShowComposerEntry] = useState(true);
   const [quickCampaignName, setQuickCampaignName] = useState("");
   const [creatingCampaign, setCreatingCampaign] = useState(false);
+  const [savingEditedImage, setSavingEditedImage] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const uploadInputRef = useRef<HTMLInputElement>(null);
@@ -485,6 +494,61 @@ function ComposePageContent() {
     return response.json() as Promise<MediaAsset>;
   }
 
+  function openImageEditor() {
+    if (selectedFile && selectedFilePreviewUrl) {
+      setEditingImageSource({
+        imageUrl: selectedFilePreviewUrl,
+        filename: selectedFile.name,
+        folder: form.campaign || "",
+        tags: "composer"
+      });
+      return;
+    }
+
+    if (selectedMedia && mediaPreviewUrls[selectedMedia.id]) {
+      setEditingImageSource({
+        imageUrl: mediaPreviewUrls[selectedMedia.id],
+        filename: selectedMedia.original_filename,
+        folder: selectedMedia.folder,
+        tags: selectedMedia.tags
+      });
+    }
+  }
+
+  async function saveEditedComposerImage(file: File) {
+    if (!editingImageSource) return;
+    setSavingEditedImage(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", editingImageSource.folder);
+      formData.append("tags", [editingImageSource.tags, "edited", "composer"].filter(Boolean).join(", "));
+      const response = await fetch(`${apiUrl}/media`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token()}` },
+        body: formData
+      });
+      if (!response.ok) throw new Error("ذخیره نسخه ویرایش‌شده ناموفق بود");
+      const savedAsset = (await response.json()) as MediaAsset;
+      setMediaAssets((current) => [savedAsset, ...current.filter((asset) => asset.id !== savedAsset.id)]);
+      setSelectedMediaId(String(savedAsset.id));
+      setSelectedFile(null);
+      setEditingImageSource(null);
+      setShowComposerEntry(false);
+      setMessage("نسخه ویرایش‌شده به پست انتخاب شد");
+      showToast({ title: "تصویر ویرایش‌شده انتخاب شد", description: savedAsset.original_filename, tone: "success" });
+    } catch (err) {
+      const nextError = err instanceof Error ? err.message : "خطای ذخیره نسخه ویرایش‌شده";
+      setError(nextError);
+      showToast({ title: "ذخیره ویرایش تصویر ناموفق بود", description: nextError, tone: "alert" });
+    } finally {
+      setSavingEditedImage(false);
+    }
+  }
+
   async function attachMedia(assetId: number, postId: number | null) {
     const response = await fetch(`${apiUrl}/media/${assetId}/attach`, {
       method: "PUT",
@@ -635,6 +699,15 @@ function ComposePageContent() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-4">
+          {editingImageSource ? (
+            <MediaImageEditor
+              imageUrl={editingImageSource.imageUrl}
+              filename={editingImageSource.filename}
+              saving={savingEditedImage}
+              onClose={() => setEditingImageSource(null)}
+              onSave={saveEditedComposerImage}
+            />
+          ) : null}
           <section className="app-studio-panel rounded-lg px-4 py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
@@ -787,7 +860,17 @@ function ComposePageContent() {
                 <WorkspacePanel
                   title="رسانه"
                   description="یک تصویر تازه آپلود کنید یا از کتابخانه رسانه انتخاب کنید."
-                  action={<Tag tone={previewImageUrl ? "success" : "warning"}>{previewImageUrl ? "انتخاب شده" : "بدون رسانه"}</Tag>}
+                  action={(
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Tag tone={previewImageUrl ? "success" : "warning"}>{previewImageUrl ? "انتخاب شده" : "بدون رسانه"}</Tag>
+                      {previewImageUrl ? (
+                        <Button type="button" variant="secondary" size="sm" onClick={openImageEditor}>
+                          <PencilLine className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                          ویرایش تصویر
+                        </Button>
+                      ) : null}
+                    </div>
+                  )}
                   bodyClassName="grid gap-4 p-4 lg:grid-cols-[230px_minmax(0,1fr)]"
                 >
                   <div className="space-y-3">

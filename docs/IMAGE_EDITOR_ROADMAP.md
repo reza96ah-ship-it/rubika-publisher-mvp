@@ -166,6 +166,13 @@ Acceptance criteria:
 - Users can produce square, portrait, and story variants from one image.
 - Source asset and generated variants are clearly linked in Media Library.
 
+Current implementation status:
+
+- The editor now has social crop presets for original, Rubika, square, portrait, story, and landscape outputs.
+- Users can zoom, reposition, rotate, and horizontally flip the source photo before saving a variant.
+- Exported filenames include the selected variant type when a social preset is used.
+- The editor is now available from Composer for selected library images or newly uploaded local images.
+
 Priority: **P0**.
 
 ### Editor Phase 4: Persian Typography Pro

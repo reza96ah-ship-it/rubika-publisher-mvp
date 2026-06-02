@@ -1,6 +1,6 @@
 "use client";
 
-import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Copy, Eye, EyeOff, GripVertical, Group, ImagePlus, Layers3, Lock, Maximize2, Minus, Palette, Plus, Redo2, RotateCcw, RotateCw, Save, ShieldCheck, SmilePlus, Trash2, Type, Undo2, Ungroup, Unlock, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Copy, Crop, Eye, EyeOff, FlipHorizontal, GripVertical, Group, ImagePlus, Layers3, Lock, Maximize2, Minus, Palette, Plus, RectangleHorizontal, Redo2, RotateCcw, RotateCw, Save, ShieldCheck, SmilePlus, Square, Trash2, Type, Undo2, Ungroup, Unlock, X, type LucideIcon } from "lucide-react";
 import { PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "./ui/button";
@@ -30,6 +30,17 @@ type ImageAdjustments = {
   saturation: number;
 };
 
+type CropPresetId = "original" | "rubika" | "square" | "portrait" | "story" | "landscape";
+
+type ImageCropSettings = {
+  presetId: CropPresetId;
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+  rotation: number;
+  flipX: boolean;
+};
+
 type MediaImageEditorProps = {
   imageUrl: string;
   filename: string;
@@ -41,6 +52,8 @@ type MediaImageEditorProps = {
 type EditorSnapshot = {
   layers: EditorLayer[];
   adjustments: ImageAdjustments;
+  crop: ImageCropSettings;
+  canvasSize: { width: number; height: number };
 };
 
 type ActiveTransform = {
@@ -66,6 +79,15 @@ const fontOptions = [
   { label: "Tahoma", value: "Tahoma" }
 ];
 const initialAdjustments: ImageAdjustments = { brightness: 100, contrast: 100, saturation: 100 };
+const initialCrop: ImageCropSettings = { presetId: "original", scale: 100, offsetX: 0, offsetY: 0, rotation: 0, flipX: false };
+const cropPresets: Array<{ id: CropPresetId; label: string; detail: string; width: number; height: number; icon: LucideIcon }> = [
+  { id: "original", label: "اصلی", detail: "نسبت فایل", width: 0, height: 0, icon: Crop },
+  { id: "rubika", label: "روبیکا", detail: "1080×1080", width: 1080, height: 1080, icon: Square },
+  { id: "square", label: "مربع", detail: "1080×1080", width: 1080, height: 1080, icon: Square },
+  { id: "portrait", label: "پرتره", detail: "1080×1350", width: 1080, height: 1350, icon: RectangleHorizontal },
+  { id: "story", label: "استوری", detail: "1080×1920", width: 1080, height: 1920, icon: RectangleHorizontal },
+  { id: "landscape", label: "افقی", detail: "1200×675", width: 1200, height: 675, icon: RectangleHorizontal }
+];
 
 function createLayerId() {
   return `layer-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -84,6 +106,30 @@ function normalizeAngle(angle: number) {
   return normalized < 0 ? normalized + 360 : normalized;
 }
 
+function boundedSourceRect(image: HTMLImageElement, targetSize: { width: number; height: number }, crop: ImageCropSettings) {
+  const sourceRatio = image.naturalWidth / image.naturalHeight;
+  const targetRatio = targetSize.width / targetSize.height;
+  const baseWidth = sourceRatio > targetRatio ? image.naturalHeight * targetRatio : image.naturalWidth;
+  const baseHeight = sourceRatio > targetRatio ? image.naturalHeight : image.naturalWidth / targetRatio;
+  const zoom = Math.max(1, crop.scale / 100);
+  const width = Math.max(1, Math.min(image.naturalWidth, baseWidth / zoom));
+  const height = Math.max(1, Math.min(image.naturalHeight, baseHeight / zoom));
+  const maxLeft = Math.max(0, image.naturalWidth - width);
+  const maxTop = Math.max(0, image.naturalHeight - height);
+  const left = Math.max(0, Math.min(maxLeft, maxLeft / 2 + (crop.offsetX / 100) * (maxLeft / 2)));
+  const top = Math.max(0, Math.min(maxTop, maxTop / 2 + (crop.offsetY / 100) * (maxTop / 2)));
+  return { left, top, width, height };
+}
+
+function originalCanvasSize(image: HTMLImageElement) {
+  const maxWidth = 1600;
+  const scale = Math.min(1, maxWidth / image.naturalWidth);
+  return {
+    width: Math.max(1, Math.round(image.naturalWidth * scale)),
+    height: Math.max(1, Math.round(image.naturalHeight * scale))
+  };
+}
+
 export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, onSave }: MediaImageEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const artboardRef = useRef<HTMLDivElement>(null);
@@ -97,6 +143,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const [selectedLayerIds, setSelectedLayerIds] = useState<string[]>([]);
   const [draftText, setDraftText] = useState("متن جدید");
   const [adjustments, setAdjustments] = useState<ImageAdjustments>(initialAdjustments);
+  const [crop, setCrop] = useState<ImageCropSettings>(initialCrop);
   const [past, setPast] = useState<EditorSnapshot[]>([]);
   const [future, setFuture] = useState<EditorSnapshot[]>([]);
   const [canvasSize, setCanvasSize] = useState({ width: 1, height: 1 });
@@ -111,8 +158,10 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
   const snapshot = useCallback((): EditorSnapshot => ({
     layers: cloneLayers(layers),
-    adjustments: { ...adjustments }
-  }), [adjustments, layers]);
+    adjustments: { ...adjustments },
+    crop: { ...crop },
+    canvasSize: { ...canvasSize }
+  }), [adjustments, canvasSize, crop, layers]);
 
   const remember = useCallback(() => {
     setPast((current) => [...current, snapshot()].slice(-80));
@@ -129,7 +178,13 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.save();
     context.filter = imageFilter(adjustments);
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    context.translate(canvas.width / 2, canvas.height / 2);
+    context.rotate((crop.rotation * Math.PI) / 180);
+    context.scale(crop.flipX ? -1 : 1, 1);
+    const drawWidth = crop.rotation % 180 === 0 ? canvas.width : canvas.height;
+    const drawHeight = crop.rotation % 180 === 0 ? canvas.height : canvas.width;
+    const source = boundedSourceRect(image, { width: drawWidth, height: drawHeight }, crop);
+    context.drawImage(image, source.left, source.top, source.width, source.height, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
     context.restore();
 
     layers.filter((layer) => layer.visible).forEach((layer) => {
@@ -148,7 +203,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       context.fillText(layer.value, 0, 0);
       context.restore();
     });
-  }, [adjustments, layers]);
+  }, [adjustments, crop, layers]);
 
   const fitCanvas = useCallback((size: { width: number; height: number }) => {
     const viewport = viewportRef.current;
@@ -164,11 +219,9 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     image.onload = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const maxWidth = 1600;
-      const scale = Math.min(1, maxWidth / image.naturalWidth);
-      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-      const nextSize = { width: canvas.width, height: canvas.height };
+      const nextSize = originalCanvasSize(image);
+      canvas.width = nextSize.width;
+      canvas.height = nextSize.height;
       imageRef.current = image;
       setCanvasSize(nextSize);
       setImageReady(true);
@@ -307,8 +360,15 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   }
 
   const restoreSnapshot = useCallback((next: EditorSnapshot) => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.width = next.canvasSize.width;
+      canvas.height = next.canvasSize.height;
+    }
     setLayers(cloneLayers(next.layers));
     setAdjustments({ ...next.adjustments });
+    setCrop({ ...next.crop });
+    setCanvasSize({ ...next.canvasSize });
     setSelectedLayerId((current) => next.layers.some((layer) => layer.id === current) ? current : "");
     setSelectedLayerIds((current) => current.filter((id) => next.layers.some((layer) => layer.id === id)));
   }, []);
@@ -409,12 +469,47 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setSelectedLayerId("");
     setSelectedLayerIds([]);
     setAdjustments(initialAdjustments);
+    setCrop(initialCrop);
+    if (imageRef.current && canvasRef.current) {
+      const nextSize = originalCanvasSize(imageRef.current);
+      canvasRef.current.width = nextSize.width;
+      canvasRef.current.height = nextSize.height;
+      setCanvasSize(nextSize);
+      window.setTimeout(() => fitCanvas(nextSize), 0);
+    }
     setError("");
   }
 
   function updateAdjustment(field: keyof ImageAdjustments, value: number) {
     remember();
     setAdjustments((current) => ({ ...current, [field]: value }));
+  }
+
+  function applyCropPreset(presetId: CropPresetId) {
+    const image = imageRef.current;
+    const canvas = canvasRef.current;
+    if (!image || !canvas) return;
+    const preset = cropPresets.find((item) => item.id === presetId);
+    if (!preset) return;
+    const nextSize = preset.id === "original" ? originalCanvasSize(image) : { width: preset.width, height: preset.height };
+    const scaleX = nextSize.width / canvasSize.width;
+    const scaleY = nextSize.height / canvasSize.height;
+    remember();
+    canvas.width = nextSize.width;
+    canvas.height = nextSize.height;
+    setCanvasSize(nextSize);
+    setCrop((current) => ({ ...current, presetId, offsetX: 0, offsetY: 0, scale: 100 }));
+    setLayers((current) => current.map((layer) => ({ ...layer, x: layer.x * scaleX, y: layer.y * scaleY, fontSize: Math.max(20, Math.round(layer.fontSize * Math.min(scaleX, scaleY))) })));
+    window.setTimeout(() => fitCanvas(nextSize), 0);
+  }
+
+  function updateCrop(patch: Partial<ImageCropSettings>) {
+    remember();
+    setCrop((current) => ({ ...current, ...patch }));
+  }
+
+  function rotateImage() {
+    updateCrop({ rotation: normalizeAngle(crop.rotation + 90) });
   }
 
   function selectLayer(layerId: string, additive = false) {
@@ -537,7 +632,9 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       return;
     }
     const baseName = filename.replace(/\.[^.]+$/, "") || "image";
-    await onSave(new File([blob], `${baseName}-edited.png`, { type: "image/png" }));
+    const preset = cropPresets.find((item) => item.id === crop.presetId);
+    const suffix = preset && preset.id !== "original" ? `${preset.id}-variant` : "edited";
+    await onSave(new File([blob], `${baseName}-${suffix}.png`, { type: "image/png" }));
   }
 
   return createPortal((
@@ -551,6 +648,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <StatusToken tone={layers.length ? "primary" : "neutral"}>{layers.length} لایه</StatusToken>
+            <StatusToken tone="neutral">{canvasSize.width}×{canvasSize.height}</StatusToken>
             <button type="button" onClick={undo} disabled={!past.length} className="app-interactive flex h-8 w-8 items-center justify-center rounded-md border border-app-border bg-white text-slate-600 shadow-hairline hover:bg-blue-50 hover:text-app-primary disabled:pointer-events-none disabled:opacity-40" aria-label="بازگشت" title="بازگشت (Ctrl+Z)">
               <Undo2 className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -576,6 +674,57 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
         <div className="grid min-h-0 flex-1 overflow-auto lg:grid-cols-[240px_minmax(320px,1fr)_300px]">
           <aside className="space-y-4 border-b border-app-border bg-white p-4 lg:border-b-0 lg:border-l">
+            <section>
+              <div className="flex items-center gap-2">
+                <Crop className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                <h3 className="text-xs font-black text-app-text">کراپ و خروجی</h3>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {cropPresets.map((preset) => {
+                  const Icon = preset.icon;
+                  const active = crop.presetId === preset.id;
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => applyCropPreset(preset.id)}
+                      className={`app-interactive rounded-md border p-2 text-right shadow-hairline ${active ? "border-blue-300 bg-blue-50 text-app-primary ring-1 ring-blue-200" : "border-app-border bg-white text-app-text hover:bg-slate-50"}`}
+                    >
+                      <span className="flex items-center gap-2 text-xs font-black">
+                        <Icon className="h-4 w-4" aria-hidden="true" />
+                        {preset.label}
+                      </span>
+                      <span className="mt-1 block text-[10px] font-bold text-app-muted">{preset.detail}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-3 rounded-md bg-app-surfaceMuted p-3 shadow-hairline">
+                <label className="block text-xs font-bold text-app-muted">
+                  بزرگ‌نمایی تصویر · {crop.scale}%
+                  <input type="range" min="100" max="220" value={crop.scale} onChange={(event) => updateCrop({ scale: Number(event.target.value) })} className="mt-2 w-full accent-blue-600" />
+                </label>
+                <label className="mt-3 block text-xs font-bold text-app-muted">
+                  جابه‌جایی افقی · {crop.offsetX}
+                  <input type="range" min="-100" max="100" value={crop.offsetX} onChange={(event) => updateCrop({ offsetX: Number(event.target.value) })} className="mt-2 w-full accent-blue-600" />
+                </label>
+                <label className="mt-3 block text-xs font-bold text-app-muted">
+                  جابه‌جایی عمودی · {crop.offsetY}
+                  <input type="range" min="-100" max="100" value={crop.offsetY} onChange={(event) => updateCrop({ offsetY: Number(event.target.value) })} className="mt-2 w-full accent-blue-600" />
+                </label>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Button type="button" variant="secondary" size="sm" onClick={rotateImage}>
+                    <RotateCw className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                    چرخش ۹۰°
+                  </Button>
+                  <Button type="button" variant="secondary" size="sm" onClick={() => updateCrop({ flipX: !crop.flipX })}>
+                    <FlipHorizontal className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                    قرینه
+                  </Button>
+                </div>
+              </div>
+            </section>
+
             <section>
               <div className="flex items-center gap-2">
                 <Type className="h-4 w-4 text-app-primary" aria-hidden="true" />
