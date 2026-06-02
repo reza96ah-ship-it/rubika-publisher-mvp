@@ -9,14 +9,19 @@ import {
   Clock3,
   FileText,
   ImageIcon,
+  MessageSquareText,
   Pencil,
   RefreshCw,
   RotateCcw,
+  ShieldCheck,
+  ThumbsDown,
+  ThumbsUp,
   XCircle
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
+import { ApprovalBadge } from "../../components/approval-badge";
 import { CountdownBadge } from "../../components/countdown-badge";
 import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
 import { PublishingTab, PublishingWorkspaceHeader } from "../../components/publishing-workspace";
@@ -26,7 +31,7 @@ import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { notifyNotificationsUpdated } from "../../lib/notifications";
-import { apiUrl, authHeaders, formatDateTime, Post, postFinalText, readApiError, workflowTabs } from "../../lib/posts";
+import { apiUrl, approvalConfig, approvalTabs, authHeaders, formatDateTime, Post, postFinalText, readApiError, workflowTabs } from "../../lib/posts";
 
 type Metric = {
   label: string;
@@ -48,6 +53,7 @@ type MediaAsset = {
 };
 
 type SortMode = "priority" | "updated" | "schedule" | "title";
+type ReviewAction = "submit-review" | "approve" | "reject" | "request-changes";
 
 const searchableFields: Array<keyof Pick<Post, "title" | "caption" | "hashtags" | "campaign" | "internal_note">> = [
   "title",
@@ -83,9 +89,12 @@ export default function ContentWorkspacePage() {
   const [activeStatus, setActiveStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [campaignFilter, setCampaignFilter] = useState("all");
+  const [approvalFilter, setApprovalFilter] = useState("all");
   const [sortMode, setSortMode] = useState<SortMode>("priority");
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [reviewNote, setReviewNote] = useState("");
+  const [reviewingAction, setReviewingAction] = useState<ReviewAction | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [bulkUpdating, setBulkUpdating] = useState(false);
@@ -180,6 +189,7 @@ export default function ContentWorkspacePage() {
     return posts
       .filter((post) => activeStatus === "all" || post.status === activeStatus)
       .filter((post) => campaignFilter === "all" || campaignKeyForPost(post) === campaignFilter)
+      .filter((post) => approvalFilter === "all" || (post.approval_status || "not_required") === approvalFilter)
       .filter((post) => !query || visiblePostText(post).includes(query))
       .sort((a, b) => {
         if (sortMode === "updated") return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
@@ -189,7 +199,7 @@ export default function ContentWorkspacePage() {
         if (a.status !== "failed" && b.status === "failed") return 1;
         return compareBySchedule(a, b);
       });
-  }, [activeStatus, campaignFilter, posts, search, sortMode]);
+  }, [activeStatus, approvalFilter, campaignFilter, posts, search, sortMode]);
 
   const campaignOptions = useMemo(() => buildCampaignFilterOptions(posts, campaigns), [campaigns, posts]);
 
@@ -209,11 +219,15 @@ export default function ContentWorkspacePage() {
     return filteredPosts[0] ?? posts[0] ?? null;
   }, [filteredPosts, posts, selectedPostId]);
 
+  useEffect(() => {
+    setReviewNote(selectedPost?.approval_note || "");
+  }, [selectedPost?.id, selectedPost?.approval_note]);
+
   const metrics = useMemo<Metric[]>(() => {
     const failed = statusCount(posts, "failed");
     const scheduled = statusCount(posts, "scheduled");
     const ready = statusCount(posts, "ready");
-    const published = statusCount(posts, "published");
+    const pendingReview = posts.filter((post) => post.approval_status === "pending").length;
     const nextScheduled = posts
       .filter((post) => post.status === "scheduled" && post.scheduled_at)
       .sort(compareBySchedule)[0];
@@ -234,18 +248,18 @@ export default function ContentWorkspacePage() {
         tone: failed ? "alert" : "success"
       },
       {
+        label: "در انتظار بازبینی",
+        value: pendingReview,
+        hint: pendingReview ? "تایید یا درخواست اصلاح را از پنل بازبینی انجام دهید" : "هیچ پست منتظر بازبینی نیست",
+        icon: ShieldCheck,
+        tone: pendingReview ? "warning" : "success"
+      },
+      {
         label: "آماده و زمان‌بندی‌شده",
         value: ready + scheduled,
         hint: nextScheduled ? `نزدیک‌ترین انتشار: ${formatDateTime(nextScheduled.scheduled_at)}` : "هنوز انتشار آینده ثبت نشده",
         icon: CalendarClock,
         tone: "warning"
-      },
-      {
-        label: "منتشرشده",
-        value: published,
-        hint: "خروجی‌های موفق در لاگ انتشار قابل پیگیری‌اند",
-        icon: CheckCircle2,
-        tone: "success"
       }
     ];
   }, [filteredPosts.length, posts]);
@@ -364,11 +378,13 @@ export default function ContentWorkspacePage() {
     setActiveStatus("all");
     setSearch("");
     setCampaignFilter("all");
+    setApprovalFilter("all");
     setSortMode("priority");
   }
 
   function selectPost(post: Post) {
     setSelectedPostId(post.id);
+    setReviewNote(post.approval_note || "");
   }
 
   function primaryMediaForPost(post: Post) {
@@ -378,6 +394,50 @@ export default function ContentWorkspacePage() {
   function previewUrlForPost(post: Post) {
     const asset = primaryMediaForPost(post);
     return asset ? mediaPreviewUrls[asset.id] ?? "" : "";
+  }
+
+  function canSubmitForReview(post: Post) {
+    return ["draft", "ready", "failed", "cancelled"].includes(post.status) && post.approval_status !== "pending" && post.status !== "published";
+  }
+
+  function canReviewDecision(post: Post) {
+    return post.approval_status === "pending";
+  }
+
+  async function reviewPost(post: Post, action: ReviewAction) {
+    const actionTitle: Record<ReviewAction, string> = {
+      "submit-review": "پست برای بازبینی ارسال شد",
+      approve: "پست تایید شد",
+      reject: "پست رد شد",
+      "request-changes": "درخواست اصلاح ثبت شد"
+    };
+
+    setMessage("");
+    setError("");
+    setReviewingAction(action);
+    const response = await fetch(`${apiUrl}/posts/${post.id}/${action}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ note: reviewNote })
+    });
+
+    if (!response.ok) {
+      const detail = await readApiError(response, "عملیات بازبینی ناموفق بود");
+      setError(detail);
+      setReviewingAction(null);
+      showToast({ title: "عملیات بازبینی ناموفق بود", description: detail, tone: "alert" });
+      return;
+    }
+
+    const updated = (await response.json()) as Post;
+    setPosts((current) => current.map((item) => item.id === updated.id ? updated : item));
+    setSelectedPostId(updated.id);
+    setReviewNote(updated.approval_note || "");
+    setMessage(actionTitle[action]);
+    setReviewingAction(null);
+    notifyNotificationsUpdated();
+    showToast({ title: actionTitle[action], description: updated.title, tone: action === "reject" || action === "request-changes" ? "warning" : "success" });
+    await loadPosts(true);
   }
 
   return (
@@ -463,7 +523,7 @@ export default function ContentWorkspacePage() {
                   </>
                 )}
               >
-                <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_170px_170px]">
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_160px_160px_170px]">
                   <DataSearchField
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
@@ -474,6 +534,12 @@ export default function ContentWorkspacePage() {
                     <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
                       <option value="all">همه کمپین‌ها</option>
                       {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
+                    <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <select value={approvalFilter} onChange={(event) => setApprovalFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                      {approvalTabs.map((tab) => <option key={tab.value} value={tab.value}>{tab.label}</option>)}
                     </select>
                   </label>
                   <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
@@ -518,6 +584,18 @@ export default function ContentWorkspacePage() {
                       count={statusCount(posts, tab.value)}
                       onClick={() => setActiveStatus(tab.value)}
                     >
+                      {tab.label}
+                    </FilterChip>
+                  );
+                })}
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2 border-t border-app-border pt-3">
+                {approvalTabs.map((tab) => {
+                  const active = approvalFilter === tab.value;
+                  const count = tab.value === "all" ? posts.length : posts.filter((post) => (post.approval_status || "not_required") === tab.value).length;
+                  return (
+                    <FilterChip key={tab.value} active={active} count={count} onClick={() => setApprovalFilter(tab.value)}>
                       {tab.label}
                     </FilterChip>
                   );
@@ -581,6 +659,7 @@ export default function ContentWorkspacePage() {
 
                       <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
                         <StatusBadge status={post.status} />
+                        <ApprovalBadge status={post.approval_status} compact />
                         <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
                       </div>
 
@@ -608,7 +687,7 @@ export default function ContentWorkspacePage() {
               <WorkspacePanel
                 title="بازبین پست"
                 description="پست انتخاب‌شده را بدون خروج از فضای محتوا بررسی کنید."
-                action={selectedPost ? <StatusBadge status={selectedPost.status} /> : null}
+                action={selectedPost ? <ApprovalBadge status={selectedPost.approval_status} compact /> : null}
               >
                 {selectedPost ? (
                   <div className="space-y-4">
@@ -625,6 +704,7 @@ export default function ContentWorkspacePage() {
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={selectedPost.status} />
+                        <ApprovalBadge status={selectedPost.approval_status} />
                         <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
                         {primaryMediaForPost(selectedPost) ? <StatusToken tone="success">رسانه آماده</StatusToken> : <StatusToken tone="warning">نیازمند رسانه</StatusToken>}
                       </div>
@@ -640,10 +720,53 @@ export default function ContentWorkspacePage() {
                       items={[
                         { label: "زمان‌بندی", value: formatDateTime(selectedPost.scheduled_at), hint: "زمان برنامه‌ریزی انتشار" },
                         { label: "کمپین", value: campaignLabelForPost(selectedPost, campaigns), hint: "برچسب عملیاتی محتوا" },
+                        { label: "بازبینی", value: approvalConfig(selectedPost.approval_status).label, hint: approvalConfig(selectedPost.approval_status).description },
+                        { label: "بازبین", value: selectedPost.reviewed_by || "ثبت نشده", hint: selectedPost.reviewed_at ? formatDateTime(selectedPost.reviewed_at) : "هنوز تصمیم نهایی ثبت نشده" },
                         { label: "تلاش انتشار", value: selectedPost.attempt_count, hint: "تعداد تلاش‌های ثبت‌شده" },
                         { label: "به‌روزرسانی", value: formatDateTime(selectedPost.updated_at), hint: "آخرین تغییر پست" }
                       ]}
                     />
+
+                    <section className="rounded-md border border-app-border bg-app-surfaceMuted/70 p-3">
+                      <div className="flex items-start gap-2">
+                        <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0 text-app-primary" aria-hidden="true" />
+                        <div>
+                          <p className="text-sm font-black text-app-text">گردش کار بازبینی</p>
+                          <p className="mt-1 text-xs leading-5 text-app-muted">{approvalConfig(selectedPost.approval_status).description}</p>
+                        </div>
+                      </div>
+                      {selectedPost.submitted_at ? <p className="mt-3 text-xs text-app-muted">ارسال برای بازبینی: {formatDateTime(selectedPost.submitted_at)}</p> : null}
+                      <textarea
+                        value={reviewNote}
+                        onChange={(event) => setReviewNote(event.target.value)}
+                        className="mt-3 min-h-20 w-full resize-y rounded-md border border-app-border bg-white px-3 py-2 text-sm leading-6 text-app-text outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                        placeholder="یادداشت بازبین، دلیل رد یا اصلاح مورد نیاز..."
+                      />
+                      <div className="mt-3 grid gap-2">
+                        {canSubmitForReview(selectedPost) ? (
+                          <Button type="button" variant="secondary" disabled={Boolean(reviewingAction)} onClick={() => reviewPost(selectedPost, "submit-review")}>
+                            <ShieldCheck className="ml-2 h-4 w-4" aria-hidden="true" />
+                            {reviewingAction === "submit-review" ? "در حال ارسال" : "ارسال برای بازبینی"}
+                          </Button>
+                        ) : null}
+                        {canReviewDecision(selectedPost) ? (
+                          <div className="grid gap-2 sm:grid-cols-3">
+                            <Button type="button" size="sm" disabled={Boolean(reviewingAction)} onClick={() => reviewPost(selectedPost, "approve")}>
+                              <ThumbsUp className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                              تایید
+                            </Button>
+                            <Button type="button" variant="secondary" size="sm" disabled={Boolean(reviewingAction)} onClick={() => reviewPost(selectedPost, "request-changes")}>
+                              <MessageSquareText className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                              اصلاح
+                            </Button>
+                            <Button type="button" variant="danger" size="sm" disabled={Boolean(reviewingAction)} onClick={() => reviewPost(selectedPost, "reject")}>
+                              <ThumbsDown className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                              رد
+                            </Button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </section>
 
                     {selectedPost.internal_note ? (
                       <div className="rounded-md border border-app-border bg-slate-50 p-3 text-xs leading-6 text-app-muted">

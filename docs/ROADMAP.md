@@ -218,6 +218,7 @@ Current implementation status:
 
 - Posts now have approval status, review notes, submitted/reviewed timestamps, and reviewer identity fields.
 - Backend review actions can submit, approve, reject, or request changes; pending/rejected review states block scheduling.
+- Content, queue, and composer screens now surface approval state; the content inspector supports submit, approve, reject, and request-changes actions.
 
 Risk: high.
 

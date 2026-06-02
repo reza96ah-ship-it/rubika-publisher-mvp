@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { CalendarClock, ChevronDown, Cloud, Eye, FileText, ImagePlus, Images, Plus, Send, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
+import { ApprovalBadge } from "../../components/approval-badge";
 import { ComposerActionFooter } from "../../components/composer-action-footer";
 import { ComposerReadinessChecks } from "../../components/composer-readiness-checks";
 import { RubikaPostPreview } from "../../components/rubika-post-preview";
@@ -19,6 +20,7 @@ import { Field, Input, Select, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
 import { NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { createCampaign, loadCampaigns, type Campaign } from "../../lib/campaigns";
+import { approvalBlocksPublishing, approvalConfig } from "../../lib/posts";
 import { isRubikaConnected, loadWorkspaceOverview, type RubikaSettings, type StoreProfile } from "../../lib/workspace";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -51,6 +53,11 @@ type Post = {
   campaign: string;
   internal_note: string;
   scheduled_at: string | null;
+  approval_status: string;
+  approval_note: string;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  reviewed_by: string;
 };
 
 const emptyForm = {
@@ -131,9 +138,10 @@ function ComposePageContent() {
   const hasLocalDraftContent = Boolean(form.title.trim() || form.caption.trim() || form.hashtags.trim() || form.campaign_id || form.campaign.trim() || form.internal_note.trim() || form.scheduled_at || selectedMediaId);
   const rubikaReady = isRubikaConnected(rubika);
   const canMoveToReady = !editingPost || ["draft", "failed", "cancelled"].includes(editingPost.status);
+  const reviewBlocksSchedule = editingPost ? approvalBlocksPublishing(editingPost) : false;
   const canSaveDraft = hasTitle;
   const canMarkReady = hasTitle && hasPostBody && canMoveToReady;
-  const canSchedule = canMarkReady && hasSchedule && rubikaReady;
+  const canSchedule = canMarkReady && hasSchedule && rubikaReady && !reviewBlocksSchedule;
   const readinessItems = [
     {
       label: "عنوان داخلی",
@@ -194,7 +202,7 @@ function ComposePageContent() {
     },
     {
       label: "بازبینی نهایی",
-      helper: canSchedule ? "پست آماده ورود به صف انتشار است." : "پیش‌نمایش و الزام‌های انتشار را بررسی کنید.",
+      helper: reviewBlocksSchedule ? "این پست قبل از زمان‌بندی باید تایید شود." : canSchedule ? "پست آماده ورود به صف انتشار است." : "پیش‌نمایش و الزام‌های انتشار را بررسی کنید.",
       icon: ShieldCheck,
       state: canSchedule ? "done" : canMarkReady ? "active" : "pending"
     }
@@ -559,8 +567,9 @@ function ComposePageContent() {
       return;
     }
     if (action === "schedule" && !canSchedule) {
-      setError(rubikaReady ? "برای زمان‌بندی، زمان انتشار را انتخاب کنید." : "برای زمان‌بندی، ابتدا اتصال روبیکا را تست کنید.");
-      showToast({ title: "زمان‌بندی هنوز آماده نیست", description: rubikaReady ? "یک زمان انتشار انتخاب کنید." : "ابتدا اتصال روبیکا را تست کنید.", tone: "warning" });
+      const scheduleError = reviewBlocksSchedule ? "این پست برای زمان‌بندی باید تایید بازبینی داشته باشد." : rubikaReady ? "برای زمان‌بندی، زمان انتشار را انتخاب کنید." : "برای زمان‌بندی، ابتدا اتصال روبیکا را تست کنید.";
+      setError(scheduleError);
+      showToast({ title: "زمان‌بندی هنوز آماده نیست", description: scheduleError, tone: "warning" });
       return;
     }
 
@@ -641,6 +650,7 @@ function ComposePageContent() {
                 <StatusToken tone={rubikaReady ? "success" : "warning"}>{rubikaReady ? "روبیکا متصل" : "اتصال روبیکا لازم است"}</StatusToken>
                 {!isEditing ? <StatusToken tone={autosaveState === "dirty" ? "warning" : "neutral"}><Cloud className="h-3.5 w-3.5" aria-hidden="true" />{autosaveLabel}</StatusToken> : null}
                 {editingPost?.status ? <StatusBadge status={editingPost.status} /> : null}
+                {editingPost ? <ApprovalBadge status={editingPost.approval_status} compact /> : null}
                 <Button href="/calendar" variant="secondary" size="sm">بازگشت به پلنر</Button>
               </div>
             </div>
@@ -885,6 +895,16 @@ function ComposePageContent() {
                           <p className="text-xs font-black text-app-text">کنترل پیش از انتشار</p>
                           <StatusToken tone={canSchedule ? "success" : "warning"}>{canSchedule ? "آماده صف" : "نیازمند تکمیل"}</StatusToken>
                         </div>
+                        {editingPost ? (
+                          <div className="mb-3 rounded-md border border-app-border bg-app-surfaceMuted/70 p-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <ApprovalBadge status={editingPost.approval_status} />
+                              {editingPost.reviewed_by ? <StatusToken tone="neutral">{editingPost.reviewed_by}</StatusToken> : null}
+                            </div>
+                            <p className="mt-2 text-xs leading-5 text-app-muted">{approvalConfig(editingPost.approval_status).description}</p>
+                            {editingPost.approval_note ? <p className="mt-2 rounded bg-white px-3 py-2 text-xs leading-5 text-app-muted shadow-hairline">{editingPost.approval_note}</p> : null}
+                          </div>
+                        ) : null}
                         <ComposerReadinessChecks items={readinessItems} />
                         <Button href="/media" variant="secondary" className="mt-4 w-full">کتابخانه رسانه</Button>
                       </div>

@@ -1,6 +1,7 @@
 export const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export type PostStatus = "draft" | "ready" | "scheduled" | "publishing" | "published" | "failed" | "cancelled";
+export type ApprovalStatus = "not_required" | "pending" | "approved" | "rejected" | "changes_requested";
 
 export type Post = {
   id: number;
@@ -18,6 +19,11 @@ export type Post = {
   ready_at: string | null;
   published_at: string | null;
   failed_at: string | null;
+  approval_status: ApprovalStatus | string;
+  approval_note: string;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  reviewed_by: string;
   rubika_message_id: string;
   last_error: string;
   attempt_count: number;
@@ -46,6 +52,51 @@ export const workflowTabs: Array<{ label: string; value: "all" | PostStatus }> =
   { label: "ناموفق", value: "failed" },
   { label: "لغوشده", value: "cancelled" }
 ];
+
+export const approvalTabs: Array<{ label: string; value: "all" | ApprovalStatus }> = [
+  { label: "همه بازبینی‌ها", value: "all" },
+  { label: "بدون الزام", value: "not_required" },
+  { label: "در انتظار بازبینی", value: "pending" },
+  { label: "تایید شده", value: "approved" },
+  { label: "رد شده", value: "rejected" },
+  { label: "نیازمند اصلاح", value: "changes_requested" }
+];
+
+export const approvalMeta: Record<string, { label: string; tone: "neutral" | "primary" | "success" | "warning" | "alert" | "info"; description: string }> = {
+  not_required: {
+    label: "بازبینی لازم نیست",
+    tone: "neutral",
+    description: "این پست بدون گیت تایید قابل زمان‌بندی است."
+  },
+  pending: {
+    label: "در انتظار بازبینی",
+    tone: "warning",
+    description: "تا زمان تایید، ورود به زمان‌بندی و تلاش مجدد انتشار مسدود است."
+  },
+  approved: {
+    label: "تایید شده",
+    tone: "success",
+    description: "این پست برای زمان‌بندی و انتشار تایید شده است."
+  },
+  rejected: {
+    label: "رد شده",
+    tone: "alert",
+    description: "این پست رد شده و باید قبل از انتشار اصلاح شود."
+  },
+  changes_requested: {
+    label: "نیازمند اصلاح",
+    tone: "alert",
+    description: "بازبین درخواست تغییر داده و پست به پیش‌نویس برگشته است."
+  }
+};
+
+export function approvalConfig(status?: string | null) {
+  return approvalMeta[status || "not_required"] ?? approvalMeta.not_required;
+}
+
+export function approvalBlocksPublishing(post: Pick<Post, "approval_status">) {
+  return !["not_required", "approved"].includes(post.approval_status || "not_required");
+}
 
 export function token() {
   return window.localStorage.getItem("rubika_publisher_access") ?? "";

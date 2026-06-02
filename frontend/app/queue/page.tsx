@@ -4,6 +4,7 @@ import { AlertTriangle, CalendarClock, CheckCircle2, ImageIcon, ListChecks, Refr
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
+import { ApprovalBadge } from "../../components/approval-badge";
 import { CountdownBadge } from "../../components/countdown-badge";
 import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
 import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
@@ -13,7 +14,7 @@ import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, Timeline, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { notifyNotificationsUpdated } from "../../lib/notifications";
-import { apiUrl, authHeaders, formatDateTime, readApiError, recoveryGuidance, type Post } from "../../lib/posts";
+import { apiUrl, approvalBlocksPublishing, approvalConfig, authHeaders, formatDateTime, readApiError, recoveryGuidance, type Post } from "../../lib/posts";
 
 type QueueFilter = "all" | "ready" | "scheduled" | "publishing" | "failed";
 
@@ -244,7 +245,8 @@ export default function QueuePage() {
       ready: posts.filter((post) => post.status === "ready").length,
       scheduled: posts.filter((post) => post.status === "scheduled").length,
       publishing: posts.filter((post) => post.status === "publishing").length,
-      failed: posts.filter((post) => post.status === "failed").length
+      failed: posts.filter((post) => post.status === "failed").length,
+      blockedByReview: posts.filter((post) => approvalBlocksPublishing(post)).length
     };
   }, [posts]);
 
@@ -324,6 +326,7 @@ export default function QueuePage() {
               <>
                 <StatusToken tone="primary">{posts.length} پست در صف</StatusToken>
                 <StatusToken tone={counts.failed ? "alert" : "success"}>{counts.failed ? `${counts.failed} خطای فعال` : "بدون خطای فعال"}</StatusToken>
+                <StatusToken tone={counts.blockedByReview ? "warning" : "success"}>{counts.blockedByReview ? `${counts.blockedByReview} منتظر تایید` : "بازبینی پاک"}</StatusToken>
                 {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
               </>
             )}
@@ -334,7 +337,7 @@ export default function QueuePage() {
                   به‌روزرسانی
                 </Button>
                 {counts.failed ? (
-                  <Button type="button" size="sm" disabled={retryingAll} onClick={retryAllFailed}>
+                  <Button type="button" size="sm" disabled={retryingAll || posts.some((post) => post.status === "failed" && approvalBlocksPublishing(post))} onClick={retryAllFailed}>
                     <RotateCcw className={`ml-2 h-4 w-4 ${retryingAll ? "animate-spin" : ""}`} aria-hidden="true" />
                     بازیابی همه خطاها
                   </Button>
@@ -345,6 +348,11 @@ export default function QueuePage() {
 
           {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
           {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
+          {posts.some((post) => post.status === "failed" && approvalBlocksPublishing(post)) ? (
+            <NoticeBanner tone="warning" title="بازیابی گروهی محدود شده است">
+              بعضی پست‌های ناموفق هنوز تایید بازبینی ندارند. آن‌ها را از لیست محتوا تایید کنید یا جداگانه بررسی کنید.
+            </NoticeBanner>
+          ) : null}
 
           <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-2 xl:grid-cols-4">
             {queueSummary.map((item) => {
@@ -454,6 +462,7 @@ export default function QueuePage() {
                             </StatusToken>
                           ) : null}
                           {media ? <StatusToken tone="success">رسانه آماده</StatusToken> : <StatusToken tone="warning">بدون رسانه</StatusToken>}
+                          <ApprovalBadge status={post.approval_status} compact />
                         </div>
                         <h2 className="truncate font-black text-app-text">{post.title}</h2>
                         <p className="mt-2 line-clamp-2 text-sm leading-6 text-app-muted">{post.caption || "بدون کپشن"}</p>
@@ -494,6 +503,7 @@ export default function QueuePage() {
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={selectedPost.status} />
+                        <ApprovalBadge status={selectedPost.approval_status} />
                         <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
                         {primaryMediaForPost(selectedPost) ? <StatusToken tone="success">رسانه آماده</StatusToken> : <StatusToken tone="warning">نیازمند رسانه</StatusToken>}
                       </div>
@@ -506,6 +516,7 @@ export default function QueuePage() {
                           items={[
                             { label: "زمان‌بندی", value: formatDateTime(selectedPost.scheduled_at) },
                             { label: "کمپین", value: campaignLabelForPost(selectedPost, campaigns) },
+                            { label: "بازبینی", value: approvalConfig(selectedPost.approval_status).label },
                             { label: "تلاش انتشار", value: selectedPost.attempt_count },
                             { label: "آخرین تغییر", value: formatDateTime(selectedPost.updated_at) },
                             { label: "شناسه پست", value: `#${selectedPost.id}` }
@@ -545,10 +556,15 @@ export default function QueuePage() {
                           </NoticeBanner>
                         </div>
                       ) : null}
+                      {approvalBlocksPublishing(selectedPost) ? (
+                        <NoticeBanner tone="warning" title="انتشار مسدود است">
+                          {approvalConfig(selectedPost.approval_status).description}
+                        </NoticeBanner>
+                      ) : null}
                       <div className="mt-4 grid gap-2">
                         <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary">باز کردن پست</Button>
                         {selectedPost.status === "failed" ? (
-                          <Button type="button" disabled={retryingPostId === selectedPost.id} onClick={() => retryPost(selectedPost)}>
+                          <Button type="button" disabled={retryingPostId === selectedPost.id || approvalBlocksPublishing(selectedPost)} onClick={() => retryPost(selectedPost)}>
                             <RotateCcw className={`ml-2 h-4 w-4 ${retryingPostId === selectedPost.id ? "animate-spin" : ""}`} aria-hidden="true" />
                             {retryingPostId === selectedPost.id ? "در حال ورود به صف" : "تلاش مجدد انتشار"}
                           </Button>
