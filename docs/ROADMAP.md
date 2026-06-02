@@ -89,7 +89,8 @@ Current implementation status:
 - Campaign model, migration, and scoped CRUD API exist.
 - Posts can reference `campaign_id` while the legacy free-text `campaign` field remains supported.
 - Existing free-text campaign names are backfilled into Campaign records during migration.
-- The next Campaign OS slice should add campaign picker/filter UI in composer, content, queue, calendar, and analytics.
+- Composer can now load campaigns, attach a post to a real campaign, and quick-create a campaign without leaving the studio.
+- The next Campaign OS slice should add campaign filters in content, queue, calendar, and analytics.
 
 ## Phase 4: Composer Studio Pro
 

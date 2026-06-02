@@ -2,7 +2,7 @@
 
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CalendarClock, ChevronDown, Cloud, Eye, FileText, ImagePlus, Images, Send, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { CalendarClock, ChevronDown, Cloud, Eye, FileText, ImagePlus, Images, Plus, Send, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ComposerActionFooter } from "../../components/composer-action-footer";
@@ -15,9 +15,10 @@ import { ComposerStartPanel } from "../../components/composer-start-panel";
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
-import { Field, Input, Textarea } from "../../components/ui/form";
+import { Field, Input, Select, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
 import { NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { createCampaign, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { isRubikaConnected, loadWorkspaceOverview, type RubikaSettings, type StoreProfile } from "../../lib/workspace";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -46,6 +47,7 @@ type Post = {
   platform: string;
   status: string;
   timezone: string;
+  campaign_id: number | null;
   campaign: string;
   internal_note: string;
   scheduled_at: string | null;
@@ -57,6 +59,7 @@ const emptyForm = {
   hashtags: "",
   platform: "rubika",
   timezone: scheduleTimezone,
+  campaign_id: null as number | null,
   campaign: "",
   internal_note: "",
   scheduled_at: null as string | null
@@ -71,6 +74,7 @@ function ComposePageContent() {
 
   const [store, setStore] = useState<StoreProfile | null>(null);
   const [rubika, setRubika] = useState<RubikaSettings | null>(null);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [form, setForm] = useState(emptyForm);
@@ -86,6 +90,8 @@ function ComposePageContent() {
   const [autosaveAt, setAutosaveAt] = useState("");
   const [studioPanel, setStudioPanel] = useState<StudioPanel>("preview");
   const [showComposerEntry, setShowComposerEntry] = useState(true);
+  const [quickCampaignName, setQuickCampaignName] = useState("");
+  const [creatingCampaign, setCreatingCampaign] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const uploadInputRef = useRef<HTMLInputElement>(null);
@@ -103,6 +109,10 @@ function ComposePageContent() {
       .slice(0, 3);
   }, [mediaAssets, mediaPreviewUrls]);
   const brandAvatarUrl = store?.avatar_asset_id ? mediaPreviewUrls[store.avatar_asset_id] : store?.logo_asset_id ? mediaPreviewUrls[store.logo_asset_id] : "";
+  const selectedCampaign = useMemo(() => {
+    if (form.campaign_id === null) return null;
+    return campaigns.find((campaign) => campaign.id === form.campaign_id) ?? null;
+  }, [campaigns, form.campaign_id]);
 
   const finalPreview = useMemo(() => {
     const hasVisiblePostContent = Boolean(form.caption.trim() || previewImageUrl);
@@ -117,7 +127,7 @@ function ComposePageContent() {
   const hasSchedule = Boolean(form.scheduled_at);
   const hasTitle = Boolean(form.title.trim());
   const hasPostBody = Boolean(form.caption.trim() || previewImageUrl);
-  const hasLocalDraftContent = Boolean(form.title.trim() || form.caption.trim() || form.hashtags.trim() || form.campaign.trim() || form.internal_note.trim() || form.scheduled_at || selectedMediaId);
+  const hasLocalDraftContent = Boolean(form.title.trim() || form.caption.trim() || form.hashtags.trim() || form.campaign_id || form.campaign.trim() || form.internal_note.trim() || form.scheduled_at || selectedMediaId);
   const rubikaReady = isRubikaConnected(rubika);
   const canMoveToReady = !editingPost || ["draft", "failed", "cancelled"].includes(editingPost.status);
   const canSaveDraft = hasTitle;
@@ -202,14 +212,16 @@ function ComposePageContent() {
     setLoading(true);
     setComposerReady(false);
     const headers = { Authorization: `Bearer ${token()}` };
-    const [overview, mediaResponse, postResponse] = await Promise.all([
+    const [overview, loadedCampaigns, mediaResponse, postResponse] = await Promise.all([
       loadWorkspaceOverview(),
+      loadCampaigns(),
       fetch(`${apiUrl}/media`, { headers }),
       editingPostId ? fetch(`${apiUrl}/posts/${editingPostId}`, { headers }) : Promise.resolve(null)
     ]);
 
     setStore(overview.store);
     setRubika(overview.rubika);
+    setCampaigns(loadedCampaigns);
 
     let loadedMediaAssets: MediaAsset[] = [];
     if (mediaResponse.ok) {
@@ -230,11 +242,12 @@ function ComposePageContent() {
         hashtags: post.hashtags,
         platform: post.platform || "rubika",
         timezone: scheduleTimezone,
+        campaign_id: post.campaign_id ?? null,
         campaign: post.campaign || "",
         internal_note: post.internal_note || "",
         scheduled_at: post.scheduled_at
       });
-      setShowOptionalDetails(Boolean(post.campaign || post.internal_note));
+      setShowOptionalDetails(Boolean(post.campaign_id || post.campaign || post.internal_note));
 
       const attachedAsset = loadedMediaAssets.find((asset) => asset.post_id === post.id);
       setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
@@ -248,10 +261,10 @@ function ComposePageContent() {
         window.localStorage.removeItem(localDraftKey);
       }
       setEditingPost(null);
-      setForm(restoredDraft?.form ? { ...restoredDraft.form, scheduled_at: presetScheduledAt || restoredDraft.form.scheduled_at } : { ...emptyForm, scheduled_at: presetScheduledAt });
+      setForm(restoredDraft?.form ? { ...emptyForm, ...restoredDraft.form, scheduled_at: presetScheduledAt || restoredDraft.form.scheduled_at } : { ...emptyForm, scheduled_at: presetScheduledAt });
       const restoredMediaId = restoredDraft?.selectedMediaId ?? "";
       setSelectedMediaId(loadedMediaAssets.some((asset) => String(asset.id) === restoredMediaId) ? restoredMediaId : "");
-      setShowOptionalDetails(Boolean(restoredDraft?.form?.campaign || restoredDraft?.form?.internal_note));
+      setShowOptionalDetails(Boolean(restoredDraft?.form?.campaign_id || restoredDraft?.form?.campaign || restoredDraft?.form?.internal_note));
       setShowComposerEntry(!restoredDraft?.form && !restoredMediaId && !presetScheduledAt);
       if (restoredDraft?.savedAt) {
         setAutosaveState("restored");
@@ -348,9 +361,45 @@ function ComposePageContent() {
     setAutosaveState("idle");
   }
 
-  function updateField(field: keyof typeof emptyForm, value: string | null) {
+  function updateField(field: keyof typeof emptyForm, value: typeof emptyForm[keyof typeof emptyForm]) {
     setForm((current) => ({ ...current, [field]: value }));
     if (message) setMessage("");
+  }
+
+  function selectCampaign(campaignId: string) {
+    if (!campaignId) {
+      setForm((current) => ({ ...current, campaign_id: null, campaign: "" }));
+      return;
+    }
+    const campaign = campaigns.find((item) => String(item.id) === campaignId);
+    setForm((current) => ({ ...current, campaign_id: campaign?.id ?? null, campaign: campaign?.name ?? "" }));
+    if (message) setMessage("");
+  }
+
+  async function quickCreateCampaign() {
+    const name = quickCampaignName.trim() || form.campaign.trim();
+    if (!name) {
+      showToast({ title: "نام کمپین لازم است", description: "برای ساخت کمپین، یک نام کوتاه وارد کنید.", tone: "warning" });
+      return;
+    }
+    setCreatingCampaign(true);
+    setError("");
+    try {
+      const createdCampaign = await createCampaign({
+        name,
+        color: store?.brand_accent_color || store?.brand_primary_color || "#0F766E"
+      });
+      setCampaigns((current) => [createdCampaign, ...current.filter((campaign) => campaign.id !== createdCampaign.id)]);
+      setForm((current) => ({ ...current, campaign_id: createdCampaign.id, campaign: createdCampaign.name }));
+      setQuickCampaignName("");
+      showToast({ title: "کمپین ساخته شد", description: "پست فعلی به کمپین جدید متصل شد.", tone: "success" });
+    } catch (err) {
+      const nextError = err instanceof Error ? err.message : "ساخت کمپین ناموفق بود";
+      setError(nextError);
+      showToast({ title: "ساخت کمپین ناموفق بود", description: nextError, tone: "alert" });
+    } finally {
+      setCreatingCampaign(false);
+    }
   }
 
   function applyDefaults() {
@@ -387,11 +436,12 @@ function ComposePageContent() {
         hashtags: editingPost.hashtags,
         platform: editingPost.platform || "rubika",
         timezone: scheduleTimezone,
+        campaign_id: editingPost.campaign_id ?? null,
         campaign: editingPost.campaign || "",
         internal_note: editingPost.internal_note || "",
         scheduled_at: editingPost.scheduled_at
       });
-      setShowOptionalDetails(Boolean(editingPost.campaign || editingPost.internal_note));
+      setShowOptionalDetails(Boolean(editingPost.campaign_id || editingPost.campaign || editingPost.internal_note));
       const attachedAsset = mediaAssets.find((asset) => asset.post_id === editingPost.id);
       setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
     } else {
@@ -670,14 +720,41 @@ function ComposePageContent() {
                     </button>
 
                     {showOptionalDetails ? (
-                      <div className="grid gap-4 border-t border-app-border bg-white p-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-                        <Field label="کمپین" hint="برای دسته‌بندی و گزارش‌گیری داخلی.">
-                          <Input
-                            value={form.campaign}
-                            onChange={(event) => updateField("campaign", event.target.value)}
-                            placeholder="مثلاً لانچ خرداد"
-                          />
-                        </Field>
+                      <div className="grid gap-4 border-t border-app-border bg-white p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                        <div>
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-app-text">کمپین</p>
+                              <p className="mt-1 text-xs leading-5 text-app-muted">پست را به یک کمپین واقعی برای فیلتر و گزارش‌گیری وصل کنید.</p>
+                            </div>
+                            {selectedCampaign ? (
+                              <span className="mt-0.5 h-4 w-4 shrink-0 rounded shadow-hairline" style={{ backgroundColor: selectedCampaign.color }} aria-hidden="true" />
+                            ) : null}
+                          </div>
+
+                          <div className="mt-2 grid gap-2">
+                            <Select value={form.campaign_id ?? ""} onChange={(event) => selectCampaign(event.target.value)}>
+                              <option value="">بدون کمپین</option>
+                              {campaigns.map((campaign) => (
+                                <option key={campaign.id} value={campaign.id}>
+                                  {campaign.name} · {campaign.post_count} پست
+                                </option>
+                              ))}
+                            </Select>
+
+                            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                              <Input value={quickCampaignName} onChange={(event) => setQuickCampaignName(event.target.value)} placeholder="نام کمپین جدید، مثلاً لانچ خرداد" />
+                              <Button type="button" variant="secondary" size="sm" onClick={quickCreateCampaign} disabled={creatingCampaign}>
+                                <Plus className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                                {creatingCampaign ? "در حال ساخت" : "ساخت کمپین"}
+                              </Button>
+                            </div>
+                          </div>
+
+                          {selectedCampaign ? (
+                            <p className="mt-2 line-clamp-2 text-xs leading-5 text-app-muted">{selectedCampaign.goal || selectedCampaign.notes || "هدف کمپین هنوز تعریف نشده است."}</p>
+                          ) : null}
+                        </div>
 
                         <Field label="یادداشت داخلی" hint="این متن فقط برای تیم نمایش داده می‌شود.">
                           <Textarea
