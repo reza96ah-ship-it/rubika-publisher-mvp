@@ -112,6 +112,13 @@ Acceptance criteria:
 - Snapping and safe-zone guides make centered layouts easy.
 - The canvas remains usable on laptop and desktop widths.
 
+Current implementation status:
+
+- Active layers now show a selection box with resize and rotation handles.
+- Dragging is bounded to the canvas and snaps to horizontal or vertical center guides.
+- The artboard now includes a Rubika safe-zone overlay, zoom controls, and fit-to-screen.
+- Undo, redo, duplicate, delete, and keyboard nudging shortcuts are available for editing.
+
 Priority: **P0**.
 
 ### Editor Phase 2: Real Layer System
@@ -301,4 +308,3 @@ Start with **Editor Phase 1: Professional Canvas Foundation**.
 This is the highest-leverage next step because the current editor already has layers but does not yet feel trustworthy during manipulation. Selection bounds, handles, rotation, snapping, safe zones, zoom, and real undo/redo will produce the biggest immediate improvement in perceived quality and everyday usability.
 
 After Phase 1, implement Phase 3 and Phase 4 before adding a large sticker library. Precise social variants and strong Persian typography will create more professional business value than decorative assets alone.
-

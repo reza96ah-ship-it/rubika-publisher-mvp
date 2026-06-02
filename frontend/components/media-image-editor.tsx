@@ -1,7 +1,8 @@
 "use client";
 
-import { AlignCenter, AlignLeft, AlignRight, ImagePlus, Palette, Redo2, RotateCcw, Save, SmilePlus, Trash2, Type, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Copy, ImagePlus, Maximize2, Minus, Palette, Plus, Redo2, RotateCcw, RotateCw, Save, ShieldCheck, SmilePlus, Trash2, Type, Undo2, X } from "lucide-react";
 import { PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "./ui/button";
 import { StatusToken } from "./workspace-ui";
 
@@ -15,6 +16,7 @@ type EditorLayer = {
   fontFamily: string;
   fontSize: number;
   align: "left" | "center" | "right";
+  rotation: number;
 };
 
 type ImageAdjustments = {
@@ -29,6 +31,25 @@ type MediaImageEditorProps = {
   saving?: boolean;
   onClose: () => void;
   onSave: (file: File) => Promise<void>;
+};
+
+type EditorSnapshot = {
+  layers: EditorLayer[];
+  adjustments: ImageAdjustments;
+};
+
+type ActiveTransform = {
+  layerId: string;
+  mode: "resize" | "rotate";
+  initialFontSize: number;
+  initialRotation: number;
+  initialDistance: number;
+  initialAngle: number;
+};
+
+type CanvasGuides = {
+  centerX: boolean;
+  centerY: boolean;
 };
 
 const colorSwatches = ["#FFFFFF", "#0F172A", "#0F766E", "#2563EB", "#E11D48", "#F59E0B", "#7C3AED", "#16A34A"];
@@ -49,18 +70,47 @@ function imageFilter(adjustments: ImageAdjustments) {
   return `brightness(${adjustments.brightness}%) contrast(${adjustments.contrast}%) saturate(${adjustments.saturation}%)`;
 }
 
+function cloneLayers(layers: EditorLayer[]) {
+  return layers.map((layer) => ({ ...layer }));
+}
+
+function normalizeAngle(angle: number) {
+  const normalized = angle % 360;
+  return normalized < 0 ? normalized + 360 : normalized;
+}
+
 export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, onSave }: MediaImageEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const artboardRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const dragRef = useRef<{ layerId: string; offsetX: number; offsetY: number } | null>(null);
+  const transformRef = useRef<ActiveTransform | null>(null);
   const [layers, setLayers] = useState<EditorLayer[]>([]);
   const [selectedLayerId, setSelectedLayerId] = useState("");
   const [draftText, setDraftText] = useState("متن جدید");
   const [adjustments, setAdjustments] = useState<ImageAdjustments>(initialAdjustments);
+  const [past, setPast] = useState<EditorSnapshot[]>([]);
+  const [future, setFuture] = useState<EditorSnapshot[]>([]);
+  const [canvasSize, setCanvasSize] = useState({ width: 1, height: 1 });
+  const [zoom, setZoom] = useState(100);
+  const [showSafeZone, setShowSafeZone] = useState(true);
+  const [guides, setGuides] = useState<CanvasGuides>({ centerX: false, centerY: false });
   const [imageReady, setImageReady] = useState(false);
   const [error, setError] = useState("");
 
   const selectedLayer = useMemo(() => layers.find((layer) => layer.id === selectedLayerId) ?? null, [layers, selectedLayerId]);
+  const selectedBounds = selectedLayer ? layerBounds(selectedLayer) : null;
+
+  const snapshot = useCallback((): EditorSnapshot => ({
+    layers: cloneLayers(layers),
+    adjustments: { ...adjustments }
+  }), [adjustments, layers]);
+
+  const remember = useCallback(() => {
+    setPast((current) => [...current, snapshot()].slice(-80));
+    setFuture([]);
+  }, [snapshot]);
 
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -77,6 +127,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
     layers.forEach((layer) => {
       context.save();
+      context.translate(layer.x, layer.y);
+      context.rotate((layer.rotation * Math.PI) / 180);
       context.textAlign = layer.align;
       context.textBaseline = "middle";
       context.direction = "rtl";
@@ -85,10 +137,17 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       context.shadowColor = "rgba(15, 23, 42, 0.32)";
       context.shadowBlur = Math.max(2, Math.round(layer.fontSize / 14));
       context.shadowOffsetY = Math.max(1, Math.round(layer.fontSize / 22));
-      context.fillText(layer.value, layer.x, layer.y);
+      context.fillText(layer.value, 0, 0);
       context.restore();
     });
   }, [adjustments, layers]);
+
+  const fitCanvas = useCallback((size: { width: number; height: number }) => {
+    const viewport = viewportRef.current;
+    if (!viewport || !size.width || !size.height) return;
+    const nextZoom = Math.min(100, ((viewport.clientWidth - 64) / size.width) * 100, ((viewport.clientHeight - 64) / size.height) * 100);
+    setZoom(Math.max(20, Math.round(nextZoom)));
+  }, []);
 
   useEffect(() => {
     setImageReady(false);
@@ -101,35 +160,65 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       const scale = Math.min(1, maxWidth / image.naturalWidth);
       canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
       canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const nextSize = { width: canvas.width, height: canvas.height };
       imageRef.current = image;
+      setCanvasSize(nextSize);
       setImageReady(true);
+      window.setTimeout(() => fitCanvas(nextSize), 0);
     };
     image.onerror = () => setError("بارگذاری تصویر برای ویرایش ناموفق بود.");
     image.src = imageUrl;
     return () => {
       imageRef.current = null;
     };
-  }, [imageUrl]);
+  }, [fitCanvas, imageUrl]);
 
   useEffect(() => {
     if (imageReady) renderCanvas();
   }, [imageReady, renderCanvas]);
 
-  function canvasPoint(event: PointerEvent<HTMLCanvasElement>) {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const bounds = canvas.getBoundingClientRect();
+  function canvasPointFromClient(clientX: number, clientY: number) {
+    const artboard = artboardRef.current;
+    if (!artboard) return { x: 0, y: 0 };
+    const bounds = artboard.getBoundingClientRect();
     return {
-      x: (event.clientX - bounds.left) * (canvas.width / bounds.width),
-      y: (event.clientY - bounds.top) * (canvas.height / bounds.height)
+      x: (clientX - bounds.left) * (canvasSize.width / bounds.width),
+      y: (clientY - bounds.top) * (canvasSize.height / bounds.height)
     };
+  }
+
+  function canvasPoint(event: PointerEvent<HTMLElement>) {
+    return canvasPointFromClient(event.clientX, event.clientY);
+  }
+
+  function snapPoint(point: { x: number; y: number }) {
+    const threshold = Math.max(8, canvasSize.width * 0.012);
+    const centerX = canvasSize.width / 2;
+    const centerY = canvasSize.height / 2;
+    const snapX = Math.abs(point.x - centerX) <= threshold;
+    const snapY = Math.abs(point.y - centerY) <= threshold;
+    setGuides({ centerX: snapX, centerY: snapY });
+    return {
+      x: Math.max(0, Math.min(canvasSize.width, snapX ? centerX : point.x)),
+      y: Math.max(0, Math.min(canvasSize.height, snapY ? centerY : point.y))
+    };
+  }
+
+  function layerWidth(layer: EditorLayer) {
+    return Math.max(layer.fontSize, layer.value.length * layer.fontSize * (layer.type === "sticker" ? 0.8 : 0.52));
+  }
+
+  function layerBounds(layer: EditorLayer) {
+    const width = layerWidth(layer);
+    const height = layer.fontSize * 2;
+    const left = layer.align === "center" ? layer.x - width / 2 : layer.align === "right" ? layer.x - width : layer.x;
+    return { left, top: layer.y - height / 2, width, height };
   }
 
   function hitLayer(point: { x: number; y: number }) {
     return [...layers].reverse().find((layer) => {
-      const estimatedWidth = Math.max(layer.fontSize, layer.value.length * layer.fontSize * (layer.type === "sticker" ? 0.8 : 0.52));
-      const left = layer.align === "center" ? layer.x - estimatedWidth / 2 : layer.align === "right" ? layer.x - estimatedWidth : layer.x;
-      return point.x >= left - 16 && point.x <= left + estimatedWidth + 16 && point.y >= layer.y - layer.fontSize && point.y <= layer.y + layer.fontSize;
+      const bounds = layerBounds(layer);
+      return point.x >= bounds.left - 16 && point.x <= bounds.left + bounds.width + 16 && point.y >= bounds.top - 16 && point.y <= bounds.top + bounds.height + 16;
     }) ?? null;
   }
 
@@ -142,19 +231,86 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     }
     event.currentTarget.setPointerCapture(event.pointerId);
     setSelectedLayerId(layer.id);
+    remember();
     dragRef.current = { layerId: layer.id, offsetX: point.x - layer.x, offsetY: point.y - layer.y };
   }
 
   function dragLayer(event: PointerEvent<HTMLCanvasElement>) {
     const drag = dragRef.current;
     if (!drag) return;
-    const point = canvasPoint(event);
-    setLayers((current) => current.map((layer) => layer.id === drag.layerId ? { ...layer, x: point.x - drag.offsetX, y: point.y - drag.offsetY } : layer));
+    const pointer = canvasPoint(event);
+    const point = snapPoint({ x: pointer.x - drag.offsetX, y: pointer.y - drag.offsetY });
+    setLayers((current) => current.map((layer) => layer.id === drag.layerId ? { ...layer, x: point.x, y: point.y } : layer));
   }
 
   function stopDrag() {
     dragRef.current = null;
+    setGuides({ centerX: false, centerY: false });
   }
+
+  function startTransform(event: PointerEvent<HTMLButtonElement>, mode: ActiveTransform["mode"]) {
+    if (!selectedLayer) return;
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const point = canvasPoint(event);
+    const deltaX = point.x - selectedLayer.x;
+    const deltaY = point.y - selectedLayer.y;
+    remember();
+    transformRef.current = {
+      layerId: selectedLayer.id,
+      mode,
+      initialFontSize: selectedLayer.fontSize,
+      initialRotation: selectedLayer.rotation,
+      initialDistance: Math.max(1, Math.hypot(deltaX, deltaY)),
+      initialAngle: Math.atan2(deltaY, deltaX)
+    };
+  }
+
+  function transformLayer(event: PointerEvent<HTMLButtonElement>) {
+    const transform = transformRef.current;
+    if (!transform) return;
+    const layer = layers.find((item) => item.id === transform.layerId);
+    if (!layer) return;
+    const point = canvasPoint(event);
+    const deltaX = point.x - layer.x;
+    const deltaY = point.y - layer.y;
+
+    if (transform.mode === "resize") {
+      const nextSize = Math.max(20, Math.min(240, Math.round(transform.initialFontSize * (Math.hypot(deltaX, deltaY) / transform.initialDistance))));
+      setLayers((current) => current.map((item) => item.id === transform.layerId ? { ...item, fontSize: nextSize } : item));
+      return;
+    }
+
+    const angle = Math.atan2(deltaY, deltaX);
+    const nextRotation = normalizeAngle(transform.initialRotation + ((angle - transform.initialAngle) * 180) / Math.PI);
+    setLayers((current) => current.map((item) => item.id === transform.layerId ? { ...item, rotation: Math.round(nextRotation) } : item));
+  }
+
+  function stopTransform() {
+    transformRef.current = null;
+  }
+
+  const restoreSnapshot = useCallback((next: EditorSnapshot) => {
+    setLayers(cloneLayers(next.layers));
+    setAdjustments({ ...next.adjustments });
+    setSelectedLayerId((current) => next.layers.some((layer) => layer.id === current) ? current : "");
+  }, []);
+
+  const undo = useCallback(() => {
+    const previous = past[past.length - 1];
+    if (!previous) return;
+    setPast((current) => current.slice(0, -1));
+    setFuture((current) => [snapshot(), ...current].slice(0, 80));
+    restoreSnapshot(previous);
+  }, [past, restoreSnapshot, snapshot]);
+
+  const redo = useCallback(() => {
+    const next = future[0];
+    if (!next) return;
+    setPast((current) => [...current, snapshot()].slice(-80));
+    setFuture((current) => current.slice(1));
+    restoreSnapshot(next);
+  }, [future, restoreSnapshot, snapshot]);
 
   function addText() {
     const canvas = canvasRef.current;
@@ -168,8 +324,10 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       color: "#FFFFFF",
       fontFamily: "Vazirmatn",
       fontSize: Math.max(28, Math.round(canvas.width / 18)),
-      align: "center"
+      align: "center",
+      rotation: 0
     };
+    remember();
     setLayers((current) => [...current, layer]);
     setSelectedLayerId(layer.id);
   }
@@ -186,29 +344,83 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       color: "#FFFFFF",
       fontFamily: "Arial",
       fontSize: Math.max(36, Math.round(canvas.width / 14)),
-      align: "center"
+      align: "center",
+      rotation: 0
     };
+    remember();
     setLayers((current) => [...current, layer]);
     setSelectedLayerId(layer.id);
   }
 
   function updateSelectedLayer(patch: Partial<EditorLayer>) {
     if (!selectedLayerId) return;
+    remember();
     setLayers((current) => current.map((layer) => layer.id === selectedLayerId ? { ...layer, ...patch } : layer));
   }
 
-  function removeSelectedLayer() {
+  const removeSelectedLayer = useCallback(() => {
     if (!selectedLayerId) return;
+    remember();
     setLayers((current) => current.filter((layer) => layer.id !== selectedLayerId));
     setSelectedLayerId("");
-  }
+  }, [remember, selectedLayerId]);
+
+  const duplicateSelectedLayer = useCallback(() => {
+    if (!selectedLayer) return;
+    const duplicate = { ...selectedLayer, id: createLayerId(), x: selectedLayer.x + 24, y: selectedLayer.y + 24 };
+    remember();
+    setLayers((current) => [...current, duplicate]);
+    setSelectedLayerId(duplicate.id);
+  }, [remember, selectedLayer]);
 
   function resetEditor() {
+    if (layers.length || adjustments.brightness !== 100 || adjustments.contrast !== 100 || adjustments.saturation !== 100) remember();
     setLayers([]);
     setSelectedLayerId("");
     setAdjustments(initialAdjustments);
     setError("");
   }
+
+  function updateAdjustment(field: keyof ImageAdjustments, value: number) {
+    remember();
+    setAdjustments((current) => ({ ...current, [field]: value }));
+  }
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target?.matches("input, textarea, select")) return;
+      const commandKey = event.ctrlKey || event.metaKey;
+      if (commandKey && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        if (event.shiftKey) redo();
+        else undo();
+        return;
+      }
+      if (commandKey && event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        duplicateSelectedLayer();
+        return;
+      }
+      if ((event.key === "Delete" || event.key === "Backspace") && selectedLayer) {
+        event.preventDefault();
+        removeSelectedLayer();
+        return;
+      }
+      if (!selectedLayer || !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      const distance = event.shiftKey ? 10 : 1;
+      const patch = {
+        x: selectedLayer.x + (event.key === "ArrowRight" ? distance : event.key === "ArrowLeft" ? -distance : 0),
+        y: selectedLayer.y + (event.key === "ArrowDown" ? distance : event.key === "ArrowUp" ? -distance : 0)
+      };
+      remember();
+      setLayers((current) => current.map((layer) => layer.id === selectedLayer.id ? { ...layer, x: Math.max(0, Math.min(canvasSize.width, patch.x)), y: Math.max(0, Math.min(canvasSize.height, patch.y)) } : layer));
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [canvasSize.height, canvasSize.width, duplicateSelectedLayer, redo, remember, removeSelectedLayer, selectedLayer, undo]);
 
   async function saveEditedImage() {
     const canvas = canvasRef.current;
@@ -224,7 +436,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     await onSave(new File([blob], `${baseName}-edited.png`, { type: "image/png" }));
   }
 
-  return (
+  return createPortal((
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="ویرایشگر تصویر">
       <section className="flex max-h-[96vh] w-full max-w-[1480px] flex-col overflow-hidden rounded-lg border border-app-border bg-app-canvas shadow-2xl">
         <header className="flex flex-col justify-between gap-3 border-b border-app-border bg-white px-4 py-3 lg:flex-row lg:items-center">
@@ -235,6 +447,15 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <StatusToken tone={layers.length ? "primary" : "neutral"}>{layers.length} لایه</StatusToken>
+            <button type="button" onClick={undo} disabled={!past.length} className="app-interactive flex h-8 w-8 items-center justify-center rounded-md border border-app-border bg-white text-slate-600 shadow-hairline hover:bg-blue-50 hover:text-app-primary disabled:pointer-events-none disabled:opacity-40" aria-label="بازگشت" title="بازگشت (Ctrl+Z)">
+              <Undo2 className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <button type="button" onClick={redo} disabled={!future.length} className="app-interactive flex h-8 w-8 items-center justify-center rounded-md border border-app-border bg-white text-slate-600 shadow-hairline hover:bg-blue-50 hover:text-app-primary disabled:pointer-events-none disabled:opacity-40" aria-label="انجام دوباره" title="انجام دوباره (Ctrl+Shift+Z)">
+              <Redo2 className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <button type="button" onClick={() => setShowSafeZone((current) => !current)} className={`app-interactive flex h-8 w-8 items-center justify-center rounded-md border shadow-hairline ${showSafeZone ? "border-blue-200 bg-blue-50 text-app-primary" : "border-app-border bg-white text-slate-600 hover:bg-blue-50 hover:text-app-primary"}`} aria-label="نمایش محدوده امن" title="محدوده امن روبیکا">
+              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            </button>
             <Button type="button" variant="secondary" size="sm" onClick={resetEditor}>
               <RotateCcw className="ml-1.5 h-4 w-4" aria-hidden="true" />
               بازنشانی
@@ -249,8 +470,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 overflow-auto xl:grid-cols-[280px_minmax(0,1fr)_260px]">
-          <aside className="space-y-4 border-b border-app-border bg-white p-4 xl:border-b-0 xl:border-l">
+        <div className="grid min-h-0 flex-1 overflow-auto lg:grid-cols-[240px_minmax(320px,1fr)_240px]">
+          <aside className="space-y-4 border-b border-app-border bg-white p-4 lg:border-b-0 lg:border-l">
             <section>
               <div className="flex items-center gap-2">
                 <Type className="h-4 w-4 text-app-primary" aria-hidden="true" />
@@ -285,25 +506,89 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
               {(["brightness", "contrast", "saturation"] as const).map((field) => (
                 <label key={field} className="mt-3 block text-xs font-bold text-app-muted">
                   {field === "brightness" ? "روشنایی" : field === "contrast" ? "کنتراست" : "اشباع رنگ"} · {adjustments[field]}%
-                  <input type="range" min="50" max="150" value={adjustments[field]} onChange={(event) => setAdjustments((current) => ({ ...current, [field]: Number(event.target.value) }))} className="mt-2 w-full accent-blue-600" />
+                  <input type="range" min="50" max="150" value={adjustments[field]} onChange={(event) => updateAdjustment(field, Number(event.target.value))} className="mt-2 w-full accent-blue-600" />
                 </label>
               ))}
             </section>
           </aside>
 
-          <div className="app-studio-grid flex min-h-[440px] items-center justify-center overflow-auto bg-slate-100 p-4 lg:p-6">
+          <div ref={viewportRef} className="app-studio-grid relative flex min-h-[440px] items-center justify-center overflow-auto bg-slate-100 p-4 lg:p-6">
             {error ? <p className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
-            <canvas
-              ref={canvasRef}
-              onPointerDown={startDrag}
-              onPointerMove={dragLayer}
-              onPointerUp={stopDrag}
-              onPointerCancel={stopDrag}
-              className={`max-h-[70vh] max-w-full rounded-md bg-white shadow-lift ${imageReady ? "cursor-move" : "hidden"}`}
-            />
+            <div
+              ref={artboardRef}
+              className={`relative shrink-0 overflow-visible rounded-md bg-white shadow-lift ${imageReady ? "" : "hidden"}`}
+              style={{ width: `${Math.round((canvasSize.width * zoom) / 100)}px`, height: `${Math.round((canvasSize.height * zoom) / 100)}px` }}
+            >
+              <canvas
+                ref={canvasRef}
+                onPointerDown={startDrag}
+                onPointerMove={dragLayer}
+                onPointerUp={stopDrag}
+                onPointerCancel={stopDrag}
+                className="h-full w-full cursor-move rounded-md"
+              />
+              {showSafeZone ? (
+                <div className="pointer-events-none absolute inset-[8%] rounded border border-dashed border-emerald-400/90">
+                  <span className="absolute right-2 top-2 rounded bg-emerald-500/90 px-1.5 py-1 text-[10px] font-black leading-none text-white">محدوده امن روبیکا</span>
+                </div>
+              ) : null}
+              {guides.centerX ? <span className="pointer-events-none absolute inset-y-0 left-1/2 border-l border-dashed border-blue-500" /> : null}
+              {guides.centerY ? <span className="pointer-events-none absolute inset-x-0 top-1/2 border-t border-dashed border-blue-500" /> : null}
+              {selectedLayer && selectedBounds ? (
+                <div
+                  className="pointer-events-none absolute border border-blue-500"
+                  style={{
+                    left: `${(selectedBounds.left / canvasSize.width) * 100}%`,
+                    top: `${(selectedBounds.top / canvasSize.height) * 100}%`,
+                    width: `${(selectedBounds.width / canvasSize.width) * 100}%`,
+                    height: `${(selectedBounds.height / canvasSize.height) * 100}%`,
+                    transform: `rotate(${selectedLayer.rotation}deg)`
+                  }}
+                >
+                  {["-left-1.5 -top-1.5", "-right-1.5 -top-1.5", "-bottom-1.5 -left-1.5"].map((position) => (
+                    <span key={position} className={`absolute h-3 w-3 rounded-sm border border-blue-600 bg-white ${position}`} />
+                  ))}
+                  <button
+                    type="button"
+                    onPointerDown={(event) => startTransform(event, "resize")}
+                    onPointerMove={transformLayer}
+                    onPointerUp={stopTransform}
+                    onPointerCancel={stopTransform}
+                    className="pointer-events-auto absolute -bottom-2 -right-2 h-4 w-4 cursor-nwse-resize rounded-sm border border-blue-600 bg-white shadow-sm"
+                    aria-label="تغییر اندازه لایه"
+                    title="برای تغییر اندازه بکشید"
+                  />
+                  <span className="absolute -top-8 left-1/2 h-8 border-l border-blue-500" />
+                  <button
+                    type="button"
+                    onPointerDown={(event) => startTransform(event, "rotate")}
+                    onPointerMove={transformLayer}
+                    onPointerUp={stopTransform}
+                    onPointerCancel={stopTransform}
+                    className="pointer-events-auto absolute -top-11 left-1/2 flex h-5 w-5 -translate-x-1/2 cursor-grab items-center justify-center rounded-full border border-blue-600 bg-white text-blue-700 shadow-sm active:cursor-grabbing"
+                    aria-label="چرخاندن لایه"
+                    title="برای چرخاندن بکشید"
+                  >
+                    <RotateCw className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-md border border-app-border bg-white/95 p-1 shadow-soft">
+              <button type="button" onClick={() => setZoom((current) => Math.max(20, current - 10))} className="app-interactive flex h-7 w-7 items-center justify-center rounded text-slate-600 hover:bg-blue-50 hover:text-app-primary" aria-label="کوچک‌نمایی" title="کوچک‌نمایی">
+                <Minus className="h-4 w-4" aria-hidden="true" />
+              </button>
+              <span className="min-w-12 text-center text-[11px] font-black text-app-text">{zoom}%</span>
+              <button type="button" onClick={() => setZoom((current) => Math.min(180, current + 10))} className="app-interactive flex h-7 w-7 items-center justify-center rounded text-slate-600 hover:bg-blue-50 hover:text-app-primary" aria-label="بزرگ‌نمایی" title="بزرگ‌نمایی">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+              </button>
+              <button type="button" onClick={() => fitCanvas(canvasSize)} className="app-interactive flex h-7 w-7 items-center justify-center rounded text-slate-600 hover:bg-blue-50 hover:text-app-primary" aria-label="جای دادن در صفحه" title="جای دادن در صفحه">
+                <Maximize2 className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
           </div>
 
-          <aside className="border-t border-app-border bg-white p-4 xl:border-r xl:border-t-0">
+          <aside className="border-t border-app-border bg-white p-4 lg:border-r lg:border-t-0">
             <div className="flex items-center gap-2">
               <Redo2 className="h-4 w-4 text-app-primary" aria-hidden="true" />
               <h3 className="text-xs font-black text-app-text">تنظیم لایه</h3>
@@ -331,6 +616,16 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                   اندازه · {selectedLayer.fontSize}px
                   <input type="range" min="20" max="180" value={selectedLayer.fontSize} onChange={(event) => updateSelectedLayer({ fontSize: Number(event.target.value) })} className="mt-2 w-full accent-blue-600" />
                 </label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button type="button" variant="secondary" size="sm" onClick={duplicateSelectedLayer}>
+                    <Copy className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                    تکثیر
+                  </Button>
+                  <div className="flex items-center justify-center rounded-md bg-app-surfaceMuted px-2 text-xs font-black text-app-muted shadow-hairline">
+                    {Math.round(selectedLayer.rotation)}°
+                  </div>
+                </div>
 
                 {selectedLayer.type === "text" ? (
                   <div>
@@ -375,5 +670,5 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
         </div>
       </section>
     </div>
-  );
+  ), document.body);
 }
