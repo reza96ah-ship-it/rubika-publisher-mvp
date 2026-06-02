@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, CheckSquare2, FileImage, ImageIcon, Plus, RefreshCw, Target, TimerReset, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart3, CheckCircle2, CheckSquare2, FileImage, ImageIcon, PieChart, Plus, RefreshCw, Target, TimerReset, TrendingUp, XCircle, Zap } from "lucide-react";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
@@ -26,6 +26,20 @@ type MediaAsset = {
   folder: string;
   tags: string;
   url: string;
+};
+
+type PublishAttempt = {
+  id: number;
+  post_id: number;
+  post_title: string;
+  action: string;
+  status: string;
+  request_payload: string;
+  response_payload: string;
+  error: string;
+  started_at: string | null;
+  finished_at: string | null;
+  created_at: string;
 };
 
 type CampaignStats = {
@@ -207,6 +221,33 @@ function postActivityTime(post: Post) {
   return Number.isNaN(time) ? 0 : time;
 }
 
+function dayKey(value: string | null | undefined) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return "unknown";
+  return date.toISOString().slice(0, 10);
+}
+
+function dayLabel(key: string) {
+  if (key === "unknown") return "نامشخص";
+  return new Intl.DateTimeFormat("fa-IR", { month: "short", day: "numeric" }).format(new Date(`${key}T00:00:00Z`));
+}
+
+function isWithinDays(value: string | null | undefined, days: number) {
+  const time = value ? new Date(value).getTime() : NaN;
+  if (Number.isNaN(time)) return false;
+  return time >= Date.now() - days * 24 * 60 * 60 * 1000;
+}
+
+function riskScoreForPost(post: Post, hasMedia: boolean) {
+  let score = 0;
+  if (post.status === "failed") score += 42;
+  if (post.last_error) score += 26;
+  if (post.attempt_count > 1) score += Math.min(24, (post.attempt_count - 1) * 8);
+  if (!hasMedia) score += 8;
+  if (post.status === "draft") score += 6;
+  return Math.min(100, score);
+}
+
 function buildCampaignStats(posts: Post[], mediaByPostId: Map<number, MediaAsset[]>): CampaignStats {
   const draft = posts.filter((post) => post.status === "draft").length;
   const ready = posts.filter((post) => post.status === "ready").length;
@@ -239,6 +280,7 @@ export default function CampaignsPage() {
   const { showToast } = useToast();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [attempts, setAttempts] = useState<PublishAttempt[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [selectedCampaignId, setSelectedCampaignId] = useState<number | null>(null);
@@ -260,16 +302,19 @@ export default function CampaignsPage() {
     setError("");
     try {
       const headers = authHeaders();
-      const [campaignResponse, postsResponse, mediaResponse] = await Promise.all([
+      const [campaignResponse, postsResponse, mediaResponse, attemptsResponse] = await Promise.all([
         loadCampaigns(),
         fetch(`${apiUrl}/posts`, { headers }),
-        fetch(`${apiUrl}/media`, { headers })
+        fetch(`${apiUrl}/media`, { headers }),
+        fetch(`${apiUrl}/publish-attempts`, { headers })
       ]);
       if (!postsResponse.ok) throw new Error("دریافت پست‌ها برای کمپین ناموفق بود");
       const nextPosts = await postsResponse.json() as Post[];
       const nextMedia = mediaResponse.ok ? await mediaResponse.json() as MediaAsset[] : [];
+      const nextAttempts = attemptsResponse.ok ? await attemptsResponse.json() as PublishAttempt[] : [];
       setCampaigns(campaignResponse);
       setPosts(nextPosts);
+      setAttempts(nextAttempts);
       setMediaAssets(nextMedia);
       setSelectedCampaignId((current) => current ?? campaignResponse[0]?.id ?? null);
       if (campaignResponse.length === 0) {
@@ -376,6 +421,69 @@ export default function CampaignsPage() {
     const ids = new Set(selectedPosts.map((post) => post.id));
     return mediaAssets.filter((asset) => asset.post_id && ids.has(asset.post_id));
   }, [mediaAssets, selectedPosts]);
+
+  const selectedAttempts = useMemo(() => {
+    const ids = new Set(selectedPosts.map((post) => post.id));
+    return attempts.filter((attempt) => ids.has(attempt.post_id));
+  }, [attempts, selectedPosts]);
+
+  const campaignInsights = useMemo(() => {
+    const published = selectedPosts.filter((post) => post.status === "published").length;
+    const failed = selectedPosts.filter((post) => post.status === "failed" || post.last_error).length;
+    const queued = selectedPosts.filter(isQueued).length;
+    const draft = selectedPosts.filter((post) => post.status === "draft").length;
+    const withMedia = selectedPosts.filter((post) => (mediaByPostId.get(post.id) ?? []).length > 0).length;
+    const successfulAttempts = selectedAttempts.filter((attempt) => attempt.status === "success").length;
+    const failedAttempts = selectedAttempts.filter((attempt) => attempt.status === "failed").length;
+    const completedAttempts = successfulAttempts + failedAttempts;
+    const recentPublished = selectedPosts.filter((post) => post.status === "published" && isWithinDays(post.published_at, 7)).length;
+    const recentFailed = selectedPosts.filter((post) => (post.status === "failed" || post.last_error) && isWithinDays(post.failed_at || post.updated_at, 7)).length;
+    const trendKeys = Array.from({ length: 10 }, (_, index) => {
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() - (9 - index));
+      return date.toISOString().slice(0, 10);
+    });
+    const trend = trendKeys.map((key) => {
+      const dayPosts = selectedPosts.filter((post) => dayKey(post.published_at || post.failed_at || post.scheduled_at || post.updated_at) === key);
+      return {
+        key,
+        label: dayLabel(key),
+        activity: dayPosts.length,
+        published: dayPosts.filter((post) => post.status === "published").length,
+        failed: dayPosts.filter((post) => post.status === "failed" || post.last_error).length
+      };
+    });
+    const maxActivity = Math.max(1, ...trend.map((point) => point.activity));
+    const riskPosts = selectedPosts
+      .map((post) => ({ post, score: riskScoreForPost(post, (mediaByPostId.get(post.id) ?? []).length > 0) }))
+      .filter((item) => item.score > 0)
+      .sort((first, second) => second.score - first.score || postActivityTime(second.post) - postActivityTime(first.post))
+      .slice(0, 5);
+    const statusMix = [
+      { label: "منتشر", value: published, color: "#059669" },
+      { label: "در جریان", value: queued, color: "#2563EB" },
+      { label: "پیش‌نویس", value: draft, color: "#64748B" },
+      { label: "ریسک", value: failed, color: "#E11D48" }
+    ];
+    return {
+      published,
+      failed,
+      queued,
+      draft,
+      withMedia,
+      mediaCoverage: percent(withMedia, selectedPosts.length),
+      deliveryRate: percent(published, published + failed),
+      attemptSuccessRate: percent(successfulAttempts, completedAttempts),
+      failedAttempts,
+      recentPublished,
+      recentFailed,
+      trend,
+      maxActivity,
+      riskPosts,
+      statusMix
+    };
+  }, [mediaByPostId, selectedAttempts, selectedPosts]);
 
   const assignablePosts = useMemo(() => {
     if (!selectedRow) return [];
@@ -799,6 +907,144 @@ export default function CampaignsPage() {
 
           {selectedRow ? (
             <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
+              <WorkspacePanel
+                title="تحلیل کمپین"
+                description="خلاصه عملکرد، پوشش رسانه، روند فعالیت و ریسک‌های عملیاتی کمپین انتخاب‌شده."
+                action={<StatusToken tone={campaignInsights.recentFailed ? "alert" : "success"}>{campaignInsights.recentPublished} انتشار در ۷ روز</StatusToken>}
+                bodyClassName="p-4"
+                className="xl:col-span-2"
+              >
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="app-row bg-white p-3.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold text-app-muted">نرخ تحویل کمپین</p>
+                        <p className="mt-2 text-2xl font-black text-emerald-700">{campaignInsights.deliveryRate}%</p>
+                      </div>
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600" aria-hidden="true" />
+                    </div>
+                    <p className="mt-3 text-xs leading-5 text-app-muted">{campaignInsights.published} منتشر، {campaignInsights.failed} نیازمند بررسی</p>
+                  </div>
+                  <div className="app-row bg-white p-3.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold text-app-muted">پوشش رسانه</p>
+                        <p className="mt-2 text-2xl font-black text-sky-700">{campaignInsights.mediaCoverage}%</p>
+                      </div>
+                      <FileImage className="h-5 w-5 text-sky-600" aria-hidden="true" />
+                    </div>
+                    <p className="mt-3 text-xs leading-5 text-app-muted">{campaignInsights.withMedia} پست دارای رسانه از {selectedPosts.length} پست</p>
+                  </div>
+                  <div className="app-row bg-white p-3.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold text-app-muted">موفقیت تلاش‌ها</p>
+                        <p className="mt-2 text-2xl font-black text-app-primary">{campaignInsights.attemptSuccessRate}%</p>
+                      </div>
+                      <Zap className="h-5 w-5 text-app-primary" aria-hidden="true" />
+                    </div>
+                    <p className="mt-3 text-xs leading-5 text-app-muted">{selectedAttempts.length} تلاش ثبت‌شده، {campaignInsights.failedAttempts} شکست</p>
+                  </div>
+                  <div className="app-row bg-white p-3.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold text-app-muted">ریسک هفته</p>
+                        <p className={`mt-2 text-2xl font-black ${campaignInsights.recentFailed ? "text-rose-700" : "text-emerald-700"}`}>{campaignInsights.recentFailed}</p>
+                      </div>
+                      <AlertTriangle className={`h-5 w-5 ${campaignInsights.recentFailed ? "text-rose-600" : "text-emerald-600"}`} aria-hidden="true" />
+                    </div>
+                    <p className="mt-3 text-xs leading-5 text-app-muted">خطاهای جدید یا پست‌های دارای آخرین خطا در ۷ روز اخیر</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+                  <div className="rounded-lg border border-app-border bg-white p-4 shadow-hairline">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="flex items-center gap-2 text-sm font-black text-app-text">
+                          <BarChart3 className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                          روند فعالیت ۱۰ روزه
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-app-muted">بر اساس انتشار، زمان‌بندی، خطا و آخرین تغییر پست‌های همین کمپین.</p>
+                      </div>
+                      <StatusToken tone="neutral">{campaignInsights.queued} در جریان</StatusToken>
+                    </div>
+                    <div className="mt-5 flex h-44 items-end gap-2 border-b border-app-border px-1 pb-2">
+                      {campaignInsights.trend.map((point) => {
+                        const height = Math.max(10, Math.round((point.activity / campaignInsights.maxActivity) * 100));
+                        return (
+                          <div key={point.key} className="group flex min-w-0 flex-1 flex-col items-center justify-end gap-2">
+                            <div className="flex h-32 w-full items-end justify-center">
+                              <div
+                                className={`relative w-full max-w-8 rounded-t-md transition group-hover:opacity-85 ${point.failed ? "bg-rose-500" : point.published ? "bg-emerald-500" : point.activity ? "bg-app-primary" : "bg-slate-200"}`}
+                                style={{ height: `${height}%` }}
+                              >
+                                <span className="absolute -top-2 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full border border-white bg-current shadow-sm" />
+                              </div>
+                            </div>
+                            <span className="truncate text-[10px] font-bold text-app-muted">{point.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-3 text-[11px] font-bold text-app-muted">
+                      <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" /> انتشار</span>
+                      <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-app-primary" /> فعالیت</span>
+                      <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-rose-500" /> خطا</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="rounded-lg border border-app-border bg-white p-4 shadow-hairline">
+                      <p className="flex items-center gap-2 text-sm font-black text-app-text">
+                        <PieChart className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                        ترکیب وضعیت
+                      </p>
+                      <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
+                        <div className="flex h-full">
+                          {campaignInsights.statusMix.map((item) => (
+                            <span key={item.label} style={{ width: `${percent(item.value, selectedPosts.length)}%`, backgroundColor: item.color }} />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {campaignInsights.statusMix.map((item) => (
+                          <div key={item.label} className="rounded-md bg-app-surfaceMuted p-2">
+                            <p className="flex items-center gap-1.5 text-[11px] font-black text-app-muted">
+                              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
+                              {item.label}
+                            </p>
+                            <p className="mt-1 text-sm font-black text-app-text">{item.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-app-border bg-white p-4 shadow-hairline">
+                      <p className="flex items-center gap-2 text-sm font-black text-app-text">
+                        <TrendingUp className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                        اولویت‌های رسیدگی
+                      </p>
+                      {campaignInsights.riskPosts.length === 0 ? (
+                        <p className="mt-3 rounded-md bg-emerald-50 p-3 text-xs font-bold leading-5 text-emerald-800">ریسک فعالی برای پست‌های این کمپین دیده نمی‌شود.</p>
+                      ) : (
+                        <div className="mt-3 space-y-2">
+                          {campaignInsights.riskPosts.map(({ post, score }) => (
+                            <Link key={post.id} href={`/compose?postId=${post.id}`} className="app-row flex items-center justify-between gap-3 rounded-md border border-app-border bg-app-surfaceMuted p-2 hover:bg-blue-50/60">
+                              <span className="min-w-0">
+                                <span className="block truncate text-xs font-black text-app-text">{post.title}</span>
+                                <span className="mt-1 block truncate text-[11px] text-app-muted">{post.last_error || `${post.attempt_count} تلاش ثبت‌شده`}</span>
+                              </span>
+                              <StatusToken tone={score >= 60 ? "alert" : "warning"}>{score}%</StatusToken>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </WorkspacePanel>
+
               <WorkspacePanel
                 title="پست‌های متصل"
                 description="محتوای مرتبط با کمپین انتخاب‌شده و آخرین وضعیت عملیاتی هر پست."
