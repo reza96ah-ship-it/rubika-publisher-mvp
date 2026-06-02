@@ -180,6 +180,11 @@ Acceptance criteria:
 - Deleting an asset with usage requires confirmation.
 - Composer can pull media by campaign/collection.
 
+Current implementation status:
+
+- Media library supports folders, tags, grid/list views, and attaching assets to posts.
+- Media inspector now exposes a usage map and safe delete flow; attached assets are blocked by the backend unless deletion is explicitly forced after confirmation.
+
 Risk: medium.
 
 Priority: P1.

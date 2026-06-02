@@ -145,3 +145,21 @@ def update_media_metadata(
     db.commit()
     db.refresh(asset)
     return media_response(asset)
+
+
+@router.delete("/{asset_id}")
+def delete_media(
+    asset_id: int,
+    force: bool = False,
+    store: Store = Depends(get_active_store),
+    db: Session = Depends(get_db),
+):
+    asset = get_store_media_asset(db, store, asset_id)
+    if asset.post_id is not None and not force:
+        raise HTTPException(status_code=409, detail="Media is attached to a post")
+
+    file_path = Path(asset.file_path)
+    db.delete(asset)
+    db.commit()
+    file_path.unlink(missing_ok=True)
+    return {"deleted": True, "id": asset_id}

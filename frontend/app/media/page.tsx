@@ -1,7 +1,7 @@
 "use client";
 
 import { DragEvent, FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, FileImage, Folder, Grid2X2, Hash, ImageIcon, Images, Link2, List, Save, Search, SlidersHorizontal, UploadCloud, X, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileImage, Folder, Grid2X2, Hash, ImageIcon, Images, Link2, List, Save, Search, SlidersHorizontal, Trash2, UploadCloud, X, XCircle } from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { LoadingRows } from "../../components/loading-skeleton";
@@ -67,6 +67,8 @@ export default function MediaPage() {
   const [metadataFolder, setMetadataFolder] = useState("");
   const [metadataTags, setMetadataTags] = useState("");
   const [savingMetadata, setSavingMetadata] = useState(false);
+  const [deletingAssetId, setDeletingAssetId] = useState<number | null>(null);
+  const [confirmDeleteAssetId, setConfirmDeleteAssetId] = useState<number | null>(null);
   const [draggingAssetId, setDraggingAssetId] = useState<number | null>(null);
   const [dropTargetPostId, setDropTargetPostId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
@@ -213,6 +215,7 @@ export default function MediaPage() {
     }
 
     setMessage("اتصال تصویر به پست ذخیره شد");
+    setConfirmDeleteAssetId(null);
     showToast({ title: "اتصال تصویر ذخیره شد", description: postId ? "رسانه به پست انتخاب‌شده متصل شد." : "رسانه از پست جدا شد.", tone: "success" });
     await loadData();
   }
@@ -233,6 +236,7 @@ export default function MediaPage() {
   function clearSelectedAsset() {
     setSelectedAssetId("");
     setInspectorTab("details");
+    setConfirmDeleteAssetId(null);
     stopDraggingAsset();
   }
 
@@ -280,6 +284,37 @@ export default function MediaPage() {
     }
   }
 
+  async function deleteAsset(asset: MediaAsset, force = false) {
+    setDeletingAssetId(asset.id);
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await fetch(`${apiUrl}/media/${asset.id}${force ? "?force=true" : ""}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token()}` }
+      });
+
+      if (response.status === 409) {
+        setConfirmDeleteAssetId(asset.id);
+        setError("این رسانه به یک پست متصل است. برای حذف، ابتدا تایید کنید یا آن را از پست جدا کنید.");
+        return;
+      }
+      if (!response.ok) throw new Error("حذف رسانه ناموفق بود");
+
+      setMessage("رسانه از کتابخانه حذف شد");
+      showToast({ title: "رسانه حذف شد", description: asset.original_filename, tone: "success" });
+      setConfirmDeleteAssetId(null);
+      await loadData();
+    } catch (err) {
+      const nextError = err instanceof Error ? err.message : "خطای حذف رسانه";
+      setError(nextError);
+      showToast({ title: "حذف رسانه ناموفق بود", description: nextError, tone: "alert" });
+    } finally {
+      setDeletingAssetId(null);
+    }
+  }
+
   const postById = useMemo(() => {
     return new Map(posts.map((post) => [post.id, post]));
   }, [posts]);
@@ -292,6 +327,7 @@ export default function MediaPage() {
   useEffect(() => {
     setMetadataFolder(selectedAsset?.folder ?? "");
     setMetadataTags(selectedAsset?.tags ?? "");
+    setConfirmDeleteAssetId(null);
   }, [selectedAsset]);
 
   const selectedLinkedPost = selectedAsset?.post_id ? postById.get(selectedAsset.post_id) ?? null : null;
@@ -567,6 +603,7 @@ export default function MediaPage() {
                             } else {
                               setSelectedAssetId(String(asset.id));
                               setInspectorTab("details");
+                              setConfirmDeleteAssetId(null);
                             }
                           }}
                           onDragStart={(event) => startDraggingAsset(event, asset.id)}
@@ -704,12 +741,24 @@ export default function MediaPage() {
                     </form>
 
                     <div className="mt-4 rounded-md bg-app-surfaceMuted p-3 shadow-hairline">
-                      <p className="text-xs font-black text-app-muted">وضعیت اتصال</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-black text-app-text">نقشه استفاده</p>
+                        <StatusToken tone={selectedLinkedPost ? "primary" : "success"}>{selectedLinkedPost ? "۱ مصرف فعال" : "بدون مصرف"}</StatusToken>
+                      </div>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
                         <Tag tone={selectedLinkedPost ? "primary" : "success"}>{selectedLinkedPost ? "متصل به پست" : "بدون اتصال"}</Tag>
                         {selectedLinkedPost ? <StatusBadge status={selectedLinkedPost.status} /> : null}
                       </div>
-                      {selectedLinkedPost ? <p className="mt-2 text-sm font-black text-app-text">{selectedLinkedPost.title}</p> : null}
+                      {selectedLinkedPost ? (
+                        <div className="mt-3 rounded-md bg-white p-3 text-xs leading-6 shadow-hairline">
+                          <p className="font-black text-app-text">{selectedLinkedPost.title}</p>
+                          <p className="mt-1 text-app-muted">این رسانه در پست #{selectedLinkedPost.id} استفاده می‌شود. حذف آن بعد از تایید، رسانه را از کتابخانه حذف می‌کند و پست بدون رسانه می‌ماند.</p>
+                        </div>
+                      ) : (
+                        <p className="mt-3 rounded-md bg-white p-3 text-xs leading-6 text-app-muted shadow-hairline">
+                          این فایل در هیچ پستی استفاده نشده و برای استفاده مجدد در composer یا کمپین‌های بعدی آماده است.
+                        </p>
+                      )}
                     </div>
 
                     <div className="mt-4 flex flex-wrap gap-2">
@@ -728,6 +777,36 @@ export default function MediaPage() {
                           ساخت پست جدید
                         </Button>
                       )}
+                    </div>
+
+                    <div className="mt-4 rounded-md border border-rose-100 bg-rose-50 p-3">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-700" aria-hidden="true" />
+                        <div>
+                          <p className="text-xs font-black text-rose-800">حذف امن رسانه</p>
+                          <p className="mt-1 text-[11px] leading-5 text-rose-700">
+                            {selectedLinkedPost ? "این رسانه در یک پست استفاده شده است؛ حذف فقط بعد از تایید دوم انجام می‌شود." : "این رسانه استفاده فعالی ندارد و می‌تواند از کتابخانه حذف شود."}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {selectedLinkedPost && confirmDeleteAssetId !== selectedAsset.id ? (
+                          <Button type="button" variant="danger" size="sm" onClick={() => setConfirmDeleteAssetId(selectedAsset.id)}>
+                            <Trash2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                            درخواست حذف
+                          </Button>
+                        ) : (
+                          <Button type="button" variant="danger" size="sm" disabled={deletingAssetId === selectedAsset.id} onClick={() => void deleteAsset(selectedAsset, Boolean(selectedLinkedPost))}>
+                            <Trash2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                            {deletingAssetId === selectedAsset.id ? "در حال حذف..." : selectedLinkedPost ? "تایید حذف رسانه" : "حذف رسانه"}
+                          </Button>
+                        )}
+                        {confirmDeleteAssetId === selectedAsset.id ? (
+                          <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmDeleteAssetId(null)}>
+                            انصراف
+                          </Button>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 ) : inspectorTab === "details" ? (
