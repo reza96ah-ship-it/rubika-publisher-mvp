@@ -2,8 +2,7 @@
 
 import { AlertTriangle, BarChart3, CheckCircle2, CheckSquare2, FileImage, ImageIcon, PieChart, Plus, RefreshCw, Target, TimerReset, TrendingUp, XCircle, Zap } from "lucide-react";
 import Link from "next/link";
-import { type CSSProperties, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { DataRow, DataSearchField, DataTable, DataToolbar } from "../../components/data-view";
@@ -136,9 +135,6 @@ function CampaignJalaliDateField({
 }) {
   const timezone = "Asia/Tehran";
   const [draft, setDraft] = useState<JalaliPickerParts>(() => getJalaliPickerParts(value, timezone));
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const [popoverStyle, setPopoverStyle] = useState<CSSProperties>({});
-  const [portalReady, setPortalReady] = useState(false);
   const selectedParts = value ? getJalaliPickerParts(value, timezone) : null;
   const todayParts = getJalaliPickerParts(null, timezone);
   const monthLength = getJalaliMonthLength(draft.year, draft.month);
@@ -148,34 +144,6 @@ function CampaignJalaliDateField({
   useEffect(() => {
     setDraft(getJalaliPickerParts(value, timezone));
   }, [value]);
-
-  useEffect(() => {
-    setPortalReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function updatePosition() {
-      const rect = buttonRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const width = 244;
-      const height = 258;
-      const margin = 12;
-      const left = Math.min(Math.max(rect.right - width, margin), window.innerWidth - width - margin);
-      const belowTop = rect.bottom + 8;
-      const top = belowTop + height > window.innerHeight - margin ? Math.max(margin, rect.top - height - 8) : belowTop;
-      setPopoverStyle({ left, top });
-    }
-
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-    };
-  }, [open]);
 
   function emit(next: JalaliPickerParts) {
     setDraft(next);
@@ -198,7 +166,6 @@ function CampaignJalaliDateField({
   return (
     <div className="relative" dir="rtl">
       <button
-        ref={buttonRef}
         type="button"
         onClick={() => onOpenChange(!open)}
         className={`app-row flex w-full items-center justify-between gap-3 rounded-md border bg-white p-3 text-right transition hover:bg-blue-50/40 ${
@@ -214,8 +181,8 @@ function CampaignJalaliDateField({
         </span>
       </button>
 
-      {open && portalReady ? createPortal((
-        <div dir="rtl" className={`app-popover fixed z-[70] w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift ${typeof popoverStyle.top === "undefined" ? "pointer-events-none opacity-0" : ""}`} style={popoverStyle}>
+      {open ? (
+        <div className="app-popover absolute right-0 top-full z-[70] mt-2 w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift">
           <div className="flex items-center justify-between gap-1.5">
             <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)} className="h-7 px-2">قبل</Button>
             <p className="min-w-20 text-center text-xs font-black text-app-primary">{jalaliMonthNames[draft.month - 1]} {draft.year}</p>
@@ -263,7 +230,7 @@ function CampaignJalaliDateField({
             <Button type="button" size="sm" onClick={() => onOpenChange(false)} className="h-7 px-2">تایید</Button>
           </div>
         </div>
-      ), document.body) : null}
+      ) : null}
     </div>
   );
 }
