@@ -26,6 +26,7 @@ type ComposerSchedulePanelProps = {
 export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: ComposerSchedulePanelProps) {
   const scheduleTimezone = timezone || "Asia/Tehran";
   const [draft, setDraft] = useState<JalaliPickerParts>(() => getJalaliPickerParts(scheduledAt, scheduleTimezone));
+  const [open, setOpen] = useState(false);
   const hasSchedule = Boolean(scheduledAt);
   const selectedParts = hasSchedule ? getJalaliPickerParts(scheduledAt, scheduleTimezone) : null;
   const todayParts = getJalaliPickerParts(null, scheduleTimezone);
@@ -59,42 +60,80 @@ export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: Compo
   function clearSchedule() {
     onChange(null);
     setDraft(getJalaliPickerParts(null, scheduleTimezone));
+    setOpen(false);
   }
 
   return (
     <div className="space-y-4" dir="rtl">
-      <div className="rounded-md bg-white p-3 shadow-hairline">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)}>ماه قبل</Button>
-          <div className="text-center">
-            <p className="text-sm font-black text-app-text">{jalaliMonthNames[draft.month - 1]} {draft.year}</p>
-            <p className="mt-1 text-xs text-app-muted">تقویم شمسی · {scheduleTimezone}</p>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          className={`app-row flex w-full items-center justify-between gap-3 rounded-lg border bg-white p-3 text-right transition hover:bg-blue-50/40 ${
+            open ? "border-blue-200 ring-2 ring-blue-100" : "border-app-border"
+          }`}
+        >
+          <span className="min-w-0">
+            <span className="block text-xs font-black text-app-muted">زمان انتشار</span>
+            <span className="mt-1 block truncate text-sm font-black text-app-text">{formatSchedule(selectedParts)}</span>
+          </span>
+          <span className={`rounded-md px-3 py-2 text-xs font-black ${hasSchedule ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-app-primary"}`}>
+            {hasSchedule ? "تغییر" : "انتخاب"}
+          </span>
+        </button>
+
+        {open ? (
+          <div className="app-popover absolute right-0 top-full z-40 mt-2 w-full min-w-[280px] rounded-lg border border-app-border bg-white p-3 shadow-lift">
+            <div className="flex items-center justify-between gap-2">
+              <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)}>قبل</Button>
+              <div className="text-center">
+                <p className="text-sm font-black text-app-text">{jalaliMonthNames[draft.month - 1]} {draft.year}</p>
+                <p className="mt-0.5 text-[11px] text-app-muted">تقویم شمسی · {scheduleTimezone}</p>
+              </div>
+              <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(1)}>بعد</Button>
+            </div>
+
+            <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] font-black text-app-muted">
+              {persianWeekdays.map((weekday) => <span key={weekday}>{weekday.slice(0, 1)}</span>)}
+            </div>
+            <div className="mt-1 grid grid-cols-7 gap-1">
+              {dayCells.map((day, index) => {
+                if (!day) return <div key={`empty-${index}`} className="h-8" />;
+                const selected = sameDay(selectedParts, draft.year, draft.month, day);
+                const today = sameDay(todayParts, draft.year, draft.month, day);
+                const classes = selected ? "bg-app-primary text-white shadow-sm" : today ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-slate-50 text-slate-700 hover:bg-blue-50 hover:text-app-primary";
+                return (
+                  <button key={day} type="button" onClick={() => emit({ ...draft, day })} className={`h-8 rounded text-xs font-black transition ${classes}`}>
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr]">
+              <label className="text-xs font-black text-app-muted">
+                ساعت
+                <select value={draft.hour} onChange={(event) => changeTime("hour", event.target.value)} className="mt-1 w-full rounded-md border border-app-border bg-white px-2 py-2 text-xs font-bold text-app-text outline-none ring-app-primary focus:ring-2">
+                  {Array.from({ length: 24 }, (_, hour) => <option key={hour} value={hour}>{pad(hour)}</option>)}
+                </select>
+              </label>
+              <label className="text-xs font-black text-app-muted">
+                دقیقه
+                <select value={draft.minute} onChange={(event) => changeTime("minute", event.target.value)} className="mt-1 w-full rounded-md border border-app-border bg-white px-2 py-2 text-xs font-bold text-app-text outline-none ring-app-primary focus:ring-2">
+                  {Array.from({ length: 12 }, (_, index) => index * 5).map((minute) => <option key={minute} value={minute}>{pad(minute)}</option>)}
+                </select>
+              </label>
+            </div>
+
+            <div className="mt-3 flex flex-wrap justify-between gap-2 border-t border-app-border pt-3">
+              <Button type="button" variant="secondary" size="sm" onClick={() => emit(todayParts)}>امروز</Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="ghost" size="sm" onClick={clearSchedule}>حذف</Button>
+                <Button type="button" size="sm" onClick={() => setOpen(false)}>تایید</Button>
+              </div>
+            </div>
           </div>
-          <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(1)}>ماه بعد</Button>
-          <Button type="button" variant="secondary" size="sm" onClick={() => emit(todayParts)}>امروز</Button>
-        </div>
-        <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-app-muted">
-          {persianWeekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
-        </div>
-        <div className="mt-2 grid grid-cols-7 gap-1">
-          {dayCells.map((day, index) => {
-            if (!day) return <div key={`empty-${index}`} className="h-12" />;
-            const selected = sameDay(selectedParts, draft.year, draft.month, day);
-            const today = sameDay(todayParts, draft.year, draft.month, day);
-            const classes = selected ? "bg-app-primary text-white shadow-sm" : today ? "bg-emerald-50 text-emerald-700 ring-2 ring-emerald-200" : "bg-slate-50 text-slate-700 hover:bg-blue-50 hover:text-app-primary";
-            return (
-              <button key={day} type="button" onClick={() => emit({ ...draft, day })} className={`relative h-11 rounded text-sm font-semibold transition ${classes}`}>
-                <span>{day}</span>
-                {today ? <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 text-[9px] ${selected ? "text-white" : "text-emerald-700"}`}>امروز</span> : null}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
-        <label className="text-sm font-semibold text-app-text">ساعت<select value={draft.hour} onChange={(event) => changeTime("hour", event.target.value)} className="mt-2 w-full rounded-md border border-app-border bg-white px-3 py-2 text-sm outline-none ring-app-primary focus:ring-2">{Array.from({ length: 24 }, (_, hour) => <option key={hour} value={hour}>{pad(hour)}</option>)}</select></label>
-        <label className="text-sm font-semibold text-app-text">دقیقه<select value={draft.minute} onChange={(event) => changeTime("minute", event.target.value)} className="mt-2 w-full rounded-md border border-app-border bg-white px-3 py-2 text-sm outline-none ring-app-primary focus:ring-2">{Array.from({ length: 12 }, (_, index) => index * 5).map((minute) => <option key={minute} value={minute}>{pad(minute)}</option>)}</select></label>
-        <Button type="button" variant="ghost" onClick={clearSchedule}>حذف زمان‌بندی</Button>
+        ) : null}
       </div>
       <div className="rounded-md bg-app-surfaceMuted p-3 text-sm leading-7 text-app-muted shadow-hairline">
         <p><span className="font-semibold text-app-text">وضعیت:</span> {hasSchedule ? "با ذخیره فرم، پست زمان‌بندی می‌شود." : "فعلاً به عنوان پیش‌نویس ذخیره می‌شود."}</p>
