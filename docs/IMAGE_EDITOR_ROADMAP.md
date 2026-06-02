@@ -193,6 +193,13 @@ Acceptance criteria:
 - Text wraps correctly within a resizable text box.
 - Common store promotional layouts can be built without external software.
 
+Current implementation status:
+
+- Text layers now render as resizable wrapped Persian text boxes.
+- Typography controls include font weight, line height, character spacing, width, padding, rounded background labels, outline, and shadow.
+- Preset text styles are available for sale headers, prices, CTAs, and subtitles.
+- Canvas export preserves styled labels, outlines, shadows, opacity, and RTL text layout.
+
 Priority: **P0**.
 
 ### Editor Phase 5: Brand Kit Integration

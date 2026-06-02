@@ -13,8 +13,21 @@ type EditorLayer = {
   x: number;
   y: number;
   color: string;
+  backgroundColor: string;
+  backgroundOpacity: number;
   fontFamily: string;
   fontSize: number;
+  fontWeight: number;
+  lineHeight: number;
+  letterSpacing: number;
+  boxWidth: number;
+  padding: number;
+  radius: number;
+  outlineColor: string;
+  outlineWidth: number;
+  shadowColor: string;
+  shadowBlur: number;
+  shadowOffsetY: number;
   align: "left" | "center" | "right";
   rotation: number;
   name: string;
@@ -71,12 +84,19 @@ type CanvasGuides = {
 };
 
 const colorSwatches = ["#FFFFFF", "#0F172A", "#0F766E", "#2563EB", "#E11D48", "#F59E0B", "#7C3AED", "#16A34A"];
+const labelSwatches = ["#0F172A", "#0F766E", "#2563EB", "#E11D48", "#F59E0B", "#FFFFFF"];
 const stickers = ["✨", "🔥", "🎉", "❤️", "⭐", "✅", "📣", "🛍️", "🎁", "💎", "🌿", "☀️"];
 const fontOptions = [
   { label: "وزیرمتن", value: "Vazirmatn" },
   { label: "لاله‌زار", value: "Lalezar" },
   { label: "نسخ نوتو", value: "Noto Naskh Arabic" },
   { label: "Tahoma", value: "Tahoma" }
+];
+const textStylePresets = [
+  { label: "تیتر فروش", value: "فروش ویژه", color: "#FFFFFF", backgroundColor: "#E11D48", fontFamily: "Lalezar", fontWeight: 700, fontSizeRatio: 12, radius: 18, padding: 18, outlineWidth: 0, shadowBlur: 8 },
+  { label: "قیمت", value: "۲۹۹ هزار تومان", color: "#0F172A", backgroundColor: "#FFFFFF", fontFamily: "Vazirmatn", fontWeight: 900, fontSizeRatio: 16, radius: 14, padding: 16, outlineWidth: 0, shadowBlur: 5 },
+  { label: "دعوت به اقدام", value: "همین حالا سفارش بده", color: "#FFFFFF", backgroundColor: "#0F766E", fontFamily: "Vazirmatn", fontWeight: 800, fontSizeRatio: 20, radius: 999, padding: 16, outlineWidth: 0, shadowBlur: 6 },
+  { label: "زیرتیتر", value: "ارسال سریع و تضمین کیفیت", color: "#FFFFFF", backgroundColor: "#0F172A", fontFamily: "Noto Naskh Arabic", fontWeight: 700, fontSizeRatio: 24, radius: 12, padding: 14, outlineWidth: 1, shadowBlur: 4 }
 ];
 const initialAdjustments: ImageAdjustments = { brightness: 100, contrast: 100, saturation: 100 };
 const initialCrop: ImageCropSettings = { presetId: "original", scale: 100, offsetX: 0, offsetY: 0, rotation: 0, flipX: false };
@@ -128,6 +148,72 @@ function originalCanvasSize(image: HTMLImageElement) {
     width: Math.max(1, Math.round(image.naturalWidth * scale)),
     height: Math.max(1, Math.round(image.naturalHeight * scale))
   };
+}
+
+function layerFont(layer: EditorLayer) {
+  const weight = layer.type === "text" ? layer.fontWeight : 700;
+  const size = layer.type === "sticker" ? Math.round(layer.fontSize * 1.2) : layer.fontSize;
+  const family = layer.type === "sticker" ? "Arial" : layer.fontFamily;
+  return `${weight} ${size}px ${family}`;
+}
+
+function splitTextLines(context: CanvasRenderingContext2D, layer: EditorLayer) {
+  if (layer.type !== "text") return [layer.value];
+  const maxWidth = Math.max(layer.fontSize * 2, layer.boxWidth - layer.padding * 2);
+  const paragraphs = layer.value.split(/\n/);
+  const lines: string[] = [];
+
+  paragraphs.forEach((paragraph) => {
+    const words = paragraph.trim().split(/\s+/).filter(Boolean);
+    if (!words.length) {
+      lines.push("");
+      return;
+    }
+
+    let line = "";
+    words.forEach((word) => {
+      const nextLine = line ? `${line} ${word}` : word;
+      if (line && context.measureText(nextLine).width > maxWidth) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = nextLine;
+      }
+    });
+    lines.push(line);
+  });
+
+  return lines;
+}
+
+function roughTextLineCount(layer: EditorLayer) {
+  if (layer.type !== "text") return 1;
+  const maxChars = Math.max(4, Math.floor((layer.boxWidth - layer.padding * 2) / Math.max(8, layer.fontSize * 0.52)));
+  return layer.value.split(/\n/).reduce((total, line) => total + Math.max(1, Math.ceil(line.length / maxChars)), 0);
+}
+
+function drawRoundedRect(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+  const nextRadius = Math.min(radius, width / 2, height / 2);
+  context.beginPath();
+  context.moveTo(x + nextRadius, y);
+  context.lineTo(x + width - nextRadius, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + nextRadius);
+  context.lineTo(x + width, y + height - nextRadius);
+  context.quadraticCurveTo(x + width, y + height, x + width - nextRadius, y + height);
+  context.lineTo(x + nextRadius, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - nextRadius);
+  context.lineTo(x, y + nextRadius);
+  context.quadraticCurveTo(x, y, x + nextRadius, y);
+  context.closePath();
+}
+
+function hexToRgba(hex: string, opacity: number) {
+  const normalized = hex.replace("#", "");
+  const value = normalized.length === 3 ? normalized.split("").map((item) => item + item).join("") : normalized.padEnd(6, "0").slice(0, 6);
+  const red = parseInt(value.slice(0, 2), 16);
+  const green = parseInt(value.slice(2, 4), 16);
+  const blue = parseInt(value.slice(4, 6), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${Math.max(0, Math.min(100, opacity)) / 100})`;
 }
 
 export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, onSave }: MediaImageEditorProps) {
@@ -196,11 +282,43 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       context.textBaseline = "middle";
       context.direction = "rtl";
       context.fillStyle = layer.color;
-      context.font = `${layer.type === "sticker" ? Math.round(layer.fontSize * 1.2) : layer.fontSize}px ${layer.type === "sticker" ? "Arial" : layer.fontFamily}`;
-      context.shadowColor = "rgba(15, 23, 42, 0.32)";
-      context.shadowBlur = Math.max(2, Math.round(layer.fontSize / 14));
-      context.shadowOffsetY = Math.max(1, Math.round(layer.fontSize / 22));
-      context.fillText(layer.value, 0, 0);
+      context.font = layerFont(layer);
+      (context as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = layer.type === "text" ? `${layer.letterSpacing}px` : "0px";
+      context.shadowColor = layer.shadowColor;
+      context.shadowBlur = layer.shadowBlur;
+      context.shadowOffsetY = layer.shadowOffsetY;
+
+      if (layer.type === "text") {
+        const lines = splitTextLines(context, layer);
+        const lineHeight = layer.fontSize * layer.lineHeight;
+        const height = lines.length * lineHeight + layer.padding * 2;
+        const backgroundLeft = layer.align === "center" ? -layer.boxWidth / 2 : layer.align === "right" ? -layer.boxWidth : 0;
+        if (layer.backgroundOpacity > 0) {
+          context.save();
+          context.shadowColor = "rgba(15, 23, 42, 0.16)";
+          context.shadowBlur = Math.max(4, layer.shadowBlur);
+          context.shadowOffsetY = Math.max(2, layer.shadowOffsetY);
+          context.fillStyle = hexToRgba(layer.backgroundColor, layer.backgroundOpacity);
+          drawRoundedRect(context, backgroundLeft, -height / 2, layer.boxWidth, height, layer.radius);
+          context.fill();
+          context.restore();
+        }
+
+        context.shadowColor = layer.shadowColor;
+        context.shadowBlur = layer.shadowBlur;
+        context.shadowOffsetY = layer.shadowOffsetY;
+        context.fillStyle = layer.color;
+        context.strokeStyle = layer.outlineColor;
+        context.lineWidth = layer.outlineWidth;
+        const textX = layer.align === "center" ? 0 : layer.align === "right" ? -layer.padding : layer.padding;
+        lines.forEach((line, index) => {
+          const y = -((lines.length - 1) * lineHeight) / 2 + index * lineHeight;
+          if (layer.outlineWidth > 0) context.strokeText(line, textX, y);
+          context.fillText(line, textX, y);
+        });
+      } else {
+        context.fillText(layer.value, 0, 0);
+      }
       context.restore();
     });
   }, [adjustments, crop, layers]);
@@ -271,12 +389,13 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   }
 
   function layerWidth(layer: EditorLayer) {
-    return Math.max(layer.fontSize, layer.value.length * layer.fontSize * (layer.type === "sticker" ? 0.8 : 0.52));
+    if (layer.type === "text") return layer.boxWidth;
+    return Math.max(layer.fontSize, layer.value.length * layer.fontSize * 0.8);
   }
 
   function layerBounds(layer: EditorLayer) {
     const width = layerWidth(layer);
-    const height = layer.fontSize * 2;
+    const height = layer.type === "text" ? roughTextLineCount(layer) * layer.fontSize * layer.lineHeight + layer.padding * 2 : layer.fontSize * 2;
     const left = layer.align === "center" ? layer.x - width / 2 : layer.align === "right" ? layer.x - width : layer.x;
     return { left, top: layer.y - height / 2, width, height };
   }
@@ -389,25 +508,52 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     restoreSnapshot(next);
   }, [future, restoreSnapshot, snapshot]);
 
-  function addText() {
+  function createTextLayer(value = draftText.trim(), preset?: typeof textStylePresets[number]) {
     const canvas = canvasRef.current;
-    if (!canvas || !draftText.trim()) return;
-    const layer: EditorLayer = {
+    if (!canvas || !value.trim()) return null;
+    return {
       id: createLayerId(),
       type: "text",
-      value: draftText.trim(),
+      value: value.trim(),
       x: canvas.width / 2,
       y: canvas.height / 2,
-      color: "#FFFFFF",
-      fontFamily: "Vazirmatn",
-      fontSize: Math.max(28, Math.round(canvas.width / 18)),
+      color: preset?.color ?? "#FFFFFF",
+      backgroundColor: preset?.backgroundColor ?? "#0F172A",
+      backgroundOpacity: preset ? 82 : 0,
+      fontFamily: preset?.fontFamily ?? "Vazirmatn",
+      fontSize: Math.max(24, Math.round(canvas.width / (preset?.fontSizeRatio ?? 18))),
+      fontWeight: preset?.fontWeight ?? 800,
+      lineHeight: 1.22,
+      letterSpacing: 0,
+      boxWidth: Math.max(260, Math.round(canvas.width * 0.68)),
+      padding: preset?.padding ?? 14,
+      radius: preset?.radius ?? 12,
+      outlineColor: "#0F172A",
+      outlineWidth: preset?.outlineWidth ?? 0,
+      shadowColor: "rgba(15, 23, 42, 0.35)",
+      shadowBlur: preset?.shadowBlur ?? 6,
+      shadowOffsetY: 3,
       align: "center",
       rotation: 0,
       name: `متن ${layers.filter((item) => item.type === "text").length + 1}`,
       visible: true,
       locked: false,
       opacity: 100
-    };
+    } satisfies EditorLayer;
+  }
+
+  function addText() {
+    const layer = createTextLayer();
+    if (!layer) return;
+    remember();
+    setLayers((current) => [...current, layer]);
+    setSelectedLayerId(layer.id);
+    setSelectedLayerIds([layer.id]);
+  }
+
+  function addPresetText(preset: typeof textStylePresets[number]) {
+    const layer = createTextLayer(preset.value, preset);
+    if (!layer) return;
     remember();
     setLayers((current) => [...current, layer]);
     setSelectedLayerId(layer.id);
@@ -424,8 +570,21 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       x: canvas.width / 2,
       y: canvas.height / 2,
       color: "#FFFFFF",
+      backgroundColor: "#0F172A",
+      backgroundOpacity: 0,
       fontFamily: "Arial",
       fontSize: Math.max(36, Math.round(canvas.width / 14)),
+      fontWeight: 700,
+      lineHeight: 1,
+      letterSpacing: 0,
+      boxWidth: Math.max(120, Math.round(canvas.width * 0.24)),
+      padding: 0,
+      radius: 0,
+      outlineColor: "#0F172A",
+      outlineWidth: 0,
+      shadowColor: "rgba(15, 23, 42, 0.32)",
+      shadowBlur: Math.max(2, Math.round(canvas.width / 220)),
+      shadowOffsetY: 2,
       align: "center",
       rotation: 0,
       name: `استیکر ${layers.filter((item) => item.type === "sticker").length + 1}`,
@@ -735,6 +894,18 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                 <ImagePlus className="ml-1.5 h-4 w-4" aria-hidden="true" />
                 افزودن متن
               </Button>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {textStylePresets.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => addPresetText(preset)}
+                    className="app-interactive rounded-md border border-app-border bg-white px-2 py-2 text-right text-[11px] font-black text-app-text shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
             </section>
 
             <section className="border-t border-app-border pt-4">
@@ -934,6 +1105,15 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                             {fontOptions.map((font) => <option key={font.value} value={font.value}>{font.label}</option>)}
                           </select>
                         </label>
+                        <label className="block text-xs font-bold text-app-muted">
+                          وزن فونت
+                          <select value={selectedLayer.fontWeight} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ fontWeight: Number(event.target.value) })} className="mt-2 w-full rounded-md border border-app-border bg-white px-3 py-2 text-sm text-app-text outline-none focus:border-blue-300 disabled:opacity-60">
+                            <option value={400}>معمولی</option>
+                            <option value={700}>بولد</option>
+                            <option value={800}>سنگین</option>
+                            <option value={900}>تبلیغاتی</option>
+                          </select>
+                        </label>
                       </>
                     ) : (
                       <div className="rounded-md bg-app-surfaceMuted p-3 text-center text-4xl shadow-hairline">{selectedLayer.value}</div>
@@ -947,6 +1127,24 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                       اندازه · {selectedLayer.fontSize}px
                       <input type="range" min="20" max="180" value={selectedLayer.fontSize} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ fontSize: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
                     </label>
+                    {selectedLayer.type === "text" ? (
+                      <>
+                        <label className="block text-xs font-bold text-app-muted">
+                          عرض جعبه متن · {selectedLayer.boxWidth}px
+                          <input type="range" min="160" max={Math.max(320, canvasSize.width)} value={selectedLayer.boxWidth} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ boxWidth: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <label className="block text-xs font-bold text-app-muted">
+                            فاصله خطوط · {selectedLayer.lineHeight.toFixed(2)}
+                            <input type="range" min="0.9" max="1.8" step="0.05" value={selectedLayer.lineHeight} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ lineHeight: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                          </label>
+                          <label className="block text-xs font-bold text-app-muted">
+                            فاصله حروف · {selectedLayer.letterSpacing}px
+                            <input type="range" min="-2" max="8" value={selectedLayer.letterSpacing} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ letterSpacing: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                          </label>
+                        </div>
+                      </>
+                    ) : null}
 
                     <div className="grid grid-cols-2 gap-2">
                       <Button type="button" variant="secondary" size="sm" onClick={duplicateSelectedLayer}>
@@ -983,6 +1181,42 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                               </button>
                             );
                           })}
+                        </div>
+                        <div className="mt-4 rounded-md border border-app-border bg-app-surfaceMuted p-3">
+                          <p className="text-xs font-black text-app-text">برچسب و افکت متن</p>
+                          <div className="mt-2 grid grid-cols-6 gap-1.5">
+                            {labelSwatches.map((color) => (
+                              <button key={color} type="button" disabled={selectedLayer.locked} onClick={() => updateSelectedLayer({ backgroundColor: color, backgroundOpacity: Math.max(selectedLayer.backgroundOpacity, 70) })} className={`aspect-square rounded-md border shadow-hairline disabled:opacity-50 ${selectedLayer.backgroundColor === color ? "ring-2 ring-app-primary ring-offset-2" : "border-app-border"}`} style={{ backgroundColor: color }} aria-label={`انتخاب پس‌زمینه ${color}`} title={color} />
+                            ))}
+                          </div>
+                          <label className="mt-3 block text-xs font-bold text-app-muted">
+                            شفافیت پس‌زمینه · {selectedLayer.backgroundOpacity}%
+                            <input type="range" min="0" max="100" value={selectedLayer.backgroundOpacity} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ backgroundOpacity: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                          </label>
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            <label className="block text-xs font-bold text-app-muted">
+                              فاصله داخلی · {selectedLayer.padding}px
+                              <input type="range" min="0" max="44" value={selectedLayer.padding} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ padding: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                            </label>
+                            <label className="block text-xs font-bold text-app-muted">
+                              گردی · {selectedLayer.radius}px
+                              <input type="range" min="0" max="48" value={selectedLayer.radius} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ radius: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                            </label>
+                          </div>
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            <label className="block text-xs font-bold text-app-muted">
+                              دورخط · {selectedLayer.outlineWidth}px
+                              <input type="range" min="0" max="8" value={selectedLayer.outlineWidth} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ outlineWidth: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                            </label>
+                            <label className="flex items-end justify-between gap-2 text-xs font-bold text-app-muted">
+                              رنگ دورخط
+                              <input type="color" value={selectedLayer.outlineColor} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ outlineColor: event.target.value })} className="h-8 w-12 cursor-pointer rounded border-0 bg-transparent p-0 disabled:opacity-50" />
+                            </label>
+                          </div>
+                          <label className="mt-3 block text-xs font-bold text-app-muted">
+                            سایه متن · {selectedLayer.shadowBlur}px
+                            <input type="range" min="0" max="24" value={selectedLayer.shadowBlur} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ shadowBlur: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                          </label>
                         </div>
                       </div>
                     ) : null}
