@@ -163,6 +163,8 @@ Priority: P1.
 
 Goal: make media a reusable asset system, not only uploads.
 
+Detailed image editor roadmap: [Professional Image Editor Roadmap](./IMAGE_EDITOR_ROADMAP.md).
+
 Scope:
 
 - Collections.
