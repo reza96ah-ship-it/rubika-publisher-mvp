@@ -145,6 +145,7 @@ Current implementation status:
 
 - Calendar has month, week, and list views with drag-and-drop rescheduling.
 - Calendar planning now exposes campaign workload, campaign-colored post rails, campaign-aware quick-create, and a direct Campaign Manager action.
+- Calendar inspector now warns about tight post spacing, failed posts, missing media, and suggests open publish-time slots for the selected day.
 
 Acceptance criteria:
 

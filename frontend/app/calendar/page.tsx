@@ -193,6 +193,13 @@ function postTimelineTone(status: string): "primary" | "success" | "warning" | "
   return "warning";
 }
 
+function minutesBetween(first: string | null, second: string | null) {
+  const firstTime = dateTime(first);
+  const secondTime = dateTime(second);
+  if (firstTime === null || secondTime === null) return null;
+  return Math.abs(secondTime - firstTime) / 60_000;
+}
+
 function dayRangeLabel(days: CalendarDay[]) {
   if (days.length === 0) return "—";
   return `${formatJalaliDate(days[0].date)} تا ${formatJalaliDate(days[days.length - 1].date)}`;
@@ -340,7 +347,7 @@ export default function CalendarPage() {
   });
   const monthPostCount = filteredPosts.filter((post) => postsByDay.has(jalaliDateKey(post.scheduled_at)) && monthDays.some((day) => day.key === jalaliDateKey(post.scheduled_at))).length;
   const activeDayKey = selectedDayKey ?? (selectedPost?.scheduled_at ? jalaliDateKey(selectedPost.scheduled_at) : todayKey);
-  const selectedDayPosts = activeDayKey ? postsByDay.get(activeDayKey) ?? [] : [];
+  const selectedDayPosts = useMemo(() => (activeDayKey ? postsByDay.get(activeDayKey) ?? [] : []), [activeDayKey, postsByDay]);
   const selectedDay = [...monthDays, ...activeWeekDays].find((day) => day.key === activeDayKey) ?? null;
   const selectedDayValue = selectedDay?.date ?? monthAnchor;
   const selectedDayLabel = formatJalaliDate(selectedDayValue);
@@ -364,6 +371,24 @@ export default function CalendarPage() {
       failed: rangePosts.filter((post) => post.status === "failed").length
     };
   }, [activeRangeDayKeys, calendarPosts, selectedCampaignOption]);
+  const selectedDayInsights = useMemo(() => {
+    const sortedDayPosts = sortByScheduleAsc(selectedDayPosts);
+    const conflicts: Array<{ first: Post; second: Post; gap: number }> = [];
+    sortedDayPosts.forEach((post, index) => {
+      const nextPostForDay = sortedDayPosts[index + 1];
+      if (!nextPostForDay) return;
+      const gap = minutesBetween(post.scheduled_at, nextPostForDay.scheduled_at);
+      if (gap !== null && gap < 90) conflicts.push({ first: post, second: nextPostForDay, gap: Math.round(gap) });
+    });
+    const missingMedia = sortedDayPosts.filter((post) => !assetByPostId.has(post.id));
+    const failed = sortedDayPosts.filter((post) => post.status === "failed" || post.last_error);
+    const busyHours = new Set(sortedDayPosts.map((post) => getJalaliPickerParts(post.scheduled_at, scheduleTimezone).hour));
+    const suggestedSlots = [9, 12, 15, 18, 21]
+      .filter((hour) => !busyHours.has(hour))
+      .slice(0, 3)
+      .map((hour) => ({ hour, label: `${String(hour).padStart(2, "0")}:00` }));
+    return { conflicts, missingMedia, failed, suggestedSlots };
+  }, [assetByPostId, selectedDayPosts]);
 
   function selectPost(post: Post) {
     setSelectedPostId(post.id);
@@ -391,8 +416,12 @@ export default function CalendarPage() {
     setSelectedPostId(null);
   }
 
+  function openQuickCreateAt(value: string, hour = 9, minute = 0) {
+    setQuickCreateAt(jalaliDateToIsoAtTime(value, hour, minute) ?? value);
+  }
+
   function openQuickCreate(value: string) {
-    setQuickCreateAt(jalaliDateToIsoAtTime(value, 9, 0) ?? value);
+    openQuickCreateAt(value, 9, 0);
   }
 
   function startDraggingPost(event: DragEvent<HTMLButtonElement>, post: Post) {
@@ -799,6 +828,51 @@ export default function CalendarPage() {
                   </Button>
                 )}
               >
+                <div className="mb-4 rounded-lg border border-app-border bg-app-surfaceMuted p-3 shadow-hairline">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-black text-app-text">هوشمندی برنامه‌ریزی</p>
+                    <StatusToken tone={selectedDayInsights.conflicts.length || selectedDayInsights.failed.length ? "alert" : selectedDayInsights.missingMedia.length ? "warning" : "success"}>
+                      {selectedDayInsights.conflicts.length || selectedDayInsights.failed.length ? "نیازمند توجه" : selectedDayInsights.missingMedia.length ? "قابل بهبود" : "پایدار"}
+                    </StatusToken>
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    {selectedDayInsights.conflicts.slice(0, 2).map((conflict) => (
+                      <div key={`${conflict.first.id}-${conflict.second.id}`} className="rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] font-bold leading-5 text-amber-800">
+                        فاصله کم: {conflict.first.title} و {conflict.second.title} فقط {conflict.gap} دقیقه فاصله دارند.
+                      </div>
+                    ))}
+                    {selectedDayInsights.failed.length ? (
+                      <div className="rounded-md border border-rose-200 bg-rose-50 p-2 text-[11px] font-bold leading-5 text-rose-800">
+                        {selectedDayInsights.failed.length} پست این روز خطا یا وضعیت ناموفق دارد.
+                      </div>
+                    ) : null}
+                    {selectedDayInsights.missingMedia.length ? (
+                      <div className="rounded-md border border-sky-200 bg-sky-50 p-2 text-[11px] font-bold leading-5 text-sky-800">
+                        {selectedDayInsights.missingMedia.length} پست بدون رسانه است؛ برای پست فروشگاهی بهتر است رسانه اضافه شود.
+                      </div>
+                    ) : null}
+                    {!selectedDayInsights.conflicts.length && !selectedDayInsights.failed.length && !selectedDayInsights.missingMedia.length ? (
+                      <div className="rounded-md border border-emerald-200 bg-emerald-50 p-2 text-[11px] font-bold leading-5 text-emerald-800">
+                        فاصله‌بندی، وضعیت و رسانه‌های این روز خوب به نظر می‌رسند.
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-3 border-t border-app-border pt-3">
+                    <p className="mb-2 text-[11px] font-black text-app-muted">پیشنهاد زمان برای پست جدید</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedDayInsights.suggestedSlots.length ? selectedDayInsights.suggestedSlots.map((slot) => (
+                        <Button key={slot.hour} type="button" variant="secondary" size="sm" onClick={() => openQuickCreateAt(selectedDayValue, slot.hour, 0)}>
+                          {slot.label}
+                        </Button>
+                      )) : (
+                        <StatusToken tone="warning">روز شلوغ است</StatusToken>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   {selectedDayPosts.length === 0 ? (
                     <p className="rounded-md border border-dashed border-app-border bg-slate-50 px-3 py-4 text-center text-xs leading-6 text-app-muted">
