@@ -37,6 +37,12 @@ export type CampaignFilterOption = {
   count: number;
 };
 
+export type BulkCampaignResult = {
+  updated_count: number;
+  post_ids: number[];
+  skipped_post_ids: number[];
+};
+
 export function campaignKeyForPost(post: Pick<Post, "campaign_id" | "campaign">) {
   if (post.campaign_id) return `id:${post.campaign_id}`;
   const label = post.campaign?.trim();
@@ -134,5 +140,21 @@ export async function updateCampaign(campaignId: number, payload: CampaignInput)
     })
   });
   if (!response.ok) throw new Error("به‌روزرسانی کمپین ناموفق بود");
+  return response.json();
+}
+
+export async function assignPostsToCampaign(postIds: number[], campaignId: number | null): Promise<BulkCampaignResult> {
+  const response = await fetch(`${apiUrl}/posts/bulk-campaign`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders()
+    },
+    body: JSON.stringify({
+      post_ids: postIds,
+      campaign_id: campaignId
+    })
+  });
+  if (!response.ok) throw new Error("اتصال گروهی پست‌ها به کمپین ناموفق بود");
   return response.json();
 }

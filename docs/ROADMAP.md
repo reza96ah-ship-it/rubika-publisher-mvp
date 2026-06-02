@@ -94,7 +94,8 @@ Current implementation status:
 - A dedicated Campaign Center now shows campaign health, timeline, linked posts, and linked media assets.
 - Campaign Center can create and edit campaign name, goal, status, color, owner, date range, and notes.
 - Campaign details now include a compact performance funnel for media coverage, queue, successful publishing, and active risk.
-- The next Campaign OS slice should add campaign-to-post bulk assignment and campaign-specific analytics drilldowns.
+- Campaign Center now supports bulk assigning posts to the selected campaign and removing linked posts from that campaign.
+- The next Campaign OS slice should add campaign-specific analytics drilldowns.
 
 ## Phase 4: Composer Studio Pro
 

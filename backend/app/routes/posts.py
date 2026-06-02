@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_active_store
 from app.models import Campaign, Post, RubikaAccount, Store
-from app.schemas import BulkPostStatusRequest, BulkPostStatusResponse, PostRequest, PostResponse, PostScheduleRequest, PostStatsResponse, PostStatusRequest, RetryFailedPostsResponse
+from app.schemas import BulkPostCampaignRequest, BulkPostStatusRequest, BulkPostStatusResponse, PostRequest, PostResponse, PostScheduleRequest, PostStatsResponse, PostStatusRequest, RetryFailedPostsResponse
 from app.services.rubika_health import is_rubika_account_ready
 from app.store_scope import get_store_post
 
@@ -164,6 +164,28 @@ def bulk_change_status(payload: BulkPostStatusRequest, store: Store = Depends(ge
             skipped_ids.append(post_id)
             continue
         apply_workflow_status(post, payload.status, now)
+        updated_ids.append(post.id)
+    db.commit()
+    return BulkPostStatusResponse(updated_count=len(updated_ids), post_ids=updated_ids, skipped_post_ids=skipped_ids)
+
+
+@router.post("/bulk-campaign", response_model=BulkPostStatusResponse)
+def bulk_assign_campaign(payload: BulkPostCampaignRequest, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> BulkPostStatusResponse:
+    campaign = validate_payload_campaign(db, store, payload.campaign_id)
+    unique_post_ids = list(dict.fromkeys(payload.post_ids))
+    posts = db.scalars(select(Post).where(Post.store_id == store.id, Post.id.in_(unique_post_ids))).all() if unique_post_ids else []
+    posts_by_id = {post.id: post for post in posts}
+    updated_ids: list[int] = []
+    skipped_ids: list[int] = []
+    now = datetime.utcnow()
+    for post_id in unique_post_ids:
+        post = posts_by_id.get(post_id)
+        if post is None:
+            skipped_ids.append(post_id)
+            continue
+        post.campaign_id = campaign.id if campaign else None
+        post.campaign = campaign.name if campaign else ""
+        post.updated_at = now
         updated_ids.append(post.id)
     db.commit()
     return BulkPostStatusResponse(updated_count=len(updated_ids), post_ids=updated_ids, skipped_post_ids=skipped_ids)

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, FileImage, ImageIcon, Plus, RefreshCw, Target, TimerReset } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CheckSquare2, FileImage, ImageIcon, Plus, RefreshCw, Target, TimerReset, XCircle } from "lucide-react";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
@@ -13,7 +13,7 @@ import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { Field, Input, Select, Textarea } from "../../components/ui/form";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, Timeline, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
-import { campaignColorForPost, campaignLabelForPost, createCampaign, loadCampaigns, updateCampaign, type Campaign, type CampaignStatus } from "../../lib/campaigns";
+import { assignPostsToCampaign, campaignColorForPost, campaignLabelForPost, createCampaign, loadCampaigns, updateCampaign, type Campaign, type CampaignStatus } from "../../lib/campaigns";
 import { getJalaliMonthLength, getJalaliMonthStartOffset, getJalaliPickerParts, jalaliMonthNames, jalaliPickerPartsToIso, persianWeekdays, type JalaliPickerParts } from "../../lib/jalali-picker";
 import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
 
@@ -245,6 +245,9 @@ export default function CampaignsPage() {
   const [editorMode, setEditorMode] = useState<EditorMode>("edit");
   const [campaignForm, setCampaignForm] = useState<CampaignForm>(emptyCampaignForm);
   const [savingCampaign, setSavingCampaign] = useState(false);
+  const [assignmentSearch, setAssignmentSearch] = useState("");
+  const [selectedAssignIds, setSelectedAssignIds] = useState<Set<number>>(new Set());
+  const [assigningPosts, setAssigningPosts] = useState(false);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -360,6 +363,11 @@ export default function CampaignsPage() {
     }
   }, [editorMode, selectedRow]);
 
+  useEffect(() => {
+    setAssignmentSearch("");
+    setSelectedAssignIds(new Set());
+  }, [selectedCampaignId]);
+
   const selectedPosts = useMemo(() => {
     return [...(selectedRow?.posts ?? [])].sort((first, second) => postActivityTime(second) - postActivityTime(first));
   }, [selectedRow]);
@@ -369,6 +377,19 @@ export default function CampaignsPage() {
     return mediaAssets.filter((asset) => asset.post_id && ids.has(asset.post_id));
   }, [mediaAssets, selectedPosts]);
 
+  const assignablePosts = useMemo(() => {
+    if (!selectedRow) return [];
+    const query = assignmentSearch.trim().toLowerCase();
+    return posts
+      .filter((post) => post.campaign_id !== selectedRow.campaign.id)
+      .filter((post) => {
+        if (!query) return true;
+        return `${post.title} ${post.caption} ${post.hashtags} ${post.campaign} ${post.status}`.toLowerCase().includes(query);
+      })
+      .sort((first, second) => postActivityTime(second) - postActivityTime(first))
+      .slice(0, 30);
+  }, [assignmentSearch, posts, selectedRow]);
+
   const activeCount = campaigns.filter((campaign) => campaign.status === "active").length;
   const failedCount = selectedRow?.stats.failed ?? 0;
   const queuedCount = selectedRow ? selectedRow.stats.ready + selectedRow.stats.scheduled + selectedRow.stats.publishing : 0;
@@ -377,6 +398,26 @@ export default function CampaignsPage() {
   function previewUrlForPost(post: Post) {
     const asset = (mediaByPostId.get(post.id) ?? [])[0];
     return asset ? mediaPreviewUrls[asset.id] ?? "" : "";
+  }
+
+  function toggleAssignPost(postId: number) {
+    setSelectedAssignIds((current) => {
+      const next = new Set(current);
+      if (next.has(postId)) next.delete(postId);
+      else next.add(postId);
+      return next;
+    });
+  }
+
+  function toggleAllAssignable() {
+    const visibleIds = assignablePosts.map((post) => post.id);
+    const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedAssignIds.has(id));
+    setSelectedAssignIds((current) => {
+      const next = new Set(current);
+      if (allSelected) visibleIds.forEach((id) => next.delete(id));
+      else visibleIds.forEach((id) => next.add(id));
+      return next;
+    });
   }
 
   function updateCampaignField<K extends keyof CampaignForm>(field: K, value: CampaignForm[K]) {
@@ -454,6 +495,45 @@ export default function CampaignsPage() {
       showToast({ title: "ذخیره کمپین ناموفق بود", description: nextError, tone: "alert" });
     } finally {
       setSavingCampaign(false);
+    }
+  }
+
+  async function assignSelectedPosts() {
+    if (!selectedRow || selectedAssignIds.size === 0) return;
+    setAssigningPosts(true);
+    setError("");
+    setMessage("");
+    try {
+      const result = await assignPostsToCampaign([...selectedAssignIds], selectedRow.campaign.id);
+      setPosts((current) => current.map((post) => result.post_ids.includes(post.id) ? { ...post, campaign_id: selectedRow.campaign.id, campaign: selectedRow.campaign.name } : post));
+      setSelectedAssignIds(new Set());
+      const skippedText = result.skipped_post_ids.length ? `، ${result.skipped_post_ids.length} مورد رد شد` : "";
+      setMessage(`${result.updated_count} پست به کمپین وصل شد${skippedText}.`);
+      showToast({ title: "پست‌ها به کمپین وصل شدند", description: `${result.updated_count} پست به ${selectedRow.campaign.name} اضافه شد`, tone: "success" });
+    } catch (err) {
+      const nextError = err instanceof Error ? err.message : "اتصال پست‌ها به کمپین ناموفق بود";
+      setError(nextError);
+      showToast({ title: "اتصال گروهی ناموفق بود", description: nextError, tone: "alert" });
+    } finally {
+      setAssigningPosts(false);
+    }
+  }
+
+  async function removePostFromCampaign(post: Post) {
+    setAssigningPosts(true);
+    setError("");
+    setMessage("");
+    try {
+      const result = await assignPostsToCampaign([post.id], null);
+      setPosts((current) => current.map((item) => result.post_ids.includes(item.id) ? { ...item, campaign_id: null, campaign: "" } : item));
+      setMessage("پست از کمپین جدا شد.");
+      showToast({ title: "پست از کمپین جدا شد", description: post.title, tone: "success" });
+    } catch (err) {
+      const nextError = err instanceof Error ? err.message : "جدا کردن پست از کمپین ناموفق بود";
+      setError(nextError);
+      showToast({ title: "جدا کردن پست ناموفق بود", description: nextError, tone: "alert" });
+    } finally {
+      setAssigningPosts(false);
     }
   }
 
@@ -725,15 +805,72 @@ export default function CampaignsPage() {
                 action={<StatusToken tone="neutral">{selectedPosts.length} پست</StatusToken>}
                 bodyClassName="p-3"
               >
+                <div className="rounded-lg border border-app-border bg-app-surfaceMuted p-3 shadow-hairline">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-black text-app-text">اتصال سریع پست‌ها</p>
+                      <p className="mt-1 text-xs leading-5 text-app-muted">پست‌های بدون این کمپین را انتخاب کنید و گروهی به کمپین فعلی وصل کنید.</p>
+                    </div>
+                    <StatusToken tone={selectedAssignIds.size ? "primary" : "neutral"}>{selectedAssignIds.size} انتخاب</StatusToken>
+                  </div>
+                  <div className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
+                    <DataSearchField value={assignmentSearch} onChange={(event) => setAssignmentSearch(event.target.value)} placeholder="جست‌وجوی پست برای اتصال" />
+                    <Button type="button" variant="secondary" size="sm" onClick={toggleAllAssignable} disabled={assignablePosts.length === 0 || assigningPosts}>
+                      <CheckSquare2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                      انتخاب همه
+                    </Button>
+                    <Button type="button" size="sm" onClick={assignSelectedPosts} disabled={selectedAssignIds.size === 0 || assigningPosts}>
+                      {assigningPosts ? "در حال اتصال" : "اتصال به کمپین"}
+                    </Button>
+                  </div>
+                  <div className="mt-3 max-h-72 overflow-y-auto rounded-md border border-app-border bg-white">
+                    {assignablePosts.length === 0 ? (
+                      <div className="p-4">
+                        <EmptyState title="پست قابل اتصال پیدا نشد" description="همه پست‌های موجود به این کمپین وصل شده‌اند یا نتیجه‌ای برای جست‌وجو وجود ندارد." />
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-app-border">
+                        {assignablePosts.map((post) => {
+                          const checked = selectedAssignIds.has(post.id);
+                          const previewUrl = previewUrlForPost(post);
+                          return (
+                            <button
+                              key={post.id}
+                              type="button"
+                              onClick={() => toggleAssignPost(post.id)}
+                              className={`app-row flex w-full items-center gap-3 p-3 text-right transition ${checked ? "bg-blue-50/70" : "bg-white hover:bg-slate-50"}`}
+                            >
+                              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border text-white ${checked ? "border-app-primary bg-app-primary" : "border-app-border bg-white"}`}>
+                                {checked ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+                              </span>
+                              <span className="flex h-12 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
+                                {previewUrl ? <img src={previewUrl} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-black text-app-text">{post.title}</span>
+                                <span className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-bold text-app-muted">
+                                  <StatusBadge status={post.status} />
+                                  <span>{campaignLabelForPost(post, campaigns)}</span>
+                                </span>
+                              </span>
+                              <span className="hidden text-[11px] font-bold text-app-muted sm:block">{formatDateTime(post.scheduled_at || post.published_at || post.updated_at)}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <DataTable
                   columns={["پست", "وضعیت", "زمان", "اقدام"]}
-                  gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_160px_100px]"
+                  gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_160px_150px]"
                   empty={selectedPosts.length === 0 ? <EmptyState title="هنوز پستی به این کمپین وصل نیست" description="در استودیو تولید محتوا، پست را به این کمپین متصل کنید." /> : null}
                 >
                   {selectedPosts.map((post) => {
                     const previewUrl = previewUrlForPost(post);
                     return (
-                      <DataRow key={post.id} gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_160px_100px]">
+                      <DataRow key={post.id} gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_160px_150px]">
                         <div className="flex min-w-0 items-center gap-3">
                           <div className="flex h-14 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
                             {previewUrl ? <img src={previewUrl} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />}
@@ -751,7 +888,13 @@ export default function CampaignsPage() {
                           <p>{formatDateTime(post.scheduled_at || post.published_at || post.updated_at)}</p>
                           <p>{post.attempt_count} تلاش</p>
                         </div>
-                        <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن</Button>
+                        <div className="flex flex-wrap gap-2">
+                          <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن</Button>
+                          <Button type="button" variant="ghost" size="sm" disabled={assigningPosts} onClick={() => removePostFromCampaign(post)}>
+                            <XCircle className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                            جدا کردن
+                          </Button>
+                        </div>
                       </DataRow>
                     );
                   })}

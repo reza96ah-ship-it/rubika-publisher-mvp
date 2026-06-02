@@ -6,9 +6,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
-from app.models import Post, RubikaAccount, Store
-from app.routes.posts import apply_payload, bulk_change_status, change_status, post_response, retry_all_failed_posts, retry_failed_post, router, schedule_post
-from app.schemas import BulkPostStatusRequest, PostRequest, PostScheduleRequest, PostStatusRequest
+from app.models import Campaign, Post, RubikaAccount, Store
+from app.routes.posts import apply_payload, bulk_assign_campaign, bulk_change_status, change_status, post_response, retry_all_failed_posts, retry_failed_post, router, schedule_post
+from app.schemas import BulkPostCampaignRequest, BulkPostStatusRequest, PostRequest, PostScheduleRequest, PostStatusRequest
 
 
 def test_apply_payload_stores_aware_schedule_as_utc_naive() -> None:
@@ -196,8 +196,71 @@ def test_bulk_change_status_rejects_unsafe_transition() -> None:
             bulk_change_status(BulkPostStatusRequest(post_ids=[], status="published"), store=store, db=db)
 
 
+def test_bulk_assign_campaign_updates_current_store_posts_and_reports_skips() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime.utcnow()
+
+    with session_factory() as db:
+        current_store = Store(name="Main", created_at=now, updated_at=now)
+        other_store = Store(name="Other", created_at=now, updated_at=now)
+        db.add_all([current_store, other_store])
+        db.flush()
+        campaign = Campaign(store_id=current_store.id, name="Launch", color="#0F766E", status="active", created_at=now, updated_at=now)
+        current_post = Post(store_id=current_store.id, title="Current", status="published", campaign="", created_at=now, updated_at=now)
+        second_post = Post(store_id=current_store.id, title="Second", status="draft", campaign="", created_at=now, updated_at=now)
+        other_post = Post(store_id=other_store.id, title="Other", status="draft", campaign="", created_at=now, updated_at=now)
+        db.add_all([campaign, current_post, second_post, other_post])
+        db.commit()
+
+        response = bulk_assign_campaign(
+            BulkPostCampaignRequest(post_ids=[current_post.id, second_post.id, other_post.id, current_post.id], campaign_id=campaign.id),
+            store=current_store,
+            db=db,
+        )
+
+        assert response.updated_count == 2
+        assert response.post_ids == [current_post.id, second_post.id]
+        assert response.skipped_post_ids == [other_post.id]
+        assert current_post.campaign_id == campaign.id
+        assert current_post.campaign == "Launch"
+        assert second_post.campaign_id == campaign.id
+        assert other_post.campaign_id is None
+
+        remove_response = bulk_assign_campaign(
+            BulkPostCampaignRequest(post_ids=[current_post.id], campaign_id=None),
+            store=current_store,
+            db=db,
+        )
+
+        assert remove_response.updated_count == 1
+        assert current_post.campaign_id is None
+        assert current_post.campaign == ""
+
+
+def test_bulk_assign_campaign_rejects_other_store_campaign() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime.utcnow()
+
+    with session_factory() as db:
+        current_store = Store(name="Main", created_at=now, updated_at=now)
+        other_store = Store(name="Other", created_at=now, updated_at=now)
+        db.add_all([current_store, other_store])
+        db.flush()
+        campaign = Campaign(store_id=other_store.id, name="Other campaign", color="#0F766E", status="active", created_at=now, updated_at=now)
+        db.add(campaign)
+        db.commit()
+
+        with pytest.raises(HTTPException, match="Campaign not found for active store"):
+            bulk_assign_campaign(BulkPostCampaignRequest(post_ids=[], campaign_id=campaign.id), store=current_store, db=db)
+
+
 def test_literal_bulk_routes_are_registered_before_dynamic_post_route() -> None:
     paths = [route.path for route in router.routes]
 
     assert paths.index("/posts/retry-failed") < paths.index("/posts/{post_id}")
     assert paths.index("/posts/bulk-status") < paths.index("/posts/{post_id}")
+    assert paths.index("/posts/bulk-campaign") < paths.index("/posts/{post_id}")

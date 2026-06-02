@@ -171,6 +171,11 @@ class BulkPostStatusRequest(BaseModel):
     status: str
 
 
+class BulkPostCampaignRequest(BaseModel):
+    post_ids: list[int]
+    campaign_id: int | None = None
+
+
 class BulkPostStatusResponse(BaseModel):
     updated_count: int
     post_ids: list[int]
