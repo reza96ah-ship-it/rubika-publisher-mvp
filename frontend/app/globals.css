@@ -24,6 +24,7 @@
 @import "@fontsource/harmattan";
 @import "@fontsource/lemonada";
 @import "@fontsource/mada";
+@import "./p30-persian-fonts.css";
 
 @tailwind base;
 @tailwind components;
