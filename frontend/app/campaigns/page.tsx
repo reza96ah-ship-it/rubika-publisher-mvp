@@ -3,6 +3,7 @@
 import { AlertTriangle, BarChart3, CheckCircle2, CheckSquare2, FileImage, ImageIcon, PieChart, Plus, RefreshCw, Target, TimerReset, TrendingUp, XCircle, Zap } from "lucide-react";
 import Link from "next/link";
 import { type CSSProperties, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { DataRow, DataSearchField, DataTable, DataToolbar } from "../../components/data-view";
@@ -137,6 +138,7 @@ function CampaignJalaliDateField({
   const [draft, setDraft] = useState<JalaliPickerParts>(() => getJalaliPickerParts(value, timezone));
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [popoverStyle, setPopoverStyle] = useState<CSSProperties>({});
+  const [portalReady, setPortalReady] = useState(false);
   const selectedParts = value ? getJalaliPickerParts(value, timezone) : null;
   const todayParts = getJalaliPickerParts(null, timezone);
   const monthLength = getJalaliMonthLength(draft.year, draft.month);
@@ -146,6 +148,10 @@ function CampaignJalaliDateField({
   useEffect(() => {
     setDraft(getJalaliPickerParts(value, timezone));
   }, [value]);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -208,8 +214,8 @@ function CampaignJalaliDateField({
         </span>
       </button>
 
-      {open ? (
-        <div className="app-popover fixed z-[70] w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift" style={popoverStyle}>
+      {open && portalReady ? createPortal((
+        <div dir="rtl" className={`app-popover fixed z-[70] w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift ${typeof popoverStyle.top === "undefined" ? "pointer-events-none opacity-0" : ""}`} style={popoverStyle}>
           <div className="flex items-center justify-between gap-1.5">
             <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)} className="h-7 px-2">قبل</Button>
             <p className="min-w-20 text-center text-xs font-black text-app-primary">{jalaliMonthNames[draft.month - 1]} {draft.year}</p>
@@ -257,7 +263,7 @@ function CampaignJalaliDateField({
             <Button type="button" size="sm" onClick={() => onOpenChange(false)} className="h-7 px-2">تایید</Button>
           </div>
         </div>
-      ) : null}
+      ), document.body) : null}
     </div>
   );
 }
