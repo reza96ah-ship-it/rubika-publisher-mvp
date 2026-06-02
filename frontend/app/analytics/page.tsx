@@ -4,12 +4,15 @@ import { Activity, AlertTriangle, ArrowDownUp, ArrowUpLeft, CalendarClock, Check
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
+import { WorkspaceAvatar } from "../../components/brand-mark";
 import { LoadingPanel } from "../../components/loading-skeleton";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
 import { DataRow, DataTable } from "../../components/data-view";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel, WorkspaceToolbar } from "../../components/workspace-ui";
+import { useMediaPreviewUrl } from "../../lib/media-preview";
 import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
+import { loadWorkspaceOverview, type StoreProfile } from "../../lib/workspace";
 
 type PublishAttempt = {
   id: number;
@@ -200,6 +203,7 @@ export default function AnalyticsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [attempts, setAttempts] = useState<PublishAttempt[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
+  const [store, setStore] = useState<StoreProfile | null>(null);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [selectedTrendKey, setSelectedTrendKey] = useState("");
@@ -213,10 +217,11 @@ export default function AnalyticsPage() {
     setLoading(true);
     setError("");
     const headers = authHeaders();
-    const [postsResponse, attemptsResponse, mediaResponse] = await Promise.all([
+    const [postsResponse, attemptsResponse, mediaResponse, overview] = await Promise.all([
       fetch(`${apiUrl}/posts`, { headers }),
       fetch(`${apiUrl}/publish-attempts`, { headers }),
-      fetch(`${apiUrl}/media`, { headers })
+      fetch(`${apiUrl}/media`, { headers }),
+      loadWorkspaceOverview()
     ]);
 
     if (!postsResponse.ok) throw new Error("دریافت پست‌ها برای تحلیل ناموفق بود");
@@ -225,6 +230,7 @@ export default function AnalyticsPage() {
     setPosts(await postsResponse.json());
     setAttempts(await attemptsResponse.json());
     setMediaAssets(mediaResponse.ok ? await mediaResponse.json() : []);
+    setStore(overview.store);
     setLoading(false);
   }, []);
 
@@ -419,6 +425,10 @@ export default function AnalyticsPage() {
   const publishedCount = statusCounts.published ?? 0;
   const failedCount = (statusCounts.failed ?? 0) + attemptSummary.failed;
   const queuedCount = (statusCounts.ready ?? 0) + (statusCounts.scheduled ?? 0) + (statusCounts.publishing ?? 0);
+  const brandColor = store?.brand_primary_color || "#0F766E";
+  const brandAccentColor = store?.brand_accent_color || "#2563EB";
+  const brandAvatarUrl = useMediaPreviewUrl(store?.avatar_asset_id ?? store?.logo_asset_id);
+  const brandLogoUrl = useMediaPreviewUrl(store?.logo_asset_id);
   const previousPublishedCount = previousStatusCounts.published ?? 0;
   const previousFailedCount = (previousStatusCounts.failed ?? 0) + previousAttemptSummary.failed;
   const previousQueuedCount = (previousStatusCounts.ready ?? 0) + (previousStatusCounts.scheduled ?? 0) + (previousStatusCounts.publishing ?? 0);
@@ -489,17 +499,26 @@ export default function AnalyticsPage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage>
-          <section className="app-studio-panel overflow-hidden rounded-lg">
+          <section className="app-studio-panel overflow-hidden rounded-lg border-t-4" style={{ borderTopColor: brandColor }}>
             <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="px-4 py-4 lg:px-5">
                 <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
                   <div className="min-w-0">
+                    <div className="mb-4 flex min-w-0 items-center gap-3">
+                      <WorkspaceAvatar name={store?.name || "فضای کاری روبیکا"} size="lg" color={brandColor} imageUrl={brandAvatarUrl} />
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black text-app-muted">گزارش فعال برای</p>
+                        <p className="mt-1 truncate text-base font-black text-app-text">{store?.name || "پروفایل فروشگاه"}</p>
+                        <p className="mt-0.5 truncate text-xs text-app-muted">{store?.category || store?.brand_voice || "برند workspace هنوز کامل نشده است."}</p>
+                      </div>
+                    </div>
                     <p className="text-[10px] font-black text-app-primary">مرکز بینش عملکرد</p>
                     <h1 className="mt-1 text-2xl font-black text-app-text">تحلیل انتشار و کیفیت محتوا</h1>
                     <p className="mt-2 max-w-3xl text-sm leading-6 text-app-muted">روند ارسال، سلامت کمپین‌ها، پوشش رسانه‌ای و پست‌های اثرگذار را در یک نمای تصمیم‌ساز بررسی کنید.</p>
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
                     <StatusToken tone={attemptSummary.failed ? "alert" : "success"}>{attemptSummary.failed ? `${attemptSummary.failed} تلاش ناموفق` : "ارسال پایدار"}</StatusToken>
+                    <StatusToken tone="primary">{store?.name || "Workspace"}</StatusToken>
                     <StatusToken tone="neutral">{scopedPosts.length} پست مرتبط</StatusToken>
                     <Button href="/logs" variant="secondary" size="sm">سلامت انتشار</Button>
                   </div>
@@ -791,6 +810,39 @@ export default function AnalyticsPage() {
             </div>
 
             <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+              <WorkspacePanel title="هویت گزارش" description="برندی که این تحلیل با آن آماده می‌شود." bodyClassName="p-4">
+                <div className="flex items-center gap-3">
+                  <WorkspaceAvatar name={store?.name || "فضای کاری روبیکا"} size="lg" color={brandColor} imageUrl={brandAvatarUrl} />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-app-text">{store?.name || "پروفایل فروشگاه"}</p>
+                    <p className="mt-1 truncate text-xs text-app-muted">{store?.brand_voice || "لحن برند ثبت نشده"}</p>
+                  </div>
+                </div>
+                {brandLogoUrl ? (
+                  <div className="mt-4 rounded-md border border-app-border bg-app-surfaceMuted p-3">
+                    <p className="mb-2 text-[11px] font-black text-app-muted">لوگوی گزارش</p>
+                    <img src={brandLogoUrl} alt="لوگوی برند" className="max-h-20 max-w-full rounded object-contain" />
+                  </div>
+                ) : null}
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <div className="rounded-md bg-app-surfaceMuted p-2">
+                    <p className="text-[10px] font-black text-app-muted">رنگ اصلی</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="h-5 w-5 rounded shadow-hairline" style={{ backgroundColor: brandColor }} />
+                      <span className="text-xs font-black text-app-text" dir="ltr">{brandColor}</span>
+                    </div>
+                  </div>
+                  <div className="rounded-md bg-app-surfaceMuted p-2">
+                    <p className="text-[10px] font-black text-app-muted">رنگ مکمل</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="h-5 w-5 rounded shadow-hairline" style={{ backgroundColor: brandAccentColor }} />
+                      <span className="text-xs font-black text-app-text" dir="ltr">{brandAccentColor}</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-3 line-clamp-2 text-xs leading-5 text-app-muted">{store?.default_cta || "CTA پیش‌فرض برای گزارش‌های بعدی هنوز ثبت نشده است."}</p>
+              </WorkspacePanel>
+
               {selectedTrend ? (
                 <WorkspacePanel
                   title="بازرس روز انتخاب‌شده"

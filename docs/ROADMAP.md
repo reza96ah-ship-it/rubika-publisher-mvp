@@ -57,7 +57,8 @@ Current implementation status:
 - Store settings has a clean Brand Kit panel with color controls and brand copy fields.
 - Composer uses brand defaults, brand color, and brand avatar/logo for starter panels and preview identity.
 - App shell and dashboard now use the active brand avatar/logo and primary color.
-- The next Brand Kit slice should apply the same visual identity to reports, analytics exports, and campaign workspaces.
+- Analytics/report views now use the active brand avatar/logo and brand color for report identity.
+- The next Brand Kit slice should apply the same visual identity to analytics exports and campaign workspaces.
 
 ## Phase 3: Campaign OS
 
