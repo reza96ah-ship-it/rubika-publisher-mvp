@@ -4,10 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.auth import get_current_user
 from app.database import get_db
 from app.dependencies import get_active_store
-from app.models import Campaign, Post, RubikaAccount, Store
-from app.schemas import BulkPostCampaignRequest, BulkPostStatusRequest, BulkPostStatusResponse, PostRequest, PostResponse, PostScheduleRequest, PostStatsResponse, PostStatusRequest, RetryFailedPostsResponse
+from app.models import Campaign, Post, RubikaAccount, Store, User
+from app.schemas import BulkPostCampaignRequest, BulkPostStatusRequest, BulkPostStatusResponse, PostRequest, PostResponse, PostReviewRequest, PostScheduleRequest, PostStatsResponse, PostStatusRequest, RetryFailedPostsResponse
 from app.services.rubika_health import is_rubika_account_ready
 from app.store_scope import get_store_post
 
@@ -15,6 +16,8 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 
 WORKFLOW_STATUSES = {"draft", "ready", "scheduled", "publishing", "published", "failed", "cancelled"}
 EDITABLE_STATUSES = {"draft", "ready", "scheduled", "failed"}
+APPROVAL_STATUSES = {"not_required", "pending", "approved", "rejected", "changes_requested"}
+PUBLISHABLE_APPROVAL_STATUSES = {"not_required", "approved"}
 
 
 def utc_naive(value: datetime | None) -> datetime | None:
@@ -50,6 +53,11 @@ def post_response(post: Post) -> PostResponse:
         ready_at=utc_response(post.ready_at),
         published_at=utc_response(post.published_at),
         failed_at=utc_response(post.failed_at),
+        approval_status=post.approval_status or "not_required",
+        approval_note=post.approval_note or "",
+        submitted_at=utc_response(post.submitted_at),
+        reviewed_at=utc_response(post.reviewed_at),
+        reviewed_by=post.reviewed_by or "",
         rubika_message_id=post.rubika_message_id,
         last_error=post.last_error,
         attempt_count=post.attempt_count,
@@ -86,6 +94,15 @@ def require_rubika_ready(db: Session) -> None:
         raise HTTPException(status_code=400, detail="Rubika connection must be tested successfully within the last 24 hours")
 
 
+def require_approval_ready(post: Post) -> None:
+    if post.approval_status not in PUBLISHABLE_APPROVAL_STATUSES:
+        raise HTTPException(status_code=400, detail="Post must be approved before scheduling")
+
+
+def reviewer_label(user: User) -> str:
+    return user.full_name or user.email
+
+
 def requeue_failed_post(post: Post, now: datetime) -> None:
     post.status = "scheduled"
     post.scheduled_at = now
@@ -93,6 +110,24 @@ def requeue_failed_post(post: Post, now: datetime) -> None:
     post.failed_at = None
     post.last_error = ""
     post.updated_at = now
+
+
+def apply_review_decision(post: Post, status: str, note: str, reviewer: User | None, now: datetime) -> None:
+    post.approval_status = status
+    post.approval_note = note.strip()
+    post.reviewed_at = now if status != "pending" else None
+    post.reviewed_by = reviewer_label(reviewer) if reviewer and status != "pending" else ""
+    post.updated_at = now
+    if status == "pending":
+        post.submitted_at = now
+        post.reviewed_at = None
+        post.reviewed_by = ""
+        if post.status in {"draft", "failed", "cancelled"}:
+            post.status = "ready"
+            post.ready_at = post.ready_at or now
+    if status in {"rejected", "changes_requested"} and post.status in {"ready", "scheduled"}:
+        post.status = "draft"
+        post.scheduled_at = None
 
 
 def apply_workflow_status(post: Post, status: str, now: datetime) -> None:
@@ -142,6 +177,7 @@ def retry_all_failed_posts(store: Store = Depends(get_active_store), db: Session
     require_rubika_ready(db)
     now = datetime.utcnow()
     for post in posts:
+        require_approval_ready(post)
         requeue_failed_post(post, now)
     db.commit()
     return RetryFailedPostsResponse(retried_count=len(posts), post_ids=[post.id for post in posts])
@@ -238,6 +274,7 @@ def schedule_post(post_id: int, payload: PostScheduleRequest, store: Store = Dep
     post = get_store_post(db, store, post_id)
     if post.status not in {"draft", "ready", "scheduled", "failed"}:
         raise HTTPException(status_code=400, detail="Post cannot be scheduled in its current status")
+    require_approval_ready(post)
     require_rubika_ready(db)
     post.status = "scheduled"
     post.scheduled_at = utc_naive(payload.scheduled_at)
@@ -255,6 +292,7 @@ def retry_failed_post(post_id: int, store: Store = Depends(get_active_store), db
     post = get_store_post(db, store, post_id)
     if post.status != "failed":
         raise HTTPException(status_code=400, detail="Only failed posts can be retried")
+    require_approval_ready(post)
     require_rubika_ready(db)
     now = datetime.utcnow()
     requeue_failed_post(post, now)
@@ -269,8 +307,53 @@ def change_status(post_id: int, payload: PostStatusRequest, store: Store = Depen
         raise HTTPException(status_code=400, detail="Invalid post status")
     post = get_store_post(db, store, post_id)
     if payload.status == "scheduled":
+        require_approval_ready(post)
         require_rubika_ready(db)
     apply_workflow_status(post, payload.status, datetime.utcnow())
+    db.commit()
+    db.refresh(post)
+    return post_response(post)
+
+
+@router.post("/{post_id}/submit-review", response_model=PostResponse)
+def submit_post_for_review(post_id: int, payload: PostReviewRequest, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostResponse:
+    post = get_store_post(db, store, post_id)
+    if post.status not in {"draft", "ready", "failed", "cancelled"}:
+        raise HTTPException(status_code=400, detail="Post cannot be submitted for review in its current status")
+    apply_review_decision(post, "pending", payload.note, None, datetime.utcnow())
+    db.commit()
+    db.refresh(post)
+    return post_response(post)
+
+
+@router.post("/{post_id}/approve", response_model=PostResponse)
+def approve_post(post_id: int, payload: PostReviewRequest, store: Store = Depends(get_active_store), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> PostResponse:
+    post = get_store_post(db, store, post_id)
+    if post.approval_status != "pending":
+        raise HTTPException(status_code=400, detail="Only pending posts can be approved")
+    apply_review_decision(post, "approved", payload.note, current_user, datetime.utcnow())
+    db.commit()
+    db.refresh(post)
+    return post_response(post)
+
+
+@router.post("/{post_id}/reject", response_model=PostResponse)
+def reject_post(post_id: int, payload: PostReviewRequest, store: Store = Depends(get_active_store), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> PostResponse:
+    post = get_store_post(db, store, post_id)
+    if post.approval_status != "pending":
+        raise HTTPException(status_code=400, detail="Only pending posts can be rejected")
+    apply_review_decision(post, "rejected", payload.note, current_user, datetime.utcnow())
+    db.commit()
+    db.refresh(post)
+    return post_response(post)
+
+
+@router.post("/{post_id}/request-changes", response_model=PostResponse)
+def request_post_changes(post_id: int, payload: PostReviewRequest, store: Store = Depends(get_active_store), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> PostResponse:
+    post = get_store_post(db, store, post_id)
+    if post.approval_status != "pending":
+        raise HTTPException(status_code=400, detail="Only pending posts can receive change requests")
+    apply_review_decision(post, "changes_requested", payload.note, current_user, datetime.utcnow())
     db.commit()
     db.refresh(post)
     return post_response(post)

@@ -214,6 +214,11 @@ Acceptance criteria:
 - Comments and approval decisions are recorded.
 - Notifications link to the exact post.
 
+Current implementation status:
+
+- Posts now have approval status, review notes, submitted/reviewed timestamps, and reviewer identity fields.
+- Backend review actions can submit, approve, reject, or request changes; pending/rejected review states block scheduling.
+
 Risk: high.
 
 Priority: P1.

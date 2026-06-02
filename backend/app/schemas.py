@@ -127,6 +127,10 @@ class PostStatusRequest(BaseModel):
     status: str
 
 
+class PostReviewRequest(BaseModel):
+    note: str = ""
+
+
 class PostResponse(BaseModel):
     id: int
     store_id: int
@@ -143,6 +147,11 @@ class PostResponse(BaseModel):
     ready_at: datetime | None
     published_at: datetime | None
     failed_at: datetime | None
+    approval_status: str = "not_required"
+    approval_note: str = ""
+    submitted_at: datetime | None = None
+    reviewed_at: datetime | None = None
+    reviewed_by: str = ""
     rubika_message_id: str
     last_error: str
     attempt_count: int

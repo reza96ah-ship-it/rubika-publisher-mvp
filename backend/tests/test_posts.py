@@ -6,9 +6,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
-from app.models import Campaign, Post, RubikaAccount, Store
-from app.routes.posts import apply_payload, bulk_assign_campaign, bulk_change_status, change_status, post_response, retry_all_failed_posts, retry_failed_post, router, schedule_post
-from app.schemas import BulkPostCampaignRequest, BulkPostStatusRequest, PostRequest, PostScheduleRequest, PostStatusRequest
+from app.models import Campaign, Post, RubikaAccount, Store, User
+from app.routes.posts import apply_payload, approve_post, bulk_assign_campaign, bulk_change_status, change_status, post_response, request_post_changes, retry_all_failed_posts, retry_failed_post, router, schedule_post, submit_post_for_review
+from app.schemas import BulkPostCampaignRequest, BulkPostStatusRequest, PostRequest, PostReviewRequest, PostScheduleRequest, PostStatusRequest
 
 
 def test_apply_payload_stores_aware_schedule_as_utc_naive() -> None:
@@ -116,6 +116,51 @@ def test_schedule_post_rejects_stale_rubika_connection() -> None:
         db.commit()
         with pytest.raises(HTTPException, match="Rubika connection must be tested successfully"):
             retry_failed_post(post.id, store=store, db=db)
+
+
+def test_review_workflow_controls_scheduling() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime.utcnow()
+
+    with session_factory() as db:
+        store = Store(name="Main", created_at=now, updated_at=now)
+        reviewer = User(email="reviewer@example.com", full_name="Reviewer", password_hash="hash", created_at=now)
+        db.add_all([store, reviewer])
+        db.flush()
+        post = Post(store_id=store.id, title="Review me", status="draft", created_at=now, updated_at=now)
+        db.add(post)
+        db.add(RubikaAccount(bot_token="token", chat_id="channel", status="connected", last_test_at=now))
+        db.commit()
+
+        submitted = submit_post_for_review(post.id, PostReviewRequest(note="Please review"), store=store, db=db)
+
+        assert submitted.approval_status == "pending"
+        assert submitted.approval_note == "Please review"
+        assert submitted.submitted_at is not None
+        assert post.status == "ready"
+
+        with pytest.raises(HTTPException, match="Post must be approved before scheduling"):
+            schedule_post(post.id, PostScheduleRequest(scheduled_at=now + timedelta(hours=1)), store=store, db=db)
+
+        changes = request_post_changes(post.id, PostReviewRequest(note="Add image"), store=store, db=db, current_user=reviewer)
+
+        assert changes.approval_status == "changes_requested"
+        assert changes.approval_note == "Add image"
+        assert changes.reviewed_by == "Reviewer"
+        assert post.status == "draft"
+
+        submit_post_for_review(post.id, PostReviewRequest(note="Updated"), store=store, db=db)
+        approved = approve_post(post.id, PostReviewRequest(note="Looks good"), store=store, db=db, current_user=reviewer)
+
+        assert approved.approval_status == "approved"
+        assert approved.reviewed_at is not None
+        assert approved.reviewed_by == "Reviewer"
+
+        scheduled = schedule_post(post.id, PostScheduleRequest(scheduled_at=now + timedelta(hours=1)), store=store, db=db)
+
+        assert scheduled.status == "scheduled"
 
 
 def test_retry_all_failed_posts_requeues_current_store_only() -> None:
