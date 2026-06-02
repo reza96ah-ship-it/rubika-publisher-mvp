@@ -135,7 +135,6 @@ function CampaignJalaliDateField({
 }) {
   const timezone = "Asia/Tehran";
   const [draft, setDraft] = useState<JalaliPickerParts>(() => getJalaliPickerParts(value, timezone));
-  const rootRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [popoverStyle, setPopoverStyle] = useState<CSSProperties>({});
   const selectedParts = value ? getJalaliPickerParts(value, timezone) : null;
@@ -163,22 +162,14 @@ function CampaignJalaliDateField({
       setPopoverStyle({ left, top });
     }
 
-    function closeOnOutside(event: PointerEvent) {
-      const target = event.target;
-      if (target instanceof Node && rootRef.current?.contains(target)) return;
-      onOpenChange(false);
-    }
-
     updatePosition();
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", updatePosition, true);
-    window.addEventListener("pointerdown", closeOnOutside);
     return () => {
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
-      window.removeEventListener("pointerdown", closeOnOutside);
     };
-  }, [onOpenChange, open]);
+  }, [open]);
 
   function emit(next: JalaliPickerParts) {
     setDraft(next);
@@ -199,7 +190,7 @@ function CampaignJalaliDateField({
   }
 
   return (
-    <div ref={rootRef} className="relative" dir="rtl">
+    <div className="relative" dir="rtl">
       <button
         ref={buttonRef}
         type="button"
