@@ -2,7 +2,7 @@
 
 import { AlertTriangle, BarChart3, CheckCircle2, CheckSquare2, FileImage, ImageIcon, PieChart, Plus, RefreshCw, Target, TimerReset, TrendingUp, XCircle, Zap } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { DataRow, DataSearchField, DataTable, DataToolbar } from "../../components/data-view";
@@ -135,6 +135,7 @@ function CampaignJalaliDateField({
 }) {
   const timezone = "Asia/Tehran";
   const [draft, setDraft] = useState<JalaliPickerParts>(() => getJalaliPickerParts(value, timezone));
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const selectedParts = value ? getJalaliPickerParts(value, timezone) : null;
   const todayParts = getJalaliPickerParts(null, timezone);
   const monthLength = getJalaliMonthLength(draft.year, draft.month);
@@ -144,6 +145,19 @@ function CampaignJalaliDateField({
   useEffect(() => {
     setDraft(getJalaliPickerParts(value, timezone));
   }, [value]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function closeOnOutside(event: PointerEvent) {
+      const target = event.target;
+      if (target instanceof Node && rootRef.current?.contains(target)) return;
+      onOpenChange(false);
+    }
+
+    window.addEventListener("pointerdown", closeOnOutside);
+    return () => window.removeEventListener("pointerdown", closeOnOutside);
+  }, [onOpenChange, open]);
 
   function emit(next: JalaliPickerParts) {
     setDraft(next);
@@ -164,7 +178,7 @@ function CampaignJalaliDateField({
   }
 
   return (
-    <div className="relative" dir="rtl">
+    <div ref={rootRef} className="relative" dir="rtl">
       <button
         type="button"
         onClick={() => onOpenChange(!open)}
@@ -182,7 +196,7 @@ function CampaignJalaliDateField({
       </button>
 
       {open ? (
-        <div className="app-popover absolute right-0 top-full z-[70] mt-2 w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift">
+        <div className="app-popover absolute bottom-full right-0 z-[70] mb-2 w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift">
           <div className="flex items-center justify-between gap-1.5">
             <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)} className="h-7 px-2">قبل</Button>
             <p className="min-w-20 text-center text-xs font-black text-app-primary">{jalaliMonthNames[draft.month - 1]} {draft.year}</p>
