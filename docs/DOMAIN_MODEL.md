@@ -94,6 +94,7 @@ Current fields:
 - `platform`
 - `status`
 - `timezone`
+- `campaign_id`
 - `campaign`
 - `internal_note`
 - `scheduled_at`
@@ -108,7 +109,7 @@ Current fields:
 
 Target direction:
 
-- Replace free-text `campaign` with `campaign_id`.
+- Keep `campaign_id` as the primary relationship and retain free-text `campaign` only as a compatibility label until all UI screens use Campaign objects.
 - Add `approval_status`.
 - Add `owner_user_id`.
 - Add `template_id`.
@@ -224,6 +225,12 @@ Relationships:
 - Has many `AnalyticsEvent`.
 
 Phase: Campaign OS.
+
+Current implementation:
+
+- Exists as a backend model and scoped CRUD API.
+- Backfilled from existing post campaign labels.
+- Posts can reference it through `campaign_id`.
 
 ### PostTemplate
 

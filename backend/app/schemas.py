@@ -79,12 +79,40 @@ class RubikaTestResponse(BaseModel):
     last_test_at: datetime | None = None
 
 
+class CampaignRequest(BaseModel):
+    name: str
+    goal: str = ""
+    status: str = "active"
+    color: str = "#0F766E"
+    owner: str = ""
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    notes: str = ""
+
+
+class CampaignResponse(BaseModel):
+    id: int
+    store_id: int
+    name: str
+    goal: str
+    status: str
+    color: str
+    owner: str
+    starts_at: datetime | None
+    ends_at: datetime | None
+    notes: str
+    post_count: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+
 class PostRequest(BaseModel):
     title: str
     caption: str = ""
     hashtags: str = ""
     platform: str = "rubika"
     timezone: str = "Asia/Tehran"
+    campaign_id: int | None = None
     campaign: str = ""
     internal_note: str = ""
     scheduled_at: datetime | None = None
@@ -108,6 +136,7 @@ class PostResponse(BaseModel):
     platform: str
     status: str
     timezone: str
+    campaign_id: int | None
     campaign: str
     internal_note: str
     scheduled_at: datetime | None

@@ -55,6 +55,23 @@ class RubikaAccount(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
 
+class Campaign(Base):
+    __tablename__ = "campaigns"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    goal: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    status: Mapped[str] = mapped_column(String(64), nullable=False, default="active", index=True)
+    color: Mapped[str] = mapped_column(String(32), nullable=False, default="#0F766E")
+    owner: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    starts_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    notes: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+
 class Post(Base):
     __tablename__ = "posts"
 
@@ -66,6 +83,7 @@ class Post(Base):
     platform: Mapped[str] = mapped_column(String(64), nullable=False, default="rubika")
     status: Mapped[str] = mapped_column(String(64), nullable=False, default="draft", index=True)
     timezone: Mapped[str] = mapped_column(String(64), nullable=False, default="Asia/Tehran")
+    campaign_id: Mapped[int | None] = mapped_column(ForeignKey("campaigns.id"), nullable=True, index=True)
     campaign: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     internal_note: Mapped[str] = mapped_column(Text, nullable=False, default="")
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_active_store
-from app.models import Post, RubikaAccount, Store
+from app.models import Campaign, Post, RubikaAccount, Store
 from app.schemas import BulkPostStatusRequest, BulkPostStatusResponse, PostRequest, PostResponse, PostScheduleRequest, PostStatsResponse, PostStatusRequest, RetryFailedPostsResponse
 from app.services.rubika_health import is_rubika_account_ready
 from app.store_scope import get_store_post
@@ -43,6 +43,7 @@ def post_response(post: Post) -> PostResponse:
         platform=post.platform,
         status=post.status,
         timezone=post.timezone,
+        campaign_id=post.campaign_id,
         campaign=post.campaign,
         internal_note=post.internal_note,
         scheduled_at=utc_response(post.scheduled_at),
@@ -57,13 +58,23 @@ def post_response(post: Post) -> PostResponse:
     )
 
 
-def apply_payload(post: Post, payload: PostRequest) -> None:
+def validate_payload_campaign(db: Session, store: Store, campaign_id: int | None) -> Campaign | None:
+    if campaign_id is None:
+        return None
+    campaign = db.scalar(select(Campaign).where(Campaign.id == campaign_id, Campaign.store_id == store.id))
+    if campaign is None:
+        raise HTTPException(status_code=400, detail="Campaign not found for active store")
+    return campaign
+
+
+def apply_payload(post: Post, payload: PostRequest, campaign: Campaign | None = None) -> None:
     post.title = payload.title.strip() or "پست بدون عنوان"
     post.caption = payload.caption.strip()
     post.hashtags = payload.hashtags.strip()
     post.platform = payload.platform.strip() or "rubika"
     post.timezone = payload.timezone.strip() or "Asia/Tehran"
-    post.campaign = payload.campaign.strip()
+    post.campaign_id = campaign.id if campaign else None
+    post.campaign = campaign.name if campaign else payload.campaign.strip()
     post.internal_note = payload.internal_note.strip()
     post.scheduled_at = utc_naive(payload.scheduled_at)
     post.updated_at = datetime.utcnow()
@@ -107,6 +118,7 @@ def post_stats(store: Store = Depends(get_active_store), db: Session = Depends(g
 def list_posts(
     status: str | None = Query(default=None),
     search: str | None = Query(default=None),
+    campaign_id: int | None = Query(default=None),
     store: Store = Depends(get_active_store),
     db: Session = Depends(get_db),
 ):
@@ -116,6 +128,8 @@ def list_posts(
     if search:
         pattern = f"%{search.strip()}%"
         statement = statement.where(Post.title.ilike(pattern) | Post.caption.ilike(pattern) | Post.hashtags.ilike(pattern))
+    if campaign_id is not None:
+        statement = statement.where(Post.campaign_id == campaign_id)
     posts = db.scalars(statement.order_by(Post.scheduled_at.asc().nulls_last(), Post.id.desc())).all()
     return [post_response(post) for post in posts]
 
@@ -163,7 +177,8 @@ def read_post(post_id: int, store: Store = Depends(get_active_store), db: Sessio
 @router.post("", response_model=PostResponse)
 def create_post(payload: PostRequest, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostResponse:
     post = Post(store_id=store.id, status="draft")
-    apply_payload(post, payload)
+    campaign = validate_payload_campaign(db, store, payload.campaign_id)
+    apply_payload(post, payload, campaign)
     db.add(post)
     db.commit()
     db.refresh(post)
@@ -175,7 +190,8 @@ def update_post(post_id: int, payload: PostRequest, store: Store = Depends(get_a
     post = get_store_post(db, store, post_id)
     if post.status not in EDITABLE_STATUSES:
         raise HTTPException(status_code=400, detail="Post cannot be edited in its current status")
-    apply_payload(post, payload)
+    campaign = validate_payload_campaign(db, store, payload.campaign_id)
+    apply_payload(post, payload, campaign)
     db.commit()
     db.refresh(post)
     return post_response(post)

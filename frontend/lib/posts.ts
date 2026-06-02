@@ -11,6 +11,7 @@ export type Post = {
   platform: string;
   status: PostStatus | string;
   timezone: string;
+  campaign_id: number | null;
   campaign: string;
   internal_note: string;
   scheduled_at: string | null;
