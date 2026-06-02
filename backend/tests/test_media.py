@@ -9,6 +9,20 @@ from app.database import Base
 from app.models import MediaAsset, Post, Store
 from app.routes.media import delete_media, media_response, update_media_metadata
 from app.schemas import MediaMetadataRequest
+from app.services.media_storage import LocalMediaStorage
+
+
+def test_local_media_storage_saves_and_deletes_file(tmp_path) -> None:
+    storage = LocalMediaStorage(str(tmp_path))
+
+    stored_filename, file_path = storage.save("hero.webp", b"image")
+
+    assert stored_filename.endswith(".webp")
+    assert (tmp_path / stored_filename).read_bytes() == b"image"
+
+    storage.delete(file_path)
+
+    assert not (tmp_path / stored_filename).exists()
 
 
 def test_update_media_metadata_and_response() -> None:

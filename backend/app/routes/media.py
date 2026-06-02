@@ -1,20 +1,16 @@
-from pathlib import Path
-from uuid import uuid4
-
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
 from app.database import get_db
 from app.dependencies import get_active_store
 from app.models import MediaAsset, Store
 from app.schemas import AttachMediaRequest, MediaMetadataRequest, MediaResponse
+from app.services.media_storage import get_media_storage
 from app.store_scope import get_store_media_asset, get_store_post
 
 router = APIRouter(prefix="/media", tags=["media"])
-settings = get_settings()
 
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_SIZE = 8 * 1024 * 1024
@@ -49,19 +45,13 @@ async def save_uploaded_media(file: UploadFile, store: Store, db: Session, folde
     if len(content) > MAX_SIZE:
         raise HTTPException(status_code=400, detail="File is too large")
 
-    media_dir = Path(settings.media_dir)
-    media_dir.mkdir(parents=True, exist_ok=True)
-
-    extension = Path(file.filename or "image").suffix.lower() or ".jpg"
-    stored_filename = f"{uuid4().hex}{extension}"
-    file_path = media_dir / stored_filename
-    file_path.write_bytes(content)
+    stored_filename, file_path = get_media_storage().save(file.filename or "image", content)
 
     asset = MediaAsset(
         store_id=store.id,
         original_filename=file.filename or stored_filename,
         stored_filename=stored_filename,
-        file_path=str(file_path),
+        file_path=file_path,
         content_type=file.content_type or "application/octet-stream",
         size_bytes=len(content),
         folder=folder.strip(),
@@ -106,7 +96,7 @@ async def upload_media_batch(
     except Exception:
         db.rollback()
         for asset in assets:
-            Path(asset.file_path).unlink(missing_ok=True)
+            get_media_storage().delete(asset.file_path)
         raise
     for asset in assets:
         db.refresh(asset)
@@ -158,8 +148,8 @@ def delete_media(
     if asset.post_id is not None and not force:
         raise HTTPException(status_code=409, detail="Media is attached to a post")
 
-    file_path = Path(asset.file_path)
+    file_path = asset.file_path
     db.delete(asset)
     db.commit()
-    file_path.unlink(missing_ok=True)
+    get_media_storage().delete(file_path)
     return {"deleted": True, "id": asset_id}
