@@ -4,6 +4,26 @@
 @import "@fontsource/lalezar/400.css";
 @import "@fontsource/noto-naskh-arabic/400.css";
 @import "@fontsource/noto-naskh-arabic/700.css";
+@import "@fontsource/cairo";
+@import "@fontsource/tajawal";
+@import "@fontsource/almarai";
+@import "@fontsource/changa";
+@import "@fontsource/el-messiri";
+@import "@fontsource/ibm-plex-sans-arabic";
+@import "@fontsource/noto-sans-arabic";
+@import "@fontsource/noto-kufi-arabic";
+@import "@fontsource/noto-nastaliq-urdu";
+@import "@fontsource/amiri";
+@import "@fontsource/aref-ruqaa";
+@import "@fontsource/markazi-text";
+@import "@fontsource/mirza";
+@import "@fontsource/reem-kufi";
+@import "@fontsource/rakkas";
+@import "@fontsource/katibeh";
+@import "@fontsource/lateef";
+@import "@fontsource/harmattan";
+@import "@fontsource/lemonada";
+@import "@fontsource/mada";
 
 @tailwind base;
 @tailwind components;

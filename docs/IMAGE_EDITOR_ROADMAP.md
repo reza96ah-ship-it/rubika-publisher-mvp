@@ -196,7 +196,7 @@ Acceptance criteria:
 Current implementation status:
 
 - Text layers now render as resizable wrapped Persian text boxes.
-- Typography controls include font weight, line height, character spacing, width, padding, rounded background labels, outline, and shadow.
+- Typography controls include 20 additional Persian/Arabic-capable fonts, font weight, line height, character spacing, width, padding, rounded background labels, outline, and shadow.
 - Preset text styles are available for sale headers, prices, CTAs, and subtitles.
 - Canvas export preserves styled labels, outlines, shadows, opacity, and RTL text layout.
 
