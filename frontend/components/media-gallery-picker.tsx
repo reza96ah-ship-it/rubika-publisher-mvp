@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Folder, Hash, ImageIcon, Link2, Search } from "lucide-react";
 import { Skeleton } from "./loading-skeleton";
 import { Tag } from "./ui/tag";
@@ -13,10 +13,25 @@ type MediaAsset = {
   tags: string;
 };
 
+type CampaignOption = {
+  id: number;
+  name: string;
+  color: string;
+};
+
+type PostMediaContext = {
+  id: number;
+  campaign_id: number | null;
+  campaign: string;
+};
+
 type MediaGalleryPickerProps = {
   assets: MediaAsset[];
+  campaigns?: CampaignOption[];
+  posts?: PostMediaContext[];
   previewUrls: Record<number, string>;
   selectedMediaId: string;
+  activeCampaignId?: number | null;
   loading?: boolean;
   onSelect: (assetId: string) => void;
 };
@@ -30,19 +45,41 @@ function tagList(value: string) {
   return value.split(/[,،\n]/).map((tag) => tag.trim()).filter(Boolean);
 }
 
-export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loading = false, onSelect }: MediaGalleryPickerProps) {
+export function MediaGalleryPicker({ assets, campaigns = [], posts = [], previewUrls, selectedMediaId, activeCampaignId = null, loading = false, onSelect }: MediaGalleryPickerProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [folderFilter, setFolderFilter] = useState("all");
+  const [campaignFilter, setCampaignFilter] = useState(activeCampaignId ? `id:${activeCampaignId}` : "all");
+  const postById = useMemo(() => new Map(posts.map((post) => [post.id, post])), [posts]);
   const imageAssets = useMemo(() => assets.filter((asset) => asset.content_type.startsWith("image/")), [assets]);
+
+  useEffect(() => {
+    setCampaignFilter(activeCampaignId ? `id:${activeCampaignId}` : "all");
+  }, [activeCampaignId]);
+
   const folders = useMemo(() => Array.from(new Set(imageAssets.map((asset) => asset.folder.trim()).filter(Boolean))).sort(), [imageAssets]);
+  const campaignOptions = useMemo(() => {
+    return campaigns
+      .map((campaign) => {
+        const count = imageAssets.filter((asset) => {
+          const linkedPost = asset.post_id ? postById.get(asset.post_id) : null;
+          return linkedPost?.campaign_id === campaign.id;
+        }).length;
+        return { campaign, count };
+      })
+      .filter((option) => option.count > 0 || option.campaign.id === activeCampaignId)
+      .sort((first, second) => second.count - first.count || first.campaign.name.localeCompare(second.campaign.name, "fa"));
+  }, [activeCampaignId, campaigns, imageAssets, postById]);
   const filteredAssets = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
     return imageAssets.filter((asset) => {
       const matchesFolder = folderFilter === "all" || asset.folder === folderFilter;
-      const searchableText = `${asset.original_filename} ${asset.folder} ${asset.tags}`.toLowerCase();
-      return matchesFolder && (!normalizedSearch || searchableText.includes(normalizedSearch));
+      const linkedPost = asset.post_id ? postById.get(asset.post_id) : null;
+      const linkedCampaignLabel = linkedPost?.campaign_id ? campaigns.find((campaign) => campaign.id === linkedPost.campaign_id)?.name ?? linkedPost.campaign : "";
+      const matchesCampaign = campaignFilter === "all" || (linkedPost?.campaign_id ? campaignFilter === `id:${linkedPost.campaign_id}` : false);
+      const searchableText = `${asset.original_filename} ${asset.folder} ${asset.tags} ${linkedCampaignLabel}`.toLowerCase();
+      return matchesFolder && matchesCampaign && (!normalizedSearch || searchableText.includes(normalizedSearch));
     });
-  }, [folderFilter, imageAssets, searchTerm]);
+  }, [campaignFilter, campaigns, folderFilter, imageAssets, postById, searchTerm]);
 
   if (loading) {
     return (
@@ -86,6 +123,31 @@ export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loadi
           ))}
         </div>
       ) : null}
+      {campaignOptions.length ? (
+        <div className="mt-2 rounded-md border border-app-border bg-app-surfaceMuted p-2">
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-black text-app-text">رسانه بر اساس کمپین</span>
+            {activeCampaignId ? <Tag tone="primary">کمپین پست</Tag> : null}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            <button type="button" onClick={() => setCampaignFilter("all")} className={`rounded px-2 py-1 text-[11px] font-bold ${campaignFilter === "all" ? "bg-app-primary text-white" : "bg-white text-slate-600 shadow-hairline hover:bg-blue-50 hover:text-app-primary"}`}>
+              همه کمپین‌ها
+            </button>
+            {campaignOptions.map(({ campaign, count }) => (
+              <button
+                key={campaign.id}
+                type="button"
+                onClick={() => setCampaignFilter(`id:${campaign.id}`)}
+                className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-bold ${campaignFilter === `id:${campaign.id}` ? "bg-app-primary text-white" : "bg-white text-slate-600 shadow-hairline hover:bg-blue-50 hover:text-app-primary"}`}
+              >
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: campaign.color }} />
+                {campaign.name}
+                <span className="opacity-75">({count})</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <button
         type="button"
         onClick={() => onSelect("")}
@@ -107,6 +169,8 @@ export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loadi
           const selected = selectedMediaId === String(asset.id);
           const previewUrl = previewUrls[asset.id];
           const tags = tagList(asset.tags);
+          const linkedPost = asset.post_id ? postById.get(asset.post_id) : null;
+          const linkedCampaign = linkedPost?.campaign_id ? campaigns.find((campaign) => campaign.id === linkedPost.campaign_id) : null;
 
           return (
             <button
@@ -128,6 +192,7 @@ export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loadi
                 <p className="mt-1 text-xs text-app-muted">{asset.content_type} · {formatSize(asset.size_bytes)}</p>
                 {asset.folder ? <p className="mt-2 flex items-center gap-1 truncate text-[11px] font-bold text-app-primary"><Folder className="h-3 w-3 shrink-0" aria-hidden="true" />{asset.folder}</p> : null}
                 {tags.length ? <div className="mt-2 flex flex-wrap gap-1">{tags.slice(0, 2).map((tag) => <Tag key={tag}><Hash className="ml-1 h-3 w-3" aria-hidden="true" />{tag}</Tag>)}</div> : null}
+                {linkedCampaign ? <p className="mt-2 flex items-center gap-1 truncate text-[11px] font-bold text-app-primary"><span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: linkedCampaign.color }} />{linkedCampaign.name}</p> : null}
                 {asset.post_id ? <p className="mt-2 flex items-center gap-1 text-[11px] text-amber-700"><Link2 className="h-3 w-3" aria-hidden="true" />متصل به پست {asset.post_id}</p> : null}
               </div>
             </button>
@@ -135,7 +200,7 @@ export function MediaGalleryPicker({ assets, previewUrls, selectedMediaId, loadi
         })}
         {filteredAssets.length === 0 ? (
           <div className="rounded-md border border-dashed border-app-border bg-slate-50 p-4 text-center text-xs leading-5 text-app-muted sm:col-span-2">
-            رسانه‌ای با این جست‌وجو یا پوشه پیدا نشد.
+            رسانه‌ای با این جست‌وجو، پوشه یا کمپین پیدا نشد.
           </div>
         ) : null}
       </div>

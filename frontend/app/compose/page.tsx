@@ -75,6 +75,7 @@ function ComposePageContent() {
   const [store, setStore] = useState<StoreProfile | null>(null);
   const [rubika, setRubika] = useState<RubikaSettings | null>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [form, setForm] = useState(emptyForm);
@@ -212,16 +213,18 @@ function ComposePageContent() {
     setLoading(true);
     setComposerReady(false);
     const headers = { Authorization: `Bearer ${token()}` };
-    const [overview, loadedCampaigns, mediaResponse, postResponse] = await Promise.all([
+    const [overview, loadedCampaigns, mediaResponse, postsResponse, postResponse] = await Promise.all([
       loadWorkspaceOverview(),
       loadCampaigns(),
       fetch(`${apiUrl}/media`, { headers }),
+      fetch(`${apiUrl}/posts`, { headers }),
       editingPostId ? fetch(`${apiUrl}/posts/${editingPostId}`, { headers }) : Promise.resolve(null)
     ]);
 
     setStore(overview.store);
     setRubika(overview.rubika);
     setCampaigns(loadedCampaigns);
+    if (postsResponse.ok) setPosts(await postsResponse.json());
 
     let loadedMediaAssets: MediaAsset[] = [];
     if (mediaResponse.ok) {
@@ -802,8 +805,11 @@ function ComposePageContent() {
                   </div>
                   <MediaGalleryPicker
                     assets={mediaAssets}
+                    campaigns={campaigns}
+                    posts={posts}
                     previewUrls={mediaPreviewUrls}
                     selectedMediaId={selectedMediaId}
+                    activeCampaignId={form.campaign_id}
                     loading={loading}
                     onSelect={(assetId) => {
                       setSelectedMediaId(assetId);
