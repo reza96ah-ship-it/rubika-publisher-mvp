@@ -14,7 +14,8 @@ import { Button } from "../../components/ui/button";
 import { Field, Input, Select, Textarea } from "../../components/ui/form";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, Timeline, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { campaignColorForPost, campaignLabelForPost, createCampaign, loadCampaigns, updateCampaign, type Campaign, type CampaignStatus } from "../../lib/campaigns";
-import { apiUrl, authHeaders, formatDateTime, fromDatetimeLocalValue, toDatetimeLocalValue, type Post } from "../../lib/posts";
+import { getJalaliMonthLength, getJalaliMonthStartOffset, getJalaliPickerParts, jalaliMonthNames, jalaliPickerPartsToIso, persianWeekdays, type JalaliPickerParts } from "../../lib/jalali-picker";
+import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
 
 type MediaAsset = {
   id: number;
@@ -45,8 +46,8 @@ type CampaignForm = {
   status: CampaignStatus;
   color: string;
   owner: string;
-  starts_at: string;
-  ends_at: string;
+  starts_at: string | null;
+  ends_at: string | null;
   notes: string;
 };
 
@@ -72,8 +73,8 @@ const emptyCampaignForm: CampaignForm = {
   status: "active",
   color: "#0F766E",
   owner: "",
-  starts_at: "",
-  ends_at: "",
+  starts_at: null,
+  ends_at: null,
   notes: ""
 };
 
@@ -84,10 +85,109 @@ function campaignToForm(campaign: Campaign): CampaignForm {
     status: campaignStatusOptions.some((option) => option.value === campaign.status) ? campaign.status as CampaignStatus : "active",
     color: campaign.color || "#0F766E",
     owner: campaign.owner,
-    starts_at: toDatetimeLocalValue(campaign.starts_at),
-    ends_at: toDatetimeLocalValue(campaign.ends_at),
+    starts_at: campaign.starts_at,
+    ends_at: campaign.ends_at,
     notes: campaign.notes
   };
+}
+
+function pad(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function sameJalaliDay(parts: JalaliPickerParts | null, year: number, month: number, day: number) {
+  return Boolean(parts && parts.year === year && parts.month === month && parts.day === day);
+}
+
+function formatJalaliSelection(value: string | null) {
+  if (!value) return "انتخاب نشده";
+  const parts = getJalaliPickerParts(value, "Asia/Tehran");
+  return `${parts.day} ${jalaliMonthNames[parts.month - 1]} ${parts.year}، ${pad(parts.hour)}:${pad(parts.minute)}`;
+}
+
+function CampaignJalaliDateField({ label, value, onChange }: { label: string; value: string | null; onChange: (value: string | null) => void }) {
+  const timezone = "Asia/Tehran";
+  const [draft, setDraft] = useState<JalaliPickerParts>(() => getJalaliPickerParts(value, timezone));
+  const selectedParts = value ? getJalaliPickerParts(value, timezone) : null;
+  const todayParts = getJalaliPickerParts(null, timezone);
+  const monthLength = getJalaliMonthLength(draft.year, draft.month);
+  const startOffset = getJalaliMonthStartOffset(draft.year, draft.month);
+  const dayCells = useMemo(() => [...Array.from({ length: startOffset }, () => null), ...Array.from({ length: monthLength }, (_, index) => index + 1)], [monthLength, startOffset]);
+
+  useEffect(() => {
+    setDraft(getJalaliPickerParts(value, timezone));
+  }, [value]);
+
+  function emit(next: JalaliPickerParts) {
+    setDraft(next);
+    onChange(jalaliPickerPartsToIso(next, timezone));
+  }
+
+  function moveMonth(delta: number) {
+    const absoluteMonth = draft.month + delta;
+    const nextYear = draft.year + Math.floor((absoluteMonth - 1) / 12);
+    const nextMonth = ((absoluteMonth - 1 + 240) % 12) + 1;
+    const nextLength = getJalaliMonthLength(nextYear, nextMonth);
+    setDraft({ ...draft, year: nextYear, month: nextMonth, day: Math.min(draft.day, nextLength) });
+  }
+
+  function changeTime(field: "hour" | "minute", nextValue: string) {
+    const parsed = Number(nextValue);
+    if (!Number.isNaN(parsed)) emit({ ...draft, [field]: parsed });
+  }
+
+  return (
+    <div className="rounded-md border border-app-border bg-white p-3 shadow-hairline" dir="rtl">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-xs font-black text-app-text">{label}</p>
+          <p className="mt-1 text-[11px] font-bold text-app-muted">{formatJalaliSelection(value)}</p>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)}>قبل</Button>
+          <p className="min-w-24 text-center text-xs font-black text-app-primary">{jalaliMonthNames[draft.month - 1]} {draft.year}</p>
+          <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(1)}>بعد</Button>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] font-black text-app-muted">
+        {persianWeekdays.map((weekday) => <span key={weekday}>{weekday.slice(0, 1)}</span>)}
+      </div>
+      <div className="mt-1 grid grid-cols-7 gap-1">
+        {dayCells.map((day, index) => {
+          if (!day) return <span key={`empty-${index}`} className="h-8" />;
+          const selected = sameJalaliDay(selectedParts, draft.year, draft.month, day);
+          const today = sameJalaliDay(todayParts, draft.year, draft.month, day);
+          return (
+            <button
+              key={day}
+              type="button"
+              onClick={() => emit({ ...draft, day })}
+              className={`h-8 rounded text-xs font-black transition ${selected ? "bg-app-primary text-white shadow-sm" : today ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-app-primary"}`}
+            >
+              {day}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+        <label className="text-xs font-black text-app-muted">
+          ساعت
+          <select value={draft.hour} onChange={(event) => changeTime("hour", event.target.value)} className="mt-1 w-full rounded-md border border-app-border bg-white px-2 py-2 text-xs font-bold text-app-text outline-none focus:ring-2 focus:ring-blue-100">
+            {Array.from({ length: 24 }, (_, hour) => <option key={hour} value={hour}>{pad(hour)}</option>)}
+          </select>
+        </label>
+        <label className="text-xs font-black text-app-muted">
+          دقیقه
+          <select value={draft.minute} onChange={(event) => changeTime("minute", event.target.value)} className="mt-1 w-full rounded-md border border-app-border bg-white px-2 py-2 text-xs font-bold text-app-text outline-none focus:ring-2 focus:ring-blue-100">
+            {Array.from({ length: 12 }, (_, index) => index * 5).map((minute) => <option key={minute} value={minute}>{pad(minute)}</option>)}
+          </select>
+        </label>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)}>حذف</Button>
+      </div>
+    </div>
+  );
 }
 
 function campaignStatusTone(status: string): "primary" | "success" | "warning" | "neutral" {
@@ -284,12 +384,20 @@ export default function CampaignsPage() {
     if (message) setMessage("");
   }
 
+  function focusCampaignEditor() {
+    window.setTimeout(() => {
+      document.getElementById("campaign-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.setTimeout(() => document.getElementById("campaign-name-input")?.focus(), 250);
+    }, 0);
+  }
+
   function startNewCampaign() {
     setEditorMode("create");
     setCampaignForm(emptyCampaignForm);
     setSelectedCampaignId(null);
     setMessage("");
     setError("");
+    focusCampaignEditor();
   }
 
   function editCampaign(campaign: Campaign) {
@@ -319,8 +427,8 @@ export default function CampaignsPage() {
         status: campaignForm.status,
         color: campaignForm.color,
         owner: campaignForm.owner.trim(),
-        starts_at: campaignForm.starts_at ? fromDatetimeLocalValue(campaignForm.starts_at) : null,
-        ends_at: campaignForm.ends_at ? fromDatetimeLocalValue(campaignForm.ends_at) : null,
+        starts_at: campaignForm.starts_at,
+        ends_at: campaignForm.ends_at,
         notes: campaignForm.notes.trim()
       };
       const savedCampaign = editorMode === "create"
@@ -557,12 +665,13 @@ export default function CampaignsPage() {
                 title={editorMode === "create" ? "ساخت کمپین" : "ویرایش کمپین"}
                 description={editorMode === "create" ? "کمپین جدید را با هدف، رنگ و مالک مشخص بسازید." : "مشخصات عملیاتی کمپین انتخاب‌شده را به‌روزرسانی کنید."}
                 bodyClassName="p-4"
+                className="scroll-mt-24"
                 action={editorMode === "create" ? <StatusToken tone="primary">جدید</StatusToken> : selectedRow ? <StatusToken tone={campaignStatusTone(selectedRow.campaign.status)}>{statusLabels[selectedRow.campaign.status] ?? selectedRow.campaign.status}</StatusToken> : null}
               >
-                <form onSubmit={saveCampaign} className="space-y-4">
+                <form id="campaign-editor" onSubmit={saveCampaign} className="space-y-4">
                   <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_86px]">
                     <Field label="نام کمپین" required>
-                      <Input value={campaignForm.name} onChange={(event) => updateCampaignField("name", event.target.value)} placeholder="مثلاً لانچ تابستان" required />
+                      <Input id="campaign-name-input" value={campaignForm.name} onChange={(event) => updateCampaignField("name", event.target.value)} placeholder="مثلاً لانچ تابستان" required />
                     </Field>
                     <Field label="رنگ">
                       <Input value={campaignForm.color} onChange={(event) => updateCampaignField("color", event.target.value)} type="color" className="h-[42px] p-1" aria-label="رنگ کمپین" />
@@ -584,13 +693,9 @@ export default function CampaignsPage() {
                     </Field>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="شروع">
-                      <Input value={campaignForm.starts_at} onChange={(event) => updateCampaignField("starts_at", event.target.value)} type="datetime-local" />
-                    </Field>
-                    <Field label="پایان">
-                      <Input value={campaignForm.ends_at} onChange={(event) => updateCampaignField("ends_at", event.target.value)} type="datetime-local" />
-                    </Field>
+                  <div className="grid gap-3">
+                    <CampaignJalaliDateField label="شروع کمپین" value={campaignForm.starts_at} onChange={(value) => updateCampaignField("starts_at", value)} />
+                    <CampaignJalaliDateField label="پایان کمپین" value={campaignForm.ends_at} onChange={(value) => updateCampaignField("ends_at", value)} />
                   </div>
 
                   <Field label="یادداشت">
