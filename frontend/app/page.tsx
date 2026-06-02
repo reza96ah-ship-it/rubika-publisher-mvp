@@ -6,14 +6,17 @@ import {
   CheckCircle2,
   CircleAlert,
   ListChecks,
+  Palette,
   PlugZap,
   RefreshCw,
   Rocket,
+  Sparkles,
   TimerReset
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
+import { WorkspaceAvatar } from "../components/brand-mark";
 import { CountdownBadge } from "../components/countdown-badge";
 import { LiveOperations, PublicationPulse, SignalRibbon } from "../components/dashboard-command-center";
 import { Skeleton } from "../components/loading-skeleton";
@@ -29,6 +32,7 @@ import {
   OperationalNotifications
 } from "../lib/notifications";
 import { apiUrl, authHeaders, formatDateTime, Post } from "../lib/posts";
+import { useMediaPreviewUrl } from "../lib/media-preview";
 import { isRubikaConnected, isStoreConfigured, loadWorkspaceOverview, RubikaSettings, StoreProfile } from "../lib/workspace";
 
 function statusCount(posts: Post[], status: string) {
@@ -110,6 +114,9 @@ export default function HomePage() {
   const queueTotal = queueCounts.ready + queueCounts.scheduled + queueCounts.publishing + queueCounts.failed;
   const storeReady = isStoreConfigured(store);
   const rubikaReady = isRubikaConnected(rubika);
+  const brandColor = store?.brand_primary_color || "#0F766E";
+  const brandImageUrl = useMediaPreviewUrl(store?.avatar_asset_id ?? store?.logo_asset_id);
+  const logoUrl = useMediaPreviewUrl(store?.logo_asset_id);
   const setupScore = Number(storeReady) * 50 + Number(rubikaReady) * 50;
   const priorityAlerts = notifications.notifications.filter((item) => item.action_required).slice(0, 4);
   const unreadAlerts = notifications.notifications.filter((item) => item.action_required && !readIds.has(item.id)).length;
@@ -137,9 +144,17 @@ export default function HomePage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-4">
-          <section className="app-studio-panel overflow-hidden rounded-lg">
+          <section className="app-studio-panel overflow-hidden rounded-lg border-t-4" style={{ borderTopColor: brandColor }}>
             <div className="grid lg:grid-cols-[minmax(0,1fr)_410px]">
               <div className="px-4 py-5 lg:px-5">
+                <div className="mb-4 flex min-w-0 items-center gap-3">
+                  <WorkspaceAvatar name={store?.name || "فضای کاری روبیکا"} size="lg" color={brandColor} imageUrl={brandImageUrl} />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black text-app-muted">فضای کاری فعال</p>
+                    <p className="mt-1 truncate text-base font-black text-app-text">{store?.name || "پروفایل فروشگاه"}</p>
+                    <p className="mt-0.5 truncate text-xs text-app-muted">{store?.category || store?.brand_voice || "هویت برند را از تنظیمات فروشگاه کامل کنید."}</p>
+                  </div>
+                </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusToken tone={healthTone} className="gap-1">
                     <Rocket className="h-3.5 w-3.5" aria-hidden="true" />
@@ -238,6 +253,39 @@ export default function HomePage() {
                 rubikaReady={rubikaReady}
                 nextWindow={nextPosts[0]?.scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"}
               />
+
+              <WorkspacePanel title="هویت برند فعال" description="برند جاری که در composer و پیش‌نمایش انتشار استفاده می‌شود." bodyClassName="p-4">
+                <div className="flex items-center gap-3">
+                  <WorkspaceAvatar name={store?.name || "فضای کاری روبیکا"} size="lg" color={brandColor} imageUrl={brandImageUrl} />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-app-text">{store?.name || "پروفایل فروشگاه"}</p>
+                    <p className="mt-1 truncate text-xs text-app-muted">{store?.brand_voice || "لحن برند هنوز تعریف نشده است."}</p>
+                  </div>
+                </div>
+                {logoUrl ? (
+                  <div className="mt-4 rounded-md border border-app-border bg-app-surfaceMuted p-3">
+                    <p className="mb-2 flex items-center gap-1.5 text-[11px] font-black text-app-muted">
+                      <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                      لوگوی workspace
+                    </p>
+                    <img src={logoUrl} alt="لوگوی برند" className="max-h-20 max-w-full rounded object-contain" />
+                  </div>
+                ) : null}
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <div className="rounded-md bg-app-surfaceMuted p-2">
+                    <p className="flex items-center gap-1.5 text-[10px] font-black text-app-muted"><Palette className="h-3.5 w-3.5" aria-hidden="true" />رنگ اصلی</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="h-5 w-5 rounded shadow-hairline" style={{ backgroundColor: brandColor }} />
+                      <span className="text-xs font-black text-app-text" dir="ltr">{brandColor}</span>
+                    </div>
+                  </div>
+                  <div className="rounded-md bg-app-surfaceMuted p-2">
+                    <p className="text-[10px] font-black text-app-muted">CTA پیش‌فرض</p>
+                    <p className="mt-2 line-clamp-2 text-xs font-bold leading-5 text-app-text">{store?.default_cta || "ثبت نشده"}</p>
+                  </div>
+                </div>
+                <Button href="/store" variant="secondary" size="sm" className="mt-4 w-full">ویرایش کیت برند</Button>
+              </WorkspacePanel>
 
               <WorkspacePanel title="میز کار سریع" description="دسترسی کوتاه به کارهای پرتکرار روزانه." bodyClassName="p-3">
                 <div className="grid gap-2">

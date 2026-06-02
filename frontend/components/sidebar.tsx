@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ProductMark } from "./brand-mark";
+import { ProductMark, WorkspaceAvatar } from "./brand-mark";
 
 export type NavItem = {
   label: string;
@@ -34,6 +34,8 @@ export type NavGroup = {
 type SidebarProps = {
   storeName?: string;
   ready?: boolean;
+  brandColor?: string;
+  avatarUrl?: string;
 };
 
 const primaryNavGroups: NavGroup[] = [
@@ -116,7 +118,7 @@ function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
   );
 }
 
-export function Sidebar({ storeName = "فضای کاری", ready = false }: SidebarProps) {
+export function Sidebar({ storeName = "فضای کاری", ready = false, brandColor, avatarUrl }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -134,9 +136,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false }: Side
           href="/store"
           className="app-interactive mt-3 flex items-center gap-2 rounded-lg bg-white/90 px-2.5 py-2.5 shadow-soft ring-1 ring-app-border hover:bg-white"
         >
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-app-tealSoft text-app-teal">
-            <Store className="h-3.5 w-3.5" aria-hidden="true" />
-          </span>
+          <WorkspaceAvatar name={storeName} size="sm" color={brandColor} imageUrl={avatarUrl} />
           <span className="min-w-0 flex-1">
             <span className="block text-[10px] font-bold text-app-muted">فضای کاری فعال</span>
             <span className="mt-0.5 block truncate text-xs font-black text-app-text">{storeName}</span>

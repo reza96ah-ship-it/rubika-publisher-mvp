@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, BellRing, ChevronDown, ChevronLeft, LogOut, PlugZap, Search, Settings2, Sparkles, UserRound } from "lucide-react";
+import { AlertCircle, BellRing, ChevronDown, ChevronLeft, LogOut, PlugZap, Search, Settings2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -19,8 +19,9 @@ import {
   saveKnownNotificationIds,
   unreadOperationalCount
 } from "../lib/notifications";
+import { useMediaPreviewUrl } from "../lib/media-preview";
 import { CommandPalette } from "./command-palette";
-import { ProductMark } from "./brand-mark";
+import { ProductMark, WorkspaceAvatar } from "./brand-mark";
 import { getActiveNav, MobileNav, Sidebar } from "./sidebar";
 import { useToast } from "./toast-provider";
 
@@ -132,6 +133,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const shellReady = storeReady && rubikaReady;
   const setupHref = !storeReady ? "/store" : !rubikaReady ? "/rubika" : "/compose";
   const showSetupAction = !overviewLoading && !shellReady;
+  const brandAssetId = overview.store?.avatar_asset_id ?? overview.store?.logo_asset_id ?? null;
+  const brandImageUrl = useMediaPreviewUrl(brandAssetId);
+  const brandColor = overview.store?.brand_primary_color;
+  const workspaceName = overview.store?.name || "پروفایل فروشگاه";
 
   function logout() {
     window.localStorage.removeItem("rubika_publisher_access");
@@ -141,7 +146,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="app-workspace-bg min-h-screen text-app-text">
       <div className="flex min-h-screen">
-        <Sidebar storeName={overview.store?.name || "پروفایل فروشگاه"} ready={shellReady} />
+        <Sidebar storeName={workspaceName} ready={shellReady} brandColor={brandColor} avatarUrl={brandImageUrl} />
         <section className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 border-b border-app-border/90 bg-[#F9FCFC]/92 shadow-[0_8px_24px_rgba(38,75,88,0.055)] backdrop-blur-xl">
             <div className="flex min-h-[68px] items-center justify-between gap-3 px-4 py-2 lg:px-6">
@@ -149,7 +154,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link href="/" className="lg:hidden" aria-label="Rubika Publisher">
                   <ProductMark />
                 </Link>
-                <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-app-teal shadow-hairline lg:flex">
+                <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-app-teal shadow-hairline lg:flex" style={brandColor ? { color: brandColor } : undefined}>
                   <ActiveNavIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
@@ -228,18 +233,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     aria-label="منوی حساب کاربری"
                     aria-expanded={accountMenuOpen}
                   >
-                    <span className="flex h-6 w-6 items-center justify-center rounded bg-app-tealSoft text-app-teal">
-                      <UserRound className="h-3.5 w-3.5" aria-hidden="true" />
-                    </span>
-                    <span className="hidden xl:inline">مدیر فضای کاری</span>
+                    <WorkspaceAvatar name={workspaceName} size="sm" color={brandColor} imageUrl={brandImageUrl} className="h-6 w-6 rounded" />
+                    <span className="hidden xl:inline">{workspaceName}</span>
                     <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
 
                   {accountMenuOpen ? (
                     <div className="app-popover app-studio-panel absolute left-0 top-11 w-64 overflow-hidden rounded-lg">
                       <div className="border-b border-app-border px-3 py-3">
-                        <p className="flex items-center gap-1.5 text-xs font-black text-app-text"><Sparkles className="h-3.5 w-3.5 text-app-teal" aria-hidden="true" />مدیر فضای کاری</p>
-                        <p className="mt-1 truncate text-[11px] text-app-muted">{overview.store?.name || "Rubika Publisher"}</p>
+                        <div className="flex items-center gap-2">
+                          <WorkspaceAvatar name={workspaceName} color={brandColor} imageUrl={brandImageUrl} />
+                          <div className="min-w-0">
+                            <p className="flex items-center gap-1.5 text-xs font-black text-app-text"><Sparkles className="h-3.5 w-3.5 text-app-teal" aria-hidden="true" />مدیر فضای کاری</p>
+                            <p className="mt-1 truncate text-[11px] text-app-muted">{workspaceName}</p>
+                          </div>
+                        </div>
                       </div>
                       <div className="p-1.5">
                         <Link href="/store" className="app-interactive flex items-center gap-2 rounded px-2.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-app-text">
