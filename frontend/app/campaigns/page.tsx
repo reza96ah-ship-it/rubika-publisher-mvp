@@ -2,7 +2,7 @@
 
 import { AlertTriangle, BarChart3, CheckCircle2, CheckSquare2, FileImage, ImageIcon, PieChart, Plus, RefreshCw, Target, TimerReset, TrendingUp, XCircle, Zap } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { DataRow, DataSearchField, DataTable, DataToolbar } from "../../components/data-view";
@@ -66,6 +66,7 @@ type CampaignForm = {
 };
 
 type EditorMode = "edit" | "create";
+type CampaignDateField = "starts_at" | "ends_at";
 
 const statusLabels: Record<string, string> = {
   active: "فعال",
@@ -119,10 +120,24 @@ function formatJalaliSelection(value: string | null) {
   return `${parts.day} ${jalaliMonthNames[parts.month - 1]} ${parts.year}، ${pad(parts.hour)}:${pad(parts.minute)}`;
 }
 
-function CampaignJalaliDateField({ label, value, onChange }: { label: string; value: string | null; onChange: (value: string | null) => void }) {
+function CampaignJalaliDateField({
+  label,
+  value,
+  open,
+  onOpenChange,
+  onChange
+}: {
+  label: string;
+  value: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onChange: (value: string | null) => void;
+}) {
   const timezone = "Asia/Tehran";
   const [draft, setDraft] = useState<JalaliPickerParts>(() => getJalaliPickerParts(value, timezone));
-  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [popoverStyle, setPopoverStyle] = useState<CSSProperties>({});
   const selectedParts = value ? getJalaliPickerParts(value, timezone) : null;
   const todayParts = getJalaliPickerParts(null, timezone);
   const monthLength = getJalaliMonthLength(draft.year, draft.month);
@@ -132,6 +147,38 @@ function CampaignJalaliDateField({ label, value, onChange }: { label: string; va
   useEffect(() => {
     setDraft(getJalaliPickerParts(value, timezone));
   }, [value]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function updatePosition() {
+      const rect = buttonRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const width = 244;
+      const height = 258;
+      const margin = 12;
+      const left = Math.min(Math.max(rect.right - width, margin), window.innerWidth - width - margin);
+      const belowTop = rect.bottom + 8;
+      const top = belowTop + height > window.innerHeight - margin ? Math.max(margin, rect.top - height - 8) : belowTop;
+      setPopoverStyle({ left, top });
+    }
+
+    function closeOnOutside(event: PointerEvent) {
+      const target = event.target;
+      if (target instanceof Node && rootRef.current?.contains(target)) return;
+      onOpenChange(false);
+    }
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("pointerdown", closeOnOutside);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("pointerdown", closeOnOutside);
+    };
+  }, [onOpenChange, open]);
 
   function emit(next: JalaliPickerParts) {
     setDraft(next);
@@ -152,10 +199,11 @@ function CampaignJalaliDateField({ label, value, onChange }: { label: string; va
   }
 
   return (
-    <div className="relative" dir="rtl">
+    <div ref={rootRef} className="relative" dir="rtl">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => onOpenChange(!open)}
         className={`app-row flex w-full items-center justify-between gap-3 rounded-md border bg-white p-3 text-right transition hover:bg-blue-50/40 ${
           open ? "border-blue-200 ring-2 ring-blue-100" : "border-app-border"
         }`}
@@ -170,7 +218,7 @@ function CampaignJalaliDateField({ label, value, onChange }: { label: string; va
       </button>
 
       {open ? (
-        <div className="app-popover absolute right-0 top-full z-40 mt-2 w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift">
+        <div className="app-popover fixed z-[70] w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift" style={popoverStyle}>
           <div className="flex items-center justify-between gap-1.5">
             <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)} className="h-7 px-2">قبل</Button>
             <p className="min-w-20 text-center text-xs font-black text-app-primary">{jalaliMonthNames[draft.month - 1]} {draft.year}</p>
@@ -214,8 +262,8 @@ function CampaignJalaliDateField({ label, value, onChange }: { label: string; va
           </div>
 
           <div className="mt-2 flex justify-between gap-1.5 border-t border-app-border pt-2">
-            <Button type="button" variant="ghost" size="sm" onClick={() => { onChange(null); setOpen(false); }} className="h-7 px-2">حذف</Button>
-            <Button type="button" size="sm" onClick={() => setOpen(false)} className="h-7 px-2">تایید</Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => { onChange(null); onOpenChange(false); }} className="h-7 px-2">حذف</Button>
+            <Button type="button" size="sm" onClick={() => onOpenChange(false)} className="h-7 px-2">تایید</Button>
           </div>
         </div>
       ) : null}
@@ -305,6 +353,7 @@ export default function CampaignsPage() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<number | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>("edit");
   const [campaignForm, setCampaignForm] = useState<CampaignForm>(emptyCampaignForm);
+  const [openCampaignCalendar, setOpenCampaignCalendar] = useState<CampaignDateField | null>(null);
   const [savingCampaign, setSavingCampaign] = useState(false);
   const [assignmentSearch, setAssignmentSearch] = useState("");
   const [selectedAssignIds, setSelectedAssignIds] = useState<Set<number>>(new Set());
@@ -901,8 +950,20 @@ export default function CampaignsPage() {
                   </div>
 
                   <div className="grid gap-3">
-                    <CampaignJalaliDateField label="شروع کمپین" value={campaignForm.starts_at} onChange={(value) => updateCampaignField("starts_at", value)} />
-                    <CampaignJalaliDateField label="پایان کمپین" value={campaignForm.ends_at} onChange={(value) => updateCampaignField("ends_at", value)} />
+                    <CampaignJalaliDateField
+                      label="شروع کمپین"
+                      value={campaignForm.starts_at}
+                      open={openCampaignCalendar === "starts_at"}
+                      onOpenChange={(nextOpen) => setOpenCampaignCalendar(nextOpen ? "starts_at" : null)}
+                      onChange={(value) => updateCampaignField("starts_at", value)}
+                    />
+                    <CampaignJalaliDateField
+                      label="پایان کمپین"
+                      value={campaignForm.ends_at}
+                      open={openCampaignCalendar === "ends_at"}
+                      onOpenChange={(nextOpen) => setOpenCampaignCalendar(nextOpen ? "ends_at" : null)}
+                      onChange={(value) => updateCampaignField("ends_at", value)}
+                    />
                   </div>
 
                   <Field label="یادداشت">
