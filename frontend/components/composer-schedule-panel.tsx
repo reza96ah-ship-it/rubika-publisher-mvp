@@ -83,53 +83,53 @@ export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: Compo
         </button>
 
         {open ? (
-          <div className="app-popover absolute right-0 top-full z-40 mt-2 w-full min-w-[280px] rounded-lg border border-app-border bg-white p-3 shadow-lift">
-            <div className="flex items-center justify-between gap-2">
-              <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)}>قبل</Button>
+          <div className="app-popover absolute right-0 top-full z-40 mt-2 w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift">
+            <div className="flex items-center justify-between gap-1.5">
+              <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)} className="h-7 px-2">قبل</Button>
               <div className="text-center">
-                <p className="text-sm font-black text-app-text">{jalaliMonthNames[draft.month - 1]} {draft.year}</p>
-                <p className="mt-0.5 text-[11px] text-app-muted">تقویم شمسی · {scheduleTimezone}</p>
+                <p className="text-xs font-black text-app-text">{jalaliMonthNames[draft.month - 1]} {draft.year}</p>
+                <p className="mt-0.5 text-[10px] text-app-muted">شمسی</p>
               </div>
-              <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(1)}>بعد</Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(1)} className="h-7 px-2">بعد</Button>
             </div>
 
-            <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] font-black text-app-muted">
+            <div className="mt-2 grid grid-cols-7 gap-0.5 text-center text-[9px] font-black text-app-muted">
               {persianWeekdays.map((weekday) => <span key={weekday}>{weekday.slice(0, 1)}</span>)}
             </div>
-            <div className="mt-1 grid grid-cols-7 gap-1">
+            <div className="mt-1 grid grid-cols-7 gap-0.5">
               {dayCells.map((day, index) => {
-                if (!day) return <div key={`empty-${index}`} className="h-8" />;
+                if (!day) return <div key={`empty-${index}`} className="h-7" />;
                 const selected = sameDay(selectedParts, draft.year, draft.month, day);
                 const today = sameDay(todayParts, draft.year, draft.month, day);
                 const classes = selected ? "bg-app-primary text-white shadow-sm" : today ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-slate-50 text-slate-700 hover:bg-blue-50 hover:text-app-primary";
                 return (
-                  <button key={day} type="button" onClick={() => emit({ ...draft, day })} className={`h-8 rounded text-xs font-black transition ${classes}`}>
+                  <button key={day} type="button" onClick={() => emit({ ...draft, day })} className={`h-7 rounded text-[11px] font-black transition ${classes}`}>
                     {day}
                   </button>
                 );
               })}
             </div>
 
-            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr]">
-              <label className="text-xs font-black text-app-muted">
+            <div className="mt-2 grid grid-cols-2 gap-1.5">
+              <label className="text-[10px] font-black text-app-muted">
                 ساعت
-                <select value={draft.hour} onChange={(event) => changeTime("hour", event.target.value)} className="mt-1 w-full rounded-md border border-app-border bg-white px-2 py-2 text-xs font-bold text-app-text outline-none ring-app-primary focus:ring-2">
+                <select value={draft.hour} onChange={(event) => changeTime("hour", event.target.value)} className="mt-1 h-8 w-full rounded-md border border-app-border bg-white px-2 text-xs font-bold text-app-text outline-none ring-app-primary focus:ring-2">
                   {Array.from({ length: 24 }, (_, hour) => <option key={hour} value={hour}>{pad(hour)}</option>)}
                 </select>
               </label>
-              <label className="text-xs font-black text-app-muted">
+              <label className="text-[10px] font-black text-app-muted">
                 دقیقه
-                <select value={draft.minute} onChange={(event) => changeTime("minute", event.target.value)} className="mt-1 w-full rounded-md border border-app-border bg-white px-2 py-2 text-xs font-bold text-app-text outline-none ring-app-primary focus:ring-2">
+                <select value={draft.minute} onChange={(event) => changeTime("minute", event.target.value)} className="mt-1 h-8 w-full rounded-md border border-app-border bg-white px-2 text-xs font-bold text-app-text outline-none ring-app-primary focus:ring-2">
                   {Array.from({ length: 12 }, (_, index) => index * 5).map((minute) => <option key={minute} value={minute}>{pad(minute)}</option>)}
                 </select>
               </label>
             </div>
 
-            <div className="mt-3 flex flex-wrap justify-between gap-2 border-t border-app-border pt-3">
-              <Button type="button" variant="secondary" size="sm" onClick={() => emit(todayParts)}>امروز</Button>
+            <div className="mt-2 flex justify-between gap-1.5 border-t border-app-border pt-2">
+              <Button type="button" variant="secondary" size="sm" onClick={() => emit(todayParts)} className="h-7 px-2">امروز</Button>
               <div className="flex gap-2">
-                <Button type="button" variant="ghost" size="sm" onClick={clearSchedule}>حذف</Button>
-                <Button type="button" size="sm" onClick={() => setOpen(false)}>تایید</Button>
+                <Button type="button" variant="ghost" size="sm" onClick={clearSchedule} className="h-7 px-2">حذف</Button>
+                <Button type="button" size="sm" onClick={() => setOpen(false)} className="h-7 px-2">تایید</Button>
               </div>
             </div>
           </div>
