@@ -114,3 +114,25 @@ export async function createCampaign(payload: CampaignInput): Promise<Campaign> 
   if (!response.ok) throw new Error("ساخت کمپین ناموفق بود");
   return response.json();
 }
+
+export async function updateCampaign(campaignId: number, payload: CampaignInput): Promise<Campaign> {
+  const response = await fetch(`${apiUrl}/campaigns/${campaignId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders()
+    },
+    body: JSON.stringify({
+      goal: "",
+      status: "active",
+      color: "#0F766E",
+      owner: "",
+      starts_at: null,
+      ends_at: null,
+      notes: "",
+      ...payload
+    })
+  });
+  if (!response.ok) throw new Error("به‌روزرسانی کمپین ناموفق بود");
+  return response.json();
+}

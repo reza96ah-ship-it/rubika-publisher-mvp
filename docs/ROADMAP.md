@@ -92,7 +92,9 @@ Current implementation status:
 - Composer can now load campaigns, attach a post to a real campaign, and quick-create a campaign without leaving the studio.
 - Content, queue, calendar, and analytics now share campaign-aware filters that understand `campaign_id` and legacy text campaigns.
 - A dedicated Campaign Center now shows campaign health, timeline, linked posts, and linked media assets.
-- The next Campaign OS slice should add campaign editing controls and deeper campaign analytics.
+- Campaign Center can create and edit campaign name, goal, status, color, owner, date range, and notes.
+- Campaign details now include a compact performance funnel for media coverage, queue, successful publishing, and active risk.
+- The next Campaign OS slice should add campaign-to-post bulk assignment and campaign-specific analytics drilldowns.
 
 ## Phase 4: Composer Studio Pro
 
