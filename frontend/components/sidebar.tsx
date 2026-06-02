@@ -49,7 +49,8 @@ const primaryNavGroups: NavGroup[] = [
   {
     title: "انتشار",
     items: [
-      { label: "فضای انتشار", href: "/calendar", icon: CalendarDays }
+      { label: "پلنر انتشار", href: "/calendar", icon: CalendarDays },
+      { label: "مدیر کمپین", href: "/campaigns", icon: Target }
     ]
   },
   {
@@ -162,7 +163,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
             <div className="space-y-1">
               {group.items.map((item) => {
                 const active = item.href === "/calendar"
-                  ? publishingRouteItems.some((route) => isActiveRoute(pathname, route.href))
+                  ? isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue")
                   : isActiveRoute(pathname, item.href);
                 return <NavEntry key={item.href} item={item} active={active} />;
               })}

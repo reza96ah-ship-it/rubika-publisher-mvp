@@ -83,7 +83,7 @@ export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: Compo
         </button>
 
         {open ? (
-          <div className="app-popover absolute right-0 top-full z-40 mt-2 w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift">
+          <div className="app-popover absolute bottom-full right-0 z-50 mb-2 w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift">
             <div className="flex items-center justify-between gap-1.5">
               <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)} className="h-7 px-2">قبل</Button>
               <div className="text-center">

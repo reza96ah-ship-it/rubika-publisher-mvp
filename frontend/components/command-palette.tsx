@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, CalendarDays, FileImage, FileText, ListChecks, Search, Settings2, Store, X } from "lucide-react";
+import { BarChart3, CalendarDays, FileImage, FileText, ListChecks, Search, Settings2, Store, Target, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, authHeaders, type Post } from "../lib/posts";
@@ -13,6 +13,7 @@ type CommandPaletteProps = {
 
 const commands = [
   { label: "پلنر انتشار", detail: "تقویم و برنامه انتشار", href: "/calendar", icon: CalendarDays },
+  { label: "مدیر کمپین", detail: "کمپین‌ها، پست‌های متصل و تحلیل کمپین", href: "/campaigns", icon: Target },
   { label: "لیست محتوا", detail: "مدیریت پست‌ها و وضعیت‌ها", href: "/content", icon: FileText },
   { label: "صف انتشار", detail: "بررسی زمان‌بندی و بازیابی خطا", href: "/queue", icon: ListChecks },
   { label: "رسانه‌ها", detail: "کتابخانه تصاویر", href: "/media", icon: FileImage },
