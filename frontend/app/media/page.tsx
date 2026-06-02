@@ -1,7 +1,7 @@
 "use client";
 
 import { DragEvent, FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, FileImage, Folder, Grid2X2, Hash, ImageIcon, Images, Link2, List, Save, Search, SlidersHorizontal, Trash2, UploadCloud, X, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Crop, FileImage, Folder, Grid2X2, Hash, ImageIcon, Images, Link2, List, Save, Search, SlidersHorizontal, Trash2, UploadCloud, X, XCircle } from "lucide-react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { LoadingRows } from "../../components/loading-skeleton";
@@ -49,6 +49,19 @@ function tagList(value: string) {
   return value.split(/[,،\n]/).map((tag) => tag.trim()).filter(Boolean);
 }
 
+const variantPresets = [
+  { label: "مربع", detail: "پست محصول و کاتالوگ", ratio: 1, sample: "1:1" },
+  { label: "افقی", detail: "بنر و تصویر عریض", ratio: 16 / 9, sample: "16:9" },
+  { label: "عمودی", detail: "استوری و محتوای موبایل", ratio: 9 / 16, sample: "9:16" },
+  { label: "پرتره", detail: "پست بلند و معرفی محصول", ratio: 4 / 5, sample: "4:5" }
+];
+
+function variantFitTone(delta: number): "success" | "warning" | "alert" {
+  if (delta <= 0.06) return "success";
+  if (delta <= 0.2) return "warning";
+  return "alert";
+}
+
 export default function MediaPage() {
   const { showToast } = useToast();
   const [assets, setAssets] = useState<MediaAsset[]>([]);
@@ -60,6 +73,7 @@ export default function MediaPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilePreviewUrl, setSelectedFilePreviewUrl] = useState("");
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
+  const [selectedImageSize, setSelectedImageSize] = useState<{ width: number; height: number } | null>(null);
   const [showUploader, setShowUploader] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -385,6 +399,29 @@ export default function MediaPage() {
   }, [assets, campaignFilter, folderFilter, mediaFilter, postById, searchTerm]);
 
   const selectedPreviewUrl = selectedAsset ? mediaPreviewUrls[selectedAsset.id] : "";
+  useEffect(() => {
+    setSelectedImageSize(null);
+    if (!selectedPreviewUrl) return;
+
+    const image = new Image();
+    image.onload = () => setSelectedImageSize({ width: image.naturalWidth, height: image.naturalHeight });
+    image.onerror = () => setSelectedImageSize(null);
+    image.src = selectedPreviewUrl;
+  }, [selectedPreviewUrl]);
+
+  const selectedVariantReadiness = useMemo(() => {
+    if (!selectedImageSize) return [];
+    const ratio = selectedImageSize.width / selectedImageSize.height;
+    return variantPresets.map((preset) => {
+      const delta = Math.abs(ratio - preset.ratio) / preset.ratio;
+      return {
+        ...preset,
+        delta,
+        tone: variantFitTone(delta),
+        fitLabel: delta <= 0.06 ? "آماده" : delta <= 0.2 ? "کراپ سبک" : "نیازمند نسخه"
+      };
+    });
+  }, [selectedImageSize]);
   const hasActiveFilters = mediaFilter !== "all" || folderFilter !== "all" || campaignFilter !== "all" || Boolean(searchTerm.trim());
 
   function clearFilters() {
@@ -766,11 +803,49 @@ export default function MediaPage() {
                           { label: "نام فایل", value: <span className="break-words">{selectedAsset.original_filename}</span>, hint: "نام اصلی فایل" },
                           { label: "نوع", value: selectedAsset.content_type, hint: "فرمت آپلود" },
                           { label: "حجم", value: formatSize(selectedAsset.size_bytes), hint: "اندازه فایل" },
+                          { label: "ابعاد", value: selectedImageSize ? `${selectedImageSize.width}×${selectedImageSize.height}` : "در حال بررسی", hint: "اندازه واقعی تصویر" },
                           { label: "شناسه", value: `#${selectedAsset.id}`, hint: "شناسه داخلی" },
                           { label: "پوشه", value: selectedAsset.folder || "بدون پوشه", hint: "دسته‌بندی کتابخانه" },
                           { label: "برچسب", value: tagList(selectedAsset.tags).length || "بدون برچسب", hint: "تعداد برچسب‌ها" }
                         ]}
                       />
+                    </div>
+
+                    <div className="mt-4 rounded-md border border-app-border bg-white p-3 shadow-hairline">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="flex items-center gap-2 text-xs font-black text-app-text">
+                          <Crop className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                          آمادگی نسخه‌های خلاقه
+                        </p>
+                        <StatusToken tone={selectedVariantReadiness.some((item) => item.tone === "success") ? "success" : "warning"}>
+                          {selectedImageSize ? "تحلیل نسبت" : "بدون پیش‌نمایش"}
+                        </StatusToken>
+                      </div>
+                      {selectedImageSize ? (
+                        <div className="mt-3 grid gap-2">
+                          {selectedVariantReadiness.map((preset) => (
+                            <div key={preset.label} className="rounded-md bg-app-surfaceMuted p-2 shadow-hairline">
+                              <div className="flex items-center justify-between gap-2">
+                                <div>
+                                  <p className="text-xs font-black text-app-text">{preset.label} · {preset.sample}</p>
+                                  <p className="mt-1 text-[11px] text-app-muted">{preset.detail}</p>
+                                </div>
+                                <StatusToken tone={preset.tone}>{preset.fitLabel}</StatusToken>
+                              </div>
+                              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200">
+                                <div
+                                  className={`h-full rounded-full ${preset.tone === "success" ? "bg-emerald-500" : preset.tone === "warning" ? "bg-amber-500" : "bg-rose-500"}`}
+                                  style={{ width: `${Math.max(12, Math.min(100, Math.round((1 - Math.min(preset.delta, 0.5)) * 100)))}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-3 rounded-md bg-app-surfaceMuted p-3 text-xs leading-6 text-app-muted">
+                          برای تحلیل نسخه‌های خلاقه، پیش‌نمایش تصویر باید در دسترس باشد.
+                        </p>
+                      )}
                     </div>
 
                     <form onSubmit={saveMetadata} className="mt-4 rounded-md bg-app-surfaceMuted p-3 shadow-hairline">
