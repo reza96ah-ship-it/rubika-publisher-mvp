@@ -50,6 +50,14 @@ function tagList(value: string) {
   return value.split(/[,،\n]/).map((tag) => tag.trim()).filter(Boolean);
 }
 
+function displayTagLabel(tag: string) {
+  return tag.toLowerCase() === "edited" ? "نسخه ویرایش‌شده" : tag;
+}
+
+function isEditedAsset(asset: MediaAsset) {
+  return tagList(asset.tags).some((tag) => tag.toLowerCase() === "edited") || /-(edited|variant|rubika-variant|square-variant|portrait-variant|story-variant|landscape-variant)\.png$/i.test(asset.original_filename);
+}
+
 const variantPresets = [
   { label: "مربع", detail: "پست محصول و کاتالوگ", ratio: 1, sample: "1:1" },
   { label: "افقی", detail: "بنر و تصویر عریض", ratio: 16 / 9, sample: "16:9" },
@@ -730,6 +738,7 @@ export default function MediaPage() {
                       const previewUrl = mediaPreviewUrls[asset.id];
                       const linkedPost = asset.post_id ? postById.get(asset.post_id) : null;
                       const selected = selectedAssetId === String(asset.id);
+                      const edited = isEditedAsset(asset);
 
                       return (
                         <button
@@ -766,6 +775,11 @@ export default function MediaPage() {
                             <span className="absolute right-2 top-2">
                               <Tag tone={linkedPost ? "primary" : "success"}>{linkedPost ? "در استفاده" : "آزاد"}</Tag>
                             </span>
+                            {edited ? (
+                              <span className="absolute bottom-2 right-2">
+                                <Tag tone="primary">نسخه ویرایش‌شده</Tag>
+                              </span>
+                            ) : null}
                             {selected ? <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-app-primary text-white shadow-sm"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span> : null}
                           </div>
                           <div className="min-w-0 flex-1 p-3">
@@ -779,7 +793,7 @@ export default function MediaPage() {
                             ) : null}
                             {tagList(asset.tags).length ? (
                               <div className="mt-2 flex flex-wrap gap-1">
-                                {tagList(asset.tags).slice(0, 3).map((tag) => <Tag key={tag}>{tag}</Tag>)}
+                                {tagList(asset.tags).slice(0, 3).map((tag) => <Tag key={tag}>{displayTagLabel(tag)}</Tag>)}
                               </div>
                             ) : null}
                             <div className="mt-3 flex min-h-9 items-center gap-2 rounded bg-slate-50 px-2 py-1.5 text-xs text-app-muted ring-1 ring-app-border">
@@ -835,13 +849,28 @@ export default function MediaPage() {
                 </div>
                 {inspectorTab === "details" && selectedAsset ? (
                   <div className="p-4">
-                    {selectedPreviewUrl ? (
-                      <img src={selectedPreviewUrl} alt={selectedAsset.original_filename} className="aspect-video max-h-64 w-full rounded-md object-cover ring-1 ring-app-border xl:max-h-none" />
-                    ) : (
-                      <div className="flex h-56 w-full items-center justify-center rounded-md bg-slate-50 text-xs text-app-muted ring-1 ring-app-border xl:h-auto xl:aspect-video">
-                        پیش‌نمایش در دسترس نیست
+                    <div className="relative overflow-hidden rounded-md ring-1 ring-app-border">
+                      {selectedPreviewUrl ? (
+                        <img src={selectedPreviewUrl} alt={selectedAsset.original_filename} className="aspect-video max-h-64 w-full object-cover xl:max-h-none" />
+                      ) : (
+                        <div className="flex h-56 w-full items-center justify-center bg-slate-50 text-xs text-app-muted xl:h-auto xl:aspect-video">
+                          پیش‌نمایش در دسترس نیست
+                        </div>
+                      )}
+                      <div className="absolute right-2 top-2 flex flex-wrap gap-1">
+                        <Tag tone={isEditedAsset(selectedAsset) ? "primary" : "neutral"}>{isEditedAsset(selectedAsset) ? "نسخه ویرایش‌شده" : "فایل اصلی"}</Tag>
                       </div>
-                    )}
+                      {selectedPreviewUrl ? (
+                        <button
+                          type="button"
+                          onClick={() => setEditingAsset(selectedAsset)}
+                          className="app-interactive absolute bottom-2 left-2 inline-flex items-center gap-1.5 rounded-md bg-white/95 px-2.5 py-1.5 text-[11px] font-black text-app-text shadow-soft ring-1 ring-app-border hover:bg-blue-50 hover:text-app-primary"
+                        >
+                          <PencilLine className="h-3.5 w-3.5" aria-hidden="true" />
+                          باز کردن در ویرایشگر
+                        </button>
+                      ) : null}
+                    </div>
 
                     <div className="mt-4">
                       <DetailGrid
@@ -852,7 +881,7 @@ export default function MediaPage() {
                           { label: "ابعاد", value: selectedImageSize ? `${selectedImageSize.width}×${selectedImageSize.height}` : "در حال بررسی", hint: "اندازه واقعی تصویر" },
                           { label: "شناسه", value: `#${selectedAsset.id}`, hint: "شناسه داخلی" },
                           { label: "پوشه", value: selectedAsset.folder || "بدون پوشه", hint: "دسته‌بندی کتابخانه" },
-                          { label: "برچسب", value: tagList(selectedAsset.tags).length || "بدون برچسب", hint: "تعداد برچسب‌ها" }
+                          { label: "برچسب", value: tagList(selectedAsset.tags).length ? tagList(selectedAsset.tags).map(displayTagLabel).join("، ") : "بدون برچسب", hint: "برچسب‌های رسانه" }
                         ]}
                       />
                     </div>
@@ -909,7 +938,7 @@ export default function MediaPage() {
                       </div>
                       {tagList(metadataTags).length ? (
                         <div className="mt-3 flex flex-wrap gap-1">
-                          {tagList(metadataTags).map((tag) => <Tag key={tag}><Hash className="ml-1 h-3 w-3" aria-hidden="true" />{tag}</Tag>)}
+                          {tagList(metadataTags).map((tag) => <Tag key={tag}><Hash className="ml-1 h-3 w-3" aria-hidden="true" />{displayTagLabel(tag)}</Tag>)}
                         </div>
                       ) : null}
                       <Button type="submit" variant="secondary" size="sm" className="mt-3 w-full" disabled={savingMetadata}>
