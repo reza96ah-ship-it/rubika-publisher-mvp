@@ -42,6 +42,7 @@ type ImageAdjustments = {
   brightness: number;
   contrast: number;
   saturation: number;
+  blur: number;
 };
 
 type ImageOverlayMode = "none" | "vignette" | "darkWash" | "lightWash" | "gradient" | "spotlight";
@@ -223,7 +224,7 @@ const exportFormatOptions: Array<{ id: ExportFormat; label: string; detail: stri
   { id: "jpeg", label: "JPG", detail: "حجم کمتر", mime: "image/jpeg", extension: "jpg" },
   { id: "webp", label: "WEBP", detail: "مدرن و سبک", mime: "image/webp", extension: "webp" }
 ];
-const initialAdjustments: ImageAdjustments = { brightness: 100, contrast: 100, saturation: 100 };
+const initialAdjustments: ImageAdjustments = { brightness: 100, contrast: 100, saturation: 100, blur: 0 };
 const initialOverlay: ImageOverlaySettings = { mode: "none", strength: 45 };
 const initialCrop: ImageCropSettings = { presetId: "original", scale: 100, offsetX: 0, offsetY: 0, rotation: 0, flipX: false };
 const overlayPresets: Array<{ mode: ImageOverlayMode; label: string; detail: string }> = [
@@ -233,6 +234,14 @@ const overlayPresets: Array<{ mode: ImageOverlayMode; label: string; detail: str
   { mode: "darkWash", label: "واش تیره", detail: "خوانایی متن روشن" },
   { mode: "lightWash", label: "واش روشن", detail: "خوانایی متن تیره" },
   { mode: "gradient", label: "گرادیان کمپین", detail: "عمق تبلیغاتی" }
+];
+const backgroundToolPresets: Array<{ id: string; label: string; detail: string; overlay: ImageOverlaySettings; adjustments: ImageAdjustments }> = [
+  { id: "readable", label: "خوانایی متن", detail: "تیره‌سازی امن", overlay: { mode: "darkWash", strength: 58 }, adjustments: { brightness: 96, contrast: 106, saturation: 100, blur: 0 } },
+  { id: "product", label: "اسپات محصول", detail: "تمرکز روی مرکز", overlay: { mode: "spotlight", strength: 64 }, adjustments: { brightness: 102, contrast: 108, saturation: 106, blur: 0 } },
+  { id: "catalog", label: "کاتالوگ نرم", detail: "روشن و مرتب", overlay: { mode: "lightWash", strength: 36 }, adjustments: { brightness: 108, contrast: 98, saturation: 96, blur: 0 } },
+  { id: "sale", label: "کمپین فروش", detail: "رنگ و عمق", overlay: { mode: "gradient", strength: 58 }, adjustments: { brightness: 102, contrast: 110, saturation: 114, blur: 0 } },
+  { id: "softBlur", label: "بلور پس‌زمینه", detail: "متن‌محور", overlay: { mode: "vignette", strength: 42 }, adjustments: { brightness: 98, contrast: 102, saturation: 100, blur: 2 } },
+  { id: "reset", label: "بازگشت تصویر", detail: "حذف افکت‌ها", overlay: initialOverlay, adjustments: initialAdjustments }
 ];
 const cropPresets: Array<{ id: CropPresetId; label: string; detail: string; width: number; height: number; icon: LucideIcon }> = [
   { id: "original", label: "اصلی", detail: "حفظ نسبت فایل", width: 0, height: 0, icon: Crop },
@@ -320,7 +329,7 @@ function createLayerId() {
 }
 
 function imageFilter(adjustments: ImageAdjustments) {
-  return `brightness(${adjustments.brightness}%) contrast(${adjustments.contrast}%) saturate(${adjustments.saturation}%)`;
+  return `brightness(${adjustments.brightness}%) contrast(${adjustments.contrast}%) saturate(${adjustments.saturation}%) blur(${adjustments.blur ?? 0}px)`;
 }
 
 function drawImageOverlay(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement, overlay: ImageOverlaySettings) {
@@ -1214,7 +1223,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     canvas.width = nextSize.width;
     canvas.height = nextSize.height;
     setCanvasSize(nextSize);
-    setAdjustments({ ...template.adjustments });
+    setAdjustments({ ...initialAdjustments, ...template.adjustments });
     setOverlay({ ...template.overlay });
     setCrop({ ...template.crop, offsetX: 0, offsetY: 0 });
     const nextLayers = template.layers.map((layer) => scaleLayerToCanvas(layer, template.canvasSize, nextSize));
@@ -1264,6 +1273,67 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
   function addProductSpotlight() {
     updateOverlay({ mode: "spotlight", strength: 58 });
+  }
+
+  function applyBackgroundTool(preset: typeof backgroundToolPresets[number]) {
+    remember();
+    setOverlay({ ...preset.overlay });
+    setAdjustments({ ...preset.adjustments });
+    setError("");
+  }
+
+  function addAssetBadge(kind: "watermark" | "delivery" | "trust") {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const config = {
+      watermark: { value: "نام فروشگاه", y: 0.12, color: "#FFFFFF", backgroundColor: brandPrimaryColor, opacity: 64, radius: 999 },
+      delivery: { value: "ارسال سریع", y: 0.84, color: "#FFFFFF", backgroundColor: brandAccentColor, opacity: 88, radius: 999 },
+      trust: { value: "تضمین کیفیت", y: 0.74, color: "#0F172A", backgroundColor: "#FFFFFF", opacity: 92, radius: 14 }
+    }[kind];
+    const layer = createTextLayer(config.value, {
+      label: config.value,
+      value: config.value,
+      color: config.color,
+      backgroundColor: config.backgroundColor,
+      fontFamily: "Vazirmatn",
+      fontWeight: 900,
+      fontSizeRatio: 22,
+      radius: config.radius,
+      padding: 14,
+      outlineWidth: 0,
+      shadowBlur: 8
+    });
+    if (!layer) return;
+    remember();
+    const nextLayer = {
+      ...layer,
+      x: canvas.width / 2,
+      y: Math.round(canvas.height * config.y),
+      backgroundOpacity: config.opacity,
+      boxWidth: Math.max(220, Math.round(canvas.width * 0.48)),
+      name: kind === "watermark" ? "واترمارک برند" : kind === "delivery" ? "نشان ارسال" : "نشان اعتماد"
+    };
+    setLayers((current) => [...current, nextLayer]);
+    setSelectedLayerId(nextLayer.id);
+    setSelectedLayerIds([nextLayer.id]);
+  }
+
+  function makeImageReadable() {
+    remember();
+    setOverlay({ mode: "darkWash", strength: 56 });
+    setAdjustments({ brightness: 96, contrast: 108, saturation: 100, blur: 0 });
+    setLayers((current) => current.map((layer) => {
+      if (layer.locked || layer.type !== "text") return layer;
+      return {
+        ...layer,
+        color: "#FFFFFF",
+        backgroundColor: layer.backgroundColor === "#FFFFFF" ? "#0F172A" : layer.backgroundColor,
+        backgroundOpacity: Math.max(layer.backgroundOpacity, 68),
+        shadowBlur: Math.max(layer.shadowBlur, 10),
+        padding: Math.max(layer.padding, 12),
+        radius: Math.max(layer.radius, 12)
+      };
+    }));
   }
 
   function applyBrandStyle(scope: "selected" | "allText") {
@@ -1996,6 +2066,45 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
               </div>
             </section>
 
+            <section id="editor-background-tools" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                  <div>
+                    <h3 className="text-xs font-black text-app-text">پس‌زمینه و دارایی</h3>
+                    <p className="mt-0.5 text-[10px] font-bold text-app-muted">ابزارهای سریع برای خوانایی، محصول و نشان‌های فروش</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {backgroundToolPresets.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => applyBackgroundTool(preset)}
+                    className="app-interactive rounded-md border border-app-border bg-white px-2 py-2 text-right shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary"
+                  >
+                    <span className="block text-[11px] font-black text-app-text">{preset.label}</span>
+                    <span className="mt-0.5 block text-[9px] font-bold text-app-muted">{preset.detail}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <button type="button" onClick={() => addAssetBadge("watermark")} className="app-interactive rounded-md border border-app-border bg-white px-2 py-2 text-center text-[10px] font-black text-app-muted shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary">
+                  واترمارک
+                </button>
+                <button type="button" onClick={() => addAssetBadge("delivery")} className="app-interactive rounded-md border border-app-border bg-white px-2 py-2 text-center text-[10px] font-black text-app-muted shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary">
+                  ارسال
+                </button>
+                <button type="button" onClick={() => addAssetBadge("trust")} className="app-interactive rounded-md border border-app-border bg-white px-2 py-2 text-center text-[10px] font-black text-app-muted shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary">
+                  اعتماد
+                </button>
+              </div>
+              <button type="button" onClick={makeImageReadable} className="app-interactive mt-3 w-full rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-right text-[11px] font-black text-app-primary shadow-hairline hover:bg-blue-100">
+                یک‌کلیک خواناسازی تصویر و متن
+              </button>
+            </section>
+
             <section id="editor-stickers" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
@@ -2064,10 +2173,10 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                 <Palette className="h-4 w-4 text-app-primary" aria-hidden="true" />
                 <h3 className="text-xs font-black text-app-text">تنظیم تصویر</h3>
               </div>
-              {(["brightness", "contrast", "saturation"] as const).map((field) => (
+              {(["brightness", "contrast", "saturation", "blur"] as const).map((field) => (
                 <label key={field} className="mt-3 block text-xs font-bold text-app-muted">
-                  {field === "brightness" ? "روشنایی" : field === "contrast" ? "کنتراست" : "اشباع رنگ"} · {adjustments[field]}%
-                  <input type="range" min="50" max="150" value={adjustments[field]} onPointerDown={beginCanvasLiveEdit} onFocus={beginCanvasLiveEdit} onChange={(event) => updateAdjustment(field, Number(event.target.value), false)} className="mt-2 w-full accent-blue-600" />
+                  {field === "brightness" ? "روشنایی" : field === "contrast" ? "کنتراست" : field === "saturation" ? "اشباع رنگ" : "بلور"} · {field === "blur" ? `${adjustments[field]}px` : `${adjustments[field]}%`}
+                  <input type="range" min={field === "blur" ? 0 : 50} max={field === "blur" ? 8 : 150} value={adjustments[field]} onPointerDown={beginCanvasLiveEdit} onFocus={beginCanvasLiveEdit} onChange={(event) => updateAdjustment(field, Number(event.target.value), false)} className="mt-2 w-full accent-blue-600" />
                 </label>
               ))}
             </section>

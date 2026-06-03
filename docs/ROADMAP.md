@@ -304,6 +304,45 @@ Risk: high.
 
 Priority: P1.
 
+## Phase 11: Instagram Publishing Channel
+
+Goal: add a real Instagram channel beside Rubika so users can create, schedule, queue, publish, and audit Instagram posts from the same workspace.
+
+Scope:
+
+- Meta app setup and OAuth connection flow.
+- Store Instagram account connection model.
+- Token storage, refresh/expiry checks, and disconnect/reconnect actions.
+- Instagram media container creation and publish workflow through the Instagram Graph API.
+- Platform-aware composer validation for image/video format, caption length, aspect ratio, and publishing eligibility.
+- Queue worker support for `channel=instagram` beside Rubika.
+- Retry/backoff, idempotency, and failure classification for Instagram jobs.
+- Published permalink/id capture for analytics and audit logs.
+- Calendar, queue, content, media, and analytics filters by channel.
+
+Acceptance criteria:
+
+- Store can connect a valid Instagram professional account.
+- Composer can select Rubika, Instagram, or both channels.
+- Scheduled Instagram posts publish through the worker without duplicate publishes.
+- Queue and logs show Instagram-specific status, external id, and failure reason.
+- Media editor/export warns when an output is not Instagram-ready.
+
+Implementation notes:
+
+- Use Meta's official Instagram Graph API Content Publishing flow: create a media container, wait for readiness where required, then publish the container.
+- Plan permissions and review early: Instagram publishing typically requires a professional Instagram account connected to a Facebook Page and Meta app permissions such as content publishing and account/page access.
+- Keep Instagram credentials separate from Rubika credentials, but reuse the publishing reliability architecture from Phase 8.
+- Re-check Meta's official documentation at implementation time because permissions, review requirements, rate limits, and supported media types can change.
+
+Reference:
+
+- Meta Instagram Platform Content Publishing documentation: https://developers.facebook.com/docs/instagram-platform/content-publishing/
+
+Risk: high.
+
+Priority: P0.
+
 ## Release Sequence
 
 | Release | Theme | Core result |
@@ -314,7 +353,8 @@ Priority: P1.
 | R3 | Planner and media DAM | User can plan and manage assets professionally |
 | R4 | Approvals and reliability | Team can publish safely |
 | R5 | Analytics and inbox | User can measure, report, and respond |
-| R6 | Hardening | Accessibility, E2E, visual regression, docs, backup/restore |
+| R6 | Instagram channel | User can publish to Instagram beside Rubika |
+| R7 | Hardening | Accessibility, E2E, visual regression, docs, backup/restore |
 
 ## Quality Gates For Every Phase
 

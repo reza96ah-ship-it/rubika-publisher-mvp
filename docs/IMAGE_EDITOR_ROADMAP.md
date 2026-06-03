@@ -170,7 +170,7 @@ Current implementation status:
 
 - The editor now has social crop presets for original, Rubika, square, portrait, story, and landscape outputs.
 - Users can zoom, reposition, rotate, and horizontally flip the source photo before saving a variant.
-- Exported filenames include the selected variant type when a social preset is used.
+- Export controls now support PNG, JPG, and WEBP with live output filename preview and quality control for compressed formats.
 - The editor is now available from Composer for selected library images or newly uploaded local images.
 
 Priority: **P0**.
@@ -219,6 +219,14 @@ Acceptance criteria:
 - A store manager can create an on-brand design without manually re-entering brand values.
 - Brand assets remain reusable across designs.
 
+Current implementation status:
+
+- The editor now reads store brand colors and exposes a dedicated Brand Kit panel.
+- Brand swatches can be applied to selected text layers.
+- One-click brand styling can apply brand colors to selected text or all text layers.
+- Design recipes use store brand colors when available.
+- Saved local templates store brand color metadata and show it in the template card.
+
 Priority: **P1**.
 
 ### Editor Phase 6: Creative Asset Library
@@ -238,6 +246,12 @@ Acceptance criteria:
 
 - Users can build a polished promotional card using only in-app assets.
 - Recently used assets are one click away.
+
+Current implementation status:
+
+- Sticker library now supports search, category counts, recently used stickers, and local recent-sticker persistence.
+- Additional business-oriented sticker categories cover delivery and engagement.
+- Quick asset badges now add watermark, delivery, and trust badges to the canvas.
 
 Priority: **P1**.
 
@@ -259,6 +273,12 @@ Acceptance criteria:
 - Product photos can be polished without leaving the app.
 - Users can compare the original and edited result instantly.
 
+Current implementation status:
+
+- The editor now supports manual background blur alongside brightness, contrast, and saturation.
+- Background tool presets cover readable text, product spotlight, catalog softening, campaign sale treatment, background blur, and reset.
+- A one-click readability action applies a safe dark wash and improves visible text contrast.
+
 Priority: **P1**.
 
 ### Editor Phase 8: Templates And Draft Designs
@@ -278,6 +298,12 @@ Acceptance criteria:
 
 - A design remains editable after leaving the editor.
 - Teams can reuse a campaign layout with new images and text.
+
+Current implementation status:
+
+- Users can save local editable templates with layers, adjustments, overlay, crop, canvas size, brand colors, and metadata.
+- Saved template cards show date, canvas size, layer count, crop preset, and brand color count.
+- Templates can be applied to a new image with layer scaling.
 
 Priority: **P1**.
 
