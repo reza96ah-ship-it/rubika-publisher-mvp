@@ -17,7 +17,7 @@ import {
   type LucideIcon
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
 import { WorkspaceAvatar } from "../components/brand-mark";
@@ -103,6 +103,13 @@ const operationStepToneClasses = {
   alert: "border-rose-100 bg-rose-50 text-rose-700"
 };
 
+const operationStepAccent = {
+  primary: "37 99 235",
+  warning: "217 119 6",
+  info: "2 132 199",
+  alert: "225 29 72"
+};
+
 type OperationStep = {
   label: string;
   count: number;
@@ -126,20 +133,22 @@ function OperationsLane({ steps }: { steps: OperationStep[] }) {
         <StatusToken tone={total ? "primary" : "success"}>{total ? `${total} آیتم در جریان` : "مسیر خالی و آماده"}</StatusToken>
       </div>
 
-      <div className="relative mt-5">
-        <span className="dashboard-flow-track absolute right-4 left-4 top-[22px] hidden h-px sm:block" aria-hidden="true" />
-        <div className="relative grid gap-2 sm:grid-cols-4">
+      <div className="mt-5">
+        <div className="operation-lane-track hidden sm:block" aria-hidden="true">
+          <span className="operation-lane-beam" />
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-4">
           {steps.map((step) => {
             const Icon = step.icon;
             return (
               <Link
                 key={step.label}
                 href={step.href}
-                className="app-interactive group flex min-w-0 items-center gap-3 rounded-lg border border-app-border bg-white p-3 shadow-hairline hover:border-blue-200 hover:bg-blue-50/35 sm:flex-col sm:text-center"
+                className={`operation-lane-card app-interactive group flex min-w-0 items-center gap-3 rounded-lg border border-app-border bg-white p-3 shadow-hairline hover:border-blue-200 hover:bg-blue-50/35 sm:flex-col sm:text-center ${step.live ? "operation-lane-card-active" : ""}`}
+                style={step.live ? { "--operation-accent": operationStepAccent[step.tone] } as CSSProperties : undefined}
               >
-                <span className={`relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 bg-white text-sm font-black shadow-hairline ${operationStepToneClasses[step.tone]}`}>
+                <span className={`operation-stage-orb relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 bg-white text-sm font-black shadow-hairline ${operationStepToneClasses[step.tone]} ${step.live ? "operation-stage-orb-live" : ""}`}>
                   {step.count}
-                  {step.live ? <span className="app-dot-pulse absolute -left-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" aria-hidden="true" /> : null}
                 </span>
                 <span className="min-w-0">
                   <span className="flex items-center gap-1.5 text-xs font-black text-app-text sm:justify-center">
