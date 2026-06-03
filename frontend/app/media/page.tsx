@@ -51,7 +51,22 @@ function tagList(value: string) {
 }
 
 function displayTagLabel(tag: string) {
-  return tag.toLowerCase() === "edited" ? "نسخه ویرایش‌شده" : tag;
+  const normalized = tag.toLowerCase();
+  if (normalized === "edited") return "نسخه ویرایش‌شده";
+  if (normalized.startsWith("source:")) return `منبع #${tag.slice("source:".length)}`;
+  return tag;
+}
+
+function mediaTags(...values: string[]) {
+  const seen = new Set<string>();
+  const tags: string[] = [];
+  values.flatMap(tagList).forEach((tag) => {
+    const key = tag.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    tags.push(tag);
+  });
+  return tags.join(", ");
 }
 
 function isEditedAsset(asset: MediaAsset) {
@@ -363,7 +378,7 @@ export default function MediaPage() {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("folder", editingAsset.folder);
-      formData.append("tags", [editingAsset.tags, "edited"].filter(Boolean).join(", "));
+      formData.append("tags", mediaTags(editingAsset.tags, "edited", `source:${editingAsset.id}`));
       const response = await fetch(`${apiUrl}/media`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token()}` },
