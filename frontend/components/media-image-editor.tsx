@@ -86,7 +86,7 @@ type CanvasGuides = {
 const colorSwatches = ["#FFFFFF", "#0F172A", "#0F766E", "#2563EB", "#E11D48", "#F59E0B", "#7C3AED", "#16A34A"];
 const labelSwatches = ["#0F172A", "#0F766E", "#2563EB", "#E11D48", "#F59E0B", "#FFFFFF"];
 const stickers = ["✨", "🔥", "🎉", "❤️", "⭐", "✅", "📣", "🛍️", "🎁", "💎", "🌿", "☀️"];
-const fontSampleText = "فروش ویژه محصول";
+const fontSampleText = "پچژگ فروش ویژه ۱۲۳";
 const fontOptions = [
   { label: "وزیرمتن", value: "Vazirmatn" },
   { label: "لاله‌زار", value: "Lalezar" },
@@ -137,6 +137,14 @@ const textStylePresets = [
   { label: "قیمت", value: "۲۹۹ هزار تومان", color: "#0F172A", backgroundColor: "#FFFFFF", fontFamily: "Vazirmatn", fontWeight: 900, fontSizeRatio: 16, radius: 14, padding: 16, outlineWidth: 0, shadowBlur: 5 },
   { label: "دعوت به اقدام", value: "همین حالا سفارش بده", color: "#FFFFFF", backgroundColor: "#0F766E", fontFamily: "Vazirmatn", fontWeight: 800, fontSizeRatio: 20, radius: 999, padding: 16, outlineWidth: 0, shadowBlur: 6 },
   { label: "زیرتیتر", value: "ارسال سریع و تضمین کیفیت", color: "#FFFFFF", backgroundColor: "#0F172A", fontFamily: "BNazanin", fontWeight: 700, fontSizeRatio: 24, radius: 12, padding: 14, outlineWidth: 1, shadowBlur: 4 }
+];
+const fontRolePresets = [
+  { label: "تیتر", fontFamily: "BTitrBold", fontWeight: 900 },
+  { label: "قیمت", fontFamily: "BYekan", fontWeight: 800 },
+  { label: "کپشن", fontFamily: "BNazanin", fontWeight: 700 },
+  { label: "دست‌نویس", fontFamily: "BBaran", fontWeight: 700 },
+  { label: "لوکس", fontFamily: "BLotus", fontWeight: 700 },
+  { label: "خوانا", fontFamily: "Vazirmatn", fontWeight: 800 }
 ];
 const initialAdjustments: ImageAdjustments = { brightness: 100, contrast: 100, saturation: 100 };
 const initialCrop: ImageCropSettings = { presetId: "original", scale: 100, offsetX: 0, offsetY: 0, rotation: 0, flipX: false };
@@ -1203,6 +1211,23 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                               </p>
                             </div>
                           ) : null}
+                          <div className="mt-2 grid grid-cols-3 gap-1.5">
+                            {fontRolePresets.map((preset) => {
+                              const active = selectedLayer.fontFamily === preset.fontFamily && selectedLayer.fontWeight === preset.fontWeight;
+                              return (
+                                <button
+                                  key={preset.label}
+                                  type="button"
+                                  disabled={selectedLayer.locked}
+                                  onClick={() => updateSelectedLayer({ fontFamily: preset.fontFamily, fontWeight: preset.fontWeight })}
+                                  className={`app-interactive rounded-md border px-2 py-1.5 text-[10px] font-black shadow-hairline disabled:cursor-not-allowed disabled:opacity-50 ${active ? "border-blue-200 bg-blue-50 text-app-primary" : "border-app-border bg-white text-app-muted hover:bg-app-surfaceMuted"}`}
+                                  style={fontPreviewStyle(preset.fontFamily, preset.fontWeight)}
+                                >
+                                  {preset.label}
+                                </button>
+                              );
+                            })}
+                          </div>
                           <div className="mt-2 max-h-56 space-y-1 overflow-y-auto rounded-md border border-app-border bg-white p-1 shadow-hairline" role="radiogroup" aria-label="فونت فارسی">
                             {fontOptions.map((font) => {
                               const active = selectedLayer.fontFamily === font.value;
