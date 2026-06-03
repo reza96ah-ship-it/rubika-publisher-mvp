@@ -110,6 +110,35 @@ class InstagramTestResponse(BaseModel):
     last_test_at: datetime | None = None
 
 
+class ChannelAccountResponse(BaseModel):
+    id: int
+    store_id: int
+    channel: str
+    display_name: str
+    external_account_id: str
+    mode: str
+    status: str
+    capabilities: list[str]
+    limitations: list[str]
+    last_error: str
+    last_test_at: datetime | None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class ChannelAccountSummaryResponse(BaseModel):
+    total: int
+    ready: int
+    action_required: int
+    channels: list[str]
+
+
+class ChannelAccountListResponse(BaseModel):
+    accounts: list[ChannelAccountResponse]
+    summary: ChannelAccountSummaryResponse
+
+
 class CampaignRequest(BaseModel):
     name: str
     goal: str = ""

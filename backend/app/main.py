@@ -6,6 +6,7 @@ from app.database import SessionLocal, check_database
 from app.migrations import run_migrations
 from app.routes.auth import router as auth_router
 from app.routes.campaigns import router as campaigns_router
+from app.routes.channels import router as channels_router
 from app.routes.instagram import router as instagram_router
 from app.routes.media import router as media_router
 from app.routes.notifications import router as notifications_router
@@ -20,7 +21,7 @@ app = FastAPI(title=settings.app_name, version="0.1.0")
 
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origin_list, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-for router in [auth_router, stores_router, rubika_router, instagram_router, campaigns_router, posts_router, media_router, publish_attempts_router, notifications_router]:
+for router in [auth_router, stores_router, rubika_router, instagram_router, channels_router, campaigns_router, posts_router, media_router, publish_attempts_router, notifications_router]:
     app.include_router(router)
 
 

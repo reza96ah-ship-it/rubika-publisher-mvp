@@ -74,6 +74,25 @@ class InstagramAccount(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
 
+class ChannelAccount(Base):
+    __tablename__ = "channel_accounts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False, index=True)
+    channel: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    display_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    external_account_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    mode: Mapped[str] = mapped_column(String(64), nullable=False, default="disconnected")
+    status: Mapped[str] = mapped_column(String(64), nullable=False, default="not_configured", index=True)
+    capabilities: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    limitations: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    last_error: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    last_test_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+
 class Campaign(Base):
     __tablename__ = "campaigns"
 

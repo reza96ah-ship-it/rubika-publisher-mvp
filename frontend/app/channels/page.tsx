@@ -8,20 +8,32 @@ import { LoadingPanel } from "../../components/loading-skeleton";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { apiUrl, authHeaders } from "../../lib/posts";
-import { isRubikaConnected, isRubikaTestFresh, type RubikaSettings } from "../../lib/workspace";
 
-type InstagramSettings = {
+type ChannelAccount = {
   id: number;
-  username: string;
-  account_type: string;
-  publish_mode: string;
-  professional_account_id: string;
-  page_id: string;
+  store_id: number;
+  channel: string;
+  display_name: string;
+  external_account_id: string;
+  mode: string;
   status: string;
-  permissions: string;
+  capabilities: string[];
+  limitations: string[];
   last_error: string;
   last_test_at: string | null;
   is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+type ChannelAccountList = {
+  accounts: ChannelAccount[];
+  summary: {
+    total: number;
+    ready: number;
+    action_required: number;
+    channels: string[];
+  };
 };
 
 type ChannelCapability = {
@@ -46,17 +58,14 @@ function formatDateTime(value?: string | null) {
   return new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
-function instagramStatusLabel(settings: InstagramSettings | null) {
-  if (!settings) return "تنظیم نشده";
-  if (settings.status === "connected") return "اتصال حرفه‌ای آماده";
-  if (settings.status === "reminder_ready") return "یادآوری دستی آماده";
-  if (settings.status === "oauth_required") return "نیازمند Meta OAuth";
-  if (settings.status === "failed") return "خطا در اتصال";
-  return "در حال آماده‌سازی";
-}
-
-function instagramReady(settings: InstagramSettings | null) {
-  return settings?.status === "connected" || settings?.status === "reminder_ready";
+function channelStatusLabel(account?: ChannelAccount) {
+  if (!account) return "تنظیم نشده";
+  if (account.status === "ready") return "آماده";
+  if (account.status === "test_expired") return "تست منقضی شده";
+  if (account.status === "oauth_required") return "نیازمند Meta OAuth";
+  if (account.status === "not_configured") return "تنظیم نشده";
+  if (account.status === "failed") return "خطا دارد";
+  return account.status;
 }
 
 function capabilityToken(value: "yes" | "partial" | "no") {
@@ -66,8 +75,7 @@ function capabilityToken(value: "yes" | "partial" | "no") {
 }
 
 export default function ChannelsPage() {
-  const [rubika, setRubika] = useState<RubikaSettings | null>(null);
-  const [instagram, setInstagram] = useState<InstagramSettings | null>(null);
+  const [channelData, setChannelData] = useState<ChannelAccountList | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -76,12 +84,9 @@ export default function ChannelsPage() {
       setLoading(true);
       setError("");
       const headers = authHeaders();
-      const [rubikaResponse, instagramResponse] = await Promise.all([
-        fetch(`${apiUrl}/rubika/settings`, { headers }),
-        fetch(`${apiUrl}/instagram/settings`, { headers })
-      ]);
-      setRubika(rubikaResponse.ok ? await rubikaResponse.json() : null);
-      setInstagram(instagramResponse.ok ? await instagramResponse.json() : null);
+      const response = await fetch(`${apiUrl}/channels/accounts`, { headers });
+      if (!response.ok) throw new Error("دریافت مرکز کانال‌ها ناموفق بود");
+      setChannelData(await response.json());
       setLoading(false);
     }
 
@@ -91,9 +96,12 @@ export default function ChannelsPage() {
     });
   }, []);
 
-  const rubikaReady = isRubikaConnected(rubika);
-  const instagramIsReady = instagramReady(instagram);
-  const readyCount = Number(rubikaReady) + Number(instagramIsReady);
+  const accounts = channelData?.accounts ?? [];
+  const rubika = accounts.find((account) => account.channel === "rubika");
+  const instagram = accounts.find((account) => account.channel === "instagram");
+  const rubikaReady = rubika?.status === "ready";
+  const instagramIsReady = instagram?.status === "ready";
+  const readyCount = channelData?.summary.ready ?? 0;
   const channelCards = useMemo(() => [
     {
       key: "rubika",
@@ -101,15 +109,15 @@ export default function ChannelsPage() {
       description: "کانال انتشار خودکار با worker و تست سلامت 24 ساعته.",
       href: "/rubika",
       icon: Send,
-      status: rubikaReady ? "آماده انتشار خودکار" : rubika?.status === "connected" ? "تست اتصال منقضی شده" : "نیازمند تنظیم یا تست",
+      status: channelStatusLabel(rubika),
       tone: rubikaReady ? "success" as const : "warning" as const,
-      mode: "Bot/API-like",
+      mode: rubika?.mode ?? "disconnected",
       primaryAction: rubikaReady ? "مشاهده تنظیمات" : "تکمیل اتصال",
       facts: [
-        { label: "مقصد", value: rubika?.chat_id || "ثبت نشده" },
-        { label: "ربات", value: rubika?.bot_name || "نامشخص" },
+        { label: "نام نمایشی", value: rubika?.display_name || "روبیکا" },
+        { label: "شناسه کانال", value: rubika?.external_account_id || "ثبت نشده" },
         { label: "آخرین تست", value: formatDateTime(rubika?.last_test_at) },
-        { label: "اعتبار تست", value: isRubikaTestFresh(rubika?.last_test_at) ? "معتبر" : "نیازمند تست" }
+        { label: "قابلیت‌ها", value: rubika?.capabilities.length ? `${rubika.capabilities.length} قابلیت` : "نیازمند تنظیم" }
       ]
     },
     {
@@ -118,14 +126,14 @@ export default function ChannelsPage() {
       description: "اکانت معمولی با کار دستی؛ حساب حرفه‌ای بعد از Meta OAuth می‌تواند API publishing بگیرد.",
       href: "/instagram",
       icon: Instagram,
-      status: instagramStatusLabel(instagram),
+      status: channelStatusLabel(instagram),
       tone: instagramIsReady ? "success" as const : "warning" as const,
-      mode: instagram?.account_type === "personal" ? "Manual reminder" : "Meta OAuth pending",
+      mode: instagram?.mode ?? "disconnected",
       primaryAction: instagramIsReady ? "مشاهده تنظیمات" : "انتخاب حالت حساب",
       facts: [
-        { label: "نام کاربری", value: instagram?.username || "ثبت نشده" },
-        { label: "نوع حساب", value: instagram?.account_type === "personal" ? "معمولی" : instagram?.account_type === "business" ? "Business" : instagram?.account_type === "creator" ? "Creator" : "نامشخص" },
-        { label: "حالت انتشار", value: instagram?.publish_mode === "reminder" ? "یادآوری دستی" : "انتشار مستقیم پس از OAuth" },
+        { label: "نام نمایشی", value: instagram?.display_name || "اینستاگرام" },
+        { label: "شناسه حساب", value: instagram?.external_account_id || "ثبت نشده" },
+        { label: "حالت انتشار", value: instagram?.mode === "instagram_personal_manual" ? "یادآوری دستی" : instagram?.mode === "instagram_professional_api" ? "Meta API" : "تنظیم نشده" },
         { label: "آخرین تست", value: formatDateTime(instagram?.last_test_at) }
       ]
     }
@@ -220,8 +228,8 @@ export default function ChannelsPage() {
                     <div className="space-y-3">
                       {[
                         { label: "روبیکا خودکار", detail: rubikaReady ? "تست اتصال معتبر است." : "توکن، مقصد و تست تازه لازم است.", done: rubikaReady, icon: RadioTower },
-                        { label: "اینستاگرام دستی", detail: instagram?.account_type === "personal" && instagramIsReady ? "یادآوری دستی فعال است." : "برای اکانت معمولی حالت Manual reminder را فعال کنید.", done: instagram?.account_type === "personal" && instagramIsReady, icon: Clock3 },
-                        { label: "مدل ChannelAccount", detail: "فاز بعدی باید Rubika و Instagram را زیر یک مدل مشترک ببرد.", done: false, icon: Network },
+                        { label: "اینستاگرام دستی", detail: instagram?.mode === "instagram_personal_manual" && instagramIsReady ? "یادآوری دستی فعال است." : "برای اکانت معمولی حالت Manual reminder را فعال کنید.", done: instagram?.mode === "instagram_personal_manual" && instagramIsReady, icon: Clock3 },
+                        { label: "مدل ChannelAccount", detail: "روبیکا و اینستاگرام از API مشترک کانال‌ها خوانده می‌شوند.", done: true, icon: Network },
                         { label: "انتشار قابل حسابرسی", detail: "هر کانال باید job، attempt و recovery مستقل داشته باشد.", done: false, icon: ShieldCheck }
                       ].map((step) => {
                         const Icon = step.done ? BadgeCheck : step.icon;
@@ -240,11 +248,11 @@ export default function ChannelsPage() {
                     </div>
                   </WorkspacePanel>
 
-                  <NoticeBanner tone={instagram?.account_type === "personal" ? "info" : "warning"} title="اصل مهم اینستاگرام">
+                  <NoticeBanner tone={instagram?.mode === "instagram_personal_manual" ? "info" : "warning"} title="اصل مهم اینستاگرام">
                     اکانت معمولی اینستاگرام نباید به عنوان انتشار خودکار معرفی شود. در این محصول، اکانت معمولی مسیر دستی/یادآوری دارد و انتشار API فقط برای حساب‌های واجد شرایط Meta در فاز OAuth فعال می‌شود.
                   </NoticeBanner>
 
-                  <WorkspacePanel title="اقدام بعدی پیشنهادی" description="بعد از این reset، فاز بعدی ساخت مدل مشترک کانال است.">
+                  <WorkspacePanel title="اقدام بعدی پیشنهادی" description="بعد از مدل مشترک کانال، باید قابلیت‌ها وارد composer، queue و analytics شوند.">
                     <div className="grid gap-2">
                       <Button href="/rubika" variant="secondary">
                         <Send className="ml-2 h-4 w-4" aria-hidden="true" />
