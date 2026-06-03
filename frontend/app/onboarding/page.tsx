@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, CalendarDays, CheckCircle2, CircleDashed, Network, PenLine, Rocket, Store, Target } from "lucide-react";
+import { ArrowUpLeft, BadgeCheck, CalendarDays, CheckCircle2, CircleDashed, Network, PenLine, Rocket, Store, Target } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
@@ -26,31 +26,32 @@ function hasScheduledPost(posts: Post[]) {
   return posts.some((post) => ["scheduled", "publishing", "published"].includes(post.status));
 }
 
-function StepCard({ step, active, index }: { step: SetupStep; active: boolean; index: number }) {
+function StepRow({ step, active, index }: { step: SetupStep; active: boolean; index: number }) {
   const Icon = step.done ? BadgeCheck : step.icon;
   return (
-    <article className={`app-interactive rounded-lg border p-3 shadow-hairline transition ${
-      active ? "border-app-primary bg-blue-50/70" : step.done ? "border-teal-100 bg-teal-50/50" : "border-app-border bg-white"
+    <article className={`app-row relative grid gap-3 px-4 py-4 lg:grid-cols-[44px_minmax(0,1fr)_132px] lg:items-center ${
+      active ? "bg-amber-50/45" : step.done ? "bg-teal-50/30" : "bg-white"
     }`}>
-      <div className="flex items-start gap-3">
-        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${
-          step.done ? "bg-white text-teal-700" : active ? "bg-white text-app-primary" : "bg-app-surfaceMuted text-slate-500"
-        }`}>
-          <Icon className="h-5 w-5" aria-hidden="true" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded bg-white/80 px-1.5 py-0.5 text-[10px] font-black text-app-muted">{index + 1}</span>
-            <h2 className="text-sm font-black text-app-text">{step.label}</h2>
-            {step.optional ? <StatusToken tone="neutral">پیشنهادی</StatusToken> : null}
-            {step.done ? <StatusToken tone="success">کامل</StatusToken> : active ? <StatusToken tone="warning">قدم فعلی</StatusToken> : <StatusToken tone="neutral">در انتظار</StatusToken>}
-          </div>
-          <p className="mt-2 text-xs leading-6 text-app-muted">{step.description}</p>
-          <Button href={step.href} variant={active ? "primary" : "secondary"} size="sm" className="mt-3">
-            {step.done ? "بازبینی" : step.action}
-          </Button>
+      <span className={`absolute inset-y-3 right-0 w-0.5 rounded-full ${
+        step.done ? "bg-app-teal" : active ? "bg-amber-500" : "bg-app-borderStrong"
+      }`} aria-hidden="true" />
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-white shadow-hairline ${
+        step.done ? "border-teal-100 text-teal-700" : active ? "border-amber-200 text-amber-700" : "border-app-border text-slate-500"
+      }`}>
+        <Icon className="h-5 w-5" aria-hidden="true" />
+      </span>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-black text-slate-400">0{index + 1}</span>
+          <h2 className="text-sm font-black text-app-text">{step.label}</h2>
+          {step.optional ? <StatusToken tone="neutral">پیشنهادی</StatusToken> : null}
+          {step.done ? <StatusToken tone="success">کامل</StatusToken> : active ? <StatusToken tone="warning">قدم فعلی</StatusToken> : <StatusToken tone="neutral">در انتظار</StatusToken>}
         </div>
+        <p className="mt-1.5 text-xs leading-6 text-app-muted">{step.description}</p>
       </div>
+      <Button href={step.href} variant={active ? "primary" : "secondary"} size="sm" className="w-full">
+        {step.done ? "بازبینی" : step.action}
+      </Button>
     </article>
   );
 }
@@ -144,7 +145,7 @@ export default function OnboardingPage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-4">
-          <section className="app-studio-panel overflow-hidden rounded-lg">
+          <section className="app-studio-panel overflow-hidden rounded-lg border-t-4 border-app-teal">
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
               <div className="px-4 py-5 lg:px-5">
                 <p className="app-section-kicker text-[10px] font-black">Guided Setup</p>
@@ -157,20 +158,20 @@ export default function OnboardingPage() {
                     <Rocket className="ml-2 h-4 w-4" aria-hidden="true" />
                     {nextStep.action}
                   </Button>
-                  <Button href="/compose" variant="secondary">رفتن به composer</Button>
-                  <Button href="/calendar" variant="secondary">رفتن به پلنر</Button>
+                  <Button href="/compose" variant="secondary">ساخت محتوا</Button>
+                  <Button href="/calendar" variant="secondary">پلنر</Button>
                 </div>
               </div>
-              <div className="app-studio-grid border-t border-app-border bg-teal-50/55 p-4 lg:border-r lg:border-t-0">
+              <div className="dashboard-pulse border-t border-app-border p-4 lg:border-r lg:border-t-0">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-app-primary shadow-hairline">
+                  <span className="dashboard-flow-node flex h-11 w-11 items-center justify-center rounded-full border-2 border-teal-100 bg-white text-app-teal">
                     {progress === 100 ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : <CircleDashed className="h-5 w-5" aria-hidden="true" />}
                   </span>
                   <StatusToken tone={progress === 100 ? "success" : "warning"}>{completedCount}/{steps.length} کامل</StatusToken>
                 </div>
                 <p className="mt-4 text-xs font-black text-app-muted">پیشرفت راه‌اندازی</p>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
-                  <div className="h-full rounded-full bg-app-primary transition-all" style={{ width: `${progress}%` }} />
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white shadow-hairline">
+                  <div className="app-progress h-full rounded-full bg-app-teal transition-all" style={{ width: `${progress}%` }} />
                 </div>
                 <p className="mt-3 text-sm font-black text-app-text">{progress}% آماده برای انتشار حرفه‌ای</p>
                 <p className="mt-1 text-xs leading-5 text-app-muted">قدم بعدی: {nextStep.label}</p>
@@ -183,27 +184,60 @@ export default function OnboardingPage() {
 
           {!loading ? (
             <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-              <div className="grid gap-3">
-                {steps.map((step, index) => <StepCard key={step.key} step={step} active={step.key === nextStep.key} index={index} />)}
-              </div>
+              <WorkspacePanel
+                title="مسیر حرفه‌ای‌سازی workspace"
+                description="هر ردیف یک تصمیم عملیاتی است؛ وضعیت‌ها، اقدام بعدی و ترتیب کار در یک مسیر واحد دیده می‌شود."
+                action={<StatusToken tone={progress === 100 ? "success" : "warning"}>{progress}% آماده</StatusToken>}
+                bodyClassName="p-0"
+              >
+                <div className="divide-y divide-app-border">
+                  {steps.map((step, index) => <StepRow key={step.key} step={step} active={step.key === nextStep.key} index={index} />)}
+                </div>
+              </WorkspacePanel>
 
               <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-                <WorkspacePanel title="مسیر پیشنهادی روز اول" description="برای جلوگیری از پیچیدگی، فقط این ترتیب را دنبال کنید.">
-                  <ol className="space-y-3 text-sm leading-7 text-app-muted">
-                    <li><strong className="text-app-text">1.</strong> برند را کامل کنید تا UI و خروجی‌ها هویت واقعی داشته باشند.</li>
-                    <li><strong className="text-app-text">2.</strong> کانال‌ها را بررسی کنید و محدودیت اینستاگرام معمولی را شفاف نگه دارید.</li>
-                    <li><strong className="text-app-text">3.</strong> یک کمپین ساده بسازید یا مستقیم اولین پست را آماده کنید.</li>
-                    <li><strong className="text-app-text">4.</strong> پست را زمان‌بندی کنید و از Calendar وضعیت نهایی را ببینید.</li>
-                  </ol>
-                </WorkspacePanel>
+                <section className="dashboard-live-monitor">
+                  <div className="dashboard-monitor-head flex items-center justify-between gap-3 px-4 py-3">
+                    <div>
+                      <p className="app-section-kicker text-[10px] font-black">روز اول</p>
+                      <h2 className="mt-1 text-sm font-black text-app-text">ترتیب پیشنهادی</h2>
+                    </div>
+                    <Rocket className="app-status-pulse h-4 w-4 text-app-teal" aria-hidden="true" />
+                  </div>
+                  <div className="divide-y divide-app-border/80">
+                    {[
+                      "برند را کامل کنید تا خروجی‌ها هویت واقعی داشته باشند.",
+                      "کانال‌ها را بررسی کنید و محدودیت اینستاگرام معمولی را شفاف نگه دارید.",
+                      "یک کمپین ساده بسازید یا مستقیم اولین پست را آماده کنید.",
+                      "پست را زمان‌بندی کنید و از Calendar وضعیت نهایی را ببینید."
+                    ].map((item, index) => (
+                      <div key={item} className="flex items-start gap-3 px-4 py-3">
+                        <span className="mt-0.5 text-[10px] font-black text-slate-400">0{index + 1}</span>
+                        <p className="text-xs font-bold leading-6 text-app-muted">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <Button href={nextStep.href} variant="ghost" size="sm" className="w-full justify-between rounded-none border-t border-app-border bg-app-canvas/70 px-4 py-3 text-app-primary">
+                    {nextStep.action}
+                    <ArrowUpLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Button>
+                </section>
 
-                <WorkspacePanel title="وضعیت فعلی" description="خلاصه‌ای از داده‌هایی که مسیر راه‌اندازی از آن استفاده می‌کند.">
+                <WorkspacePanel title="وضعیت فعلی" description="خلاصه داده‌های فعال workspace." bodyClassName="p-3">
                   <div className="grid gap-2">
-                    <StatusToken tone={isStoreConfigured(store) ? "success" : "warning"}>برند: {isStoreConfigured(store) ? "آماده" : "ناقص"}</StatusToken>
-                    <StatusToken tone={isRubikaConnected(rubika) ? "success" : "warning"}>کانال اصلی: {isRubikaConnected(rubika) ? "آماده" : "نیازمند بررسی"}</StatusToken>
-                    <StatusToken tone={campaigns.length ? "success" : "neutral"}>کمپین‌ها: {campaigns.length}</StatusToken>
-                    <StatusToken tone={posts.length ? "success" : "warning"}>محتوا: {posts.length}</StatusToken>
-                    <StatusToken tone={hasScheduledPost(posts) ? "success" : "warning"}>زمان‌بندی: {hasScheduledPost(posts) ? "فعال" : "خالی"}</StatusToken>
+                    {[
+                      { label: "برند", value: isStoreConfigured(store) ? "آماده" : "ناقص", healthy: isStoreConfigured(store) },
+                      { label: "کانال اصلی", value: isRubikaConnected(rubika) ? "آماده" : "نیازمند بررسی", healthy: isRubikaConnected(rubika) },
+                      { label: "کمپین‌ها", value: String(campaigns.length), healthy: campaigns.length > 0 },
+                      { label: "محتوا", value: String(posts.length), healthy: posts.length > 0 },
+                      { label: "زمان‌بندی", value: hasScheduledPost(posts) ? "فعال" : "خالی", healthy: hasScheduledPost(posts) }
+                    ].map((signal) => (
+                      <div key={signal.label} className="flex items-center gap-3 rounded-md bg-app-surfaceMuted px-3 py-2">
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${signal.healthy ? "bg-emerald-500" : "bg-amber-500"}`} />
+                        <span className="min-w-0 flex-1 text-xs font-bold text-app-muted">{signal.label}</span>
+                        <span className="truncate text-xs font-black text-app-text">{signal.value}</span>
+                      </div>
+                    ))}
                   </div>
                 </WorkspacePanel>
               </aside>
