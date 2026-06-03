@@ -1442,8 +1442,30 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                     </Button>
                   </div>
                 ) : (
-                  <div className="mt-3 rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted p-4 text-xs leading-6 text-app-muted">
-                    یک متن یا استیکر اضافه کنید، سپس آن را روی تصویر بکشید تا مکان دقیقش تنظیم شود.
+                  <div className="mt-3 rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted p-4">
+                    <div className="flex items-center gap-2">
+                      <Type className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <p className="text-xs font-black text-app-text">برای شروع یک متن اضافه کنید</p>
+                    </div>
+                    <p className="mt-2 text-xs leading-6 text-app-muted">
+                      بعد از اضافه شدن متن، همین بخش به فونت‌ها، دسته‌بندی‌ها و کیت‌های تایپوگرافی تبدیل می‌شود.
+                    </p>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {textStylePresets.map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => addPresetText(preset)}
+                          className="app-interactive rounded-md border border-app-border bg-white px-2 py-2 text-right text-[11px] font-black text-app-text shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary"
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                    <Button type="button" variant="secondary" size="sm" className="mt-3 w-full" onClick={addText}>
+                      <ImagePlus className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                      افزودن متن دستی
+                    </Button>
                   </div>
                 )}
               </section>
