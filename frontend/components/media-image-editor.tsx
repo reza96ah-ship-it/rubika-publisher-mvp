@@ -330,6 +330,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const [error, setError] = useState("");
   const [fontSearch, setFontSearch] = useState("");
   const [fontCategory, setFontCategory] = useState("all");
+  const [selectedColorDraft, setSelectedColorDraft] = useState("#FFFFFF");
+  const [selectedOutlineColorDraft, setSelectedOutlineColorDraft] = useState("#0F172A");
 
   const selectedLayer = useMemo(() => layers.find((layer) => layer.id === selectedLayerId) ?? null, [layers, selectedLayerId]);
   const selectedBounds = selectedLayer?.visible ? layerBounds(selectedLayer) : null;
@@ -363,6 +365,12 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setPast((current) => [...current, snapshot()].slice(-80));
     setFuture([]);
   }, [snapshot]);
+
+  useEffect(() => {
+    if (!selectedLayer || selectedLayer.type !== "text") return;
+    setSelectedColorDraft(selectedLayer.color);
+    setSelectedOutlineColorDraft(selectedLayer.outlineColor);
+  }, [selectedLayer]);
 
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -719,12 +727,26 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   function updateSelectedLayer(patch: Partial<EditorLayer>, withHistory = true) {
     if (!selectedLayerId || selectedLayer?.locked) return;
     if (withHistory) remember();
-    setLayers((current) => current.map((layer) => layer.id === selectedLayerId ? { ...layer, ...patch } : layer));
+    setLayers((current) => {
+      let changed = false;
+      const nextLayers = current.map((layer) => {
+        if (layer.id !== selectedLayerId) return layer;
+        const nextLayer = { ...layer, ...patch };
+        changed = Object.keys(patch).some((key) => layer[key as keyof EditorLayer] !== nextLayer[key as keyof EditorLayer]);
+        return changed ? nextLayer : layer;
+      });
+      return changed ? nextLayers : current;
+    });
   }
 
   function beginSelectedLayerLiveEdit() {
     if (!selectedLayerId || selectedLayer?.locked) return;
     remember();
+  }
+
+  function commitSelectedLayerColor(field: "color" | "outlineColor", value: string) {
+    if (!/^#[0-9A-Fa-f]{6}$/.test(value)) return;
+    updateSelectedLayer({ [field]: value.toUpperCase() } as Partial<EditorLayer>, false);
   }
 
   const removeSelectedLayer = useCallback(() => {
@@ -1390,7 +1412,17 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                         </div>
                         <label className="mt-3 flex items-center justify-between gap-3 rounded-md bg-app-surfaceMuted px-3 py-2 text-xs font-bold text-app-muted shadow-hairline">
                           رنگ دلخواه
-                          <input type="color" value={selectedLayer.color} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ color: event.target.value }, false)} className="h-7 w-12 cursor-pointer rounded border-0 bg-transparent p-0 disabled:opacity-50" />
+                          <input
+                            type="color"
+                            value={selectedColorDraft}
+                            disabled={selectedLayer.locked}
+                            onPointerDown={beginSelectedLayerLiveEdit}
+                            onFocus={beginSelectedLayerLiveEdit}
+                            onInput={(event) => setSelectedColorDraft(event.currentTarget.value)}
+                            onChange={(event) => setSelectedColorDraft(event.target.value)}
+                            onBlur={(event) => commitSelectedLayerColor("color", event.currentTarget.value)}
+                            className="h-7 w-12 cursor-pointer rounded border-0 bg-transparent p-0 disabled:opacity-50"
+                          />
                         </label>
                         <div className="mt-3 grid grid-cols-3 gap-2">
                           {([
@@ -1434,7 +1466,17 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                             </label>
                             <label className="flex items-end justify-between gap-2 text-xs font-bold text-app-muted">
                               رنگ دورخط
-                              <input type="color" value={selectedLayer.outlineColor} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ outlineColor: event.target.value }, false)} className="h-8 w-12 cursor-pointer rounded border-0 bg-transparent p-0 disabled:opacity-50" />
+                              <input
+                                type="color"
+                                value={selectedOutlineColorDraft}
+                                disabled={selectedLayer.locked}
+                                onPointerDown={beginSelectedLayerLiveEdit}
+                                onFocus={beginSelectedLayerLiveEdit}
+                                onInput={(event) => setSelectedOutlineColorDraft(event.currentTarget.value)}
+                                onChange={(event) => setSelectedOutlineColorDraft(event.target.value)}
+                                onBlur={(event) => commitSelectedLayerColor("outlineColor", event.currentTarget.value)}
+                                className="h-8 w-12 cursor-pointer rounded border-0 bg-transparent p-0 disabled:opacity-50"
+                              />
                             </label>
                           </div>
                           <label className="mt-3 block text-xs font-bold text-app-muted">
