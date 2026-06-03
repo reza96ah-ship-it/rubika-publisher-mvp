@@ -1,6 +1,6 @@
 "use client";
 
-import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Copy, Crop, Eye, EyeOff, FlipHorizontal, GripVertical, Group, ImagePlus, Layers3, Lock, Maximize2, Minus, Palette, Plus, RectangleHorizontal, Redo2, RotateCcw, RotateCw, Save, ShieldCheck, SmilePlus, Square, Trash2, Type, Undo2, Ungroup, Unlock, X, Zap, type LucideIcon } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Copy, Crop, Eye, EyeOff, FlipHorizontal, Group, ImagePlus, Layers3, Lock, Maximize2, Minus, Palette, Plus, RectangleHorizontal, Redo2, RotateCcw, RotateCw, Save, ShieldCheck, SmilePlus, Square, Trash2, Type, Undo2, Ungroup, Unlock, X, Zap, type LucideIcon } from "lucide-react";
 import { PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { apiUrl, authHeaders } from "../lib/posts";
@@ -580,6 +580,18 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     { label: "طراحی", value: activeDesignRecipe?.label ?? "آزاد" },
     { label: "لایه", value: selectedLayer ? selectedLayer.name : "انتخاب نشده" },
     { label: "خروجی", value: `${canvasSize.width}×${canvasSize.height}` }
+  ];
+  const layerStats = {
+    text: layers.filter((layer) => layer.type === "text").length,
+    sticker: layers.filter((layer) => layer.type === "sticker").length,
+    visible: layers.filter((layer) => layer.visible).length,
+    locked: layers.filter((layer) => layer.locked).length
+  };
+  const layerSummaryItems = [
+    { label: "متن", value: layerStats.text },
+    { label: "استیکر", value: layerStats.sticker },
+    { label: "نمایان", value: layerStats.visible },
+    { label: "قفل", value: layerStats.locked }
   ];
 
   const snapshot = useCallback((): EditorSnapshot => ({
@@ -1975,6 +1987,24 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                   <StatusToken tone={selectedLayerIds.length > 1 ? "primary" : "neutral"}>{selectedLayerIds.length || 0} انتخاب</StatusToken>
                 </div>
 
+                <div className="mt-3 grid grid-cols-4 gap-1.5">
+                  {layerSummaryItems.map((item) => (
+                    <div key={item.label} className="rounded-md bg-app-surfaceMuted px-2 py-1.5 text-center">
+                      <span className="block text-[10px] font-black text-app-text">{item.value}</span>
+                      <span className="mt-0.5 block text-[9px] font-bold text-app-muted">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => { setSelectedLayerIds(layers.map((layer) => layer.id)); setSelectedLayerId(layers[layers.length - 1]?.id ?? ""); }} disabled={!layers.length} className="app-interactive rounded-md border border-app-border bg-white px-2 py-1.5 text-[10px] font-black text-app-muted shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary disabled:pointer-events-none disabled:opacity-40">
+                    انتخاب همه
+                  </button>
+                  <button type="button" onClick={() => { setSelectedLayerIds([]); setSelectedLayerId(""); }} disabled={!selectedLayerIds.length} className="app-interactive rounded-md border border-app-border bg-white px-2 py-1.5 text-[10px] font-black text-app-muted shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary disabled:pointer-events-none disabled:opacity-40">
+                    پاک‌کردن انتخاب
+                  </button>
+                </div>
+
                 <div className="mt-3 flex items-center gap-1 rounded-md bg-app-surfaceMuted p-1 shadow-hairline">
                   <button type="button" onClick={() => alignSelected("centerX")} disabled={!selectedLayerIds.length} className="app-interactive flex h-8 flex-1 items-center justify-center rounded text-slate-600 hover:bg-white hover:text-app-primary disabled:pointer-events-none disabled:opacity-40" aria-label="تراز افقی وسط" title="تراز افقی وسط">
                     <AlignCenter className="h-4 w-4" aria-hidden="true" />
@@ -1991,6 +2021,22 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                 </div>
 
                 <div className="mt-3 space-y-2">
+                  {!layers.length ? (
+                    <div className="rounded-lg border border-dashed border-app-borderStrong bg-app-surfaceMuted p-4 text-center">
+                      <p className="text-xs font-black text-app-text">هنوز لایه‌ای روی تصویر نیست</p>
+                      <p className="mt-2 text-[11px] font-bold leading-5 text-app-muted">از متن فارسی، ترکیب آماده یا استیکر شروع کن تا اینجا ساختار طراحی را مدیریت کنی.</p>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <Button type="button" variant="secondary" size="sm" onClick={addText}>
+                          <ImagePlus className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                          متن
+                        </Button>
+                        <Button type="button" variant="secondary" size="sm" onClick={() => applyDesignRecipe(designRecipes[0])}>
+                          <Layers3 className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                          قالب
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
                   {[...layers].reverse().map((layer) => {
                     const active = selectedLayerIds.includes(layer.id);
                     const groupIndex = layer.groupId ? layers.filter((item) => item.groupId === layer.groupId).findIndex((item) => item.id === layer.id) + 1 : 0;
@@ -2006,16 +2052,19 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                           if (layerDragRef.current) reorderLayer(layerDragRef.current, layer.id);
                           layerDragRef.current = null;
                         }}
-                        className={`rounded-md border p-2 shadow-hairline transition ${active ? "border-blue-300 bg-blue-50/70" : "border-app-border bg-white hover:bg-app-surfaceMuted"} ${layer.visible ? "" : "opacity-60"}`}
+                        className={`rounded-lg border p-2 shadow-hairline transition ${active ? "border-blue-300 bg-blue-50/70 ring-1 ring-blue-100" : "border-app-border bg-white hover:bg-app-surfaceMuted"} ${layer.visible ? "" : "opacity-60"}`}
                       >
                         <div className="flex items-center gap-2">
-                          <button type="button" onClick={() => selectLayer(layer.id, true)} className={`app-interactive flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${active ? "bg-blue-600 text-white" : "bg-app-surfaceMuted text-slate-500"}`} aria-label="انتخاب لایه" title="انتخاب لایه">
-                            <GripVertical className="h-4 w-4" aria-hidden="true" />
+                          <button type="button" onClick={() => selectLayer(layer.id, true)} className={`app-interactive flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${active ? "bg-blue-600 text-white" : "bg-app-surfaceMuted text-slate-500"}`} aria-label="انتخاب لایه" title="انتخاب لایه">
+                            {layer.type === "text" ? <Type className="h-4 w-4" aria-hidden="true" /> : <SmilePlus className="h-4 w-4" aria-hidden="true" />}
                           </button>
-                          <span className="h-7 w-1.5 shrink-0 rounded-full border border-white shadow-hairline" style={{ backgroundColor: layer.type === "text" ? layer.color : layer.backgroundColor }} aria-hidden="true" />
+                          <span className="h-8 w-1.5 shrink-0 rounded-full border border-white shadow-hairline" style={{ backgroundColor: layer.type === "text" ? layer.color : layer.backgroundColor }} aria-hidden="true" />
                           <button type="button" onClick={() => selectLayer(layer.id)} className="min-w-0 flex-1 text-right" title={layer.name}>
-                            <span className="block truncate text-xs font-black text-app-text">{layer.name}</span>
-                            <span className="mt-0.5 block truncate text-[10px] font-bold text-app-muted">{layer.type === "text" ? layer.value : "استیکر"}{layer.groupId ? ` · گروه ${groupIndex}` : ""}</span>
+                            <span className="flex items-center gap-1.5">
+                              <span className="block min-w-0 truncate text-xs font-black text-app-text">{layer.name}</span>
+                              {layer.groupId ? <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] font-black text-app-primary">گروه {groupIndex}</span> : null}
+                            </span>
+                            <span className="mt-0.5 block truncate text-[10px] font-bold text-app-muted">{layer.type === "text" ? layer.value : "استیکر"} · {Math.round(layer.opacity)}%</span>
                           </button>
                           <button type="button" onClick={() => updateLayer(layer.id, { visible: !layer.visible })} className="app-interactive flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-600 hover:bg-white hover:text-app-primary" aria-label={layer.visible ? "پنهان کردن لایه" : "نمایش لایه"} title={layer.visible ? "پنهان کردن" : "نمایش"}>
                             {layer.visible ? <Eye className="h-4 w-4" aria-hidden="true" /> : <EyeOff className="h-4 w-4" aria-hidden="true" />}
