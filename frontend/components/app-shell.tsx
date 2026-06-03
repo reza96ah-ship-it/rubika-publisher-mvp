@@ -131,7 +131,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const storeReady = !overviewLoading && isStoreConfigured(overview.store);
   const rubikaReady = !overviewLoading && isRubikaConnected(overview.rubika);
   const shellReady = storeReady && rubikaReady;
-  const setupHref = !storeReady ? "/store" : !rubikaReady ? "/channels" : "/compose";
+  const setupHref = !shellReady ? "/onboarding" : "/compose";
   const showSetupAction = !overviewLoading && !shellReady;
   const brandAssetId = overview.store?.avatar_asset_id ?? overview.store?.logo_asset_id ?? null;
   const brandImageUrl = useMediaPreviewUrl(brandAssetId);

@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   LucideIcon,
   PenLine,
+  Rocket,
   Settings2,
   Store
 } from "lucide-react";
@@ -36,6 +37,7 @@ type SidebarProps = {
 };
 
 const composeNavItem: NavItem = { label: "پست جدید", href: "/compose", icon: PenLine };
+const onboardingNavItem: NavItem = { label: "راه‌اندازی", href: "/onboarding", icon: Rocket };
 const plannerNavItem: NavItem = { label: "پلنر", href: "/calendar", icon: CalendarDays };
 const contentNavItem: NavItem = { label: "محتوا", href: "/content", icon: FileText };
 const settingsNavItem: NavItem = { label: "تنظیمات", href: "/store", icon: Store };
@@ -82,6 +84,10 @@ function isNavItemActive(pathname: string, item: NavItem) {
 }
 
 export function getActiveNav(pathname: string) {
+  if (isActiveRoute(pathname, onboardingNavItem.href)) {
+    return { group: { title: "مسیر شروع", items: [onboardingNavItem] }, item: onboardingNavItem };
+  }
+
   if (isActiveRoute(pathname, composeNavItem.href)) {
     return { group: { title: "تولید محتوا", items: [composeNavItem] }, item: composeNavItem };
   }

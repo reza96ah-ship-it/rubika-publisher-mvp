@@ -170,7 +170,8 @@ export default function HomePage() {
                 <h1 className="mt-2 text-2xl font-black text-app-text">مرکز فرمان شبکه‌های اجتماعی</h1>
                 <p className="mt-2 max-w-3xl text-sm leading-7 text-app-muted">{briefing}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Button href="/queue">باز کردن صف عملیات</Button>
+                  {setupScore < 100 ? <Button href="/onboarding">شروع مسیر راه‌اندازی</Button> : <Button href="/queue">باز کردن صف عملیات</Button>}
+                  {setupScore < 100 ? <Button href="/queue" variant="secondary">صف عملیات</Button> : null}
                   <Button href="/calendar" variant="secondary">پلنر انتشار</Button>
                   <Button type="button" variant="ghost" disabled={refreshing} onClick={() => loadDashboard(true)}>
                     <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
@@ -289,6 +290,7 @@ export default function HomePage() {
 
               <WorkspacePanel title="میز کار سریع" description="دسترسی کوتاه به کارهای پرتکرار روزانه." bodyClassName="p-3">
                 <div className="grid gap-2">
+                  <Button href="/onboarding" variant={setupScore < 100 ? "primary" : "secondary"}>مسیر راه‌اندازی</Button>
                   <Button href="/compose">ساخت محتوای جدید</Button>
                   <Button href="/content" variant="secondary">مرور محتوا و پیش‌نویس‌ها ({draftCount})</Button>
                   <Button href="/analytics" variant="secondary">تحلیل عملکرد</Button>

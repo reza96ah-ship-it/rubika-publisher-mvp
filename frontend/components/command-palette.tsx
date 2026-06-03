@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, BellRing, CalendarDays, FileImage, FileText, Home, ListChecks, PenLine, Search, Settings2, X } from "lucide-react";
+import { BarChart3, BellRing, CalendarDays, FileImage, FileText, Home, ListChecks, PenLine, Rocket, Search, Settings2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, authHeaders, type Post } from "../lib/posts";
@@ -13,6 +13,7 @@ type CommandPaletteProps = {
 
 const commands = [
   { label: "امروز", detail: "خلاصه وضعیت، کارهای فوری و آمادگی انتشار", href: "/", icon: Home },
+  { label: "راه‌اندازی", detail: "مسیر مرحله‌ای برند، کانال، محتوا و زمان‌بندی", href: "/onboarding", icon: Rocket },
   { label: "ساخت محتوا", detail: "نوشتن، طراحی رسانه و زمان‌بندی پست", href: "/compose", icon: PenLine },
   { label: "پلنر", detail: "تقویم، کمپین‌ها و برنامه انتشار", href: "/calendar", icon: CalendarDays },
   { label: "محتوا", detail: "پست‌ها، پیش‌نویس‌ها و صف انتشار", href: "/content", icon: FileText },
