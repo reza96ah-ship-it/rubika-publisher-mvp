@@ -94,12 +94,24 @@ type CanvasGuides = {
 
 type CanvasFitMode = "fit" | "actual" | "fill" | "custom";
 
+type SavedEditorTemplate = {
+  id: string;
+  name: string;
+  createdAt: string;
+  layers: EditorLayer[];
+  adjustments: ImageAdjustments;
+  overlay: ImageOverlaySettings;
+  crop: ImageCropSettings;
+  canvasSize: { width: number; height: number };
+};
+
 type StoreBrandColors = {
   brand_primary_color?: string;
   brand_accent_color?: string;
 };
 
 const recentColorStorageKey = "rubika_publisher_editor_recent_colors";
+const editorTemplateStorageKey = "rubika_publisher_editor_templates";
 const labelSwatches = ["#0F172A", "#0F766E", "#2563EB", "#E11D48", "#F59E0B", "#FFFFFF"];
 const neutralColorSwatches = ["#FFFFFF", "#F8FAFC", "#E2E8F0", "#94A3B8", "#475569", "#0F172A"];
 const commerceColorSwatches = ["#0F766E", "#16A34A", "#F59E0B", "#E11D48", "#2563EB", "#7C3AED"];
@@ -305,6 +317,35 @@ function uniqueColors(colors: string[]) {
   return Array.from(new Set(colors.filter(isHexColor).map((color) => color.toUpperCase())));
 }
 
+function readSavedTemplates() {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(editorTemplateStorageKey) ?? "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is SavedEditorTemplate => Boolean(item?.id && item?.name && Array.isArray(item?.layers)));
+  } catch {
+    return [];
+  }
+}
+
+function writeSavedTemplates(templates: SavedEditorTemplate[]) {
+  window.localStorage.setItem(editorTemplateStorageKey, JSON.stringify(templates.slice(0, 18)));
+}
+
+function scaleLayerToCanvas(layer: EditorLayer, from: { width: number; height: number }, to: { width: number; height: number }) {
+  const scaleX = from.width ? to.width / from.width : 1;
+  const scaleY = from.height ? to.height / from.height : 1;
+  const scale = Math.min(scaleX, scaleY);
+  return {
+    ...layer,
+    id: createLayerId(),
+    x: Math.max(0, Math.min(to.width, layer.x * scaleX)),
+    y: Math.max(0, Math.min(to.height, layer.y * scaleY)),
+    fontSize: Math.max(18, Math.round(layer.fontSize * scale)),
+    boxWidth: Math.max(120, Math.round(layer.boxWidth * scaleX)),
+    groupId: undefined
+  };
+}
+
 function normalizeAngle(angle: number) {
   const normalized = angle % 360;
   return normalized < 0 ? normalized + 360 : normalized;
@@ -465,6 +506,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const [selectedOutlineColorDraft, setSelectedOutlineColorDraft] = useState("#0F172A");
   const [brandColors, setBrandColors] = useState<string[]>([]);
   const [recentColors, setRecentColors] = useState<string[]>([]);
+  const [savedTemplates, setSavedTemplates] = useState<SavedEditorTemplate[]>([]);
+  const [templateName, setTemplateName] = useState("");
 
   const selectedLayer = useMemo(() => layers.find((layer) => layer.id === selectedLayerId) ?? null, [layers, selectedLayerId]);
   const selectedBounds = selectedLayer?.visible ? layerBounds(selectedLayer) : null;
@@ -521,6 +564,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     } catch {
       setRecentColors([]);
     }
+    setSavedTemplates(readSavedTemplates());
   }, []);
 
   useEffect(() => {
@@ -1007,6 +1051,55 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     window.setTimeout(() => fitCanvas(nextSize, "fit"), 0);
   }
 
+  function saveCurrentTemplate() {
+    if (!layers.length) {
+      setError("برای ذخیره قالب، ابتدا حداقل یک لایه اضافه کنید.");
+      return;
+    }
+    const nextTemplate: SavedEditorTemplate = {
+      id: `template-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name: templateName.trim() || `قالب ${savedTemplates.length + 1}`,
+      createdAt: new Date().toISOString(),
+      layers: cloneLayers(layers),
+      adjustments: { ...adjustments },
+      overlay: { ...overlay },
+      crop: { ...crop },
+      canvasSize: { ...canvasSize }
+    };
+    const nextTemplates = [nextTemplate, ...savedTemplates.filter((template) => template.id !== nextTemplate.id)].slice(0, 18);
+    writeSavedTemplates(nextTemplates);
+    setSavedTemplates(nextTemplates);
+    setTemplateName("");
+    setError("");
+  }
+
+  function applySavedTemplate(template: SavedEditorTemplate) {
+    const image = imageRef.current;
+    const canvas = canvasRef.current;
+    if (!image || !canvas) return;
+    const preset = cropPresets.find((item) => item.id === template.crop.presetId);
+    const nextSize = preset && preset.id !== "original" ? { width: preset.width, height: preset.height } : originalCanvasSize(image);
+    remember();
+    canvas.width = nextSize.width;
+    canvas.height = nextSize.height;
+    setCanvasSize(nextSize);
+    setAdjustments({ ...template.adjustments });
+    setOverlay({ ...template.overlay });
+    setCrop({ ...template.crop, offsetX: 0, offsetY: 0 });
+    const nextLayers = template.layers.map((layer) => scaleLayerToCanvas(layer, template.canvasSize, nextSize));
+    setLayers(nextLayers);
+    setSelectedLayerIds(nextLayers.map((layer) => layer.id));
+    setSelectedLayerId(nextLayers[0]?.id ?? "");
+    setFitMode("fit");
+    window.setTimeout(() => fitCanvas(nextSize, "fit"), 0);
+  }
+
+  function deleteSavedTemplate(templateId: string) {
+    const nextTemplates = savedTemplates.filter((template) => template.id !== templateId);
+    writeSavedTemplates(nextTemplates);
+    setSavedTemplates(nextTemplates);
+  }
+
   function makeSelectedTitleReadable() {
     if (!selectedLayer || selectedLayer.type !== "text" || selectedLayer.locked) return;
     remember();
@@ -1482,6 +1575,45 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                     <span className="mt-1 block text-[10px] font-bold text-app-muted">{recipe.detail}</span>
                   </button>
                 ))}
+              </div>
+            </section>
+
+            <section className="border-t border-app-border pt-4">
+              <div className="flex items-center gap-2">
+                <Save className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                <h3 className="text-xs font-black text-app-text">قالب‌های من</h3>
+              </div>
+              <div className="mt-3 rounded-md border border-app-border bg-white p-2 shadow-hairline">
+                <input
+                  value={templateName}
+                  onChange={(event) => setTemplateName(event.target.value)}
+                  placeholder="نام قالب..."
+                  className="h-9 w-full rounded-md border border-app-border bg-app-canvas px-2 text-xs font-bold text-app-text outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                />
+                <Button type="button" variant="secondary" size="sm" className="mt-2 w-full" onClick={saveCurrentTemplate} disabled={!layers.length}>
+                  <Save className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                  ذخیره قالب فعلی
+                </Button>
+              </div>
+              <div className="mt-3 space-y-2">
+                {savedTemplates.map((template) => (
+                  <div key={template.id} className="rounded-md border border-app-border bg-white p-2 shadow-hairline">
+                    <div className="flex items-center justify-between gap-2">
+                      <button type="button" onClick={() => applySavedTemplate(template)} className="min-w-0 flex-1 text-right">
+                        <span className="block truncate text-[11px] font-black text-app-text">{template.name}</span>
+                        <span className="mt-0.5 block text-[10px] font-bold text-app-muted">{template.layers.length} لایه · {template.crop.presetId}</span>
+                      </button>
+                      <button type="button" onClick={() => deleteSavedTemplate(template.id)} className="app-interactive flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-600 hover:bg-rose-50 hover:text-rose-700" aria-label="حذف قالب" title="حذف قالب">
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {!savedTemplates.length ? (
+                  <p className="rounded-md border border-dashed border-app-border bg-app-surfaceMuted px-3 py-3 text-center text-[11px] font-bold text-app-muted">
+                    هنوز قالب ذخیره‌شده‌ای ندارید.
+                  </p>
+                ) : null}
               </div>
             </section>
 
