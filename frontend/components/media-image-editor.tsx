@@ -314,6 +314,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const dragRef = useRef<{ layerId: string; offsetX: number; offsetY: number } | null>(null);
   const transformRef = useRef<ActiveTransform | null>(null);
   const layerDragRef = useRef<string | null>(null);
+  const selectedLayerLiveFrameRef = useRef<number | null>(null);
+  const selectedLayerLivePatchRef = useRef<Partial<EditorLayer>>({});
   const [layers, setLayers] = useState<EditorLayer[]>([]);
   const [selectedLayerId, setSelectedLayerId] = useState("");
   const [selectedLayerIds, setSelectedLayerIds] = useState<string[]>([]);
@@ -371,6 +373,14 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setSelectedColorDraft(selectedLayer.color);
     setSelectedOutlineColorDraft(selectedLayer.outlineColor);
   }, [selectedLayer]);
+
+  useEffect(() => {
+    return () => {
+      if (selectedLayerLiveFrameRef.current !== null) {
+        window.cancelAnimationFrame(selectedLayerLiveFrameRef.current);
+      }
+    };
+  }, []);
 
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -742,6 +752,26 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   function beginSelectedLayerLiveEdit() {
     if (!selectedLayerId || selectedLayer?.locked) return;
     remember();
+  }
+
+  function scheduleSelectedLayerLiveUpdate(patch: Partial<EditorLayer>) {
+    if (!selectedLayerId || selectedLayer?.locked) return;
+    selectedLayerLivePatchRef.current = { ...selectedLayerLivePatchRef.current, ...patch };
+    if (selectedLayerLiveFrameRef.current !== null) return;
+    selectedLayerLiveFrameRef.current = window.requestAnimationFrame(() => {
+      selectedLayerLiveFrameRef.current = null;
+      const nextPatch = selectedLayerLivePatchRef.current;
+      selectedLayerLivePatchRef.current = {};
+      updateSelectedLayer(nextPatch, false);
+    });
+  }
+
+  function updateSelectedLayerColorDraft(field: "color" | "outlineColor", value: string) {
+    const nextValue = value.toUpperCase();
+    if (field === "color") setSelectedColorDraft(nextValue);
+    else setSelectedOutlineColorDraft(nextValue);
+    if (!/^#[0-9A-Fa-f]{6}$/.test(nextValue)) return;
+    scheduleSelectedLayerLiveUpdate({ [field]: nextValue } as Partial<EditorLayer>);
   }
 
   function commitSelectedLayerColor(field: "color" | "outlineColor", value: string) {
@@ -1418,8 +1448,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                             disabled={selectedLayer.locked}
                             onPointerDown={beginSelectedLayerLiveEdit}
                             onFocus={beginSelectedLayerLiveEdit}
-                            onInput={(event) => setSelectedColorDraft(event.currentTarget.value)}
-                            onChange={(event) => setSelectedColorDraft(event.target.value)}
+                            onInput={(event) => updateSelectedLayerColorDraft("color", event.currentTarget.value)}
+                            onChange={(event) => updateSelectedLayerColorDraft("color", event.target.value)}
                             onBlur={(event) => commitSelectedLayerColor("color", event.currentTarget.value)}
                             className="h-7 w-12 cursor-pointer rounded border-0 bg-transparent p-0 disabled:opacity-50"
                           />
@@ -1472,8 +1502,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                                 disabled={selectedLayer.locked}
                                 onPointerDown={beginSelectedLayerLiveEdit}
                                 onFocus={beginSelectedLayerLiveEdit}
-                                onInput={(event) => setSelectedOutlineColorDraft(event.currentTarget.value)}
-                                onChange={(event) => setSelectedOutlineColorDraft(event.target.value)}
+                                onInput={(event) => updateSelectedLayerColorDraft("outlineColor", event.currentTarget.value)}
+                                onChange={(event) => updateSelectedLayerColorDraft("outlineColor", event.target.value)}
                                 onBlur={(event) => commitSelectedLayerColor("outlineColor", event.currentTarget.value)}
                                 className="h-8 w-12 cursor-pointer rounded border-0 bg-transparent p-0 disabled:opacity-50"
                               />
