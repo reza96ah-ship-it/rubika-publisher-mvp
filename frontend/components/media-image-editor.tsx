@@ -1,6 +1,6 @@
 "use client";
 
-import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Copy, Crop, Eye, EyeOff, FlipHorizontal, GripVertical, Group, ImagePlus, Layers3, Lock, Maximize2, Minus, Palette, Plus, RectangleHorizontal, Redo2, RotateCcw, RotateCw, Save, ShieldCheck, SmilePlus, Square, Trash2, Type, Undo2, Ungroup, Unlock, X, type LucideIcon } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Copy, Crop, Eye, EyeOff, FlipHorizontal, GripVertical, Group, ImagePlus, Layers3, Lock, Maximize2, Minus, Palette, Plus, RectangleHorizontal, Redo2, RotateCcw, RotateCw, Save, ShieldCheck, SmilePlus, Square, Trash2, Type, Undo2, Ungroup, Unlock, X, Zap, type LucideIcon } from "lucide-react";
 import { PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { apiUrl, authHeaders } from "../lib/posts";
@@ -44,6 +44,13 @@ type ImageAdjustments = {
   saturation: number;
 };
 
+type ImageOverlayMode = "none" | "vignette" | "darkWash" | "lightWash" | "gradient" | "spotlight";
+
+type ImageOverlaySettings = {
+  mode: ImageOverlayMode;
+  strength: number;
+};
+
 type CropPresetId = "original" | "rubika" | "square" | "portrait" | "story" | "landscape";
 
 type ImageCropSettings = {
@@ -66,6 +73,7 @@ type MediaImageEditorProps = {
 type EditorSnapshot = {
   layers: EditorLayer[];
   adjustments: ImageAdjustments;
+  overlay: ImageOverlaySettings;
   crop: ImageCropSettings;
   canvasSize: { width: number; height: number };
 };
@@ -93,7 +101,12 @@ const recentColorStorageKey = "rubika_publisher_editor_recent_colors";
 const labelSwatches = ["#0F172A", "#0F766E", "#2563EB", "#E11D48", "#F59E0B", "#FFFFFF"];
 const neutralColorSwatches = ["#FFFFFF", "#F8FAFC", "#E2E8F0", "#94A3B8", "#475569", "#0F172A"];
 const commerceColorSwatches = ["#0F766E", "#16A34A", "#F59E0B", "#E11D48", "#2563EB", "#7C3AED"];
-const stickers = ["✨", "🔥", "🎉", "❤️", "⭐", "✅", "📣", "🛍️", "🎁", "💎", "🌿", "☀️"];
+const stickerPacks = [
+  { label: "فروش", stickers: ["🔥", "🎁", "🛍️", "💎", "⭐", "📣"] },
+  { label: "تخفیف", stickers: ["٪", "✅", "⚡", "✨", "🎉", "💥"] },
+  { label: "اعتماد", stickers: ["✅", "⭐", "💎", "🛡️", "📦", "💬"] },
+  { label: "فصل‌ها", stickers: ["🌿", "☀️", "🍂", "❄️", "🌙", "❤️"] }
+];
 const fontSampleText = "پچژگ فروش ویژه ۱۲۳";
 const fontOptions = [
   { label: "وزیرمتن", value: "Vazirmatn" },
@@ -144,7 +157,11 @@ const textStylePresets = [
   { label: "تیتر فروش", value: "فروش ویژه", color: "#FFFFFF", backgroundColor: "#E11D48", fontFamily: "Lalezar", fontWeight: 700, fontSizeRatio: 12, radius: 18, padding: 18, outlineWidth: 0, shadowBlur: 8 },
   { label: "قیمت", value: "۲۹۹ هزار تومان", color: "#0F172A", backgroundColor: "#FFFFFF", fontFamily: "Vazirmatn", fontWeight: 900, fontSizeRatio: 16, radius: 14, padding: 16, outlineWidth: 0, shadowBlur: 5 },
   { label: "دعوت به اقدام", value: "همین حالا سفارش بده", color: "#FFFFFF", backgroundColor: "#0F766E", fontFamily: "Vazirmatn", fontWeight: 800, fontSizeRatio: 20, radius: 999, padding: 16, outlineWidth: 0, shadowBlur: 6 },
-  { label: "زیرتیتر", value: "ارسال سریع و تضمین کیفیت", color: "#FFFFFF", backgroundColor: "#0F172A", fontFamily: "BNazanin", fontWeight: 700, fontSizeRatio: 24, radius: 12, padding: 14, outlineWidth: 1, shadowBlur: 4 }
+  { label: "زیرتیتر", value: "ارسال سریع و تضمین کیفیت", color: "#FFFFFF", backgroundColor: "#0F172A", fontFamily: "BNazanin", fontWeight: 700, fontSizeRatio: 24, radius: 12, padding: 14, outlineWidth: 1, shadowBlur: 4 },
+  { label: "تیتر دورخط", value: "جدیدترین مدل", color: "#FFFFFF", backgroundColor: "#0F172A", fontFamily: "BTitrBold", fontWeight: 900, fontSizeRatio: 13, radius: 14, padding: 16, outlineWidth: 3, outlineColor: "#0F172A", shadowBlur: 10 },
+  { label: "لیبل لوکس", value: "کالکشن محدود", color: "#F8FAFC", backgroundColor: "#111827", fontFamily: "BLotus", fontWeight: 700, fontSizeRatio: 18, radius: 8, padding: 18, outlineWidth: 1, outlineColor: "#F59E0B", shadowBlur: 9 },
+  { label: "برچسب شیشه‌ای", value: "انتخاب ویژه امروز", color: "#0F172A", backgroundColor: "#FFFFFF", fontFamily: "Vazirmatn", fontWeight: 800, fontSizeRatio: 21, radius: 18, padding: 16, outlineWidth: 0, shadowBlur: 12 },
+  { label: "نشان ارسال", value: "ارسال سریع", color: "#FFFFFF", backgroundColor: "#2563EB", fontFamily: "BYekan", fontWeight: 800, fontSizeRatio: 22, radius: 999, padding: 14, outlineWidth: 0, shadowBlur: 5 }
 ];
 const fontRolePresets = [
   { label: "تیتر", fontFamily: "BTitrBold", fontWeight: 900, lineHeight: 1.05, letterSpacing: 0, padding: 18, radius: 14, backgroundOpacity: 82 },
@@ -166,7 +183,16 @@ const fontCategoryFilters = [
   { id: "decorative", label: "تزئینی", test: (font: typeof fontOptions[number]) => decorativeFontValues.has(font.value) }
 ];
 const initialAdjustments: ImageAdjustments = { brightness: 100, contrast: 100, saturation: 100 };
+const initialOverlay: ImageOverlaySettings = { mode: "none", strength: 45 };
 const initialCrop: ImageCropSettings = { presetId: "original", scale: 100, offsetX: 0, offsetY: 0, rotation: 0, flipX: false };
+const overlayPresets: Array<{ mode: ImageOverlayMode; label: string; detail: string }> = [
+  { mode: "none", label: "بدون افکت", detail: "تصویر خام" },
+  { mode: "spotlight", label: "اسپات محصول", detail: "تمرکز مرکز" },
+  { mode: "vignette", label: "وینیت نرم", detail: "لبه‌های سینمایی" },
+  { mode: "darkWash", label: "واش تیره", detail: "خوانایی متن روشن" },
+  { mode: "lightWash", label: "واش روشن", detail: "خوانایی متن تیره" },
+  { mode: "gradient", label: "گرادیان کمپین", detail: "عمق تبلیغاتی" }
+];
 const cropPresets: Array<{ id: CropPresetId; label: string; detail: string; width: number; height: number; icon: LucideIcon }> = [
   { id: "original", label: "اصلی", detail: "حفظ نسبت فایل", width: 0, height: 0, icon: Crop },
   { id: "rubika", label: "پست روبیکا", detail: "1080×1080 · محصول/آفر", width: 1080, height: 1080, icon: Square },
@@ -182,6 +208,35 @@ function createLayerId() {
 
 function imageFilter(adjustments: ImageAdjustments) {
   return `brightness(${adjustments.brightness}%) contrast(${adjustments.contrast}%) saturate(${adjustments.saturation}%)`;
+}
+
+function drawImageOverlay(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement, overlay: ImageOverlaySettings) {
+  if (overlay.mode === "none") return;
+  const alpha = Math.max(0, Math.min(100, overlay.strength)) / 100;
+  context.save();
+  if (overlay.mode === "darkWash") {
+    context.fillStyle = `rgba(15, 23, 42, ${0.5 * alpha})`;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  } else if (overlay.mode === "lightWash") {
+    context.fillStyle = `rgba(255, 255, 255, ${0.45 * alpha})`;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  } else if (overlay.mode === "gradient") {
+    const gradient = context.createLinearGradient(canvas.width, 0, 0, canvas.height);
+    gradient.addColorStop(0, `rgba(37, 99, 235, ${0.34 * alpha})`);
+    gradient.addColorStop(0.48, `rgba(15, 23, 42, ${0.08 * alpha})`);
+    gradient.addColorStop(1, `rgba(225, 29, 72, ${0.28 * alpha})`);
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  } else {
+    const gradient = context.createRadialGradient(canvas.width / 2, canvas.height / 2, canvas.width * 0.12, canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height) * 0.62);
+    const edgeAlpha = overlay.mode === "spotlight" ? 0.62 * alpha : 0.5 * alpha;
+    gradient.addColorStop(0, "rgba(15, 23, 42, 0)");
+    gradient.addColorStop(0.58, `rgba(15, 23, 42, ${0.08 * alpha})`);
+    gradient.addColorStop(1, `rgba(15, 23, 42, ${edgeAlpha})`);
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  context.restore();
 }
 
 function cloneLayers(layers: EditorLayer[]) {
@@ -338,6 +393,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const [selectedLayerIds, setSelectedLayerIds] = useState<string[]>([]);
   const [draftText, setDraftText] = useState("متن جدید");
   const [adjustments, setAdjustments] = useState<ImageAdjustments>(initialAdjustments);
+  const [overlay, setOverlay] = useState<ImageOverlaySettings>(initialOverlay);
   const [crop, setCrop] = useState<ImageCropSettings>(initialCrop);
   const [past, setPast] = useState<EditorSnapshot[]>([]);
   const [future, setFuture] = useState<EditorSnapshot[]>([]);
@@ -384,9 +440,10 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const snapshot = useCallback((): EditorSnapshot => ({
     layers: cloneLayers(layers),
     adjustments: { ...adjustments },
+    overlay: { ...overlay },
     crop: { ...crop },
     canvasSize: { ...canvasSize }
-  }), [adjustments, canvasSize, crop, layers]);
+  }), [adjustments, canvasSize, crop, layers, overlay]);
 
   const remember = useCallback(() => {
     setPast((current) => [...current, snapshot()].slice(-80));
@@ -453,6 +510,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     const source = boundedSourceRect(image, { width: drawWidth, height: drawHeight }, crop);
     context.drawImage(image, source.left, source.top, source.width, source.height, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
     context.restore();
+    drawImageOverlay(context, canvas, overlay);
 
     layers.filter((layer) => layer.visible).forEach((layer) => {
       context.save();
@@ -502,7 +560,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       }
       context.restore();
     });
-  }, [adjustments, crop, layers]);
+  }, [adjustments, crop, layers, overlay]);
 
   const fitCanvas = useCallback((size: { width: number; height: number }) => {
     const viewport = viewportRef.current;
@@ -675,6 +733,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     }
     setLayers(cloneLayers(next.layers));
     setAdjustments({ ...next.adjustments });
+    setOverlay({ ...next.overlay });
     setCrop({ ...next.crop });
     setCanvasSize({ ...next.canvasSize });
     setSelectedLayerId((current) => next.layers.some((layer) => layer.id === current) ? current : "");
@@ -717,7 +776,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       boxWidth: Math.max(260, Math.round(canvas.width * 0.68)),
       padding: preset?.padding ?? 14,
       radius: preset?.radius ?? 12,
-      outlineColor: "#0F172A",
+      outlineColor: preset?.outlineColor ?? "#0F172A",
       outlineWidth: preset?.outlineWidth ?? 0,
       shadowColor: "rgba(15, 23, 42, 0.35)",
       shadowBlur: preset?.shadowBlur ?? 6,
@@ -745,6 +804,17 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     if (!layer) return;
     remember();
     setLayers((current) => [...current, layer]);
+    setSelectedLayerId(layer.id);
+    setSelectedLayerIds([layer.id]);
+  }
+
+  function addQuickPreset(preset: typeof textStylePresets[number], position: "center" | "bottom" | "top" = "center") {
+    const canvas = canvasRef.current;
+    const layer = createTextLayer(preset.value, preset);
+    if (!layer || !canvas) return;
+    const y = position === "top" ? canvas.height * 0.18 : position === "bottom" ? canvas.height * 0.82 : canvas.height / 2;
+    remember();
+    setLayers((current) => [...current, { ...layer, y }]);
     setSelectedLayerId(layer.id);
     setSelectedLayerIds([layer.id]);
   }
@@ -785,6 +855,40 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setLayers((current) => [...current, layer]);
     setSelectedLayerId(layer.id);
     setSelectedLayerIds([layer.id]);
+  }
+
+  function makeSelectedTitleReadable() {
+    if (!selectedLayer || selectedLayer.type !== "text" || selectedLayer.locked) return;
+    remember();
+    setLayers((current) => current.map((layer) => layer.id === selectedLayer.id ? {
+      ...layer,
+      color: "#FFFFFF",
+      backgroundColor: "#0F172A",
+      backgroundOpacity: 78,
+      outlineColor: "#0F172A",
+      outlineWidth: Math.max(layer.outlineWidth, 1),
+      shadowBlur: Math.max(layer.shadowBlur, 10),
+      padding: Math.max(layer.padding, 16),
+      radius: Math.max(layer.radius, 14)
+    } : layer));
+  }
+
+  function centerProductSafe() {
+    if (!selectedLayerIds.length) return;
+    remember();
+    setLayers((current) => current.map((layer) => selectedLayerIds.includes(layer.id) && !layer.locked ? { ...layer, x: canvasSize.width / 2, y: canvasSize.height * 0.72 } : layer));
+  }
+
+  function addCtaQuickAction() {
+    addQuickPreset(textStylePresets[2], "bottom");
+  }
+
+  function addPriceQuickAction() {
+    addQuickPreset(textStylePresets[1], "top");
+  }
+
+  function addProductSpotlight() {
+    updateOverlay({ mode: "spotlight", strength: 58 });
   }
 
   function updateSelectedLayer(patch: Partial<EditorLayer>, withHistory = true) {
@@ -898,6 +1002,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setSelectedLayerId("");
     setSelectedLayerIds([]);
     setAdjustments(initialAdjustments);
+    setOverlay(initialOverlay);
     setCrop(initialCrop);
     if (imageRef.current && canvasRef.current) {
       const nextSize = originalCanvasSize(imageRef.current);
@@ -912,6 +1017,16 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   function updateAdjustment(field: keyof ImageAdjustments, value: number, withHistory = true) {
     if (withHistory) remember();
     setAdjustments((current) => ({ ...current, [field]: value }));
+  }
+
+  function updateOverlay(patch: Partial<ImageOverlaySettings>, withHistory = true) {
+    if (withHistory) remember();
+    setOverlay((current) => ({ ...current, ...patch }));
+  }
+
+  function applyOverlayPreset(mode: ImageOverlayMode) {
+    remember();
+    setOverlay((current) => ({ ...current, mode, strength: mode === "none" ? current.strength : Math.max(current.strength, 46) }));
   }
 
   function applyCropPreset(presetId: CropPresetId) {
@@ -1192,14 +1307,45 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
             <section className="border-t border-app-border pt-4">
               <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                <h3 className="text-xs font-black text-app-text">اقدام سریع</h3>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" onClick={addCtaQuickAction} className="app-interactive rounded-md border border-app-border bg-white px-2 py-2 text-right text-[11px] font-black text-app-text shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary">
+                  افزودن CTA
+                </button>
+                <button type="button" onClick={addPriceQuickAction} className="app-interactive rounded-md border border-app-border bg-white px-2 py-2 text-right text-[11px] font-black text-app-text shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary">
+                  برچسب قیمت
+                </button>
+                <button type="button" onClick={makeSelectedTitleReadable} disabled={!selectedLayer || selectedLayer.type !== "text" || selectedLayer.locked} className="app-interactive rounded-md border border-app-border bg-white px-2 py-2 text-right text-[11px] font-black text-app-text shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary disabled:pointer-events-none disabled:opacity-45">
+                  خوانا کردن تیتر
+                </button>
+                <button type="button" onClick={centerProductSafe} disabled={!selectedLayerIds.length} className="app-interactive rounded-md border border-app-border bg-white px-2 py-2 text-right text-[11px] font-black text-app-text shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary disabled:pointer-events-none disabled:opacity-45">
+                  چیدمان امن
+                </button>
+                <button type="button" onClick={addProductSpotlight} className="app-interactive col-span-2 rounded-md border border-app-border bg-white px-2 py-2 text-right text-[11px] font-black text-app-text shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary">
+                  اسپات محصول روی تصویر
+                </button>
+              </div>
+            </section>
+
+            <section className="border-t border-app-border pt-4">
+              <div className="flex items-center gap-2">
                 <SmilePlus className="h-4 w-4 text-app-primary" aria-hidden="true" />
                 <h3 className="text-xs font-black text-app-text">استیکر و ایموجی</h3>
               </div>
-              <div className="mt-3 grid grid-cols-6 gap-1.5">
-                {stickers.map((sticker) => (
-                  <button key={sticker} type="button" onClick={() => addSticker(sticker)} className="app-interactive flex aspect-square items-center justify-center rounded-md bg-app-surfaceMuted text-lg hover:bg-blue-50" title={`افزودن ${sticker}`}>
-                    {sticker}
-                  </button>
+              <div className="mt-3 space-y-3">
+                {stickerPacks.map((pack) => (
+                  <div key={pack.label} className="rounded-md border border-app-border bg-white p-2 shadow-hairline">
+                    <p className="mb-2 text-[10px] font-black text-app-muted">{pack.label}</p>
+                    <div className="grid grid-cols-6 gap-1.5">
+                      {pack.stickers.map((sticker) => (
+                        <button key={`${pack.label}-${sticker}`} type="button" onClick={() => addSticker(sticker)} className="app-interactive flex aspect-square items-center justify-center rounded-md bg-app-surfaceMuted text-lg hover:bg-blue-50" title={`افزودن ${sticker}`}>
+                          {sticker}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </section>
@@ -1215,6 +1361,33 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                   <input type="range" min="50" max="150" value={adjustments[field]} onPointerDown={beginCanvasLiveEdit} onFocus={beginCanvasLiveEdit} onChange={(event) => updateAdjustment(field, Number(event.target.value), false)} className="mt-2 w-full accent-blue-600" />
                 </label>
               ))}
+            </section>
+
+            <section className="border-t border-app-border pt-4">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                <h3 className="text-xs font-black text-app-text">افکت پس‌زمینه</h3>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {overlayPresets.map((preset) => {
+                  const active = overlay.mode === preset.mode;
+                  return (
+                    <button
+                      key={preset.mode}
+                      type="button"
+                      onClick={() => applyOverlayPreset(preset.mode)}
+                      className={`app-interactive rounded-md border p-2 text-right shadow-hairline ${active ? "border-blue-300 bg-blue-50 text-app-primary ring-1 ring-blue-200" : "border-app-border bg-white text-app-text hover:bg-slate-50"}`}
+                    >
+                      <span className="block text-[11px] font-black">{preset.label}</span>
+                      <span className="mt-1 block text-[10px] font-bold text-app-muted">{preset.detail}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <label className="mt-3 block rounded-md bg-app-surfaceMuted p-3 text-xs font-bold text-app-muted shadow-hairline">
+                شدت افکت · {overlay.strength}%
+                <input type="range" min="10" max="90" value={overlay.strength} disabled={overlay.mode === "none"} onPointerDown={beginCanvasLiveEdit} onFocus={beginCanvasLiveEdit} onChange={(event) => updateOverlay({ strength: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600 disabled:opacity-50" />
+              </label>
             </section>
           </aside>
 
