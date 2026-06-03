@@ -137,6 +137,7 @@ const stickerPacks = [
   { label: "فصل‌ها", stickers: ["🌿", "☀️", "🍂", "❄️", "🌙", "❤️"] }
 ];
 const fontSampleText = "پچژگ فروش ویژه ۱۲۳";
+const fontPickerPreviewText = "فروش ویژه ۱۲۳";
 const fontOptions = [
   { label: "وزیرمتن", value: "Vazirmatn" },
   { label: "لاله‌زار", value: "Lalezar" },
@@ -193,12 +194,12 @@ const textStylePresets = [
   { label: "نشان ارسال", value: "ارسال سریع", color: "#FFFFFF", backgroundColor: "#2563EB", fontFamily: "BYekan", fontWeight: 800, fontSizeRatio: 22, radius: 999, padding: 14, outlineWidth: 0, shadowBlur: 5 }
 ];
 const fontRolePresets = [
-  { label: "تیتر", fontFamily: "BTitrBold", fontWeight: 900, lineHeight: 1.05, letterSpacing: 0, padding: 18, radius: 14, backgroundOpacity: 82 },
-  { label: "قیمت", fontFamily: "BYekan", fontWeight: 800, lineHeight: 1.12, letterSpacing: 0, padding: 16, radius: 16, backgroundOpacity: 92 },
-  { label: "کپشن", fontFamily: "BNazanin", fontWeight: 700, lineHeight: 1.38, letterSpacing: 0, padding: 12, radius: 10, backgroundOpacity: 54 },
-  { label: "دست‌نویس", fontFamily: "BBaran", fontWeight: 700, lineHeight: 1.2, letterSpacing: 1, padding: 14, radius: 18, backgroundOpacity: 68 },
-  { label: "لوکس", fontFamily: "BLotus", fontWeight: 700, lineHeight: 1.22, letterSpacing: 2, padding: 16, radius: 8, backgroundOpacity: 64 },
-  { label: "خوانا", fontFamily: "Vazirmatn", fontWeight: 800, lineHeight: 1.26, letterSpacing: 0, padding: 14, radius: 12, backgroundOpacity: 72 }
+  { label: "تیتر", sample: "فروش ویژه", detail: "درشت و تبلیغاتی", fontFamily: "BTitrBold", fontWeight: 900, lineHeight: 1.05, letterSpacing: 0, padding: 18, radius: 14, backgroundOpacity: 82 },
+  { label: "قیمت", sample: "۲۹۹ تومان", detail: "عدد و پیشنهاد", fontFamily: "BYekan", fontWeight: 800, lineHeight: 1.12, letterSpacing: 0, padding: 16, radius: 16, backgroundOpacity: 92 },
+  { label: "کپشن", sample: "ارسال سریع", detail: "متن توضیحی", fontFamily: "BNazanin", fontWeight: 700, lineHeight: 1.38, letterSpacing: 0, padding: 12, radius: 10, backgroundOpacity: 54 },
+  { label: "دست‌نویس", sample: "خاص و تازه", detail: "حس انسانی", fontFamily: "BBaran", fontWeight: 700, lineHeight: 1.2, letterSpacing: 1, padding: 14, radius: 18, backgroundOpacity: 68 },
+  { label: "لوکس", sample: "کالکشن", detail: "پریمیوم", fontFamily: "BLotus", fontWeight: 700, lineHeight: 1.22, letterSpacing: 2, padding: 16, radius: 8, backgroundOpacity: 64 },
+  { label: "خوانا", sample: "جزئیات محصول", detail: "مطمئن و واضح", fontFamily: "Vazirmatn", fontWeight: 800, lineHeight: 1.26, letterSpacing: 0, padding: 14, radius: 12, backgroundOpacity: 72 }
 ];
 const headlineFontValues = new Set(["Lalezar", "BEsfehanBold", "BJadidBold", "BKoodakBold", "BMehrBold", "BNasimBold", "BSetarehBold", "BSinaBold", "BTitrBold", "BTitrTGEBold", "BTraffic", "BYekan"]);
 const bodyFontValues = new Set(["Vazirmatn", "BBadr", "BHoma", "BLotus", "BMitra", "BNazanin", "BRoya", "BYekan", "BZar", "Tahoma"]);
@@ -2060,17 +2061,17 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                         <div className="block text-xs font-bold text-app-muted">
                           فونت فارسی
                           {selectedFontOption ? (
-                            <div className="mt-2 rounded-md border border-blue-100 bg-blue-50/70 p-3 shadow-hairline">
+                            <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50/70 p-3 shadow-hairline">
                               <div className="flex items-center justify-between gap-2">
                                 <span className="text-[10px] font-black text-app-primary">پیش‌نمایش زنده</span>
                                 <span className="rounded bg-white px-2 py-1 text-[10px] font-black text-app-muted shadow-hairline">{selectedFontOption.label}</span>
                               </div>
-                              <p className="mt-2 truncate text-2xl leading-9 text-app-text" style={fontPreviewStyle(selectedFontOption.value, selectedLayer.fontWeight)}>
+                              <p className="mt-2 max-h-[4.5rem] overflow-hidden break-words text-2xl leading-9 text-app-text" style={fontPreviewStyle(selectedFontOption.value, selectedLayer.fontWeight)}>
                                 {selectedFontPreviewText}
                               </p>
                             </div>
                           ) : null}
-                          <div className="mt-2 grid grid-cols-3 gap-1.5">
+                          <div className="mt-3 grid grid-cols-2 gap-2">
                             {fontRolePresets.map((preset) => {
                               const active = selectedLayer.fontFamily === preset.fontFamily && selectedLayer.fontWeight === preset.fontWeight;
                               return (
@@ -2087,15 +2088,18 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                                     radius: preset.radius,
                                     backgroundOpacity: preset.backgroundOpacity
                                   })}
-                                  className={`app-interactive rounded-md border px-2 py-1.5 text-[10px] font-black shadow-hairline disabled:cursor-not-allowed disabled:opacity-50 ${active ? "border-blue-200 bg-blue-50 text-app-primary" : "border-app-border bg-white text-app-muted hover:bg-app-surfaceMuted"}`}
-                                  style={fontPreviewStyle(preset.fontFamily, preset.fontWeight)}
+                                  className={`app-interactive rounded-lg border p-2 text-right shadow-hairline disabled:cursor-not-allowed disabled:opacity-50 ${active ? "border-blue-200 bg-blue-50 text-app-primary ring-1 ring-blue-100" : "border-app-border bg-white text-app-muted hover:bg-app-surfaceMuted"}`}
                                 >
-                                  {preset.label}
+                                  <span className="block text-[10px] font-black text-app-muted">{preset.label}</span>
+                                  <span className="mt-1 block truncate text-lg leading-6 text-app-text" style={fontPreviewStyle(preset.fontFamily, preset.fontWeight)}>
+                                    {preset.sample}
+                                  </span>
+                                  <span className="mt-1 block truncate text-[9px] font-bold text-app-muted">{preset.detail}</span>
                                 </button>
                               );
                             })}
                           </div>
-                          <div className="mt-2 flex flex-wrap gap-1.5" role="tablist" aria-label="دسته‌بندی فونت">
+                          <div className="mt-3 flex flex-wrap gap-1.5" role="tablist" aria-label="دسته‌بندی فونت">
                             {fontCategoryFilters.map((filter) => {
                               const active = fontCategory === filter.id;
                               return (
@@ -2125,7 +2129,12 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                               dir="ltr"
                             />
                           </label>
-                          <div className="mt-2 max-h-56 space-y-1 overflow-y-auto rounded-md border border-app-border bg-white p-1 shadow-hairline" role="radiogroup" aria-label="فونت فارسی">
+                          <div className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-app-border bg-white p-2 shadow-hairline" role="radiogroup" aria-label="فونت فارسی">
+                            <div className="mb-2 flex items-center justify-between gap-2 px-1">
+                              <span className="text-[10px] font-black text-app-muted">{filteredFontOptions.length} فونت</span>
+                              <span className="text-[10px] font-bold text-app-muted">نمونه کوتاه برای انتخاب سریع</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5">
                             {filteredFontOptions.map((font) => {
                               const active = selectedLayer.fontFamily === font.value;
                               return (
@@ -2134,17 +2143,18 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                                   type="button"
                                   disabled={selectedLayer.locked}
                                   onClick={() => updateSelectedLayer({ fontFamily: font.value })}
-                                  className={`app-interactive flex w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-right disabled:cursor-not-allowed disabled:opacity-50 ${active ? "bg-blue-50 text-app-primary ring-1 ring-blue-200" : "text-app-text hover:bg-app-surfaceMuted"}`}
+                                  className={`app-interactive min-w-0 rounded-md border px-2 py-2 text-right disabled:cursor-not-allowed disabled:opacity-50 ${active ? "border-blue-200 bg-blue-50 text-app-primary ring-1 ring-blue-100" : "border-transparent text-app-text hover:border-app-border hover:bg-app-surfaceMuted"}`}
                                   role="radio"
                                   aria-checked={active}
                                 >
-                                  <span className="shrink-0 text-[11px] font-black">{font.label}</span>
-                                  <span className="min-w-0 flex-1 truncate text-left text-lg leading-6 text-app-text" style={fontPreviewStyle(font.value, font.value.includes("Bold") ? 700 : selectedLayer.fontWeight)}>
-                                    {selectedFontPreviewText}
+                                  <span className="block truncate text-[10px] font-black text-app-muted">{font.label}</span>
+                                  <span className="mt-1 block truncate text-lg leading-6 text-app-text" style={fontPreviewStyle(font.value, font.value.includes("Bold") ? 700 : selectedLayer.fontWeight)}>
+                                    {fontPickerPreviewText}
                                   </span>
                                 </button>
                               );
                             })}
+                            </div>
                             {!filteredFontOptions.length ? (
                               <div className="rounded-md bg-app-surfaceMuted px-3 py-4 text-center text-xs font-bold text-app-muted">
                                 فونتی پیدا نشد
