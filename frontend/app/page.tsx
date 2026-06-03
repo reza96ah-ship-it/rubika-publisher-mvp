@@ -13,8 +13,10 @@ import {
   Rocket,
   Sparkles,
   Target,
+  TimerReset,
   type LucideIcon
 } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
@@ -91,6 +93,67 @@ function CommandMetric({
         </span>
       </div>
     </article>
+  );
+}
+
+const operationStepToneClasses = {
+  primary: "border-blue-100 bg-blue-50 text-app-primary",
+  warning: "border-amber-100 bg-amber-50 text-amber-700",
+  info: "border-sky-100 bg-sky-50 text-sky-700",
+  alert: "border-rose-100 bg-rose-50 text-rose-700"
+};
+
+type OperationStep = {
+  label: string;
+  count: number;
+  detail: string;
+  href: string;
+  icon: LucideIcon;
+  tone: keyof typeof operationStepToneClasses;
+  live?: boolean;
+};
+
+function OperationsLane({ steps }: { steps: OperationStep[] }) {
+  const total = steps.reduce((sum, step) => sum + step.count, 0);
+
+  return (
+    <section className="rounded-lg border border-app-border bg-white p-4 shadow-hairline">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="app-section-kicker text-[10px] font-black">Live Operations Lane</p>
+          <h2 className="mt-1 text-sm font-black text-app-text">مسیر زنده انتشار</h2>
+        </div>
+        <StatusToken tone={total ? "primary" : "success"}>{total ? `${total} آیتم در جریان` : "مسیر خالی و آماده"}</StatusToken>
+      </div>
+
+      <div className="relative mt-5">
+        <span className="dashboard-flow-track absolute right-4 left-4 top-[22px] hidden h-px sm:block" aria-hidden="true" />
+        <div className="relative grid gap-2 sm:grid-cols-4">
+          {steps.map((step) => {
+            const Icon = step.icon;
+            return (
+              <Link
+                key={step.label}
+                href={step.href}
+                className="app-interactive group flex min-w-0 items-center gap-3 rounded-lg border border-app-border bg-white p-3 shadow-hairline hover:border-blue-200 hover:bg-blue-50/35 sm:flex-col sm:text-center"
+              >
+                <span className={`relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 bg-white text-sm font-black shadow-hairline ${operationStepToneClasses[step.tone]}`}>
+                  {step.count}
+                  {step.live ? <span className="app-dot-pulse absolute -left-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" aria-hidden="true" /> : null}
+                </span>
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1.5 text-xs font-black text-app-text sm:justify-center">
+                    <Icon className="h-3.5 w-3.5 text-app-muted transition group-hover:text-app-primary" aria-hidden="true" />
+                    {step.label}
+                  </span>
+                  <span className="mt-1 block truncate text-[11px] font-bold text-app-muted">{step.detail}</span>
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -192,6 +255,12 @@ export default function HomePage() {
     { label: "کمپین فعال", value: activeCampaigns.length, detail: "در جریان امروز", icon: Megaphone, tone: "primary" as const },
     { label: "منتشر شده", value: publishedCount, detail: "خروجی موفق", icon: CheckCircle2, tone: "success" as const }
   ];
+  const operationSteps: OperationStep[] = [
+    { label: "آماده", count: queueCounts.ready, detail: "قابل زمان‌بندی", icon: CheckCircle2, tone: "primary", href: "/content?status=ready" },
+    { label: "زمان‌بندی", count: queueCounts.scheduled, detail: "در پلنر", icon: CalendarClock, tone: "warning", href: "/calendar" },
+    { label: "در انتشار", count: queueCounts.publishing, detail: "پردازش worker", icon: TimerReset, tone: "info", href: "/queue", live: queueCounts.publishing > 0 },
+    { label: "بازیابی", count: queueCounts.failed, detail: "نیازمند اقدام", icon: AlertTriangle, tone: "alert", href: "/queue", live: queueCounts.failed > 0 }
+  ];
 
   return (
     <AuthGate>
@@ -276,6 +345,8 @@ export default function HomePage() {
           <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {commandMetrics.map((metric) => <CommandMetric key={metric.label} {...metric} />)}
           </section>
+
+          <OperationsLane steps={operationSteps} />
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
             <div className="space-y-4">
