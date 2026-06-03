@@ -849,10 +849,10 @@ export default function CalendarPage() {
                     {selectedDayInsights.rubikaBlocked ? (
                       <div className="rounded-md border border-rose-200 bg-rose-50 p-2 text-[11px] font-bold leading-5 text-rose-800">
                         <p>
-                          اتصال روبیکا برای {selectedDayInsights.publishablePosts.length} پست آماده نیست: {rubikaStatusLabel(rubikaSettings)}.
+                          کانال انتشار برای {selectedDayInsights.publishablePosts.length} پست آماده نیست: {rubikaStatusLabel(rubikaSettings)}.
                         </p>
-                        <Button href="/rubika" variant="secondary" size="sm" className="mt-2">
-                          بررسی اتصال روبیکا
+                        <Button href="/channels" variant="secondary" size="sm" className="mt-2">
+                          بررسی مرکز کانال‌ها
                         </Button>
                       </div>
                     ) : null}

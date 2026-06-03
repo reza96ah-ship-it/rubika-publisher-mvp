@@ -853,7 +853,7 @@ function ComposePageContent() {
                       value={form.caption}
                       onChange={(event) => updateField("caption", event.target.value)}
                       className="min-h-[320px] resize-y border-0 bg-app-canvas px-4 py-3 text-[15px] leading-8 shadow-hairline"
-                      placeholder="متن پست روبیکا را وارد کنید..."
+                      placeholder="متن پست شبکه‌های اجتماعی را وارد کنید..."
                     />
                   </Field>
 
@@ -861,7 +861,7 @@ function ComposePageContent() {
                     <Input
                       value={form.hashtags}
                       onChange={(event) => updateField("hashtags", event.target.value)}
-                      placeholder="#روبیکا #فروشگاه #محصول"
+                      placeholder="#فروشگاه #محصول #پیشنهاد"
                     />
                   </Field>
 

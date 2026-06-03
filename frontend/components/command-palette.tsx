@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, CalendarDays, FileImage, FileText, ListChecks, Network, Search, Settings2, Store, Target, X } from "lucide-react";
+import { BarChart3, BellRing, CalendarDays, FileImage, FileText, Home, ListChecks, PenLine, Search, Settings2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, authHeaders, type Post } from "../lib/posts";
@@ -12,16 +12,16 @@ type CommandPaletteProps = {
 };
 
 const commands = [
-  { label: "پلنر انتشار", detail: "تقویم و برنامه انتشار", href: "/calendar", icon: CalendarDays },
-  { label: "مدیر کمپین", detail: "کمپین‌ها، پست‌های متصل و تحلیل کمپین", href: "/campaigns", icon: Target },
-  { label: "لیست محتوا", detail: "مدیریت پست‌ها و وضعیت‌ها", href: "/content", icon: FileText },
-  { label: "صف انتشار", detail: "بررسی زمان‌بندی و بازیابی خطا", href: "/queue", icon: ListChecks },
-  { label: "رسانه‌ها", detail: "کتابخانه تصاویر", href: "/media", icon: FileImage },
-  { label: "کانال‌ها", detail: "روبیکا، اینستاگرام و قابلیت‌های انتشار", href: "/channels", icon: Network },
-  { label: "تحلیل عملکرد", detail: "کیفیت و روند انتشار", href: "/analytics", icon: BarChart3 },
-  { label: "پروفایل و برند", detail: "هویت برند و متن‌های پایه", href: "/store", icon: Store },
-  { label: "تنظیمات روبیکا", detail: "اعتبارنامه و تست کانال روبیکا", href: "/rubika", icon: Settings2 },
-  { label: "تنظیمات اینستاگرام", detail: "حالت دستی یا اتصال حرفه‌ای", href: "/instagram", icon: Settings2 }
+  { label: "امروز", detail: "خلاصه وضعیت، کارهای فوری و آمادگی انتشار", href: "/", icon: Home },
+  { label: "ساخت محتوا", detail: "نوشتن، طراحی رسانه و زمان‌بندی پست", href: "/compose", icon: PenLine },
+  { label: "پلنر", detail: "تقویم، کمپین‌ها و برنامه انتشار", href: "/calendar", icon: CalendarDays },
+  { label: "محتوا", detail: "پست‌ها، پیش‌نویس‌ها و صف انتشار", href: "/content", icon: FileText },
+  { label: "رسانه", detail: "کتابخانه تصاویر و ویرایشگر", href: "/media", icon: FileImage },
+  { label: "اینباکس", detail: "هشدارها و پیام‌های عملیاتی", href: "/inbox", icon: BellRing },
+  { label: "گزارش‌ها", detail: "روند عملکرد و سلامت انتشار", href: "/analytics", icon: BarChart3 },
+  { label: "تنظیمات", detail: "برند، کانال‌ها، اتصال‌ها و سلامت سیستم", href: "/store", icon: Settings2 },
+  { label: "مرکز کانال‌ها", detail: "زیرمجموعه تنظیمات برای مدیریت شبکه‌ها", href: "/channels", icon: Settings2 },
+  { label: "بازیابی صف", detail: "مسیر پیشرفته برای خطاهای زمان‌بندی", href: "/queue", icon: ListChecks }
 ];
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {

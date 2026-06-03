@@ -507,7 +507,7 @@ export default function LogsPage() {
                           { label: "رسانه", value: payloadText(selectedAttempt.requestPayload, "filename") || "—", hint: "نام فایل" },
                           { label: "نوع فایل", value: payloadText(selectedAttempt.requestPayload, "file_type") || payloadText(selectedAttempt.requestPayload, "content_type") || "—", hint: "فرمت ارسال" },
                           { label: "حجم", value: formatBytes(payloadNumber(selectedAttempt.requestPayload, "size_bytes")), hint: "اندازه فایل" },
-                          { label: "file_id", value: payloadText(selectedAttempt.responsePayload, "file_id") || "—", hint: "شناسه روبیکا" }
+                          { label: "file_id", value: payloadText(selectedAttempt.responsePayload, "file_id") || "—", hint: "شناسه کانال" }
                         ]}
                       />
                     ) : null}
@@ -544,7 +544,7 @@ export default function LogsPage() {
                       ) : null}
                       <Button href={`/compose?postId=${selectedAttempt.attempt.post_id}`} variant="secondary">باز کردن پست</Button>
                       <Button href="/queue" variant="secondary">صف انتشار</Button>
-                      <Button href="/rubika" variant="secondary">بررسی اتصال روبیکا</Button>
+                      <Button href="/channels" variant="secondary">بررسی مرکز کانال‌ها</Button>
                     </div>
                   </div>
                 ) : (

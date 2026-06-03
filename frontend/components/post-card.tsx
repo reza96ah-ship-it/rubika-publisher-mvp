@@ -14,7 +14,7 @@ export function PostCard({ title, caption, status, publishTime, attempts }: Post
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h3 className="font-bold text-app-text">{title}</h3>
-          <p className="mt-1 text-xs text-app-muted">روبیکا · {publishTime}</p>
+          <p className="mt-1 text-xs text-app-muted">انتشار · {publishTime}</p>
         </div>
         <StatusBadge status={status} />
       </div>

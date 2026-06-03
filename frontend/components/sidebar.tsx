@@ -8,14 +8,10 @@ import {
   FileText,
   GalleryHorizontalEnd,
   LayoutDashboard,
-  ListChecks,
   LucideIcon,
-  Network,
   PenLine,
-  ScrollText,
   Settings2,
-  Store,
-  Target
+  Store
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -39,46 +35,27 @@ type SidebarProps = {
   avatarUrl?: string;
 };
 
+const composeNavItem: NavItem = { label: "پست جدید", href: "/compose", icon: PenLine };
+const plannerNavItem: NavItem = { label: "پلنر", href: "/calendar", icon: CalendarDays };
+const contentNavItem: NavItem = { label: "محتوا", href: "/content", icon: FileText };
+const settingsNavItem: NavItem = { label: "تنظیمات", href: "/store", icon: Store };
+
 const primaryNavGroups: NavGroup[] = [
   {
-    title: "فضای کاری",
+    title: "مسیر اصلی",
     items: [
-      { label: "مرکز عملیات", href: "/", icon: LayoutDashboard }
-    ]
-  },
-  {
-    title: "انتشار",
-    items: [
-      { label: "پلنر انتشار", href: "/calendar", icon: CalendarDays },
-      { label: "مدیر کمپین", href: "/campaigns", icon: Target }
-    ]
-  },
-  {
-    title: "کتابخانه و گزارش",
-    items: [
-      { label: "رسانه‌ها", href: "/media", icon: GalleryHorizontalEnd },
-      { label: "کانال‌ها", href: "/channels", icon: Network },
-      { label: "تحلیل عملکرد", href: "/analytics", icon: BarChart3 },
-      { label: "هشدارهای عملیات", href: "/inbox", icon: BellRing },
-      { label: "سلامت انتشار", href: "/logs", icon: ScrollText }
+      { label: "امروز", href: "/", icon: LayoutDashboard },
+      composeNavItem,
+      plannerNavItem,
+      contentNavItem,
+      { label: "رسانه", href: "/media", icon: GalleryHorizontalEnd },
+      { label: "اینباکس", href: "/inbox", icon: BellRing },
+      { label: "گزارش‌ها", href: "/analytics", icon: BarChart3 }
     ]
   }
 ];
 
-const settingsNavItems: NavItem[] = [
-  { label: "پروفایل و برند", href: "/store", icon: Store }
-];
-
-const composeNavItem: NavItem = { label: "پست جدید", href: "/compose", icon: PenLine };
-const publishingRouteItems: NavItem[] = [
-  { label: "پلنر انتشار", href: "/calendar", icon: CalendarDays },
-  { label: "کمپین‌ها", href: "/campaigns", icon: Target },
-  { label: "لیست محتوا", href: "/content", icon: FileText },
-  { label: "صف انتشار", href: "/queue", icon: ListChecks }
-];
-const channelRouteItems: NavItem[] = [
-  { label: "کانال‌ها", href: "/channels", icon: Network }
-];
+const settingsNavItems: NavItem[] = [settingsNavItem];
 const navGroups = [
   ...primaryNavGroups,
   { title: "تنظیمات", items: settingsNavItems }
@@ -89,18 +66,42 @@ function isActiveRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function isNavItemActive(pathname: string, item: NavItem) {
+  if (item.href === "/calendar") return isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/campaigns");
+  if (item.href === "/content") return isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue");
+  if (item.href === "/store") {
+    return (
+      isActiveRoute(pathname, "/store") ||
+      isActiveRoute(pathname, "/channels") ||
+      isActiveRoute(pathname, "/rubika") ||
+      isActiveRoute(pathname, "/instagram") ||
+      isActiveRoute(pathname, "/logs")
+    );
+  }
+  return isActiveRoute(pathname, item.href);
+}
+
 export function getActiveNav(pathname: string) {
   if (isActiveRoute(pathname, composeNavItem.href)) {
     return { group: { title: "تولید محتوا", items: [composeNavItem] }, item: composeNavItem };
   }
 
-  const publishingRoute = publishingRouteItems.find((item) => isActiveRoute(pathname, item.href));
-  if (publishingRoute) {
-    return { group: { title: "انتشار", items: publishingRouteItems }, item: publishingRoute };
+  if (isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/campaigns")) {
+    return { group: { title: "برنامه‌ریزی", items: [plannerNavItem] }, item: plannerNavItem };
   }
 
-  if (isActiveRoute(pathname, "/channels") || isActiveRoute(pathname, "/rubika") || isActiveRoute(pathname, "/instagram")) {
-    return { group: { title: "کانال‌ها", items: channelRouteItems }, item: channelRouteItems[0] };
+  if (isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue")) {
+    return { group: { title: "مدیریت محتوا", items: [contentNavItem] }, item: contentNavItem };
+  }
+
+  if (
+    isActiveRoute(pathname, "/store") ||
+    isActiveRoute(pathname, "/channels") ||
+    isActiveRoute(pathname, "/rubika") ||
+    isActiveRoute(pathname, "/instagram") ||
+    isActiveRoute(pathname, "/logs")
+  ) {
+    return { group: { title: "تنظیمات", items: settingsNavItems }, item: settingsNavItem };
   }
 
   for (const group of navGroups) {
@@ -154,13 +155,6 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
           <ChevronLeft className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
         </Link>
 
-        <Link
-          href="/compose"
-          className="app-interactive mt-3 flex items-center justify-center gap-2 rounded-lg bg-app-primary px-3 py-2.5 text-sm font-black text-white shadow-accent hover:bg-app-primaryHover"
-        >
-          <PenLine className="h-4 w-4" aria-hidden="true" />
-          ایجاد پست جدید
-        </Link>
       </div>
 
       <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4" aria-label="ناوبری اصلی">
@@ -169,11 +163,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
             <p className="mb-1.5 px-2.5 text-[10px] font-black text-slate-400">{group.title}</p>
             <div className="space-y-1">
               {group.items.map((item) => {
-                const active = item.href === "/calendar"
-                  ? isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue")
-                  : item.href === "/channels"
-                    ? isActiveRoute(pathname, "/channels") || isActiveRoute(pathname, "/rubika") || isActiveRoute(pathname, "/instagram")
-                  : isActiveRoute(pathname, item.href);
+                const active = isNavItemActive(pathname, item);
                 return <NavEntry key={item.href} item={item} active={active} />;
               })}
             </div>
@@ -187,7 +177,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
           <Settings2 className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
         </div>
         <div className="space-y-0.5">
-          {settingsNavItems.map((item) => <NavEntry key={item.href} item={item} active={isActiveRoute(pathname, item.href)} />)}
+          {settingsNavItems.map((item) => <NavEntry key={item.href} item={item} active={isNavItemActive(pathname, item)} />)}
         </div>
         <Link href="/channels" className={`app-interactive mt-3 flex items-center gap-2 rounded-md px-2.5 py-2 text-xs font-bold shadow-hairline ${
           ready ? "bg-teal-50 text-teal-700" : "bg-amber-50 text-amber-700"
@@ -201,11 +191,11 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
 }
 
 const mobileNavItems = [
-  { label: "عملیات", href: "/", icon: LayoutDashboard },
+  { label: "امروز", href: "/", icon: LayoutDashboard },
   { label: "پلنر", href: "/calendar", icon: CalendarDays },
   composeNavItem,
   { label: "محتوا", href: "/content", icon: FileText },
-  { label: "صف", href: "/queue", icon: ListChecks }
+  { label: "گزارش", href: "/analytics", icon: BarChart3 }
 ];
 
 export function MobileNav() {
@@ -214,7 +204,7 @@ export function MobileNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-app-border bg-[#FBFEFE]/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_rgba(38,75,88,0.08)] backdrop-blur-xl lg:hidden" aria-label="ناوبری اصلی">
       {mobileNavItems.map((item) => {
-        const active = isActiveRoute(pathname, item.href);
+        const active = isNavItemActive(pathname, item);
         const Icon = item.icon;
         const isCompose = item.href === "/compose";
         return (

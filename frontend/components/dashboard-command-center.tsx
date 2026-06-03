@@ -47,7 +47,7 @@ export function PublicationPulse({
         <div>
           <p className="app-section-kicker text-[10px] font-black">نبض انتشار</p>
           <h2 className="mt-2 text-sm font-black text-app-text">جریان زنده محتوا</h2>
-          <p className="mt-1 text-[11px] leading-5 text-app-muted">وضعیت لحظه‌ای مسیر انتشار تا تحویل به روبیکا</p>
+          <p className="mt-1 text-[11px] leading-5 text-app-muted">وضعیت لحظه‌ای مسیر انتشار تا تحویل به کانال‌ها</p>
         </div>
         <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${alertCount ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
           {alertCount ? <CircleAlert className="h-4 w-4" aria-hidden="true" /> : <RadioTower className="app-status-pulse h-4 w-4" aria-hidden="true" />}
@@ -126,7 +126,7 @@ export function LiveOperations({
 }) {
   const signals = [
     { label: "آمادگی فضای کاری", value: `${setupScore}%`, healthy: setupScore === 100 },
-    { label: "اتصال روبیکا", value: rubikaReady ? "متصل" : "نیازمند بررسی", healthy: rubikaReady },
+    { label: "کانال اصلی", value: rubikaReady ? "آماده" : "نیازمند بررسی", healthy: rubikaReady },
     { label: "حجم صف فعال", value: `${queueTotal} محتوا`, healthy: queueTotal < 10 },
     { label: "پنجره بعدی انتشار", value: nextWindow, healthy: true }
   ];

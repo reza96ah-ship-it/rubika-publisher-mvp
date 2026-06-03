@@ -510,7 +510,7 @@ export default function AnalyticsPage() {
                 <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
                   <div className="min-w-0">
                     <div className="mb-4 flex min-w-0 items-center gap-3">
-                      <WorkspaceAvatar name={store?.name || "فضای کاری روبیکا"} size="lg" color={brandColor} imageUrl={brandAvatarUrl} />
+                      <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandAvatarUrl} />
                       <div className="min-w-0">
                         <p className="text-[10px] font-black text-app-muted">گزارش فعال برای</p>
                         <p className="mt-1 truncate text-base font-black text-app-text">{store?.name || "پروفایل فروشگاه"}</p>
@@ -825,7 +825,7 @@ export default function AnalyticsPage() {
             <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
               <WorkspacePanel title="هویت گزارش" description="برندی که این تحلیل با آن آماده می‌شود." bodyClassName="p-4">
                 <div className="flex items-center gap-3">
-                  <WorkspaceAvatar name={store?.name || "فضای کاری روبیکا"} size="lg" color={brandColor} imageUrl={brandAvatarUrl} />
+                  <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandAvatarUrl} />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-black text-app-text">{store?.name || "پروفایل فروشگاه"}</p>
                     <p className="mt-1 truncate text-xs text-app-muted">{store?.brand_voice || "لحن برند ثبت نشده"}</p>

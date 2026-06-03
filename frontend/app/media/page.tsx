@@ -512,7 +512,7 @@ export default function MediaPage() {
               <div>
                 <p className="text-[10px] font-black text-app-primary">کتابخانه دارایی‌ها</p>
                 <h1 className="mt-1 text-xl font-black text-app-text">رسانه‌های فضای کاری</h1>
-                <p className="mt-1 text-xs leading-5 text-app-muted">تصاویر را جست‌وجو، بررسی و برای استفاده در پست‌های روبیکا آماده کنید.</p>
+                <p className="mt-1 text-xs leading-5 text-app-muted">تصاویر را جست‌وجو، بررسی و برای استفاده در پست‌های شبکه‌های اجتماعی آماده کنید.</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusToken tone={unusedCount ? "success" : "neutral"}>{unusedCount} رسانه آزاد</StatusToken>

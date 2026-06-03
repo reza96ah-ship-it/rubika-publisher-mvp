@@ -127,7 +127,7 @@ export function PlannerComposerDrawer({ scheduledAt, defaultCampaign = "", onClo
         <div className="flex items-start justify-between gap-3 border-b border-app-border px-4 py-4">
           <div>
             <p className="text-[10px] font-black text-app-primary">ایجاد سریع از پلنر</p>
-            <h2 className="mt-1 text-lg font-black text-app-text">پست جدید روبیکا</h2>
+            <h2 className="mt-1 text-lg font-black text-app-text">پست جدید</h2>
             <p className="mt-1 text-xs leading-5 text-app-muted">{formatJalaliDate(schedule)} · {formatJalaliTime(schedule)} · Asia/Tehran</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-app-text" aria-label="بستن">
@@ -140,7 +140,7 @@ export function PlannerComposerDrawer({ scheduledAt, defaultCampaign = "", onClo
             {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
 
             <div className="flex flex-wrap gap-2">
-              <StatusToken tone="primary">روبیکا</StatusToken>
+              <StatusToken tone="primary">چندکاناله</StatusToken>
               <StatusToken tone="warning">ذخیره سریع</StatusToken>
               <StatusToken tone="neutral">پیش‌فرض ۰۹:۰۰</StatusToken>
               {defaultCampaign ? <StatusToken tone="info">کمپین: {defaultCampaign}</StatusToken> : null}
@@ -151,7 +151,7 @@ export function PlannerComposerDrawer({ scheduledAt, defaultCampaign = "", onClo
             </Field>
 
             <Field label="کپشن" hint="برای افزودن رسانه یا تنظیمات کامل‌تر، ویرایش پیشرفته را باز کنید.">
-              <Textarea value={caption} onChange={(event) => setCaption(event.target.value)} className="min-h-40" placeholder="متن پست روبیکا..." />
+              <Textarea value={caption} onChange={(event) => setCaption(event.target.value)} className="min-h-40" placeholder="متن پست را بنویسید..." />
             </Field>
 
             <div className="grid gap-4 sm:grid-cols-2">

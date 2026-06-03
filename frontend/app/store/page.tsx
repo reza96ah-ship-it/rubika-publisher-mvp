@@ -578,7 +578,7 @@ export default function StorePage() {
 
                       <BrandAssetPicker
                         title="آواتار انتشار"
-                        description="در پیش‌نمایش روبیکا، composer و هویت سریع workspace دیده می‌شود."
+                        description="در پیش‌نمایش محتوا، composer و هویت سریع workspace دیده می‌شود."
                         selectedId={form.avatar_asset_id}
                         previewUrl={avatarUrl}
                         assets={imageAssets}
@@ -752,8 +752,8 @@ export default function StorePage() {
                 </div>
               </WorkspacePanel>
 
-              <WorkspacePanel title="مرحله بعدی" description="بعد از هویت فروشگاه، اتصال روبیکا را تست کنید.">
-                <Button href="/rubika" className="w-full">باز کردن اتصال روبیکا</Button>
+              <WorkspacePanel title="مرحله بعدی" description="بعد از هویت برند، کانال‌های انتشار را کامل کنید.">
+                <Button href="/channels" className="w-full">باز کردن مرکز کانال‌ها</Button>
               </WorkspacePanel>
                 </aside>
               </div>

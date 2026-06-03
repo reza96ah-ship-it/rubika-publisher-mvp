@@ -148,7 +148,7 @@ export default function HomePage() {
             <div className="grid lg:grid-cols-[minmax(0,1fr)_410px]">
               <div className="px-4 py-5 lg:px-5">
                 <div className="mb-4 flex min-w-0 items-center gap-3">
-                  <WorkspaceAvatar name={store?.name || "فضای کاری روبیکا"} size="lg" color={brandColor} imageUrl={brandImageUrl} />
+                  <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandImageUrl} />
                   <div className="min-w-0">
                     <p className="text-[10px] font-black text-app-muted">فضای کاری فعال</p>
                     <p className="mt-1 truncate text-base font-black text-app-text">{store?.name || "فضای کاری اجتماعی"}</p>
