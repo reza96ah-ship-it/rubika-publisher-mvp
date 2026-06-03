@@ -3,6 +3,7 @@
 import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Copy, Crop, Eye, EyeOff, FlipHorizontal, GripVertical, Group, ImagePlus, Layers3, Lock, Maximize2, Minus, Palette, Plus, RectangleHorizontal, Redo2, RotateCcw, RotateCw, Save, ShieldCheck, SmilePlus, Square, Trash2, Type, Undo2, Ungroup, Unlock, X, type LucideIcon } from "lucide-react";
 import { PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { apiUrl, authHeaders } from "../lib/posts";
 import { Button } from "./ui/button";
 import { StatusToken } from "./workspace-ui";
 
@@ -83,8 +84,15 @@ type CanvasGuides = {
   centerY: boolean;
 };
 
-const colorSwatches = ["#FFFFFF", "#0F172A", "#0F766E", "#2563EB", "#E11D48", "#F59E0B", "#7C3AED", "#16A34A"];
+type StoreBrandColors = {
+  brand_primary_color?: string;
+  brand_accent_color?: string;
+};
+
+const recentColorStorageKey = "rubika_publisher_editor_recent_colors";
 const labelSwatches = ["#0F172A", "#0F766E", "#2563EB", "#E11D48", "#F59E0B", "#FFFFFF"];
+const neutralColorSwatches = ["#FFFFFF", "#F8FAFC", "#E2E8F0", "#94A3B8", "#475569", "#0F172A"];
+const commerceColorSwatches = ["#0F766E", "#16A34A", "#F59E0B", "#E11D48", "#2563EB", "#7C3AED"];
 const stickers = ["✨", "🔥", "🎉", "❤️", "⭐", "✅", "📣", "🛍️", "🎁", "💎", "🌿", "☀️"];
 const fontSampleText = "پچژگ فروش ویژه ۱۲۳";
 const fontOptions = [
@@ -160,12 +168,12 @@ const fontCategoryFilters = [
 const initialAdjustments: ImageAdjustments = { brightness: 100, contrast: 100, saturation: 100 };
 const initialCrop: ImageCropSettings = { presetId: "original", scale: 100, offsetX: 0, offsetY: 0, rotation: 0, flipX: false };
 const cropPresets: Array<{ id: CropPresetId; label: string; detail: string; width: number; height: number; icon: LucideIcon }> = [
-  { id: "original", label: "اصلی", detail: "نسبت فایل", width: 0, height: 0, icon: Crop },
-  { id: "rubika", label: "روبیکا", detail: "1080×1080", width: 1080, height: 1080, icon: Square },
-  { id: "square", label: "مربع", detail: "1080×1080", width: 1080, height: 1080, icon: Square },
-  { id: "portrait", label: "پرتره", detail: "1080×1350", width: 1080, height: 1350, icon: RectangleHorizontal },
-  { id: "story", label: "استوری", detail: "1080×1920", width: 1080, height: 1920, icon: RectangleHorizontal },
-  { id: "landscape", label: "افقی", detail: "1200×675", width: 1200, height: 675, icon: RectangleHorizontal }
+  { id: "original", label: "اصلی", detail: "حفظ نسبت فایل", width: 0, height: 0, icon: Crop },
+  { id: "rubika", label: "پست روبیکا", detail: "1080×1080 · محصول/آفر", width: 1080, height: 1080, icon: Square },
+  { id: "square", label: "مربع عمومی", detail: "1080×1080 · شبکه‌ها", width: 1080, height: 1080, icon: Square },
+  { id: "portrait", label: "پرتره فروش", detail: "1080×1350 · کاتالوگ", width: 1080, height: 1350, icon: RectangleHorizontal },
+  { id: "story", label: "استوری", detail: "1080×1920 · تمام‌صفحه", width: 1080, height: 1920, icon: RectangleHorizontal },
+  { id: "landscape", label: "بنر افقی", detail: "1200×675 · کمپین", width: 1200, height: 675, icon: RectangleHorizontal }
 ];
 
 function createLayerId() {
@@ -178,6 +186,14 @@ function imageFilter(adjustments: ImageAdjustments) {
 
 function cloneLayers(layers: EditorLayer[]) {
   return layers.map((layer) => ({ ...layer }));
+}
+
+function isHexColor(value: string | null | undefined) {
+  return Boolean(value && /^#[0-9A-Fa-f]{6}$/.test(value));
+}
+
+function uniqueColors(colors: string[]) {
+  return Array.from(new Set(colors.filter(isHexColor).map((color) => color.toUpperCase())));
 }
 
 function normalizeAngle(angle: number) {
@@ -316,6 +332,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const layerDragRef = useRef<string | null>(null);
   const selectedLayerLiveFrameRef = useRef<number | null>(null);
   const selectedLayerLivePatchRef = useRef<Partial<EditorLayer>>({});
+  const selectedLayerLiveEditingRef = useRef(false);
   const [layers, setLayers] = useState<EditorLayer[]>([]);
   const [selectedLayerId, setSelectedLayerId] = useState("");
   const [selectedLayerIds, setSelectedLayerIds] = useState<string[]>([]);
@@ -334,6 +351,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const [fontCategory, setFontCategory] = useState("all");
   const [selectedColorDraft, setSelectedColorDraft] = useState("#FFFFFF");
   const [selectedOutlineColorDraft, setSelectedOutlineColorDraft] = useState("#0F172A");
+  const [brandColors, setBrandColors] = useState<string[]>([]);
+  const [recentColors, setRecentColors] = useState<string[]>([]);
 
   const selectedLayer = useMemo(() => layers.find((layer) => layer.id === selectedLayerId) ?? null, [layers, selectedLayerId]);
   const selectedBounds = selectedLayer?.visible ? layerBounds(selectedLayer) : null;
@@ -355,6 +374,12 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       return matchesCategory && matchesQuery;
     });
   }, [fontCategory, fontSearch]);
+  const textColorGroups = useMemo(() => [
+    { label: "برند", detail: "از هویت فروشگاه", colors: brandColors },
+    { label: "اخیر", detail: "رنگ‌های استفاده‌شده", colors: recentColors },
+    { label: "تجاری", detail: "فروش، هشدار و CTA", colors: commerceColorSwatches },
+    { label: "خنثی", detail: "متن و پس‌زمینه", colors: neutralColorSwatches }
+  ].filter((group) => group.colors.length > 0), [brandColors, recentColors]);
 
   const snapshot = useCallback((): EditorSnapshot => ({
     layers: cloneLayers(layers),
@@ -373,6 +398,34 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setSelectedColorDraft(selectedLayer.color);
     setSelectedOutlineColorDraft(selectedLayer.outlineColor);
   }, [selectedLayer]);
+
+  useEffect(() => {
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(recentColorStorageKey) ?? "[]");
+      if (Array.isArray(parsed)) setRecentColors(uniqueColors(parsed).slice(0, 10));
+    } catch {
+      setRecentColors([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadBrandColors() {
+      try {
+        const response = await fetch(`${apiUrl}/stores/active`, { headers: authHeaders() });
+        if (!response.ok) return;
+        const data = await response.json() as StoreBrandColors | null;
+        if (cancelled || !data) return;
+        setBrandColors(uniqueColors([data.brand_primary_color ?? "", data.brand_accent_color ?? ""]));
+      } catch {
+        if (!cancelled) setBrandColors([]);
+      }
+    }
+    void loadBrandColors();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -751,7 +804,28 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
   function beginSelectedLayerLiveEdit() {
     if (!selectedLayerId || selectedLayer?.locked) return;
+    if (selectedLayerLiveEditingRef.current) return;
+    selectedLayerLiveEditingRef.current = true;
     remember();
+    window.setTimeout(() => {
+      selectedLayerLiveEditingRef.current = false;
+    }, 0);
+  }
+
+  function rememberRecentColor(color: string) {
+    if (!isHexColor(color)) return;
+    setRecentColors((current) => {
+      const next = uniqueColors([color, ...current]).slice(0, 10);
+      window.localStorage.setItem(recentColorStorageKey, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function applySelectedLayerColor(field: "color" | "outlineColor" | "backgroundColor", color: string, patch: Partial<EditorLayer> = {}) {
+    if (!isHexColor(color)) return;
+    const nextColor = color.toUpperCase();
+    rememberRecentColor(nextColor);
+    updateSelectedLayer({ [field]: nextColor, ...patch } as Partial<EditorLayer>);
   }
 
   function scheduleSelectedLayerLiveUpdate(patch: Partial<EditorLayer>) {
@@ -776,7 +850,9 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
   function commitSelectedLayerColor(field: "color" | "outlineColor", value: string) {
     if (!/^#[0-9A-Fa-f]{6}$/.test(value)) return;
-    updateSelectedLayer({ [field]: value.toUpperCase() } as Partial<EditorLayer>, false);
+    const nextValue = value.toUpperCase();
+    rememberRecentColor(nextValue);
+    updateSelectedLayer({ [field]: nextValue } as Partial<EditorLayer>, false);
   }
 
   const removeSelectedLayer = useCallback(() => {
@@ -796,6 +872,25 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setSelectedLayerId(duplicates[duplicates.length - 1].id);
     setSelectedLayerIds(duplicates.map((layer) => layer.id));
   }, [layers, remember, selectedLayerIds]);
+
+  function duplicateLayer(layerId: string) {
+    const layer = layers.find((item) => item.id === layerId);
+    if (!layer) return;
+    const duplicate = { ...layer, id: createLayerId(), name: `${layer.name} کپی`, x: layer.x + 24, y: layer.y + 24, groupId: undefined };
+    remember();
+    setLayers((current) => [...current, duplicate]);
+    setSelectedLayerId(duplicate.id);
+    setSelectedLayerIds([duplicate.id]);
+  }
+
+  function removeLayer(layerId: string) {
+    const layer = layers.find((item) => item.id === layerId);
+    if (!layer || layer.locked) return;
+    remember();
+    setLayers((current) => current.filter((item) => item.id !== layerId));
+    setSelectedLayerIds((current) => current.filter((id) => id !== layerId));
+    setSelectedLayerId((current) => current === layerId ? "" : current);
+  }
 
   function resetEditor() {
     if (layers.length || adjustments.brightness !== 100 || adjustments.contrast !== 100 || adjustments.saturation !== 100) remember();
@@ -1247,6 +1342,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                           <button type="button" onClick={() => selectLayer(layer.id, true)} className={`app-interactive flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${active ? "bg-blue-600 text-white" : "bg-app-surfaceMuted text-slate-500"}`} aria-label="انتخاب لایه" title="انتخاب لایه">
                             <GripVertical className="h-4 w-4" aria-hidden="true" />
                           </button>
+                          <span className="h-7 w-1.5 shrink-0 rounded-full border border-white shadow-hairline" style={{ backgroundColor: layer.type === "text" ? layer.color : layer.backgroundColor }} aria-hidden="true" />
                           <button type="button" onClick={() => selectLayer(layer.id)} className="min-w-0 flex-1 text-right" title={layer.name}>
                             <span className="block truncate text-xs font-black text-app-text">{layer.name}</span>
                             <span className="mt-0.5 block truncate text-[10px] font-bold text-app-muted">{layer.type === "text" ? layer.value : "استیکر"}{layer.groupId ? ` · گروه ${groupIndex}` : ""}</span>
@@ -1258,13 +1354,19 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                             {layer.locked ? <Lock className="h-4 w-4" aria-hidden="true" /> : <Unlock className="h-4 w-4" aria-hidden="true" />}
                           </button>
                         </div>
-                        <div className="mt-2 grid grid-cols-[1fr_auto_auto] gap-1">
+                        <div className="mt-2 grid grid-cols-[1fr_auto_auto_auto_auto] gap-1">
                           <input value={layer.name} onFocus={() => remember()} onChange={(event) => updateLayer(layer.id, { name: event.target.value }, false)} className="h-8 rounded-md border border-app-border bg-white px-2 text-xs font-bold text-app-text outline-none focus:border-blue-300" aria-label="نام لایه" />
                           <button type="button" onClick={() => moveLayer(layer.id, "up")} className="app-interactive flex h-8 w-8 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-600 hover:bg-white hover:text-app-primary" aria-label="انتقال لایه به جلو" title="انتقال به جلو">
                             <ArrowUp className="h-4 w-4" aria-hidden="true" />
                           </button>
                           <button type="button" onClick={() => moveLayer(layer.id, "down")} className="app-interactive flex h-8 w-8 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-600 hover:bg-white hover:text-app-primary" aria-label="انتقال لایه به عقب" title="انتقال به عقب">
                             <ArrowDown className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                          <button type="button" onClick={() => duplicateLayer(layer.id)} className="app-interactive flex h-8 w-8 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-600 hover:bg-white hover:text-app-primary" aria-label="تکثیر لایه" title="تکثیر">
+                            <Copy className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                          <button type="button" onClick={() => removeLayer(layer.id)} disabled={layer.locked} className="app-interactive flex h-8 w-8 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-600 hover:bg-rose-50 hover:text-rose-700 disabled:pointer-events-none disabled:opacity-40" aria-label="حذف لایه" title={layer.locked ? "لایه قفل است" : "حذف"}>
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
                           </button>
                         </div>
                       </div>
@@ -1435,9 +1537,28 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                     {selectedLayer.type === "text" ? (
                       <div>
                         <p className="text-xs font-bold text-app-muted">رنگ متن</p>
-                        <div className="mt-2 grid grid-cols-4 gap-2">
-                          {colorSwatches.map((color) => (
-                            <button key={color} type="button" disabled={selectedLayer.locked} onClick={() => updateSelectedLayer({ color })} className={`aspect-square rounded-md border shadow-hairline disabled:opacity-50 ${selectedLayer.color === color ? "ring-2 ring-app-primary ring-offset-2" : "border-app-border"}`} style={{ backgroundColor: color }} aria-label={`انتخاب رنگ ${color}`} title={color} />
+                        <div className="mt-2 space-y-2 rounded-md border border-app-border bg-white p-2 shadow-hairline">
+                          {textColorGroups.map((group) => (
+                            <div key={group.label}>
+                              <div className="mb-1 flex items-center justify-between gap-2">
+                                <span className="text-[10px] font-black text-app-text">{group.label}</span>
+                                <span className="text-[10px] font-bold text-app-muted">{group.detail}</span>
+                              </div>
+                              <div className="grid grid-cols-6 gap-1.5">
+                                {group.colors.map((color) => (
+                                  <button
+                                    key={`${group.label}-${color}`}
+                                    type="button"
+                                    disabled={selectedLayer.locked}
+                                    onClick={() => applySelectedLayerColor("color", color)}
+                                    className={`aspect-square rounded-md border shadow-hairline disabled:opacity-50 ${selectedLayer.color.toUpperCase() === color.toUpperCase() ? "ring-2 ring-app-primary ring-offset-2" : "border-app-border"}`}
+                                    style={{ backgroundColor: color }}
+                                    aria-label={`انتخاب رنگ ${color}`}
+                                    title={color}
+                                  />
+                                ))}
+                              </div>
+                            </div>
                           ))}
                         </div>
                         <label className="mt-3 flex items-center justify-between gap-3 rounded-md bg-app-surfaceMuted px-3 py-2 text-xs font-bold text-app-muted shadow-hairline">
@@ -1472,7 +1593,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                           <p className="text-xs font-black text-app-text">برچسب و افکت متن</p>
                           <div className="mt-2 grid grid-cols-6 gap-1.5">
                             {labelSwatches.map((color) => (
-                              <button key={color} type="button" disabled={selectedLayer.locked} onClick={() => updateSelectedLayer({ backgroundColor: color, backgroundOpacity: Math.max(selectedLayer.backgroundOpacity, 70) })} className={`aspect-square rounded-md border shadow-hairline disabled:opacity-50 ${selectedLayer.backgroundColor === color ? "ring-2 ring-app-primary ring-offset-2" : "border-app-border"}`} style={{ backgroundColor: color }} aria-label={`انتخاب پس‌زمینه ${color}`} title={color} />
+                              <button key={color} type="button" disabled={selectedLayer.locked} onClick={() => applySelectedLayerColor("backgroundColor", color, { backgroundOpacity: Math.max(selectedLayer.backgroundOpacity, 70) })} className={`aspect-square rounded-md border shadow-hairline disabled:opacity-50 ${selectedLayer.backgroundColor === color ? "ring-2 ring-app-primary ring-offset-2" : "border-app-border"}`} style={{ backgroundColor: color }} aria-label={`انتخاب پس‌زمینه ${color}`} title={color} />
                             ))}
                           </div>
                           <label className="mt-3 block text-xs font-bold text-app-muted">
