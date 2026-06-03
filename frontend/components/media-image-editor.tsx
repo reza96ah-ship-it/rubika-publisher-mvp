@@ -197,6 +197,15 @@ function layerFont(layer: EditorLayer) {
   return `${weight} ${size}px "${family.replace(/"/g, '\\"')}"`;
 }
 
+function fontPreviewStyle(fontFamily: string, fontWeight = 400) {
+  return {
+    direction: "rtl" as const,
+    fontFamily: `"${fontFamily}"`,
+    fontSynthesis: "none",
+    fontWeight
+  };
+}
+
 async function loadLayerFonts(layers: EditorLayer[]) {
   if (typeof document === "undefined" || !("fonts" in document)) return;
   const fontSet = document.fonts as FontFaceSet & {
@@ -303,6 +312,10 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
   const selectedLayer = useMemo(() => layers.find((layer) => layer.id === selectedLayerId) ?? null, [layers, selectedLayerId]);
   const selectedBounds = selectedLayer?.visible ? layerBounds(selectedLayer) : null;
+  const selectedFontOption = useMemo(() => {
+    if (!selectedLayer || selectedLayer.type !== "text") return null;
+    return fontOptions.find((font) => font.value === selectedLayer.fontFamily) ?? fontOptions[0];
+  }, [selectedLayer]);
 
   const snapshot = useCallback((): EditorSnapshot => ({
     layers: cloneLayers(layers),
@@ -871,7 +884,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="ویرایشگر تصویر">
       <div aria-hidden="true" className="pointer-events-none fixed -top-96 h-0 w-0 overflow-hidden opacity-0">
         {fontOptions.map((font) => (
-          <span key={font.value} style={{ fontFamily: `"${font.value}"`, fontWeight: font.value.includes("Bold") ? 700 : 400 }}>
+          <span key={font.value} style={fontPreviewStyle(font.value, font.value.includes("Bold") ? 700 : 400)}>
             {fontSampleText}
           </span>
         ))}
@@ -1179,6 +1192,17 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                         </label>
                         <div className="block text-xs font-bold text-app-muted">
                           فونت فارسی
+                          {selectedFontOption ? (
+                            <div className="mt-2 rounded-md border border-blue-100 bg-blue-50/70 p-3 shadow-hairline">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[10px] font-black text-app-primary">پیش‌نمایش زنده</span>
+                                <span className="rounded bg-white px-2 py-1 text-[10px] font-black text-app-muted shadow-hairline">{selectedFontOption.label}</span>
+                              </div>
+                              <p className="mt-2 truncate text-2xl leading-9 text-app-text" style={fontPreviewStyle(selectedFontOption.value, selectedLayer.fontWeight)}>
+                                {fontSampleText}
+                              </p>
+                            </div>
+                          ) : null}
                           <div className="mt-2 max-h-56 space-y-1 overflow-y-auto rounded-md border border-app-border bg-white p-1 shadow-hairline" role="radiogroup" aria-label="فونت فارسی">
                             {fontOptions.map((font) => {
                               const active = selectedLayer.fontFamily === font.value;
@@ -1193,7 +1217,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                                   aria-checked={active}
                                 >
                                   <span className="shrink-0 text-[11px] font-black">{font.label}</span>
-                                  <span className="min-w-0 flex-1 truncate text-left text-lg leading-6 text-app-text" style={{ fontFamily: `"${font.value}"`, fontWeight: font.value.includes("Bold") ? 700 : selectedLayer.fontWeight }}>
+                                  <span className="min-w-0 flex-1 truncate text-left text-lg leading-6 text-app-text" style={fontPreviewStyle(font.value, font.value.includes("Bold") ? 700 : selectedLayer.fontWeight)}>
                                     {fontSampleText}
                                   </span>
                                 </button>
