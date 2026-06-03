@@ -14,6 +14,8 @@ import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, Timeline, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
+import { channelCanAutoPublish, channelCanManualPublish, channelIsReady, channelStatusLabel, findChannelAccount, loadChannelAccounts, type ChannelAccount } from "../../lib/channel-accounts";
+import { normalizeChannels } from "../../lib/channels";
 import { notifyNotificationsUpdated } from "../../lib/notifications";
 import { apiUrl, approvalBlocksPublishing, approvalConfig, authHeaders, formatDateTime, postFinalText, readApiError, recoveryGuidance, type Post } from "../../lib/posts";
 
@@ -71,6 +73,7 @@ export default function QueuePage() {
   const { showToast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [channelAccounts, setChannelAccounts] = useState<ChannelAccount[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [statusFilter, setStatusFilter] = useState<QueueFilter>("all");
@@ -92,9 +95,10 @@ export default function QueuePage() {
     setError("");
     try {
       const headers = authHeaders();
-      const [response, campaignsResponse, mediaResponse] = await Promise.all([
+      const [response, campaignsResponse, channelData, mediaResponse] = await Promise.all([
         fetch(`${apiUrl}/posts`, { headers }),
         loadCampaigns(),
+        loadChannelAccounts(),
         fetch(`${apiUrl}/media`, { headers })
       ]);
       if (!response.ok) throw new Error("دریافت صف انتشار ناموفق بود");
@@ -102,6 +106,7 @@ export default function QueuePage() {
       const queuePosts = sortQueuePosts(allPosts.filter((post) => queueStatuses.has(post.status)));
       setPosts(queuePosts);
       setCampaigns(campaignsResponse);
+      setChannelAccounts(channelData.accounts);
       setMediaAssets(mediaResponse.ok ? await mediaResponse.json() : []);
       setSelectedPostId((current) => current ?? queuePosts[0]?.id ?? null);
       setLastUpdatedAt(new Date());
@@ -309,6 +314,7 @@ export default function QueuePage() {
   }, [posts]);
 
   const selectedPost = selectedPostId ? posts.find((post) => post.id === selectedPostId) ?? filteredPosts[0] ?? null : filteredPosts[0] ?? posts[0] ?? null;
+  const readyChannelCount = channelAccounts.filter(channelIsReady).length;
   const filterCount = (filter: QueueFilter) => filter === "all" ? posts.length : counts[filter];
   const queueSummary = [
     {
@@ -362,6 +368,19 @@ export default function QueuePage() {
     return asset ? mediaPreviewUrls[asset.id] ?? "" : "";
   }
 
+  function postChannelReadiness(post: Post) {
+    return normalizeChannels(post.platform).map((channel) => {
+      const account = findChannelAccount(channelAccounts, channel);
+      const label = channel === "rubika" ? "روبیکا" : "اینستاگرام";
+      const mode = account?.mode === "instagram_personal_manual" ? "دستی" : channelCanAutoPublish(account) ? "خودکار" : channelCanManualPublish(account) ? "دستی" : "نیازمند تنظیم";
+      return {
+        label,
+        value: channelStatusLabel(account),
+        hint: mode
+      };
+    });
+  }
+
   return (
     <AuthGate>
       <AppShell>
@@ -379,6 +398,7 @@ export default function QueuePage() {
                 <StatusToken tone="primary">{posts.length} پست در صف</StatusToken>
                 <StatusToken tone={counts.failed ? "alert" : "success"}>{counts.failed ? `${counts.failed} خطای فعال` : "بدون خطای فعال"}</StatusToken>
                 <StatusToken tone={counts.blockedByReview ? "warning" : "success"}>{counts.blockedByReview ? `${counts.blockedByReview} منتظر تایید` : "بازبینی پاک"}</StatusToken>
+                <StatusToken tone={readyChannelCount ? "success" : "warning"}>{readyChannelCount}/{channelAccounts.length || 2} کانال آماده</StatusToken>
                 {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
               </>
             )}
@@ -403,6 +423,11 @@ export default function QueuePage() {
           {posts.some((post) => post.status === "failed" && approvalBlocksPublishing(post)) ? (
             <NoticeBanner tone="warning" title="بازیابی گروهی محدود شده است">
               بعضی پست‌های ناموفق هنوز تایید بازبینی ندارند. آن‌ها را از لیست محتوا تایید کنید یا جداگانه بررسی کنید.
+            </NoticeBanner>
+          ) : null}
+          {!readyChannelCount ? (
+            <NoticeBanner tone="warning" title="هیچ کانال آماده‌ای فعال نیست">
+              برای زمان‌بندی و بازیابی صف، ابتدا وضعیت روبیکا یا اینستاگرام را در مرکز کانال‌ها کامل کنید.
             </NoticeBanner>
           ) : null}
 
@@ -573,7 +598,8 @@ export default function QueuePage() {
                             { label: "بازبینی", value: approvalConfig(selectedPost.approval_status).label },
                             { label: "تلاش انتشار", value: selectedPost.attempt_count },
                             { label: "آخرین تغییر", value: formatDateTime(selectedPost.updated_at) },
-                            { label: "شناسه پست", value: `#${selectedPost.id}` }
+                            { label: "شناسه پست", value: `#${selectedPost.id}` },
+                            ...postChannelReadiness(selectedPost)
                           ]}
                         />
                       </div>

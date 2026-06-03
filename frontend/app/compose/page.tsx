@@ -22,9 +22,10 @@ import { Field, Input, Select, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
 import { NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { createCampaign, loadCampaigns, type Campaign } from "../../lib/campaigns";
-import { channelOptions, channelValidationNotes, hasChannel, normalizeChannels, serializeChannels, type PublishingChannel } from "../../lib/channels";
+import { channelCanAutoPublish, channelCanManualPublish, channelIsReady, channelStatusLabel, findChannelAccount, loadChannelAccounts, type ChannelAccount } from "../../lib/channel-accounts";
+import { channelOptions, hasChannel, normalizeChannels, serializeChannels, type PublishingChannel } from "../../lib/channels";
 import { approvalBlocksPublishing, approvalConfig } from "../../lib/posts";
-import { isRubikaConnected, loadWorkspaceOverview, type RubikaSettings, type StoreProfile } from "../../lib/workspace";
+import { loadWorkspaceOverview, type StoreProfile } from "../../lib/workspace";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const scheduleTimezone = "Asia/Tehran";
@@ -69,12 +70,6 @@ type Post = {
   reviewed_by: string;
 };
 
-type InstagramSettings = {
-  account_type: string;
-  publish_mode: string;
-  status: string;
-};
-
 const emptyForm = {
   title: "",
   caption: "",
@@ -95,8 +90,7 @@ function ComposePageContent() {
   const isEditing = Boolean(editingPostId);
 
   const [store, setStore] = useState<StoreProfile | null>(null);
-  const [rubika, setRubika] = useState<RubikaSettings | null>(null);
-  const [instagram, setInstagram] = useState<InstagramSettings | null>(null);
+  const [channelAccounts, setChannelAccounts] = useState<ChannelAccount[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
@@ -154,18 +148,28 @@ function ComposePageContent() {
   const hasTitle = Boolean(form.title.trim());
   const hasPostBody = Boolean(form.caption.trim() || previewImageUrl);
   const hasLocalDraftContent = Boolean(form.title.trim() || form.caption.trim() || form.hashtags.trim() || form.campaign_id || form.campaign.trim() || form.internal_note.trim() || form.scheduled_at || selectedMediaId);
-  const rubikaReady = isRubikaConnected(rubika);
   const selectedChannels = useMemo(() => normalizeChannels(form.platform), [form.platform]);
   const instagramSelected = hasChannel(form.platform, "instagram");
   const rubikaSelected = hasChannel(form.platform, "rubika");
-  const instagramReminderReady = Boolean(instagram?.publish_mode === "reminder" || instagram?.status === "reminder_ready");
-  const hasReadyPublishingChannel = (rubikaSelected && rubikaReady) || (instagramSelected && instagramReminderReady);
+  const rubikaChannel = findChannelAccount(channelAccounts, "rubika");
+  const instagramChannel = findChannelAccount(channelAccounts, "instagram");
+  const rubikaReady = channelIsReady(rubikaChannel);
+  const instagramReady = channelIsReady(instagramChannel);
+  const instagramManualReady = channelCanManualPublish(instagramChannel);
+  const selectedReadyChannels = selectedChannels.filter((channel) => channelIsReady(findChannelAccount(channelAccounts, channel)));
+  const hasReadyPublishingChannel = selectedReadyChannels.length > 0;
   const canMoveToReady = !editingPost || ["draft", "failed", "cancelled"].includes(editingPost.status);
   const reviewBlocksSchedule = editingPost ? approvalBlocksPublishing(editingPost) : false;
   const canSaveDraft = hasTitle;
   const canMarkReady = hasTitle && hasPostBody && canMoveToReady;
   const canSchedule = canMarkReady && hasSchedule && hasReadyPublishingChannel && !reviewBlocksSchedule;
-  const channelNotes = channelValidationNotes(form.platform);
+  const channelNotes = selectedChannels.map((channel) => {
+    const account = findChannelAccount(channelAccounts, channel);
+    if (!account) return `${channel === "rubika" ? "روبیکا" : "اینستاگرام"} هنوز در مرکز کانال‌ها ثبت نشده است.`;
+    if (channelCanAutoPublish(account)) return `${channel === "rubika" ? "روبیکا" : "اینستاگرام"} برای انتشار خودکار آماده است.`;
+    if (channelCanManualPublish(account)) return `${channel === "rubika" ? "روبیکا" : "اینستاگرام"} در حالت انتشار دستی/یادآوری آماده است.`;
+    return `${channel === "rubika" ? "روبیکا" : "اینستاگرام"}: ${channelStatusLabel(account)}. ${account.limitations[0] ?? "برای ادامه، مرکز کانال‌ها را بررسی کنید."}`;
+  });
   const readinessItems = [
     {
       label: "عنوان داخلی",
@@ -180,15 +184,15 @@ function ComposePageContent() {
       required: true
     },
     {
-      label: "اتصال روبیکا",
-      detail: rubikaReady ? "اتصال روبیکا تست شده و آماده انتشار است." : "برای زمان‌بندی نهایی، اتصال روبیکا را تست کنید.",
-      done: rubikaReady,
+      label: "کانال روبیکا",
+      detail: rubikaReady ? "روبیکا آماده انتشار خودکار است." : `روبیکا: ${channelStatusLabel(rubikaChannel)}`,
+      done: !rubikaSelected || rubikaReady,
       required: true
     },
     {
       label: "کانال انتشار",
-      detail: instagramSelected && instagramReminderReady ? "اینستاگرام در حالت یادآوری دستی آماده زمان‌بندی است." : instagramSelected && rubikaSelected ? "روبیکا منتشر می‌شود و اینستاگرام تا اتصال Meta OAuth به صورت نتیجه کانالی ثبت می‌شود." : instagramSelected ? "اینستاگرام در این فاز برای پیش‌نویس فعال است؛ زمان‌بندی بدون کانال آماده مسدود می‌شود." : "کانال انتشار برای worker فعال انتخاب شده است.",
-      done: !instagramSelected || hasReadyPublishingChannel,
+      detail: instagramSelected && instagramManualReady ? "اینستاگرام در حالت انتشار دستی/یادآوری آماده است." : instagramSelected && instagramReady ? "اینستاگرام برای مسیر انتخاب‌شده آماده است." : instagramSelected && rubikaReady ? "روبیکا آماده است؛ اینستاگرام هنوز نیازمند اقدام کانالی است." : instagramSelected ? `اینستاگرام: ${channelStatusLabel(instagramChannel)}` : "کانال انتخاب‌شده برای worker فعال است.",
+      done: selectedChannels.every((channel) => channelIsReady(findChannelAccount(channelAccounts, channel))),
       required: instagramSelected && !hasReadyPublishingChannel
     },
     {
@@ -232,7 +236,7 @@ function ComposePageContent() {
     },
     {
       label: "بازبینی نهایی",
-      helper: instagramSelected && !hasReadyPublishingChannel ? "اینستاگرام برای زمان‌بندی به حالت یادآوری دستی یا اتصال Meta نیاز دارد." : reviewBlocksSchedule ? "این پست قبل از زمان‌بندی باید تایید شود." : canSchedule ? "پست آماده ورود به صف انتشار است." : "پیش‌نمایش و الزام‌های انتشار را بررسی کنید.",
+      helper: !hasReadyPublishingChannel ? "حداقل یک کانال آماده برای زمان‌بندی لازم است." : instagramSelected && !instagramReady ? "اینستاگرام هنوز نیازمند اقدام است؛ کانال آماده دیگر می‌تواند ادامه دهد." : reviewBlocksSchedule ? "این پست قبل از زمان‌بندی باید تایید شود." : canSchedule ? "پست آماده ورود به صف انتشار است." : "پیش‌نمایش و الزام‌های انتشار را بررسی کنید.",
       icon: ShieldCheck,
       state: canSchedule ? "done" : canMarkReady ? "active" : "pending"
     }
@@ -251,18 +255,17 @@ function ComposePageContent() {
     setLoading(true);
     setComposerReady(false);
     const headers = { Authorization: `Bearer ${token()}` };
-    const [overview, loadedCampaigns, mediaResponse, postsResponse, instagramResponse, postResponse] = await Promise.all([
+    const [overview, loadedCampaigns, channelData, mediaResponse, postsResponse, postResponse] = await Promise.all([
       loadWorkspaceOverview(),
       loadCampaigns(),
+      loadChannelAccounts(),
       fetch(`${apiUrl}/media`, { headers }),
       fetch(`${apiUrl}/posts`, { headers }),
-      fetch(`${apiUrl}/instagram/settings`, { headers }),
       editingPostId ? fetch(`${apiUrl}/posts/${editingPostId}`, { headers }) : Promise.resolve(null)
     ]);
 
     setStore(overview.store);
-    setRubika(overview.rubika);
-    setInstagram(instagramResponse.ok ? await instagramResponse.json() : null);
+    setChannelAccounts(channelData.accounts);
     setCampaigns(loadedCampaigns);
     if (postsResponse.ok) setPosts(await postsResponse.json());
 
@@ -660,13 +663,15 @@ function ComposePageContent() {
       return;
     }
     if (action === "schedule" && !canSchedule) {
-      const scheduleError = instagramSelected && !hasReadyPublishingChannel
-        ? "زمان‌بندی اینستاگرام بعد از فعال‌سازی حالت یادآوری دستی یا اتصال Meta OAuth باز می‌شود."
+      const scheduleError = !hasReadyPublishingChannel
+        ? "برای زمان‌بندی، حداقل یک کانال آماده در مرکز کانال‌ها لازم است."
+        : instagramSelected && !instagramReady
+          ? "اینستاگرام هنوز آماده نیست؛ حالت دستی یا Meta OAuth را از مرکز کانال‌ها کامل کنید."
         : reviewBlocksSchedule
           ? "این پست برای زمان‌بندی باید تایید بازبینی داشته باشد."
-          : rubikaReady
+          : hasReadyPublishingChannel
             ? "برای زمان‌بندی، زمان انتشار را انتخاب کنید."
-            : "برای زمان‌بندی، ابتدا اتصال روبیکا را تست کنید.";
+            : "برای زمان‌بندی، ابتدا مرکز کانال‌ها را کامل کنید.";
       setError(scheduleError);
       showToast({ title: "زمان‌بندی هنوز آماده نیست", description: scheduleError, tone: "warning" });
       return;
@@ -756,7 +761,7 @@ function ComposePageContent() {
                   {publishStateLabel}
                 </StatusToken>
                 <ChannelBadges platform={form.platform} compact />
-                <StatusToken tone={rubikaReady ? "success" : "warning"}>{rubikaReady ? "روبیکا متصل" : "اتصال روبیکا لازم است"}</StatusToken>
+                <StatusToken tone={hasReadyPublishingChannel ? "success" : "warning"}>{hasReadyPublishingChannel ? `${selectedReadyChannels.length} کانال آماده` : "تکمیل کانال لازم است"}</StatusToken>
                 {!isEditing ? <StatusToken tone={autosaveState === "dirty" ? "warning" : "neutral"}><Cloud className="h-3.5 w-3.5" aria-hidden="true" />{autosaveLabel}</StatusToken> : null}
                 {editingPost?.status ? <StatusBadge status={editingPost.status} /> : null}
                 {editingPost ? <ApprovalBadge status={editingPost.approval_status} compact /> : null}
@@ -767,7 +772,7 @@ function ComposePageContent() {
 
           {!isEditing && showComposerEntry ? (
             <ComposerStartPanel
-              storeName={store?.name || "فضای کاری روبیکا"}
+              storeName={store?.name || "فضای کاری اجتماعی"}
               storeCategory={store?.category}
               brandColor={store?.brand_primary_color}
               avatarUrl={brandAvatarUrl}
