@@ -89,7 +89,6 @@ const stickers = ["✨", "🔥", "🎉", "❤️", "⭐", "✅", "📣", "🛍�
 const fontOptions = [
   { label: "وزیرمتن", value: "Vazirmatn" },
   { label: "لاله‌زار", value: "Lalezar" },
-  { label: "نسخ نوتو", value: "Noto Naskh Arabic" },
   { label: "B Badr", value: "BBadr" },
   { label: "B Baran", value: "BBaran" },
   { label: "B Bardiya", value: "BBardiya" },
@@ -130,33 +129,13 @@ const fontOptions = [
   { label: "B Yekan", value: "BYekan" },
   { label: "B Zar", value: "BZar" },
   { label: "B Ziba", value: "BZiba" },
-  { label: "قاهره", value: "Cairo" },
-  { label: "تجوال", value: "Tajawal" },
-  { label: "المرعی", value: "Almarai" },
-  { label: "چانگا", value: "Changa" },
-  { label: "المسیری", value: "El Messiri" },
-  { label: "IBM Plex Arabic", value: "IBM Plex Sans Arabic" },
-  { label: "نوتو سنس عربی", value: "Noto Sans Arabic" },
-  { label: "نوتو کوفی عربی", value: "Noto Kufi Arabic" },
-  { label: "نستعلیق نوتو", value: "Noto Nastaliq Urdu" },
-  { label: "امیری", value: "Amiri" },
-  { label: "عارف رقعه", value: "Aref Ruqaa" },
-  { label: "مرکزی", value: "Markazi Text" },
-  { label: "میرزا", value: "Mirza" },
-  { label: "ریم کوفی", value: "Reem Kufi" },
-  { label: "رقاص", value: "Rakkas" },
-  { label: "کتیبه", value: "Katibeh" },
-  { label: "لطیف", value: "Lateef" },
-  { label: "هرمتان", value: "Harmattan" },
-  { label: "لیمونادا", value: "Lemonada" },
-  { label: "مدى", value: "Mada" },
   { label: "Tahoma", value: "Tahoma" }
 ];
 const textStylePresets = [
   { label: "تیتر فروش", value: "فروش ویژه", color: "#FFFFFF", backgroundColor: "#E11D48", fontFamily: "Lalezar", fontWeight: 700, fontSizeRatio: 12, radius: 18, padding: 18, outlineWidth: 0, shadowBlur: 8 },
   { label: "قیمت", value: "۲۹۹ هزار تومان", color: "#0F172A", backgroundColor: "#FFFFFF", fontFamily: "Vazirmatn", fontWeight: 900, fontSizeRatio: 16, radius: 14, padding: 16, outlineWidth: 0, shadowBlur: 5 },
   { label: "دعوت به اقدام", value: "همین حالا سفارش بده", color: "#FFFFFF", backgroundColor: "#0F766E", fontFamily: "Vazirmatn", fontWeight: 800, fontSizeRatio: 20, radius: 999, padding: 16, outlineWidth: 0, shadowBlur: 6 },
-  { label: "زیرتیتر", value: "ارسال سریع و تضمین کیفیت", color: "#FFFFFF", backgroundColor: "#0F172A", fontFamily: "Noto Naskh Arabic", fontWeight: 700, fontSizeRatio: 24, radius: 12, padding: 14, outlineWidth: 1, shadowBlur: 4 }
+  { label: "زیرتیتر", value: "ارسال سریع و تضمین کیفیت", color: "#FFFFFF", backgroundColor: "#0F172A", fontFamily: "BNazanin", fontWeight: 700, fontSizeRatio: 24, radius: 12, padding: 14, outlineWidth: 1, shadowBlur: 4 }
 ];
 const initialAdjustments: ImageAdjustments = { brightness: 100, contrast: 100, saturation: 100 };
 const initialCrop: ImageCropSettings = { presetId: "original", scale: 100, offsetX: 0, offsetY: 0, rotation: 0, flipX: false };
@@ -214,7 +193,29 @@ function layerFont(layer: EditorLayer) {
   const weight = layer.type === "text" ? layer.fontWeight : 700;
   const size = layer.type === "sticker" ? Math.round(layer.fontSize * 1.2) : layer.fontSize;
   const family = layer.type === "sticker" ? "Arial" : layer.fontFamily;
-  return `${weight} ${size}px ${family}`;
+  return `${weight} ${size}px "${family.replace(/"/g, '\\"')}"`;
+}
+
+async function loadLayerFonts(layers: EditorLayer[]) {
+  if (typeof document === "undefined" || !("fonts" in document)) return;
+  const fontSet = document.fonts as FontFaceSet & {
+    load?: (font: string, text?: string) => Promise<FontFace[]>;
+    ready?: Promise<FontFaceSet>;
+  };
+  const fontRequests = Array.from(new Set(
+    layers
+      .filter((layer) => layer.visible && layer.type === "text")
+      .map((layer) => layerFont({ ...layer, fontSize: 32 }))
+  ));
+
+  if (typeof fontSet.load === "function") {
+    await Promise.all(fontRequests.map((font) => fontSet.load?.(font, "فروش ویژه محصول")));
+  }
+  if (fontSet.ready) {
+    await fontSet.ready;
+    return;
+  }
+  await new Promise((resolve) => window.setTimeout(resolve, 180));
 }
 
 function splitTextLines(context: CanvasRenderingContext2D, layer: EditorLayer) {
@@ -413,8 +414,16 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   }, [fitCanvas, imageUrl]);
 
   useEffect(() => {
-    if (imageReady) renderCanvas();
-  }, [imageReady, renderCanvas]);
+    if (!imageReady) return;
+    let cancelled = false;
+    renderCanvas();
+    void loadLayerFonts(layers).then(() => {
+      if (!cancelled) renderCanvas();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [imageReady, layers, renderCanvas]);
 
   useEffect(() => {
     setSelectedLayerIds((current) => current.filter((id) => layers.some((layer) => layer.id === id)));
@@ -844,6 +853,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     const canvas = canvasRef.current;
     if (!canvas || !imageReady) return;
     setError("");
+    await loadLayerFonts(layers);
     renderCanvas();
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png", 0.94));
     if (!blob) {
@@ -858,6 +868,13 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
   return createPortal((
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="ویرایشگر تصویر">
+      <div aria-hidden="true" className="pointer-events-none fixed -top-96 h-0 w-0 overflow-hidden opacity-0">
+        {fontOptions.map((font) => (
+          <span key={font.value} style={{ fontFamily: `"${font.value}"`, fontWeight: font.value.includes("Bold") ? 700 : 400 }}>
+            فروش ویژه محصول
+          </span>
+        ))}
+      </div>
       <section className="flex max-h-[96vh] w-full max-w-[1480px] flex-col overflow-hidden rounded-lg border border-app-border bg-app-canvas shadow-2xl">
         <header className="flex flex-col justify-between gap-3 border-b border-app-border bg-white px-4 py-3 lg:flex-row lg:items-center">
           <div>

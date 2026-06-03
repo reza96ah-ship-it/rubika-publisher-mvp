@@ -196,7 +196,7 @@ Acceptance criteria:
 Current implementation status:
 
 - Text layers now render as resizable wrapped Persian text boxes.
-- Typography controls include 20 additional Fontsource families plus the imported 40-font P30 Persian webfont pack, font weight, line height, character spacing, width, padding, rounded background labels, outline, and shadow.
+- Typography controls use the imported 40-font P30 Persian webfont pack plus the core app fonts, with font weight, line height, character spacing, width, padding, rounded background labels, outline, and shadow.
 - Preset text styles are available for sale headers, prices, CTAs, and subtitles.
 - Canvas export preserves styled labels, outlines, shadows, opacity, and RTL text layout.
 
