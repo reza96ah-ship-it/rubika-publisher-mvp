@@ -188,18 +188,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <Search className="h-4 w-4" aria-hidden="true" />
                 </button>
 
-                <Link
-                  href="/channels"
-                  className={`app-interactive hidden h-9 items-center gap-2 rounded-md px-2.5 text-xs font-bold shadow-hairline sm:flex ${
-                    rubikaReady
-                      ? "bg-teal-50 text-teal-700 hover:bg-teal-100"
-                      : "bg-amber-50 text-amber-700 hover:bg-amber-100"
-                  }`}
-                >
-                  <Network className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span className="hidden xl:inline">کانال‌ها</span>
-                  <span>{rubikaReady ? "آماده" : "نیازمند بررسی"}</span>
-                </Link>
+                {!overviewLoading && !rubikaReady ? (
+                  <Link
+                    href="/channels"
+                    className="app-interactive hidden h-9 items-center gap-2 rounded-md bg-amber-50 px-2.5 text-xs font-bold text-amber-700 shadow-hairline hover:bg-amber-100 sm:flex"
+                  >
+                    <Network className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span className="hidden xl:inline">کانال‌ها</span>
+                    <span>نیازمند بررسی</span>
+                  </Link>
+                ) : null}
 
                 {showSetupAction ? (
                   <Link

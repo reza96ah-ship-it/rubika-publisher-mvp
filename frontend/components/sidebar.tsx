@@ -185,12 +185,12 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
         <div className="space-y-0.5">
           {settingsNavItems.map((item) => <NavEntry key={item.href} item={item} active={isNavItemActive(pathname, item)} />)}
         </div>
-        <Link href="/channels" className={`app-interactive mt-3 flex items-center gap-2 rounded-md px-2.5 py-2 text-xs font-bold shadow-hairline ${
-          ready ? "bg-teal-50 text-teal-700" : "bg-amber-50 text-amber-700"
-        }`}>
-          <span className={`h-2 w-2 rounded-full ${ready ? "bg-teal-500" : "app-status-pulse bg-amber-500"}`} />
-          {ready ? "کانال‌ها آماده انتشار" : "تکمیل کانال‌ها"}
-        </Link>
+        {!ready ? (
+          <Link href="/onboarding" className="app-interactive mt-3 flex items-center gap-2 rounded-md bg-amber-50 px-2.5 py-2 text-xs font-bold text-amber-700 shadow-hairline">
+            <span className="app-status-pulse h-2 w-2 rounded-full bg-amber-500" />
+            تکمیل راه‌اندازی
+          </Link>
+        ) : null}
       </div>
     </aside>
   );

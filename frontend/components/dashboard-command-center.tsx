@@ -125,7 +125,7 @@ export function LiveOperations({
   nextWindow: string;
 }) {
   const signals = [
-    { label: "آمادگی فضای کاری", value: `${setupScore}%`, healthy: setupScore === 100 },
+    ...(setupScore < 100 ? [{ label: "راه‌اندازی", value: `${setupScore}%`, healthy: false }] : []),
     { label: "کانال اصلی", value: rubikaReady ? "آماده" : "نیازمند بررسی", healthy: rubikaReady },
     { label: "حجم صف فعال", value: `${queueTotal} محتوا`, healthy: queueTotal < 10 },
     { label: "پنجره بعدی انتشار", value: nextWindow, healthy: true }

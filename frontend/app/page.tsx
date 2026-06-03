@@ -118,6 +118,7 @@ export default function HomePage() {
   const brandImageUrl = useMediaPreviewUrl(store?.avatar_asset_id ?? store?.logo_asset_id);
   const logoUrl = useMediaPreviewUrl(store?.logo_asset_id);
   const setupScore = Number(storeReady) * 50 + Number(rubikaReady) * 50;
+  const setupIncomplete = setupScore < 100;
   const priorityAlerts = notifications.notifications.filter((item) => item.action_required).slice(0, 4);
   const unreadAlerts = notifications.notifications.filter((item) => item.action_required && !readIds.has(item.id)).length;
   const nextPosts = scheduledPosts.slice(0, 3);
@@ -160,18 +161,20 @@ export default function HomePage() {
                     <Rocket className="h-3.5 w-3.5" aria-hidden="true" />
                     {priorityAlerts.length ? "نیازمند رسیدگی" : setupScore === 100 ? "عملیات پایدار" : "در حال آماده‌سازی"}
                   </StatusToken>
-                  <StatusToken tone={rubikaReady ? "success" : "warning"} className="gap-1">
-                    <PlugZap className="h-3.5 w-3.5" aria-hidden="true" />
-                    کانال‌ها {rubikaReady ? "آماده" : "نیازمند بررسی"}
-                  </StatusToken>
+                  {!rubikaReady ? (
+                    <StatusToken tone="warning" className="gap-1">
+                      <PlugZap className="h-3.5 w-3.5" aria-hidden="true" />
+                      کانال‌ها نیازمند بررسی
+                    </StatusToken>
+                  ) : null}
                   {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
                 </div>
                 <p className="app-section-kicker mt-4 text-[10px] font-black">Multi-channel Social Operations</p>
                 <h1 className="mt-2 text-2xl font-black text-app-text">مرکز فرمان شبکه‌های اجتماعی</h1>
                 <p className="mt-2 max-w-3xl text-sm leading-7 text-app-muted">{briefing}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {setupScore < 100 ? <Button href="/onboarding">شروع مسیر راه‌اندازی</Button> : <Button href="/queue">باز کردن صف عملیات</Button>}
-                  {setupScore < 100 ? <Button href="/queue" variant="secondary">صف عملیات</Button> : null}
+                  {setupIncomplete ? <Button href="/onboarding">شروع مسیر راه‌اندازی</Button> : <Button href="/queue">باز کردن صف عملیات</Button>}
+                  {setupIncomplete ? <Button href="/queue" variant="secondary">صف عملیات</Button> : null}
                   <Button href="/calendar" variant="secondary">پلنر انتشار</Button>
                   <Button type="button" variant="ghost" disabled={refreshing} onClick={() => loadDashboard(true)}>
                     <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
@@ -290,7 +293,7 @@ export default function HomePage() {
 
               <WorkspacePanel title="میز کار سریع" description="دسترسی کوتاه به کارهای پرتکرار روزانه." bodyClassName="p-3">
                 <div className="grid gap-2">
-                  <Button href="/onboarding" variant={setupScore < 100 ? "primary" : "secondary"}>مسیر راه‌اندازی</Button>
+                  {setupIncomplete ? <Button href="/onboarding">مسیر راه‌اندازی</Button> : null}
                   <Button href="/compose">ساخت محتوای جدید</Button>
                   <Button href="/content" variant="secondary">مرور محتوا و پیش‌نویس‌ها ({draftCount})</Button>
                   <Button href="/analytics" variant="secondary">تحلیل عملکرد</Button>
@@ -300,7 +303,7 @@ export default function HomePage() {
             </aside>
           </section>
 
-          <ReadinessJourney store={store} rubika={rubika} posts={posts} loading={loading} />
+          {setupIncomplete ? <ReadinessJourney store={store} rubika={rubika} posts={posts} loading={loading} /> : null}
         </WorkspacePage>
       </AppShell>
     </AuthGate>
