@@ -103,6 +103,7 @@ type SavedEditorTemplate = {
   overlay: ImageOverlaySettings;
   crop: ImageCropSettings;
   canvasSize: { width: number; height: number };
+  brandColors?: string[];
 };
 
 type DesignRecipe = {
@@ -374,6 +375,14 @@ function writeSavedTemplates(templates: SavedEditorTemplate[]) {
   window.localStorage.setItem(editorTemplateStorageKey, JSON.stringify(templates.slice(0, 18)));
 }
 
+function formatTemplateDate(value: string) {
+  try {
+    return new Intl.DateTimeFormat("fa-IR", { month: "short", day: "numeric" }).format(new Date(value));
+  } catch {
+    return "بدون تاریخ";
+  }
+}
+
 function scaleLayerToCanvas(layer: EditorLayer, from: { width: number; height: number }, to: { width: number; height: number }) {
   const scaleX = from.width ? to.width / from.width : 1;
   const scaleY = from.height ? to.height / from.height : 1;
@@ -584,6 +593,9 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   ].filter((group) => group.colors.length > 0), [brandColors, recentColors]);
   const activeCropPreset = cropPresets.find((preset) => preset.id === crop.presetId) ?? cropPresets[0];
   const activeOverlayPreset = overlayPresets.find((preset) => preset.mode === overlay.mode) ?? overlayPresets[0];
+  const brandKitColors = useMemo(() => uniqueColors([...brandColors, "#2563EB", "#0F766E", "#F59E0B"]).slice(0, 5), [brandColors]);
+  const brandPrimaryColor = brandKitColors[0] ?? "#2563EB";
+  const brandAccentColor = brandKitColors[1] ?? "#0F766E";
   const filteredStickerPacks = useMemo(() => {
     const query = stickerSearch.trim().toLowerCase();
     if (!query) return stickerPacks;
@@ -1112,12 +1124,19 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setAdjustments((current) => ({ ...current, ...recipe.adjustments }));
 
     const nextTextLayers = recipe.texts
-      .map((item) => {
+      .map((item, index) => {
         const textPreset = textStylePresets[item.presetIndex];
         const layer = textPreset ? createTextLayer(textPreset.value, textPreset) : null;
         if (!layer) return null;
+        const brandPatch = brandColors.length ? {
+          color: index === 1 ? "#0F172A" : "#FFFFFF",
+          backgroundColor: index === 1 ? "#FFFFFF" : index === 2 ? brandAccentColor : brandPrimaryColor,
+          backgroundOpacity: Math.max(layer.backgroundOpacity, index === 1 ? 92 : 76),
+          outlineColor: brandPrimaryColor
+        } : {};
         return {
           ...layer,
+          ...brandPatch,
           x: Math.round(nextSize.width * (item.x ?? 0.5)),
           y: Math.round(nextSize.height * item.y),
           boxWidth: Math.max(220, Math.round(nextSize.width * item.boxWidth)),
@@ -1161,7 +1180,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       adjustments: { ...adjustments },
       overlay: { ...overlay },
       crop: { ...crop },
-      canvasSize: { ...canvasSize }
+      canvasSize: { ...canvasSize },
+      brandColors: brandKitColors
     };
     const nextTemplates = [nextTemplate, ...savedTemplates.filter((template) => template.id !== nextTemplate.id)].slice(0, 18);
     writeSavedTemplates(nextTemplates);
@@ -1230,6 +1250,34 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
   function addProductSpotlight() {
     updateOverlay({ mode: "spotlight", strength: 58 });
+  }
+
+  function applyBrandStyle(scope: "selected" | "allText") {
+    const targetIds = (scope === "selected" ? layers.filter((layer) => selectedLayerIds.includes(layer.id) && layer.type === "text") : layers.filter((layer) => layer.type === "text")).map((layer) => layer.id);
+    if (!targetIds.length) {
+      setError(scope === "selected" ? "برای اعمال برند، ابتدا یک لایه متن انتخاب کنید." : "برای اعمال برند، ابتدا یک متن به تصویر اضافه کنید.");
+      return;
+    }
+    remember();
+    setLayers((current) => current.map((layer) => {
+      if (!targetIds.includes(layer.id) || layer.locked || layer.type !== "text") return layer;
+      return {
+        ...layer,
+        color: "#FFFFFF",
+        backgroundColor: brandPrimaryColor,
+        backgroundOpacity: Math.max(layer.backgroundOpacity, 78),
+        outlineColor: brandAccentColor,
+        outlineWidth: Math.max(layer.outlineWidth, 1),
+        shadowBlur: Math.max(layer.shadowBlur, 8),
+        padding: Math.max(layer.padding, 14),
+        radius: Math.max(layer.radius, 12)
+      };
+    }));
+    if (selectedLayer?.type === "text") {
+      setSelectedColorDraft("#FFFFFF");
+      setSelectedOutlineColorDraft(brandAccentColor);
+    }
+    setError("");
   }
 
   function updateSelectedLayer(patch: Partial<EditorLayer>, withHistory = true) {
@@ -1596,11 +1644,12 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
         <div className="grid min-h-0 flex-1 overflow-hidden bg-app-canvas max-lg:grid-rows-[minmax(340px,1fr)_minmax(220px,30vh)_minmax(220px,30vh)] lg:grid-cols-[286px_minmax(420px,1fr)_340px]">
           <aside className="min-h-0 space-y-4 overflow-y-auto border-b border-app-border bg-app-surfaceMuted p-4 max-lg:order-2 lg:border-b-0 lg:border-l">
             <nav className="sticky top-0 z-20 -mx-4 -mt-4 border-b border-app-border bg-app-surfaceMuted/95 px-4 py-3 backdrop-blur" aria-label="ابزارهای ویرایشگر">
-              <div className="grid grid-cols-4 gap-1">
+              <div className="grid grid-cols-5 gap-1">
                 {[
                   { href: "#editor-crop", label: "تصویر", icon: Crop },
                   { href: "#editor-text", label: "متن", icon: Type },
                   { href: "#editor-recipes", label: "قالب", icon: Layers3 },
+                  { href: "#editor-brand", label: "برند", icon: Palette },
                   { href: "#editor-effects", label: "افکت", icon: Palette }
                 ].map((item) => {
                   const Icon = item.icon;
@@ -1756,6 +1805,63 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
               ) : null}
             </section>
 
+            <section id="editor-brand" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Palette className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                  <div>
+                    <h3 className="text-xs font-black text-app-text">کیت برند</h3>
+                    <p className="mt-0.5 text-[10px] font-bold text-app-muted">رنگ و تایپوگرافی فروشگاه برای طراحی سریع</p>
+                  </div>
+                </div>
+                <span className="rounded-full bg-app-surfaceMuted px-2 py-1 text-[10px] font-black text-app-muted">
+                  {brandColors.length ? "فروشگاه" : "پیش‌فرض"}
+                </span>
+              </div>
+              <div className="mt-3 rounded-md border border-app-border bg-app-surfaceMuted p-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-sm font-black text-white shadow-hairline" style={{ background: `linear-gradient(135deg, ${brandPrimaryColor}, ${brandAccentColor})` }}>
+                    BR
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-black text-app-text">هویت بصری فروشگاه</p>
+                    <p className="mt-1 text-[10px] font-bold text-app-muted">لوگو هنوز فایل جدا ندارد؛ رنگ‌ها از پروفایل فروشگاه خوانده می‌شوند.</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-5 gap-1.5">
+                  {brandKitColors.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => selectedLayer?.type === "text" ? applySelectedLayerColor("backgroundColor", color, { backgroundOpacity: Math.max(selectedLayer.backgroundOpacity, 78), color: "#FFFFFF" }) : null}
+                      className="aspect-square rounded-md border border-white shadow-hairline ring-1 ring-app-border"
+                      style={{ backgroundColor: color }}
+                      aria-label={`رنگ برند ${color}`}
+                      title={color}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => applyBrandStyle("selected")} disabled={!selectedLayerIds.length} className="app-interactive rounded-md border border-app-border bg-white px-2 py-2 text-right text-[11px] font-black text-app-text shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary disabled:pointer-events-none disabled:opacity-45">
+                  اعمال روی انتخاب
+                </button>
+                <button type="button" onClick={() => applyBrandStyle("allText")} disabled={!layerStats.text} className="app-interactive rounded-md border border-app-border bg-white px-2 py-2 text-right text-[11px] font-black text-app-text shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary disabled:pointer-events-none disabled:opacity-45">
+                  اعمال روی همه متن‌ها
+                </button>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="rounded-md bg-app-surfaceMuted px-3 py-2">
+                  <span className="block text-[9px] font-black text-app-muted">فونت تیتر</span>
+                  <span className="mt-0.5 block text-[11px] font-black text-app-text">B Titr Bold</span>
+                </div>
+                <div className="rounded-md bg-app-surfaceMuted px-3 py-2">
+                  <span className="block text-[9px] font-black text-app-muted">فونت خوانا</span>
+                  <span className="mt-0.5 block text-[11px] font-black text-app-text">Vazirmatn</span>
+                </div>
+              </div>
+            </section>
+
             <section id="editor-templates" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
               <div className="flex items-center gap-2">
                 <Save className="h-4 w-4 text-app-primary" aria-hidden="true" />
@@ -1779,7 +1885,11 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                     <div className="flex items-center justify-between gap-2">
                       <button type="button" onClick={() => applySavedTemplate(template)} className="min-w-0 flex-1 text-right">
                         <span className="block truncate text-[11px] font-black text-app-text">{template.name}</span>
-                        <span className="mt-0.5 block text-[10px] font-bold text-app-muted">{template.layers.length} لایه · {template.crop.presetId}</span>
+                        <span className="mt-0.5 block text-[10px] font-bold text-app-muted">{template.layers.length} لایه · {template.crop.presetId} · {formatTemplateDate(template.createdAt)}</span>
+                        <span className="mt-1 flex flex-wrap gap-1">
+                          <span className="rounded bg-app-surfaceMuted px-1.5 py-0.5 text-[9px] font-black text-app-muted">{template.canvasSize.width}×{template.canvasSize.height}</span>
+                          <span className="rounded bg-app-surfaceMuted px-1.5 py-0.5 text-[9px] font-black text-app-muted">{template.brandColors?.length ?? 0} رنگ برند</span>
+                        </span>
                       </button>
                       <button type="button" onClick={() => deleteSavedTemplate(template.id)} className="app-interactive flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-600 hover:bg-rose-50 hover:text-rose-700" aria-label="حذف قالب" title="حذف قالب">
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
