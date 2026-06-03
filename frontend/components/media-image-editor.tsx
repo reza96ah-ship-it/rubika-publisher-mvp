@@ -62,6 +62,8 @@ type ImageCropSettings = {
   flipX: boolean;
 };
 
+type ExportFormat = "png" | "jpeg" | "webp";
+
 type MediaImageEditorProps = {
   imageUrl: string;
   filename: string;
@@ -215,6 +217,11 @@ const fontCategoryFilters = [
   { id: "body", label: "متن", test: (font: typeof fontOptions[number]) => bodyFontValues.has(font.value) },
   { id: "classic", label: "کلاسیک", test: (font: typeof fontOptions[number]) => classicFontValues.has(font.value) },
   { id: "decorative", label: "تزئینی", test: (font: typeof fontOptions[number]) => decorativeFontValues.has(font.value) }
+];
+const exportFormatOptions: Array<{ id: ExportFormat; label: string; detail: string; mime: string; extension: string }> = [
+  { id: "png", label: "PNG", detail: "کیفیت بالا", mime: "image/png", extension: "png" },
+  { id: "jpeg", label: "JPG", detail: "حجم کمتر", mime: "image/jpeg", extension: "jpg" },
+  { id: "webp", label: "WEBP", detail: "مدرن و سبک", mime: "image/webp", extension: "webp" }
 ];
 const initialAdjustments: ImageAdjustments = { brightness: 100, contrast: 100, saturation: 100 };
 const initialOverlay: ImageOverlaySettings = { mode: "none", strength: 45 };
@@ -563,6 +570,9 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const [savedTemplates, setSavedTemplates] = useState<SavedEditorTemplate[]>([]);
   const [templateName, setTemplateName] = useState("");
   const [activeDesignRecipeId, setActiveDesignRecipeId] = useState("");
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("png");
+  const [exportQuality, setExportQuality] = useState(92);
+  const [exportNameSuffix, setExportNameSuffix] = useState("edited");
 
   const selectedLayer = useMemo(() => layers.find((layer) => layer.id === selectedLayerId) ?? null, [layers, selectedLayerId]);
   const selectedBounds = selectedLayer?.visible ? layerBounds(selectedLayer) : null;
@@ -596,6 +606,10 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const brandKitColors = useMemo(() => uniqueColors([...brandColors, "#2563EB", "#0F766E", "#F59E0B"]).slice(0, 5), [brandColors]);
   const brandPrimaryColor = brandKitColors[0] ?? "#2563EB";
   const brandAccentColor = brandKitColors[1] ?? "#0F766E";
+  const activeExportFormat = exportFormatOptions.find((option) => option.id === exportFormat) ?? exportFormatOptions[0];
+  const safeExportSuffix = exportNameSuffix.trim().replace(/[^\w-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "edited";
+  const outputBaseName = filename.replace(/\.[^.]+$/, "") || "image";
+  const outputFilename = `${outputBaseName}-${safeExportSuffix}.${activeExportFormat.extension}`;
   const filteredStickerPacks = useMemo(() => {
     const query = stickerSearch.trim().toLowerCase();
     if (!query) return stickerPacks;
@@ -1574,15 +1588,13 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setError("");
     await loadLayerFonts(layers);
     renderCanvas();
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png", 0.94));
+    const quality = exportFormat === "png" ? undefined : exportQuality / 100;
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, activeExportFormat.mime, quality));
     if (!blob) {
       setError("ساخت خروجی تصویر ناموفق بود.");
       return;
     }
-    const baseName = filename.replace(/\.[^.]+$/, "") || "image";
-    const preset = cropPresets.find((item) => item.id === crop.presetId);
-    const suffix = preset && preset.id !== "original" ? `${preset.id}-variant` : "edited";
-    await onSave(new File([blob], `${baseName}-${suffix}.png`, { type: "image/png" }));
+    await onSave(new File([blob], outputFilename, { type: activeExportFormat.mime }));
   }
 
   return createPortal((
@@ -1632,7 +1644,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
             </Button>
             <Button type="button" size="sm" disabled={!imageReady || saving} onClick={() => void saveEditedImage()}>
               <Save className="ml-1.5 h-4 w-4" aria-hidden="true" />
-              {saving ? "در حال ذخیره" : "ذخیره نسخه جدید"}
+              {saving ? "در حال ذخیره" : `ذخیره ${activeExportFormat.label}`}
             </Button>
             <button type="button" onClick={onClose} className="app-interactive flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-app-text" aria-label="بستن ویرایشگر" title="بستن ویرایشگر">
               <X className="h-4 w-4" aria-hidden="true" />
@@ -1644,12 +1656,13 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
         <div className="grid min-h-0 flex-1 overflow-hidden bg-app-canvas max-lg:grid-rows-[minmax(340px,1fr)_minmax(220px,30vh)_minmax(220px,30vh)] lg:grid-cols-[286px_minmax(420px,1fr)_340px]">
           <aside className="min-h-0 space-y-4 overflow-y-auto border-b border-app-border bg-app-surfaceMuted p-4 max-lg:order-2 lg:border-b-0 lg:border-l">
             <nav className="sticky top-0 z-20 -mx-4 -mt-4 border-b border-app-border bg-app-surfaceMuted/95 px-4 py-3 backdrop-blur" aria-label="ابزارهای ویرایشگر">
-              <div className="grid grid-cols-5 gap-1">
+              <div className="grid grid-cols-6 gap-1">
                 {[
                   { href: "#editor-crop", label: "تصویر", icon: Crop },
                   { href: "#editor-text", label: "متن", icon: Type },
                   { href: "#editor-recipes", label: "قالب", icon: Layers3 },
                   { href: "#editor-brand", label: "برند", icon: Palette },
+                  { href: "#editor-export", label: "خروجی", icon: Save },
                   { href: "#editor-effects", label: "افکت", icon: Palette }
                 ].map((item) => {
                   const Icon = item.icon;
@@ -1859,6 +1872,60 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                   <span className="block text-[9px] font-black text-app-muted">فونت خوانا</span>
                   <span className="mt-0.5 block text-[11px] font-black text-app-text">Vazirmatn</span>
                 </div>
+              </div>
+            </section>
+
+            <section id="editor-export" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Save className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                  <div>
+                    <h3 className="text-xs font-black text-app-text">خروجی و نسخه</h3>
+                    <p className="mt-0.5 text-[10px] font-bold text-app-muted">کنترل فرمت، کیفیت و نام فایل ذخیره‌شده</p>
+                  </div>
+                </div>
+                <span className="rounded-full bg-app-surfaceMuted px-2 py-1 text-[10px] font-black text-app-muted">{activeExportFormat.label}</span>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {exportFormatOptions.map((option) => {
+                  const active = exportFormat === option.id;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setExportFormat(option.id)}
+                      className={`app-interactive rounded-md border px-2 py-2 text-right shadow-hairline ${active ? "border-blue-300 bg-blue-50 text-app-primary ring-1 ring-blue-100" : "border-app-border bg-white text-app-text hover:bg-app-surfaceMuted"}`}
+                    >
+                      <span className="block text-[11px] font-black">{option.label}</span>
+                      <span className="mt-0.5 block text-[9px] font-bold text-app-muted">{option.detail}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <label className="mt-3 block text-xs font-bold text-app-muted">
+                پسوند نام نسخه
+                <input
+                  value={exportNameSuffix}
+                  onChange={(event) => setExportNameSuffix(event.target.value)}
+                  className="mt-2 h-9 w-full rounded-md border border-app-border bg-app-canvas px-3 text-xs font-bold text-app-text outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                  dir="ltr"
+                />
+              </label>
+              <label className={`mt-3 block text-xs font-bold text-app-muted ${exportFormat === "png" ? "opacity-50" : ""}`}>
+                کیفیت فایل · {exportFormat === "png" ? "بدون فشرده‌سازی" : `${exportQuality}%`}
+                <input
+                  type="range"
+                  min="60"
+                  max="100"
+                  value={exportQuality}
+                  disabled={exportFormat === "png"}
+                  onChange={(event) => setExportQuality(Number(event.target.value))}
+                  className="mt-2 w-full accent-blue-600 disabled:opacity-50"
+                />
+              </label>
+              <div className="mt-3 rounded-md border border-app-border bg-app-surfaceMuted px-3 py-2">
+                <span className="block text-[9px] font-black text-app-muted">نام خروجی</span>
+                <span className="mt-1 block break-all text-[11px] font-black text-app-text" dir="ltr">{outputFilename}</span>
               </div>
             </section>
 
