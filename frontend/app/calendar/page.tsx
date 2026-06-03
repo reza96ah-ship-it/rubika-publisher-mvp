@@ -19,6 +19,7 @@ import Link from "next/link";
 import { DragEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
+import { ChannelBadges } from "../../components/channel-badges";
 import { LoadingRows } from "../../components/loading-skeleton";
 import { CountdownBadge } from "../../components/countdown-badge";
 import { DataSearchField } from "../../components/data-view";
@@ -799,6 +800,7 @@ export default function CalendarPage() {
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <StatusBadge status={post.status} />
+                          <ChannelBadges platform={post.platform} compact />
                           <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
                         </div>
                         <Button type="button" variant={selectedPost?.id === post.id ? "primary" : "secondary"} size="sm" onClick={() => selectPost(post)}>
@@ -919,6 +921,7 @@ export default function CalendarPage() {
                           <span className="min-w-0 flex-1">
                             <span className="flex flex-wrap items-center gap-2">
                               <StatusBadge status={post.status} />
+                              <ChannelBadges platform={post.platform} compact />
                               <span className="text-xs font-bold text-app-muted">{formatJalaliTime(post.scheduled_at)}</span>
                             </span>
                             <span className="mt-2 block truncate text-sm font-black text-app-text">{post.title}</span>
@@ -946,6 +949,7 @@ export default function CalendarPage() {
                         ) : null}
                         <div className="flex flex-wrap items-center gap-2">
                           <StatusBadge status={selectedPost.status} />
+                          <ChannelBadges platform={selectedPost.platform} compact />
                           <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
                           <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1 text-[11px] font-black text-slate-600">
                             <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: campaignColorForPost(selectedPost, campaigns) }} />

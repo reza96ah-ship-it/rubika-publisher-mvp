@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
-from app.models import Campaign, Post, RubikaAccount, Store, User
+from app.models import Campaign, InstagramAccount, Post, RubikaAccount, Store, User
 from app.routes.posts import apply_payload, approve_post, bulk_assign_campaign, bulk_change_status, change_status, post_response, request_post_changes, retry_all_failed_posts, retry_failed_post, router, schedule_post, submit_post_for_review
 from app.schemas import BulkPostCampaignRequest, BulkPostStatusRequest, PostRequest, PostReviewRequest, PostScheduleRequest, PostStatusRequest
 
@@ -22,6 +22,16 @@ def test_apply_payload_stores_aware_schedule_as_utc_naive() -> None:
     assert post.scheduled_at == datetime(2026, 1, 10, 5, 45)
     assert post.scheduled_at.tzinfo is None
     assert post.timezone == "Asia/Tehran"
+
+
+def test_apply_payload_normalizes_multi_channel_platforms() -> None:
+    now = datetime(2026, 1, 1, 12, 0, 0)
+    post = Post(store_id=1, title="", created_at=now, updated_at=now)
+    payload = PostRequest(title="Launch", platform=" Rubika, instagram, rubika ")
+
+    apply_payload(post, payload)
+
+    assert post.platform == "rubika,instagram"
 
 
 def test_post_response_returns_stored_naive_datetimes_as_utc_aware() -> None:
@@ -116,6 +126,26 @@ def test_schedule_post_rejects_stale_rubika_connection() -> None:
         db.commit()
         with pytest.raises(HTTPException, match="Rubika connection must be tested successfully"):
             retry_failed_post(post.id, store=store, db=db)
+
+
+def test_schedule_post_rejects_instagram_until_oauth_is_connected() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime.utcnow()
+
+    with session_factory() as db:
+        store = Store(name="Main", created_at=now, updated_at=now)
+        db.add(store)
+        db.flush()
+        post = Post(store_id=store.id, title="Launch", status="draft", platform="rubika,instagram", created_at=now, updated_at=now)
+        db.add(post)
+        db.add(RubikaAccount(bot_token="token", chat_id="channel", status="connected", last_test_at=now))
+        db.add(InstagramAccount(store_id=store.id, username="brand", status="oauth_required", created_at=now, updated_at=now))
+        db.commit()
+
+        with pytest.raises(HTTPException, match="Instagram publishing requires Meta OAuth"):
+            schedule_post(post.id, PostScheduleRequest(scheduled_at=now + timedelta(hours=1)), store=store, db=db)
 
 
 def test_review_workflow_controls_scheduling() -> None:

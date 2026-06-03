@@ -4,6 +4,7 @@ import { AlertTriangle, CheckCircle2, Clock3, FileUp, ListChecks, MessageSquareT
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
+import { ChannelBadges } from "../../components/channel-badges";
 import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
@@ -16,6 +17,7 @@ type PublishAttempt = {
   id: number;
   post_id: number;
   post_title: string;
+  post_platform: string;
   action: string;
   status: string;
   request_payload: string;
@@ -188,6 +190,7 @@ function attemptSearchText(item: PreparedAttempt) {
   const response = prettyPayload(item.attempt.response_payload);
   return [
     item.attempt.post_title,
+    item.attempt.post_platform,
     item.attempt.post_id,
     item.attempt.action,
     item.attempt.status,
@@ -428,6 +431,7 @@ export default function LogsPage() {
 
                         <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
                           <StatusBadge status={attemptTone(attempt.status)} />
+                          <ChannelBadges platform={attempt.post_platform} compact />
                           <StatusToken tone={mode === "media" ? "primary" : "neutral"} className="gap-1">
                             {mode === "media" ? (
                               <FileUp className="h-3.5 w-3.5" aria-hidden="true" />
@@ -465,6 +469,7 @@ export default function LogsPage() {
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={attemptTone(selectedAttempt.attempt.status)} />
+                        <ChannelBadges platform={selectedAttempt.attempt.post_platform} compact />
                         <StatusToken tone={selectedAttempt.mode === "media" ? "primary" : "neutral"}>{modeLabel(selectedAttempt.mode)}</StatusToken>
                         <StatusToken tone="neutral">{actionLabel(selectedAttempt.attempt.action)}</StatusToken>
                       </div>

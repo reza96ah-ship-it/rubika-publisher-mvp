@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import MediaAsset, Post, PublishAttempt, RubikaAccount
+from app.services.publishing_channels import channel_list
 from app.services.rubika_client import RubikaClient
 
 
@@ -295,6 +296,14 @@ def publish_media_post(db: Session, post: Post, asset: MediaAsset, action: str =
 
 
 def publish_post(db: Session, post: Post, action: str = "scheduled") -> dict:
+    if "instagram" in channel_list(post.platform):
+        post.status = "failed"
+        post.failed_at = datetime.utcnow()
+        post.last_error = "Instagram publishing requires Meta OAuth before worker delivery"
+        post.updated_at = datetime.utcnow()
+        db.commit()
+        return {"ok": False, "post_id": post.id, "error": post.last_error}
+
     asset = get_primary_media_asset(db, post)
     if asset is not None:
         return publish_media_post(db, post, asset, action)

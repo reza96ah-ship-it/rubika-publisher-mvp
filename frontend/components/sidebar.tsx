@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   FileText,
   GalleryHorizontalEnd,
+  Instagram,
   LayoutDashboard,
   ListChecks,
   LucideIcon,
@@ -66,7 +67,8 @@ const primaryNavGroups: NavGroup[] = [
 
 const settingsNavItems: NavItem[] = [
   { label: "پروفایل فروشگاه", href: "/store", icon: Store },
-  { label: "اتصال روبیکا", href: "/rubika", icon: Plug }
+  { label: "اتصال روبیکا", href: "/rubika", icon: Plug },
+  { label: "اتصال اینستاگرام", href: "/instagram", icon: Instagram }
 ];
 
 const composeNavItem: NavItem = { label: "پست جدید", href: "/compose", icon: PenLine };

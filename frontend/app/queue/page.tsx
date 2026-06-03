@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ApprovalBadge } from "../../components/approval-badge";
+import { ChannelBadges } from "../../components/channel-badges";
 import { CountdownBadge } from "../../components/countdown-badge";
 import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
 import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
@@ -461,6 +462,7 @@ export default function QueuePage() {
                               {campaignLabelForPost(post, campaigns)}
                             </StatusToken>
                           ) : null}
+                          <ChannelBadges platform={post.platform} compact />
                           {media ? <StatusToken tone="success">رسانه آماده</StatusToken> : <StatusToken tone="warning">بدون رسانه</StatusToken>}
                           <ApprovalBadge status={post.approval_status} compact />
                         </div>
@@ -503,6 +505,7 @@ export default function QueuePage() {
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={selectedPost.status} />
+                        <ChannelBadges platform={selectedPost.platform} compact />
                         <ApprovalBadge status={selectedPost.approval_status} />
                         <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
                         {primaryMediaForPost(selectedPost) ? <StatusToken tone="success">رسانه آماده</StatusToken> : <StatusToken tone="warning">نیازمند رسانه</StatusToken>}

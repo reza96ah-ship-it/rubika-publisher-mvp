@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, CalendarDays, FileImage, FileText, ListChecks, Search, Settings2, Store, Target, X } from "lucide-react";
+import { BarChart3, CalendarDays, FileImage, FileText, Instagram, ListChecks, Search, Settings2, Store, Target, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, authHeaders, type Post } from "../lib/posts";
@@ -19,7 +19,8 @@ const commands = [
   { label: "رسانه‌ها", detail: "کتابخانه تصاویر", href: "/media", icon: FileImage },
   { label: "تحلیل عملکرد", detail: "کیفیت و روند انتشار", href: "/analytics", icon: BarChart3 },
   { label: "پروفایل فروشگاه", detail: "هویت برند و متن‌های پایه", href: "/store", icon: Store },
-  { label: "اتصال روبیکا", detail: "اعتبارنامه و تست کانال", href: "/rubika", icon: Settings2 }
+  { label: "اتصال روبیکا", detail: "اعتبارنامه و تست کانال", href: "/rubika", icon: Settings2 },
+  { label: "اتصال اینستاگرام", detail: "آماده‌سازی Meta OAuth و حساب حرفه‌ای", href: "/instagram", icon: Instagram }
 ];
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {

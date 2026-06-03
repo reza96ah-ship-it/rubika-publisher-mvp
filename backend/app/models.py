@@ -55,6 +55,23 @@ class RubikaAccount(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
 
+class InstagramAccount(Base):
+    __tablename__ = "instagram_accounts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False, index=True)
+    username: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    professional_account_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    page_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    status: Mapped[str] = mapped_column(String(64), nullable=False, default="oauth_required", index=True)
+    permissions: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    last_error: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    last_test_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+
 class Campaign(Base):
     __tablename__ = "campaigns"
 

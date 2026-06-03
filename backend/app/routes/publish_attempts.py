@@ -10,11 +10,12 @@ from app.schemas import PublishAttemptResponse
 router = APIRouter(prefix="/publish-attempts", tags=["publish-attempts"])
 
 
-def attempt_response(attempt: PublishAttempt, post_title: str) -> PublishAttemptResponse:
+def attempt_response(attempt: PublishAttempt, post_title: str, post_platform: str) -> PublishAttemptResponse:
     return PublishAttemptResponse(
         id=attempt.id,
         post_id=attempt.post_id,
         post_title=post_title,
+        post_platform=post_platform,
         action=attempt.action,
         status=attempt.status,
         request_payload=attempt.request_payload,
@@ -33,10 +34,10 @@ def list_publish_attempts(
     store: Store = Depends(get_active_store),
     db: Session = Depends(get_db),
 ) -> list[PublishAttemptResponse]:
-    statement = select(PublishAttempt, Post.title).join(Post, Post.id == PublishAttempt.post_id).where(Post.store_id == store.id)
+    statement = select(PublishAttempt, Post.title, Post.platform).join(Post, Post.id == PublishAttempt.post_id).where(Post.store_id == store.id)
     if post_id is not None:
         statement = statement.where(PublishAttempt.post_id == post_id)
     if status and status != "all":
         statement = statement.where(PublishAttempt.status == status)
     rows = db.execute(statement.order_by(PublishAttempt.created_at.desc()).limit(100)).all()
-    return [attempt_response(attempt, post_title) for attempt, post_title in rows]
+    return [attempt_response(attempt, post_title, post_platform) for attempt, post_title, post_platform in rows]

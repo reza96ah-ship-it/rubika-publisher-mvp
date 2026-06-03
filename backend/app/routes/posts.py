@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user
 from app.database import get_db
 from app.dependencies import get_active_store
-from app.models import Campaign, Post, RubikaAccount, Store, User
+from app.models import Campaign, Post, Store, User
 from app.schemas import BulkPostCampaignRequest, BulkPostStatusRequest, BulkPostStatusResponse, PostRequest, PostResponse, PostReviewRequest, PostScheduleRequest, PostStatsResponse, PostStatusRequest, RetryFailedPostsResponse
-from app.services.rubika_health import is_rubika_account_ready
+from app.services.publishing_channels import normalize_channels, require_channel_readiness
 from app.store_scope import get_store_post
 
 router = APIRouter(prefix="/posts", tags=["posts"])
@@ -79,19 +79,13 @@ def apply_payload(post: Post, payload: PostRequest, campaign: Campaign | None = 
     post.title = payload.title.strip() or "پست بدون عنوان"
     post.caption = payload.caption.strip()
     post.hashtags = payload.hashtags.strip()
-    post.platform = payload.platform.strip() or "rubika"
+    post.platform = normalize_channels(payload.platform)
     post.timezone = payload.timezone.strip() or "Asia/Tehran"
     post.campaign_id = campaign.id if campaign else None
     post.campaign = campaign.name if campaign else payload.campaign.strip()
     post.internal_note = payload.internal_note.strip()
     post.scheduled_at = utc_naive(payload.scheduled_at)
     post.updated_at = datetime.utcnow()
-
-
-def require_rubika_ready(db: Session) -> None:
-    account = db.scalar(select(RubikaAccount).where(RubikaAccount.is_active.is_(True)).order_by(RubikaAccount.id.asc()))
-    if not is_rubika_account_ready(account):
-        raise HTTPException(status_code=400, detail="Rubika connection must be tested successfully within the last 24 hours")
 
 
 def require_approval_ready(post: Post) -> None:
@@ -174,10 +168,10 @@ def retry_all_failed_posts(store: Store = Depends(get_active_store), db: Session
     posts = db.scalars(select(Post).where(Post.store_id == store.id, Post.status == "failed").order_by(Post.failed_at.asc(), Post.id.asc())).all()
     if not posts:
         return RetryFailedPostsResponse(retried_count=0, post_ids=[])
-    require_rubika_ready(db)
     now = datetime.utcnow()
     for post in posts:
         require_approval_ready(post)
+        require_channel_readiness(db, store.id, post.platform)
         requeue_failed_post(post, now)
     db.commit()
     return RetryFailedPostsResponse(retried_count=len(posts), post_ids=[post.id for post in posts])
@@ -275,7 +269,7 @@ def schedule_post(post_id: int, payload: PostScheduleRequest, store: Store = Dep
     if post.status not in {"draft", "ready", "scheduled", "failed"}:
         raise HTTPException(status_code=400, detail="Post cannot be scheduled in its current status")
     require_approval_ready(post)
-    require_rubika_ready(db)
+    require_channel_readiness(db, store.id, post.platform)
     post.status = "scheduled"
     post.scheduled_at = utc_naive(payload.scheduled_at)
     post.timezone = payload.timezone.strip() or "Asia/Tehran"
@@ -293,7 +287,7 @@ def retry_failed_post(post_id: int, store: Store = Depends(get_active_store), db
     if post.status != "failed":
         raise HTTPException(status_code=400, detail="Only failed posts can be retried")
     require_approval_ready(post)
-    require_rubika_ready(db)
+    require_channel_readiness(db, store.id, post.platform)
     now = datetime.utcnow()
     requeue_failed_post(post, now)
     db.commit()
@@ -308,7 +302,7 @@ def change_status(post_id: int, payload: PostStatusRequest, store: Store = Depen
     post = get_store_post(db, store, post_id)
     if payload.status == "scheduled":
         require_approval_ready(post)
-        require_rubika_ready(db)
+        require_channel_readiness(db, store.id, post.platform)
     apply_workflow_status(post, payload.status, datetime.utcnow())
     db.commit()
     db.refresh(post)

@@ -6,6 +6,7 @@ import { CalendarClock, ChevronDown, Cloud, Eye, FileText, ImagePlus, Images, Pe
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ApprovalBadge } from "../../components/approval-badge";
+import { ChannelBadges } from "../../components/channel-badges";
 import { ComposerActionFooter } from "../../components/composer-action-footer";
 import { ComposerReadinessChecks } from "../../components/composer-readiness-checks";
 import { RubikaPostPreview } from "../../components/rubika-post-preview";
@@ -21,6 +22,7 @@ import { Field, Input, Select, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
 import { NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { createCampaign, loadCampaigns, type Campaign } from "../../lib/campaigns";
+import { channelOptions, channelValidationNotes, hasChannel, normalizeChannels, serializeChannels, type PublishingChannel } from "../../lib/channels";
 import { approvalBlocksPublishing, approvalConfig } from "../../lib/posts";
 import { isRubikaConnected, loadWorkspaceOverview, type RubikaSettings, type StoreProfile } from "../../lib/workspace";
 
@@ -146,11 +148,14 @@ function ComposePageContent() {
   const hasPostBody = Boolean(form.caption.trim() || previewImageUrl);
   const hasLocalDraftContent = Boolean(form.title.trim() || form.caption.trim() || form.hashtags.trim() || form.campaign_id || form.campaign.trim() || form.internal_note.trim() || form.scheduled_at || selectedMediaId);
   const rubikaReady = isRubikaConnected(rubika);
+  const selectedChannels = useMemo(() => normalizeChannels(form.platform), [form.platform]);
+  const instagramSelected = hasChannel(form.platform, "instagram");
   const canMoveToReady = !editingPost || ["draft", "failed", "cancelled"].includes(editingPost.status);
   const reviewBlocksSchedule = editingPost ? approvalBlocksPublishing(editingPost) : false;
   const canSaveDraft = hasTitle;
   const canMarkReady = hasTitle && hasPostBody && canMoveToReady;
-  const canSchedule = canMarkReady && hasSchedule && rubikaReady && !reviewBlocksSchedule;
+  const canSchedule = canMarkReady && hasSchedule && rubikaReady && !reviewBlocksSchedule && !instagramSelected;
+  const channelNotes = channelValidationNotes(form.platform);
   const readinessItems = [
     {
       label: "عنوان داخلی",
@@ -169,6 +174,12 @@ function ComposePageContent() {
       detail: rubikaReady ? "اتصال روبیکا تست شده و آماده انتشار است." : "برای زمان‌بندی نهایی، اتصال روبیکا را تست کنید.",
       done: rubikaReady,
       required: true
+    },
+    {
+      label: "کانال انتشار",
+      detail: instagramSelected ? "اینستاگرام در این فاز برای پیش‌نویس و آماده‌سازی فعال است؛ زمان‌بندی بعد از Meta OAuth باز می‌شود." : "کانال انتشار برای worker فعال انتخاب شده است.",
+      done: !instagramSelected,
+      required: instagramSelected
     },
     {
       label: "زمان انتشار",
@@ -211,7 +222,7 @@ function ComposePageContent() {
     },
     {
       label: "بازبینی نهایی",
-      helper: reviewBlocksSchedule ? "این پست قبل از زمان‌بندی باید تایید شود." : canSchedule ? "پست آماده ورود به صف انتشار است." : "پیش‌نمایش و الزام‌های انتشار را بررسی کنید.",
+      helper: instagramSelected ? "کانال اینستاگرام برای زمان‌بندی به اتصال Meta نیاز دارد." : reviewBlocksSchedule ? "این پست قبل از زمان‌بندی باید تایید شود." : canSchedule ? "پست آماده ورود به صف انتشار است." : "پیش‌نمایش و الزام‌های انتشار را بررسی کنید.",
       icon: ShieldCheck,
       state: canSchedule ? "done" : canMarkReady ? "active" : "pending"
     }
@@ -384,6 +395,12 @@ function ComposePageContent() {
   function updateField(field: keyof typeof emptyForm, value: typeof emptyForm[keyof typeof emptyForm]) {
     setForm((current) => ({ ...current, [field]: value }));
     if (message) setMessage("");
+  }
+
+  function toggleChannel(channel: PublishingChannel) {
+    const active = selectedChannels.includes(channel);
+    const nextChannels = active ? selectedChannels.filter((item) => item !== channel) : [...selectedChannels, channel];
+    updateField("platform", serializeChannels(nextChannels));
   }
 
   function selectCampaign(campaignId: string) {
@@ -631,7 +648,13 @@ function ComposePageContent() {
       return;
     }
     if (action === "schedule" && !canSchedule) {
-      const scheduleError = reviewBlocksSchedule ? "این پست برای زمان‌بندی باید تایید بازبینی داشته باشد." : rubikaReady ? "برای زمان‌بندی، زمان انتشار را انتخاب کنید." : "برای زمان‌بندی، ابتدا اتصال روبیکا را تست کنید.";
+      const scheduleError = instagramSelected
+        ? "زمان‌بندی اینستاگرام بعد از اتصال Meta OAuth فعال می‌شود. فعلاً پست را به عنوان پیش‌نویس یا آماده ذخیره کنید."
+        : reviewBlocksSchedule
+          ? "این پست برای زمان‌بندی باید تایید بازبینی داشته باشد."
+          : rubikaReady
+            ? "برای زمان‌بندی، زمان انتشار را انتخاب کنید."
+            : "برای زمان‌بندی، ابتدا اتصال روبیکا را تست کنید.";
       setError(scheduleError);
       showToast({ title: "زمان‌بندی هنوز آماده نیست", description: scheduleError, tone: "warning" });
       return;
@@ -712,14 +735,15 @@ function ComposePageContent() {
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
                 <p className="text-[10px] font-black text-app-primary">استودیوی انتشار</p>
-                <h1 className="mt-1 text-xl font-black text-app-text">{isEditing ? "ویرایش پست روبیکا" : "پست جدید روبیکا"}</h1>
-                <p className="mt-1 text-xs leading-5 text-app-muted">محتوا را کامل کنید، خروجی را ببینید و زمان انتشار را از یک مسیر متمرکز تنظیم کنید.</p>
+                <h1 className="mt-1 text-xl font-black text-app-text">{isEditing ? "ویرایش پست" : "پست جدید"}</h1>
+                <p className="mt-1 text-xs leading-5 text-app-muted">محتوا را کامل کنید، کانال انتشار را انتخاب کنید و زمان انتشار را از یک مسیر متمرکز تنظیم کنید.</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusToken tone={publishTone} className="gap-1">
                   <Send className="h-3.5 w-3.5" aria-hidden="true" />
                   {publishStateLabel}
                 </StatusToken>
+                <ChannelBadges platform={form.platform} compact />
                 <StatusToken tone={rubikaReady ? "success" : "warning"}>{rubikaReady ? "روبیکا متصل" : "اتصال روبیکا لازم است"}</StatusToken>
                 {!isEditing ? <StatusToken tone={autosaveState === "dirty" ? "warning" : "neutral"}><Cloud className="h-3.5 w-3.5" aria-hidden="true" />{autosaveLabel}</StatusToken> : null}
                 {editingPost?.status ? <StatusBadge status={editingPost.status} /> : null}
@@ -752,12 +776,52 @@ function ComposePageContent() {
                 description="متن اصلی را روی بوم ویرایش کامل کنید؛ اطلاعات داخلی تیم در بخش اختیاری باقی می‌مانند."
                 action={(
                   <div className="flex flex-wrap gap-2">
-                    <Tag tone="primary">روبیکا</Tag>
+                    <ChannelBadges platform={form.platform} compact />
                     {hasSchedule ? <Tag tone="success">زمان‌بندی شده</Tag> : null}
                   </div>
                 )}
                 bodyClassName="grid gap-5 p-5"
               >
+                  <section className="rounded-md border border-app-border bg-app-surfaceMuted p-3">
+                    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                      <div>
+                        <p className="text-sm font-black text-app-text">کانال انتشار</p>
+                        <p className="mt-1 text-xs leading-5 text-app-muted">یک پست می‌تواند برای روبیکا، اینستاگرام یا هر دو کانال آماده شود.</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <ChannelBadges platform={form.platform} />
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {channelOptions.map((option) => {
+                        const Icon = option.icon;
+                        const active = selectedChannels.includes(option.value);
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => toggleChannel(option.value)}
+                            className={`app-interactive rounded-md border px-3 py-3 text-right ${
+                              active ? "border-blue-200 bg-white text-app-primary shadow-soft" : "border-app-border bg-white/70 text-app-text hover:bg-white"
+                            }`}
+                            aria-pressed={active}
+                          >
+                            <span className="flex items-center gap-2 text-sm font-black">
+                              <Icon className="h-4 w-4" aria-hidden="true" />
+                              {option.label}
+                            </span>
+                            <span className="mt-1 block text-xs leading-5 text-app-muted">{option.description}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {channelNotes.length ? (
+                      <div className="mt-3 space-y-1.5">
+                        {channelNotes.map((note) => <p key={note} className="text-xs leading-5 text-app-muted">{note}</p>)}
+                      </div>
+                    ) : null}
+                  </section>
+
                   <Field label="عنوان داخلی پست" required hint="فقط برای مدیریت محتوا و صف انتشار؛ مخاطب این عنوان را نمی‌بیند.">
                     <Input
                       value={form.title}
@@ -953,7 +1017,9 @@ function ComposePageContent() {
                       <div>
                         <div className="mb-3 flex items-center justify-between gap-2">
                           <p className="text-xs font-black text-app-text">خروجی مخاطب</p>
-                          <StatusToken tone="neutral">Rubika</StatusToken>
+                          <div className="flex flex-wrap gap-1.5">
+                            <ChannelBadges platform={form.platform} compact />
+                          </div>
                         </div>
                         <RubikaPostPreview imageUrl={previewImageUrl} caption={finalPreview} destination={store?.name || "کانال روبیکا"} brandColor={store?.brand_primary_color} avatarUrl={brandAvatarUrl} />
                         <div className="mt-3 grid grid-cols-3 divide-x divide-x-reverse divide-app-border overflow-hidden rounded-md bg-app-surfaceMuted text-center shadow-hairline">

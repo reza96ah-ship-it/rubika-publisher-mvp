@@ -79,6 +79,33 @@ class RubikaTestResponse(BaseModel):
     last_test_at: datetime | None = None
 
 
+class InstagramSettingsRequest(BaseModel):
+    username: str = ""
+    professional_account_id: str = ""
+    page_id: str = ""
+    permissions: str = ""
+
+
+class InstagramAccountResponse(BaseModel):
+    id: int
+    store_id: int
+    username: str
+    professional_account_id: str
+    page_id: str
+    status: str
+    permissions: str
+    last_error: str
+    last_test_at: datetime | None
+    is_active: bool
+
+
+class InstagramTestResponse(BaseModel):
+    ok: bool
+    status: str
+    error: str = ""
+    last_test_at: datetime | None = None
+
+
 class CampaignRequest(BaseModel):
     name: str
     goal: str = ""
@@ -222,6 +249,7 @@ class PublishAttemptResponse(BaseModel):
     id: int
     post_id: int
     post_title: str
+    post_platform: str
     action: str
     status: str
     request_payload: str
