@@ -42,6 +42,13 @@ Acceptance criteria:
 - One global create action exists.
 - Onboarding explains next step clearly.
 
+Current implementation status:
+
+- App identity and primary sidebar are now multi-channel-first.
+- Main navigation is simplified to Today, Create, Planner, Content, Media, Inbox, Reports, and Settings.
+- Publishing workspace sub-navigation is simplified to Planner, Campaign, Content, and Operations; draft/published/failed now behave as page filters or status chips, not duplicate menu destinations.
+- Remaining work: first-run onboarding, final duplicate action audit, and moving channel setup routes fully under Channels Hub.
+
 Priority: P0.
 
 ## Phase 2: Channels Hub And Account Capability Model

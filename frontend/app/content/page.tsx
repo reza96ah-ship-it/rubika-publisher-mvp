@@ -25,7 +25,7 @@ import { ApprovalBadge } from "../../components/approval-badge";
 import { ChannelBadges } from "../../components/channel-badges";
 import { CountdownBadge } from "../../components/countdown-badge";
 import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
-import { PublishingTab, PublishingWorkspaceHeader } from "../../components/publishing-workspace";
+import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
@@ -271,19 +271,8 @@ export default function ContentWorkspacePage() {
   const scheduledCount = statusCount(posts, "scheduled");
   const publishingCount = statusCount(posts, "publishing");
   const publishedCount = statusCount(posts, "published");
-  const activePublishingTab: PublishingTab = activeStatus === "draft" || activeStatus === "published" || activeStatus === "failed"
-    ? activeStatus
-    : "content";
   const selectedVisibleIds = filteredPosts.map((post) => post.id);
   const allVisibleSelected = selectedVisibleIds.length > 0 && selectedVisibleIds.every((id) => selectedIds.has(id));
-
-  function applyPublishingTab(tab: PublishingTab) {
-    if (tab === "draft" || tab === "published" || tab === "failed") {
-      setActiveStatus(tab);
-    } else if (tab === "content") {
-      setActiveStatus("all");
-    }
-  }
 
   function toggleSelected(postId: number) {
     setSelectedIds((current) => {
@@ -446,19 +435,17 @@ export default function ContentWorkspacePage() {
       <AppShell>
         <WorkspacePage>
           <PublishingWorkspaceHeader
-            activeTab={activePublishingTab}
+            activeTab="content"
             title="لیست محتوا"
             description="پست‌ها را جست‌وجو، فیلتر و بدون خروج از فضای انتشار بررسی کنید."
             counts={{
               content: posts.length,
-              queue: readyCount + scheduledCount + publishingCount,
-              draft: draftCount,
-              published: publishedCount,
-              failed: failedCount
+              queue: readyCount + scheduledCount + publishingCount
             }}
-            onTabChange={applyPublishingTab}
             meta={(
               <>
+                <StatusToken tone="neutral">{draftCount} پیش‌نویس</StatusToken>
+                <StatusToken tone="success">{publishedCount} منتشرشده</StatusToken>
                 <StatusToken tone={failedCount ? "alert" : "success"}>{failedCount ? `${failedCount} نیازمند رسیدگی` : "بدون خطای فعال"}</StatusToken>
                 <StatusToken tone="warning">{scheduledCount} زمان‌بندی‌شده</StatusToken>
                 {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}

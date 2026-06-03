@@ -871,11 +871,14 @@ export default function CampaignsPage() {
             activeTab="campaigns"
             title="مرکز کمپین‌ها"
             description="سلامت، برنامه انتشار، پست‌ها و دارایی‌های هر کمپین را در یک نمای عملیاتی مدیریت کنید."
-            counts={{ campaigns: campaigns.length, content: posts.length, queue: posts.filter(isQueued).length, failed: posts.filter((post) => post.status === "failed").length }}
+            counts={{ campaigns: campaigns.length, content: posts.length, queue: posts.filter(isQueued).length }}
             meta={(
               <>
                 <StatusToken tone="primary">{activeCount} کمپین فعال</StatusToken>
                 <StatusToken tone="neutral">{campaigns.length} کل کمپین</StatusToken>
+                <StatusToken tone={posts.some((post) => post.status === "failed") ? "alert" : "success"}>
+                  {posts.filter((post) => post.status === "failed").length || "بدون"} خطای انتشار
+                </StatusToken>
               </>
             )}
             action={(

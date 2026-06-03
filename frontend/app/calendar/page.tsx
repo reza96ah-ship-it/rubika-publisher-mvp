@@ -552,13 +552,12 @@ export default function CalendarPage() {
             description="برنامه انتشار را با نماهای ماه، هفته و لیست کنترل کنید."
             counts={{
               calendar: calendarPosts.length,
-              queue: scheduledCount,
-              published: publishedCount,
-              failed: failedCount
+              queue: scheduledCount
             }}
             meta={(
               <>
                 <StatusToken tone="warning">{scheduledCount} زمان‌بندی‌شده</StatusToken>
+                <StatusToken tone="success">{publishedCount} منتشرشده</StatusToken>
                 <StatusToken tone={failedCount ? "alert" : "success"}>{failedCount ? `${failedCount} خطای تقویمی` : "بدون خطای تقویمی"}</StatusToken>
               </>
             )}

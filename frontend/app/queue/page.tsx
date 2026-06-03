@@ -390,8 +390,7 @@ export default function QueuePage() {
             title="صف انتشار"
             description="گلوگاه‌های انتشار، زمان‌بندی و بازیابی خطا را در یک نمای عملیاتی کنترل کنید."
             counts={{
-              queue: posts.length,
-              failed: counts.failed
+              queue: posts.length
             }}
             meta={(
               <>
