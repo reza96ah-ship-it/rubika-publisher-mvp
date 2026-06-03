@@ -92,6 +92,8 @@ type CanvasGuides = {
   centerY: boolean;
 };
 
+type CanvasFitMode = "fit" | "actual" | "fill" | "custom";
+
 type StoreBrandColors = {
   brand_primary_color?: string;
   brand_accent_color?: string;
@@ -388,6 +390,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const selectedLayerLiveFrameRef = useRef<number | null>(null);
   const selectedLayerLivePatchRef = useRef<Partial<EditorLayer>>({});
   const selectedLayerLiveEditingRef = useRef(false);
+  const canvasLiveEditingRef = useRef(false);
   const [layers, setLayers] = useState<EditorLayer[]>([]);
   const [selectedLayerId, setSelectedLayerId] = useState("");
   const [selectedLayerIds, setSelectedLayerIds] = useState<string[]>([]);
@@ -399,6 +402,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const [future, setFuture] = useState<EditorSnapshot[]>([]);
   const [canvasSize, setCanvasSize] = useState({ width: 1, height: 1 });
   const [zoom, setZoom] = useState(100);
+  const [fitMode, setFitMode] = useState<CanvasFitMode>("fit");
   const [showSafeZone, setShowSafeZone] = useState(true);
   const [guides, setGuides] = useState<CanvasGuides>({ centerX: false, centerY: false });
   const [imageReady, setImageReady] = useState(false);
@@ -436,6 +440,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     { label: "تجاری", detail: "فروش، هشدار و CTA", colors: commerceColorSwatches },
     { label: "خنثی", detail: "متن و پس‌زمینه", colors: neutralColorSwatches }
   ].filter((group) => group.colors.length > 0), [brandColors, recentColors]);
+  const activeCropPreset = cropPresets.find((preset) => preset.id === crop.presetId) ?? cropPresets[0];
+  const activeOverlayPreset = overlayPresets.find((preset) => preset.mode === overlay.mode) ?? overlayPresets[0];
 
   const snapshot = useCallback((): EditorSnapshot => ({
     layers: cloneLayers(layers),
@@ -562,12 +568,24 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     });
   }, [adjustments, crop, layers, overlay]);
 
-  const fitCanvas = useCallback((size: { width: number; height: number }) => {
+  const fitCanvas = useCallback((size: { width: number; height: number }, mode: CanvasFitMode = fitMode) => {
     const viewport = viewportRef.current;
     if (!viewport || !size.width || !size.height) return;
-    const nextZoom = Math.min(100, ((viewport.clientWidth - 64) / size.width) * 100, ((viewport.clientHeight - 64) / size.height) * 100);
+    const availableWidth = Math.max(220, viewport.clientWidth - 64);
+    const availableHeight = Math.max(220, viewport.clientHeight - 64);
+    const fitZoom = Math.min(100, (availableWidth / size.width) * 100, (availableHeight / size.height) * 100);
+    const nextZoom = mode === "actual"
+      ? 100
+      : mode === "fill"
+        ? Math.min(180, (availableWidth / size.width) * 100)
+        : fitZoom;
     setZoom(Math.max(20, Math.round(nextZoom)));
-  }, []);
+  }, [fitMode]);
+
+  function applyFitMode(mode: Exclude<CanvasFitMode, "custom">) {
+    setFitMode(mode);
+    fitCanvas(canvasSize, mode);
+  }
 
   useEffect(() => {
     setImageReady(false);
@@ -602,6 +620,14 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       cancelled = true;
     };
   }, [imageReady, layers, renderCanvas]);
+
+  useEffect(() => {
+    if (!imageReady || fitMode === "custom") return;
+    const handleResize = () => fitCanvas(canvasSize, fitMode);
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, [canvasSize, fitCanvas, fitMode, imageReady]);
 
   useEffect(() => {
     setSelectedLayerIds((current) => current.filter((id) => layers.some((layer) => layer.id === id)));
@@ -997,13 +1023,14 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   }
 
   function resetEditor() {
-    if (layers.length || adjustments.brightness !== 100 || adjustments.contrast !== 100 || adjustments.saturation !== 100) remember();
+    if (layers.length || adjustments.brightness !== 100 || adjustments.contrast !== 100 || adjustments.saturation !== 100 || overlay.mode !== initialOverlay.mode || crop.presetId !== initialCrop.presetId || crop.scale !== initialCrop.scale || crop.offsetX !== initialCrop.offsetX || crop.offsetY !== initialCrop.offsetY || crop.rotation !== initialCrop.rotation || crop.flipX !== initialCrop.flipX) remember();
     setLayers([]);
     setSelectedLayerId("");
     setSelectedLayerIds([]);
     setAdjustments(initialAdjustments);
     setOverlay(initialOverlay);
     setCrop(initialCrop);
+    setFitMode("fit");
     if (imageRef.current && canvasRef.current) {
       const nextSize = originalCanvasSize(imageRef.current);
       canvasRef.current.width = nextSize.width;
@@ -1025,6 +1052,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   }
 
   function applyOverlayPreset(mode: ImageOverlayMode) {
+    if (overlay.mode === mode && mode === "none") return;
     remember();
     setOverlay((current) => {
       const nextMode = current.mode === mode && mode !== "none" ? "none" : mode;
@@ -1056,7 +1084,12 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   }
 
   function beginCanvasLiveEdit() {
+    if (canvasLiveEditingRef.current) return;
+    canvasLiveEditingRef.current = true;
     remember();
+    window.setTimeout(() => {
+      canvasLiveEditingRef.current = false;
+    }, 0);
   }
 
   function rotateImage() {
@@ -1198,7 +1231,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
           </span>
         ))}
       </div>
-      <section className="flex max-h-[96vh] w-full max-w-[1480px] flex-col overflow-hidden rounded-lg border border-app-border bg-app-canvas shadow-2xl">
+      <section className="flex h-[96vh] w-full max-w-[1480px] flex-col overflow-hidden rounded-lg border border-app-border bg-app-canvas shadow-2xl">
         <header className="flex flex-col justify-between gap-3 border-b border-app-border bg-white px-4 py-3 lg:flex-row lg:items-center">
           <div>
             <p className="text-[10px] font-black text-app-primary">استودیوی خلاقه</p>
@@ -1231,8 +1264,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[240px_minmax(320px,1fr)_300px]">
-          <aside className="min-h-0 space-y-4 overflow-y-auto border-b border-app-border bg-white p-4 lg:border-b-0 lg:border-l">
+        <div className="grid min-h-0 flex-1 overflow-hidden max-lg:grid-rows-[minmax(320px,1fr)_minmax(180px,28vh)_minmax(180px,28vh)] lg:grid-cols-[240px_minmax(320px,1fr)_300px]">
+          <aside className="min-h-0 space-y-4 overflow-y-auto border-b border-app-border bg-white p-4 max-lg:order-2 lg:border-b-0 lg:border-l">
             <section>
               <div className="flex items-center gap-2">
                 <Crop className="h-4 w-4 text-app-primary" aria-hidden="true" />
@@ -1394,8 +1427,13 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
             </section>
           </aside>
 
-          <div ref={viewportRef} className="app-studio-grid relative flex min-h-[440px] min-w-0 items-center justify-center overflow-auto bg-slate-100 p-4 lg:p-6">
+          <div ref={viewportRef} className="app-studio-grid relative flex min-h-[320px] min-w-0 items-center justify-center overflow-auto bg-slate-100 p-4 max-lg:order-1 lg:min-h-[440px] lg:p-6">
             {error ? <p className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
+            <div className="absolute right-3 top-3 z-10 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-1.5 rounded-md border border-app-border bg-white/95 px-2 py-1 shadow-soft backdrop-blur">
+              <span className="rounded bg-app-surfaceMuted px-2 py-1 text-[10px] font-black text-app-text">{activeCropPreset.label}</span>
+              <span className={`rounded px-2 py-1 text-[10px] font-black ${overlay.mode === "none" ? "bg-app-surfaceMuted text-app-muted" : "bg-blue-50 text-app-primary"}`}>{activeOverlayPreset.label}</span>
+              <span className="rounded bg-app-surfaceMuted px-2 py-1 text-[10px] font-black text-app-muted">{zoom}%</span>
+            </div>
             <div
               ref={artboardRef}
               className={`relative shrink-0 overflow-visible rounded-md bg-white shadow-lift ${imageReady ? "" : "hidden"}`}
@@ -1456,21 +1494,27 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                 </div>
               ) : null}
             </div>
-            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-md border border-app-border bg-white/95 p-1 shadow-soft">
-              <button type="button" onClick={() => setZoom((current) => Math.max(20, current - 10))} className="app-interactive flex h-7 w-7 items-center justify-center rounded text-slate-600 hover:bg-blue-50 hover:text-app-primary" aria-label="کوچک‌نمایی" title="کوچک‌نمایی">
+            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 flex-wrap items-center justify-center gap-1 rounded-md border border-app-border bg-white/95 p-1 shadow-soft">
+              <button type="button" onClick={() => { setFitMode("custom"); setZoom((current) => Math.max(20, current - 10)); }} className="app-interactive flex h-7 w-7 items-center justify-center rounded text-slate-600 hover:bg-blue-50 hover:text-app-primary" aria-label="کوچک‌نمایی" title="کوچک‌نمایی">
                 <Minus className="h-4 w-4" aria-hidden="true" />
               </button>
               <span className="min-w-12 text-center text-[11px] font-black text-app-text">{zoom}%</span>
-              <button type="button" onClick={() => setZoom((current) => Math.min(180, current + 10))} className="app-interactive flex h-7 w-7 items-center justify-center rounded text-slate-600 hover:bg-blue-50 hover:text-app-primary" aria-label="بزرگ‌نمایی" title="بزرگ‌نمایی">
+              <button type="button" onClick={() => { setFitMode("custom"); setZoom((current) => Math.min(180, current + 10)); }} className="app-interactive flex h-7 w-7 items-center justify-center rounded text-slate-600 hover:bg-blue-50 hover:text-app-primary" aria-label="بزرگ‌نمایی" title="بزرگ‌نمایی">
                 <Plus className="h-4 w-4" aria-hidden="true" />
               </button>
-              <button type="button" onClick={() => fitCanvas(canvasSize)} className="app-interactive flex h-7 w-7 items-center justify-center rounded text-slate-600 hover:bg-blue-50 hover:text-app-primary" aria-label="جای دادن در صفحه" title="جای دادن در صفحه">
+              <button type="button" onClick={() => applyFitMode("fit")} className={`app-interactive flex h-7 w-7 items-center justify-center rounded text-slate-600 hover:bg-blue-50 hover:text-app-primary ${fitMode === "fit" ? "bg-blue-50 text-app-primary ring-1 ring-blue-200" : ""}`} aria-label="جای دادن در صفحه" title="جای دادن در صفحه">
                 <Maximize2 className="h-4 w-4" aria-hidden="true" />
+              </button>
+              <button type="button" onClick={() => applyFitMode("actual")} className={`app-interactive h-7 rounded px-2 text-[10px] font-black text-slate-600 hover:bg-blue-50 hover:text-app-primary ${fitMode === "actual" ? "bg-blue-50 text-app-primary ring-1 ring-blue-200" : ""}`} aria-label="نمایش صد درصد" title="نمایش صد درصد">
+                ۱۰۰
+              </button>
+              <button type="button" onClick={() => applyFitMode("fill")} className={`app-interactive h-7 rounded px-2 text-[10px] font-black text-slate-600 hover:bg-blue-50 hover:text-app-primary ${fitMode === "fill" ? "bg-blue-50 text-app-primary ring-1 ring-blue-200" : ""}`} aria-label="پر کردن عرض" title="پر کردن عرض">
+                عرض
               </button>
             </div>
           </div>
 
-          <aside className="min-h-0 overflow-hidden border-t border-app-border bg-white lg:border-r lg:border-t-0">
+          <aside className="min-h-0 overflow-hidden border-t border-app-border bg-white max-lg:order-3 lg:border-r lg:border-t-0">
             <div className="h-full overflow-y-auto p-4">
               <section>
                 <div className="flex items-center justify-between gap-3">
