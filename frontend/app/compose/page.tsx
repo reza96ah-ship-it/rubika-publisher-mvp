@@ -69,6 +69,12 @@ type Post = {
   reviewed_by: string;
 };
 
+type InstagramSettings = {
+  account_type: string;
+  publish_mode: string;
+  status: string;
+};
+
 const emptyForm = {
   title: "",
   caption: "",
@@ -90,6 +96,7 @@ function ComposePageContent() {
 
   const [store, setStore] = useState<StoreProfile | null>(null);
   const [rubika, setRubika] = useState<RubikaSettings | null>(null);
+  const [instagram, setInstagram] = useState<InstagramSettings | null>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
@@ -151,7 +158,8 @@ function ComposePageContent() {
   const selectedChannels = useMemo(() => normalizeChannels(form.platform), [form.platform]);
   const instagramSelected = hasChannel(form.platform, "instagram");
   const rubikaSelected = hasChannel(form.platform, "rubika");
-  const hasReadyPublishingChannel = rubikaSelected && rubikaReady;
+  const instagramReminderReady = Boolean(instagram?.publish_mode === "reminder" || instagram?.status === "reminder_ready");
+  const hasReadyPublishingChannel = (rubikaSelected && rubikaReady) || (instagramSelected && instagramReminderReady);
   const canMoveToReady = !editingPost || ["draft", "failed", "cancelled"].includes(editingPost.status);
   const reviewBlocksSchedule = editingPost ? approvalBlocksPublishing(editingPost) : false;
   const canSaveDraft = hasTitle;
@@ -179,7 +187,7 @@ function ComposePageContent() {
     },
     {
       label: "کانال انتشار",
-      detail: instagramSelected && rubikaSelected ? "روبیکا منتشر می‌شود و اینستاگرام تا اتصال Meta OAuth به صورت نتیجه کانالی ثبت می‌شود." : instagramSelected ? "اینستاگرام در این فاز برای پیش‌نویس فعال است؛ زمان‌بندی بدون کانال آماده مسدود می‌شود." : "کانال انتشار برای worker فعال انتخاب شده است.",
+      detail: instagramSelected && instagramReminderReady ? "اینستاگرام در حالت یادآوری دستی آماده زمان‌بندی است." : instagramSelected && rubikaSelected ? "روبیکا منتشر می‌شود و اینستاگرام تا اتصال Meta OAuth به صورت نتیجه کانالی ثبت می‌شود." : instagramSelected ? "اینستاگرام در این فاز برای پیش‌نویس فعال است؛ زمان‌بندی بدون کانال آماده مسدود می‌شود." : "کانال انتشار برای worker فعال انتخاب شده است.",
       done: !instagramSelected || hasReadyPublishingChannel,
       required: instagramSelected && !hasReadyPublishingChannel
     },
@@ -224,7 +232,7 @@ function ComposePageContent() {
     },
     {
       label: "بازبینی نهایی",
-      helper: instagramSelected && !hasReadyPublishingChannel ? "کانال اینستاگرام برای زمان‌بندی به اتصال Meta نیاز دارد." : reviewBlocksSchedule ? "این پست قبل از زمان‌بندی باید تایید شود." : canSchedule ? "پست آماده ورود به صف انتشار است." : "پیش‌نمایش و الزام‌های انتشار را بررسی کنید.",
+      helper: instagramSelected && !hasReadyPublishingChannel ? "اینستاگرام برای زمان‌بندی به حالت یادآوری دستی یا اتصال Meta نیاز دارد." : reviewBlocksSchedule ? "این پست قبل از زمان‌بندی باید تایید شود." : canSchedule ? "پست آماده ورود به صف انتشار است." : "پیش‌نمایش و الزام‌های انتشار را بررسی کنید.",
       icon: ShieldCheck,
       state: canSchedule ? "done" : canMarkReady ? "active" : "pending"
     }
@@ -243,16 +251,18 @@ function ComposePageContent() {
     setLoading(true);
     setComposerReady(false);
     const headers = { Authorization: `Bearer ${token()}` };
-    const [overview, loadedCampaigns, mediaResponse, postsResponse, postResponse] = await Promise.all([
+    const [overview, loadedCampaigns, mediaResponse, postsResponse, instagramResponse, postResponse] = await Promise.all([
       loadWorkspaceOverview(),
       loadCampaigns(),
       fetch(`${apiUrl}/media`, { headers }),
       fetch(`${apiUrl}/posts`, { headers }),
+      fetch(`${apiUrl}/instagram/settings`, { headers }),
       editingPostId ? fetch(`${apiUrl}/posts/${editingPostId}`, { headers }) : Promise.resolve(null)
     ]);
 
     setStore(overview.store);
     setRubika(overview.rubika);
+    setInstagram(instagramResponse.ok ? await instagramResponse.json() : null);
     setCampaigns(loadedCampaigns);
     if (postsResponse.ok) setPosts(await postsResponse.json());
 
@@ -651,7 +661,7 @@ function ComposePageContent() {
     }
     if (action === "schedule" && !canSchedule) {
       const scheduleError = instagramSelected && !hasReadyPublishingChannel
-        ? "زمان‌بندی اینستاگرام بعد از اتصال Meta OAuth یا انتخاب یک کانال آماده مثل روبیکا فعال می‌شود."
+        ? "زمان‌بندی اینستاگرام بعد از فعال‌سازی حالت یادآوری دستی یا اتصال Meta OAuth باز می‌شود."
         : reviewBlocksSchedule
           ? "این پست برای زمان‌بندی باید تایید بازبینی داشته باشد."
           : rubikaReady

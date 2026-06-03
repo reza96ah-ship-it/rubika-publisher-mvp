@@ -57,6 +57,7 @@ type PreparedAttempt = {
 
 function attemptTone(status: string) {
   if (status === "success") return "published";
+  if (status === "reminder") return "manual_ready";
   if (status === "failed") return "failed";
   if (status === "started") return "publishing";
   return "draft";

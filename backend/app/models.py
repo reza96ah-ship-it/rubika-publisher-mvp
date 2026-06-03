@@ -61,6 +61,8 @@ class InstagramAccount(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False, index=True)
     username: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    account_type: Mapped[str] = mapped_column(String(64), nullable=False, default="creator")
+    publish_mode: Mapped[str] = mapped_column(String(64), nullable=False, default="direct")
     professional_account_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     page_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     status: Mapped[str] = mapped_column(String(64), nullable=False, default="oauth_required", index=True)

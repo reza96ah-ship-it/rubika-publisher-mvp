@@ -25,6 +25,10 @@ const statusMap: Record<string, { label: string; tone: "neutral" | "primary" | "
     label: "نیمه‌منتشر",
     tone: "warning"
   },
+  manual_ready: {
+    label: "آماده دستی",
+    tone: "info"
+  },
   failed: {
     label: "ناموفق",
     tone: "alert"

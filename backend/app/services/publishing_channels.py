@@ -7,7 +7,11 @@ from app.services.rubika_health import is_rubika_account_ready
 
 CHANNELS = ("rubika", "instagram")
 DEFAULT_CHANNEL = "rubika"
-INSTAGRAM_OAUTH_REQUIRED_DETAIL = "Instagram publishing requires Meta OAuth and permissions before scheduling"
+INSTAGRAM_OAUTH_REQUIRED_DETAIL = "Instagram direct publishing requires Meta OAuth; personal accounts can use reminder mode"
+
+
+def is_instagram_reminder_ready(account: InstagramAccount | None) -> bool:
+    return bool(account and account.is_active and account.publish_mode == "reminder")
 
 
 def normalize_channels(value: str | None) -> str:
@@ -49,7 +53,7 @@ def require_channel_readiness(db: Session, store_id: int, platform: str | None) 
 
     if "instagram" in channels:
         instagram = get_active_instagram_account(db, store_id)
-        if instagram is not None and instagram.status == "connected":
+        if is_instagram_reminder_ready(instagram) or (instagram is not None and instagram.status == "connected"):
             ready_channels.append("instagram")
 
     if not ready_channels:

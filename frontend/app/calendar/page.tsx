@@ -42,7 +42,7 @@ import {
 } from "../../lib/jalali";
 import { getJalaliPickerParts, jalaliDateToIsoAtTime } from "../../lib/jalali-picker";
 
-type CalendarFilter = "all" | "scheduled" | "publishing" | "published" | "failed";
+type CalendarFilter = "all" | "scheduled" | "publishing" | "published" | "manual_ready" | "failed";
 type ViewMode = "month" | "week" | "list";
 type DensityMode = "compact" | "comfortable";
 
@@ -64,6 +64,7 @@ const calendarFilters: Array<{ label: string; value: CalendarFilter }> = [
   { label: "زمان‌بندی", value: "scheduled" },
   { label: "در حال انتشار", value: "publishing" },
   { label: "منتشر", value: "published" },
+  { label: "آماده دستی", value: "manual_ready" },
   { label: "ناموفق", value: "failed" }
 ];
 
@@ -74,7 +75,7 @@ const viewModes: Array<{ label: string; value: ViewMode; icon: typeof Grid3X3 }>
 ];
 
 const weekDays = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
-const calendarStatuses = new Set(["scheduled", "publishing", "published", "failed"]);
+const calendarStatuses = new Set(["scheduled", "publishing", "published", "manual_ready", "failed"]);
 const scheduleTimezone = "Asia/Tehran";
 
 function isCalendarPost(post: Post) {

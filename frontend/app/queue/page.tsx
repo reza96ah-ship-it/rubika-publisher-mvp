@@ -17,7 +17,7 @@ import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, c
 import { notifyNotificationsUpdated } from "../../lib/notifications";
 import { apiUrl, approvalBlocksPublishing, approvalConfig, authHeaders, formatDateTime, readApiError, recoveryGuidance, type Post } from "../../lib/posts";
 
-type QueueFilter = "all" | "ready" | "scheduled" | "publishing" | "failed";
+type QueueFilter = "all" | "ready" | "scheduled" | "publishing" | "manual_ready" | "failed";
 
 type MediaAsset = {
   id: number;
@@ -35,15 +35,17 @@ const queueFilters: Array<{ label: string; value: QueueFilter }> = [
   { label: "آماده", value: "ready" },
   { label: "زمان‌بندی‌شده", value: "scheduled" },
   { label: "در حال انتشار", value: "publishing" },
+  { label: "آماده دستی", value: "manual_ready" },
   { label: "ناموفق", value: "failed" }
 ];
 
-const queueStatuses = new Set(["ready", "scheduled", "publishing", "failed"]);
+const queueStatuses = new Set(["ready", "scheduled", "publishing", "manual_ready", "failed"]);
 const queuePriority: Record<string, number> = {
   failed: 0,
   publishing: 1,
-  scheduled: 2,
-  ready: 3
+  manual_ready: 2,
+  scheduled: 3,
+  ready: 4
 };
 const queueHeaderGrid = "grid-cols-[minmax(0,1.4fr)_140px_170px_100px]";
 const queueRowGrid = "lg:grid-cols-[minmax(0,1.4fr)_140px_170px_100px]";
@@ -246,6 +248,7 @@ export default function QueuePage() {
       ready: posts.filter((post) => post.status === "ready").length,
       scheduled: posts.filter((post) => post.status === "scheduled").length,
       publishing: posts.filter((post) => post.status === "publishing").length,
+      manual_ready: posts.filter((post) => post.status === "manual_ready").length,
       failed: posts.filter((post) => post.status === "failed").length,
       blockedByReview: posts.filter((post) => approvalBlocksPublishing(post)).length
     };
@@ -291,6 +294,14 @@ export default function QueuePage() {
       count: counts.publishing,
       icon: TimerReset,
       tone: "text-sky-700"
+    },
+    {
+      label: "آماده دستی",
+      detail: "نیازمند انتشار دستی",
+      status: "manual_ready" as const,
+      count: counts.manual_ready,
+      icon: CheckCircle2,
+      tone: counts.manual_ready ? "text-sky-700" : "text-slate-500"
     },
     {
       label: "ناموفق",

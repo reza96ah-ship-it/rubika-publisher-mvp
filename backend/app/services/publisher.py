@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import MediaAsset, Post, PublishAttempt, RubikaAccount
-from app.services.publishing_channels import channel_list
+from app.services.publishing_channels import channel_list, get_active_instagram_account, is_instagram_reminder_ready
 from app.services.rubika_client import RubikaClient
 
 
@@ -161,10 +161,11 @@ def finish_post_after_channel_attempts(db: Session, post: Post, results: list[di
     now = datetime.utcnow()
     failures = [result for result in results if not result.get("ok")]
     successes = [result for result in results if result.get("ok")]
+    manual_results = [result for result in results if result.get("manual")]
 
     if not failures:
-        post.status = "published"
-        post.published_at = now
+        post.status = "manual_ready" if manual_results else "published"
+        post.published_at = None if manual_results and len(manual_results) == len(results) else now
         post.failed_at = None
         post.last_error = ""
     elif successes:
@@ -316,6 +317,25 @@ def publish_media_post(db: Session, post: Post, asset: MediaAsset, action: str =
 
 
 def publish_instagram_placeholder(db: Session, post: Post, action: str = "scheduled") -> dict:
+    account = get_active_instagram_account(db, post.store_id)
+    if is_instagram_reminder_ready(account):
+        request_payload = {
+            "post_id": post.id,
+            "channel": "instagram",
+            "mode": "reminder",
+            "account_type": account.account_type if account else "personal",
+            "username": account.username if account else "",
+            "manual_steps": ["Send push reminder", "Open Instagram", "Paste caption", "Attach media manually"],
+        }
+        attempt = start_attempt(db, post, request_payload, action, "instagram")
+        now = datetime.utcnow()
+        attempt.status = "reminder"
+        attempt.response_payload = json_text({"ready_for_manual_publish": True, "username": account.username if account else ""})
+        attempt.finished_at = now
+        post.updated_at = now
+        db.commit()
+        return {"ok": True, "post_id": post.id, "channel": "instagram", "manual": True, "mode": "reminder"}
+
     error = "Instagram publishing requires Meta OAuth before worker delivery"
     request_payload = {
         "post_id": post.id,

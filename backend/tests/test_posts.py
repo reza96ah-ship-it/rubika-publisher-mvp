@@ -144,8 +144,29 @@ def test_schedule_post_rejects_instagram_only_until_oauth_is_connected() -> None
         db.add(InstagramAccount(store_id=store.id, username="brand", status="oauth_required", created_at=now, updated_at=now))
         db.commit()
 
-        with pytest.raises(HTTPException, match="Instagram publishing requires Meta OAuth"):
+        with pytest.raises(HTTPException, match="Instagram direct publishing requires Meta OAuth"):
             schedule_post(post.id, PostScheduleRequest(scheduled_at=now + timedelta(hours=1)), store=store, db=db)
+
+
+def test_schedule_post_allows_personal_instagram_reminder_mode() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime.utcnow()
+
+    with session_factory() as db:
+        store = Store(name="Main", created_at=now, updated_at=now)
+        db.add(store)
+        db.flush()
+        post = Post(store_id=store.id, title="Manual IG", status="draft", platform="instagram", created_at=now, updated_at=now)
+        db.add(post)
+        db.add(InstagramAccount(store_id=store.id, username="personal_shop", account_type="personal", publish_mode="reminder", status="reminder_ready", created_at=now, updated_at=now))
+        db.commit()
+
+        scheduled = schedule_post(post.id, PostScheduleRequest(scheduled_at=now + timedelta(hours=1)), store=store, db=db)
+
+        assert scheduled.status == "scheduled"
+        assert scheduled.platform == "instagram"
 
 
 def test_schedule_post_allows_mixed_channels_when_rubika_is_ready() -> None:

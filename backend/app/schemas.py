@@ -81,6 +81,8 @@ class RubikaTestResponse(BaseModel):
 
 class InstagramSettingsRequest(BaseModel):
     username: str = ""
+    account_type: str = "creator"
+    publish_mode: str = "direct"
     professional_account_id: str = ""
     page_id: str = ""
     permissions: str = ""
@@ -90,6 +92,8 @@ class InstagramAccountResponse(BaseModel):
     id: int
     store_id: int
     username: str
+    account_type: str
+    publish_mode: str
     professional_account_id: str
     page_id: str
     status: str
@@ -194,6 +198,7 @@ class PostStatsResponse(BaseModel):
     publishing: int
     published: int
     partially_published: int = 0
+    manual_ready: int = 0
     failed: int
     cancelled: int
 

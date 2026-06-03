@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
-from app.models import MediaAsset, Post, PublishAttempt, RubikaAccount
+from app.models import InstagramAccount, MediaAsset, Post, PublishAttempt, RubikaAccount
 from app.services.publisher import build_post_text, extract_file_id, extract_message_id, extract_upload_url, json_text
 from app.services.publisher import publish_post
 from app.services.publisher import recover_stale_publishing_posts, reserve_due_posts, rubika_response_error
@@ -301,3 +301,32 @@ def test_publish_post_keeps_rubika_success_when_instagram_is_not_connected(monke
         assert [attempt.status for attempt in attempts] == ["success", "failed"]
         assert json.loads(attempts[1].request_payload)["mode"] == "placeholder"
         assert calls == [("init", "token-123"), ("send_message", "chat-123", "Caption")]
+
+
+def test_publish_post_creates_manual_ready_for_personal_instagram_reminder() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime(2026, 1, 1, 12, 0, 0)
+
+    with session_factory() as db:
+        db.add(InstagramAccount(store_id=1, username="personal_shop", account_type="personal", publish_mode="reminder", status="reminder_ready", created_at=now, updated_at=now))
+        post = Post(store_id=1, title="Manual IG", caption="Caption", platform="instagram", status="publishing", created_at=now, updated_at=now)
+        db.add(post)
+        db.commit()
+
+        result = publish_post(db, post, action="scheduled")
+        attempt = db.scalar(select(PublishAttempt).where(PublishAttempt.post_id == post.id))
+
+        assert result == {
+            "ok": True,
+            "post_id": post.id,
+            "status": "manual_ready",
+            "channels": [{"ok": True, "post_id": post.id, "channel": "instagram", "manual": True, "mode": "reminder"}],
+        }
+        assert post.status == "manual_ready"
+        assert post.published_at is None
+        assert attempt is not None
+        assert attempt.channel == "instagram"
+        assert attempt.status == "reminder"
+        assert json.loads(attempt.request_payload)["mode"] == "reminder"

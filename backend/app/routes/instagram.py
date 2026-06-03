@@ -12,12 +12,29 @@ from app.services.publishing_channels import get_active_instagram_account
 
 router = APIRouter(prefix="/instagram", tags=["instagram"])
 
+ACCOUNT_TYPES = {"personal", "creator", "business"}
+PUBLISH_MODES = {"reminder", "direct"}
+
+
+def normalize_account_type(value: str) -> str:
+    account_type = value.strip().lower() or "creator"
+    return account_type if account_type in ACCOUNT_TYPES else "creator"
+
+
+def normalize_publish_mode(account_type: str, value: str) -> str:
+    publish_mode = value.strip().lower() or ("reminder" if account_type == "personal" else "direct")
+    if account_type == "personal":
+        return "reminder"
+    return publish_mode if publish_mode in PUBLISH_MODES else "direct"
+
 
 def instagram_response(account: InstagramAccount) -> InstagramAccountResponse:
     return InstagramAccountResponse(
         id=account.id,
         store_id=account.store_id,
         username=account.username,
+        account_type=account.account_type,
+        publish_mode=account.publish_mode,
         professional_account_id=account.professional_account_id,
         page_id=account.page_id,
         status=account.status,
@@ -48,12 +65,17 @@ def save_settings(
         account = InstagramAccount(store_id=store.id)
         db.add(account)
 
+    account_type = normalize_account_type(payload.account_type)
+    publish_mode = normalize_publish_mode(account_type, payload.publish_mode)
+
     account.username = payload.username.strip()
+    account.account_type = account_type
+    account.publish_mode = publish_mode
     account.professional_account_id = payload.professional_account_id.strip()
     account.page_id = payload.page_id.strip()
     account.permissions = payload.permissions.strip()
-    account.status = "oauth_required"
-    account.last_error = "Meta OAuth is not connected yet"
+    account.status = "reminder_ready" if publish_mode == "reminder" else "oauth_required"
+    account.last_error = "" if publish_mode == "reminder" else "Meta OAuth is not connected yet"
     account.updated_at = datetime.utcnow()
 
     db.commit()
@@ -70,6 +92,18 @@ def test_connection(
     account = get_active_instagram_account(db, store.id)
     now = datetime.utcnow()
     if account is not None:
+        if account.publish_mode == "reminder":
+            account.status = "reminder_ready"
+            account.last_error = ""
+            account.last_test_at = now
+            account.updated_at = now
+            db.commit()
+            return InstagramTestResponse(
+                ok=True,
+                status="reminder_ready",
+                error="Personal Instagram account is ready for manual reminder publishing",
+                last_test_at=now,
+            )
         account.status = "oauth_required"
         account.last_error = "Meta OAuth, instagram_basic, instagram_content_publish, and page linkage are required"
         account.last_test_at = now
