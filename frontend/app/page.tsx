@@ -13,14 +13,14 @@ import {
   Rocket,
   Sparkles,
   Target,
-  TimerReset
+  type LucideIcon
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
 import { WorkspaceAvatar } from "../components/brand-mark";
 import { CountdownBadge } from "../components/countdown-badge";
-import { LiveOperations, PublicationPulse, SignalRibbon } from "../components/dashboard-command-center";
+import { LiveOperations } from "../components/dashboard-command-center";
 import { Skeleton } from "../components/loading-skeleton";
 import { StatusBadge } from "../components/status-badge";
 import { Button } from "../components/ui/button";
@@ -56,6 +56,42 @@ function AlertIcon({ severity }: { severity: string }) {
   if (severity === "critical") return <CircleAlert className="h-4 w-4" aria-hidden="true" />;
   if (severity === "warning") return <AlertTriangle className="h-4 w-4" aria-hidden="true" />;
   return <CheckCircle2 className="h-4 w-4" aria-hidden="true" />;
+}
+
+const commandMetricToneClasses = {
+  primary: "border-blue-100 bg-blue-50/60 text-app-primary",
+  warning: "border-amber-100 bg-amber-50/70 text-amber-700",
+  success: "border-emerald-100 bg-emerald-50/70 text-emerald-700",
+  alert: "border-rose-100 bg-rose-50/70 text-rose-700"
+};
+
+function CommandMetric({
+  label,
+  value,
+  detail,
+  icon: Icon,
+  tone
+}: {
+  label: string;
+  value: number;
+  detail: string;
+  icon: LucideIcon;
+  tone: keyof typeof commandMetricToneClasses;
+}) {
+  return (
+    <article className="app-row rounded-lg border border-app-border bg-white p-4 shadow-hairline">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-app-muted">{label}</p>
+          <p className="mt-2 text-2xl font-black text-app-text">{value}</p>
+          <p className="mt-1 truncate text-[11px] font-bold text-app-muted">{detail}</p>
+        </div>
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${commandMetricToneClasses[tone]}`}>
+          <Icon className="h-4 w-4" aria-hidden="true" />
+        </span>
+      </div>
+    </article>
+  );
 }
 
 export default function HomePage() {
@@ -150,52 +186,51 @@ export default function HomePage() {
           ? "کمپین‌ها فعال‌اند، اما برنامه انتشار نزدیک هنوز سبک است. محتوا را وارد پلنر کنید."
           : "فضای کاری آماده است. یک کمپین یا محتوای جدید برای شروع برنامه روزانه بسازید.";
   const healthTone = priorityAlerts.length || queueCounts.failed ? "alert" : workspaceReady ? "success" : "warning";
-  const pipeline = [
-    { label: "آماده", count: queueCounts.ready, detail: "منتظر زمان", icon: CheckCircle2, tone: "primary" as const, href: "/content?status=ready" },
-    { label: "زمان‌بندی", count: queueCounts.scheduled, detail: "در برنامه", icon: CalendarClock, tone: "warning" as const, href: "/calendar" },
-    { label: "در انتشار", count: queueCounts.publishing, detail: "در اختیار worker", icon: TimerReset, tone: "info" as const, href: "/queue" },
-    { label: "ناموفق", count: queueCounts.failed, detail: "نیازمند بازیابی", icon: AlertTriangle, tone: "alert" as const, href: "/queue" }
-  ];
-  const signals = [
-    { label: "کارهای مسدود", value: blockedWorkCount, detail: "ریسک، خطا یا آماده‌سازی", icon: AlertTriangle, tone: blockedWorkCount ? "alert" as const : "success" as const },
-    { label: "انتشارهای آینده", value: queueCounts.scheduled, detail: "در تقویم و صف", icon: CalendarClock, tone: "warning" as const },
-    { label: "کمپین فعال", value: activeCampaigns.length, detail: "نیازمند محتوا و پیگیری", icon: Megaphone, tone: "primary" as const },
-    { label: "خروجی موفق", value: publishedCount, detail: "کل پست‌های منتشرشده", icon: CheckCircle2, tone: "success" as const }
+  const commandMetrics = [
+    { label: "ریسک‌های باز", value: blockedWorkCount, detail: unreadAlerts ? `${unreadAlerts} اعلان تازه` : "خطا، آماده‌سازی یا هشدار", icon: AlertTriangle, tone: blockedWorkCount ? "alert" as const : "success" as const },
+    { label: "انتشار آینده", value: queueCounts.scheduled, detail: "در تقویم و صف", icon: CalendarClock, tone: "warning" as const },
+    { label: "کمپین فعال", value: activeCampaigns.length, detail: "در جریان امروز", icon: Megaphone, tone: "primary" as const },
+    { label: "منتشر شده", value: publishedCount, detail: "خروجی موفق", icon: CheckCircle2, tone: "success" as const }
   ];
 
   return (
     <AuthGate>
       <AppShell>
-        <WorkspacePage className="space-y-4">
-          <section className="app-studio-panel overflow-hidden rounded-lg border-t-4" style={{ borderTopColor: brandColor }}>
-            <div className="grid lg:grid-cols-[minmax(0,1fr)_410px]">
-              <div className="px-4 py-5 lg:px-5">
-                <div className="mb-4 flex min-w-0 items-center gap-3">
-                  <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandImageUrl} />
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-black text-app-muted">فضای کاری فعال</p>
-                    <p className="mt-1 truncate text-base font-black text-app-text">{store?.name || "فضای کاری اجتماعی"}</p>
-                    <p className="mt-0.5 truncate text-xs text-app-muted">{store?.category || store?.brand_voice || "هویت برند را از تنظیمات فروشگاه کامل کنید."}</p>
+        <WorkspacePage className="space-y-5">
+          <section className="overflow-hidden rounded-lg border border-app-border bg-white shadow-soft">
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_340px]">
+              <div className="px-4 py-5 sm:px-6 lg:py-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandImageUrl} />
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black text-app-muted">فضای کاری فعال</p>
+                      <p className="mt-1 truncate text-base font-black text-app-text">{store?.name || "فضای کاری اجتماعی"}</p>
+                      <p className="mt-0.5 truncate text-xs text-app-muted">{store?.category || store?.brand_voice || "هویت برند را از تنظیمات فروشگاه کامل کنید."}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 sm:justify-end">
+                    <StatusToken tone={healthTone} className="gap-1">
+                      <Rocket className="h-3.5 w-3.5" aria-hidden="true" />
+                      {priorityAlerts.length || queueCounts.failed ? "نیازمند رسیدگی" : workspaceReady ? "عملیات پایدار" : "تکمیل لازم"}
+                    </StatusToken>
+                    {!rubikaReady ? (
+                      <StatusToken tone="warning" className="gap-1">
+                        <PlugZap className="h-3.5 w-3.5" aria-hidden="true" />
+                        کانال‌ها نیازمند بررسی
+                      </StatusToken>
+                    ) : null}
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusToken tone={healthTone} className="gap-1">
-                    <Rocket className="h-3.5 w-3.5" aria-hidden="true" />
-                    {priorityAlerts.length || queueCounts.failed ? "نیازمند رسیدگی" : workspaceReady ? "عملیات پایدار" : "تکمیل لازم"}
-                  </StatusToken>
-                  {!rubikaReady ? (
-                    <StatusToken tone="warning" className="gap-1">
-                      <PlugZap className="h-3.5 w-3.5" aria-hidden="true" />
-                      کانال‌ها نیازمند بررسی
-                    </StatusToken>
-                  ) : null}
-                  {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
+
+                <div className="mt-6 max-w-3xl">
+                  <p className="app-section-kicker text-[10px] font-black">Multi-channel Social Operations</p>
+                  <h1 className="mt-2 text-2xl font-black leading-tight text-app-text sm:text-3xl">مرکز فرمان امروز</h1>
+                  <p className="mt-3 text-sm leading-7 text-app-muted">{briefing}</p>
                 </div>
-                <p className="app-section-kicker mt-4 text-[10px] font-black">Multi-channel Social Operations</p>
-                <h1 className="mt-2 text-2xl font-black text-app-text">مرکز فرمان شبکه‌های اجتماعی</h1>
-                <p className="mt-2 max-w-3xl text-sm leading-7 text-app-muted">{briefing}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button href={nextAction.href}>
+
+                <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <Button href={nextAction.href} className="sm:min-w-44">
                     {nextAction.label}
                     <ArrowUpLeft className="mr-2 h-4 w-4" aria-hidden="true" />
                   </Button>
@@ -207,14 +242,40 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <PublicationPulse items={pipeline} alertCount={priorityAlerts.length} unreadAlerts={unreadAlerts} />
+              <aside className="border-t border-app-border bg-slate-50/75 p-4 lg:border-r lg:border-t-0">
+                <div className="rounded-lg border border-blue-100 bg-white p-4 shadow-hairline">
+                  <p className="app-section-kicker text-[10px] font-black">تمرکز امروز</p>
+                  <div className="mt-3 flex items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-app-primary">
+                      <Target className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-black text-app-text">{nextAction.label}</p>
+                      <p className="mt-1 line-clamp-3 text-xs leading-6 text-app-muted">{nextAction.detail}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-md bg-slate-50 p-2">
+                      <p className="font-bold text-app-muted">صف فعال</p>
+                      <p className="mt-1 text-lg font-black text-app-text">{queueTotal}</p>
+                    </div>
+                    <div className="rounded-md bg-slate-50 p-2">
+                      <p className="font-bold text-app-muted">انتشار بعدی</p>
+                      <p className="mt-1 truncate text-xs font-black text-app-text">{nextPosts[0]?.scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"}</p>
+                    </div>
+                  </div>
+                  {lastUpdatedAt ? <p className="mt-3 text-[11px] font-bold text-slate-400">آخرین به‌روزرسانی: {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</p> : null}
+                </div>
+              </aside>
             </div>
           </section>
 
           {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
           {loading ? <Skeleton className="h-4 w-44" /> : null}
 
-          <SignalRibbon items={signals} />
+          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {commandMetrics.map((metric) => <CommandMetric key={metric.label} {...metric} />)}
+          </section>
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
             <div className="space-y-4">
@@ -341,24 +402,6 @@ export default function HomePage() {
                 failedCount={queueCounts.failed}
                 nextWindow={nextPosts[0]?.scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"}
               />
-
-              <WorkspacePanel title="اقدام پیشنهادی" description="یک کار مهم که بیشترین اثر را روی جریان امروز دارد." bodyClassName="p-4">
-                <div className="rounded-md border border-blue-100 bg-blue-50/70 p-3">
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white text-app-primary shadow-hairline">
-                      <Target className="h-4 w-4" aria-hidden="true" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-black text-app-text">{nextAction.label}</p>
-                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
-                    </div>
-                  </div>
-                  <Button href={nextAction.href} className="mt-3 w-full" size="sm">
-                    انجام این کار
-                    <ArrowUpLeft className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-                  </Button>
-                </div>
-              </WorkspacePanel>
 
               <WorkspacePanel title="هویت برند فعال" description="برند جاری که در composer و پیش‌نمایش انتشار استفاده می‌شود." bodyClassName="p-4">
                 <div className="flex items-center gap-3">
