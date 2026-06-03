@@ -146,6 +146,17 @@ const fontRolePresets = [
   { label: "لوکس", fontFamily: "BLotus", fontWeight: 700 },
   { label: "خوانا", fontFamily: "Vazirmatn", fontWeight: 800 }
 ];
+const headlineFontValues = new Set(["Lalezar", "BEsfehanBold", "BJadidBold", "BKoodakBold", "BMehrBold", "BNasimBold", "BSetarehBold", "BSinaBold", "BTitrBold", "BTitrTGEBold", "BTraffic", "BYekan"]);
+const bodyFontValues = new Set(["Vazirmatn", "BBadr", "BHoma", "BLotus", "BMitra", "BNazanin", "BRoya", "BYekan", "BZar", "Tahoma"]);
+const classicFontValues = new Set(["BBadr", "BFerdosi", "BHoma", "BLotus", "BMitra", "BNazanin", "BRoya", "BZar"]);
+const decorativeFontValues = new Set(["BBaran", "BDavat", "BFantezy", "BFarnaz", "BHamid", "BHelal", "BMahsa", "BMorvarid", "BShiraz", "BTabassom", "BVahidBold", "BYagut", "BYas", "BZiba"]);
+const fontCategoryFilters = [
+  { id: "all", label: "همه", test: () => true },
+  { id: "headline", label: "تیتر", test: (font: typeof fontOptions[number]) => headlineFontValues.has(font.value) },
+  { id: "body", label: "متن", test: (font: typeof fontOptions[number]) => bodyFontValues.has(font.value) },
+  { id: "classic", label: "کلاسیک", test: (font: typeof fontOptions[number]) => classicFontValues.has(font.value) },
+  { id: "decorative", label: "تزئینی", test: (font: typeof fontOptions[number]) => decorativeFontValues.has(font.value) }
+];
 const initialAdjustments: ImageAdjustments = { brightness: 100, contrast: 100, saturation: 100 };
 const initialCrop: ImageCropSettings = { presetId: "original", scale: 100, offsetX: 0, offsetY: 0, rotation: 0, flipX: false };
 const cropPresets: Array<{ id: CropPresetId; label: string; detail: string; width: number; height: number; icon: LucideIcon }> = [
@@ -318,6 +329,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const [imageReady, setImageReady] = useState(false);
   const [error, setError] = useState("");
   const [fontSearch, setFontSearch] = useState("");
+  const [fontCategory, setFontCategory] = useState("all");
 
   const selectedLayer = useMemo(() => layers.find((layer) => layer.id === selectedLayerId) ?? null, [layers, selectedLayerId]);
   const selectedBounds = selectedLayer?.visible ? layerBounds(selectedLayer) : null;
@@ -332,9 +344,13 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   }, [selectedLayer]);
   const filteredFontOptions = useMemo(() => {
     const query = fontSearch.trim().toLowerCase();
-    if (!query) return fontOptions;
-    return fontOptions.filter((font) => `${font.label} ${font.value}`.toLowerCase().includes(query));
-  }, [fontSearch]);
+    const activeCategory = fontCategoryFilters.find((filter) => filter.id === fontCategory) ?? fontCategoryFilters[0];
+    return fontOptions.filter((font) => {
+      const matchesCategory = activeCategory.test(font);
+      const matchesQuery = !query || `${font.label} ${font.value}`.toLowerCase().includes(query);
+      return matchesCategory && matchesQuery;
+    });
+  }, [fontCategory, fontSearch]);
 
   const snapshot = useCallback((): EditorSnapshot => ({
     layers: cloneLayers(layers),
@@ -1235,6 +1251,24 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                                   style={fontPreviewStyle(preset.fontFamily, preset.fontWeight)}
                                 >
                                   {preset.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-1.5" role="tablist" aria-label="دسته‌بندی فونت">
+                            {fontCategoryFilters.map((filter) => {
+                              const active = fontCategory === filter.id;
+                              return (
+                                <button
+                                  key={filter.id}
+                                  type="button"
+                                  disabled={selectedLayer.locked}
+                                  onClick={() => setFontCategory(filter.id)}
+                                  className={`app-interactive rounded-md border px-2 py-1 text-[10px] font-black shadow-hairline disabled:cursor-not-allowed disabled:opacity-50 ${active ? "border-blue-200 bg-blue-50 text-app-primary" : "border-app-border bg-white text-app-muted hover:bg-app-surfaceMuted"}`}
+                                  role="tab"
+                                  aria-selected={active}
+                                >
+                                  {filter.label}
                                 </button>
                               );
                             })}
