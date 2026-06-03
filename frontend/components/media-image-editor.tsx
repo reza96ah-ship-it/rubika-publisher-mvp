@@ -126,6 +126,7 @@ type StoreBrandColors = {
 };
 
 const recentColorStorageKey = "rubika_publisher_editor_recent_colors";
+const recentStickerStorageKey = "rubika_publisher_editor_recent_stickers";
 const editorTemplateStorageKey = "rubika_publisher_editor_templates";
 const labelSwatches = ["#0F172A", "#0F766E", "#2563EB", "#E11D48", "#F59E0B", "#FFFFFF"];
 const neutralColorSwatches = ["#FFFFFF", "#F8FAFC", "#E2E8F0", "#94A3B8", "#475569", "#0F172A"];
@@ -134,7 +135,9 @@ const stickerPacks = [
   { label: "فروش", stickers: ["🔥", "🎁", "🛍️", "💎", "⭐", "📣"] },
   { label: "تخفیف", stickers: ["٪", "✅", "⚡", "✨", "🎉", "💥"] },
   { label: "اعتماد", stickers: ["✅", "⭐", "💎", "🛡️", "📦", "💬"] },
-  { label: "فصل‌ها", stickers: ["🌿", "☀️", "🍂", "❄️", "🌙", "❤️"] }
+  { label: "فصل‌ها", stickers: ["🌿", "☀️", "🍂", "❄️", "🌙", "❤️"] },
+  { label: "تحویل", stickers: ["🚚", "📦", "⏱️", "📍", "🔁", "🧾"] },
+  { label: "تعامل", stickers: ["💬", "👇", "👀", "🤍", "🙌", "📲"] }
 ];
 const fontSampleText = "پچژگ فروش ویژه ۱۲۳";
 const fontPickerPreviewText = "فروش ویژه ۱۲۳";
@@ -353,6 +356,10 @@ function uniqueColors(colors: string[]) {
   return Array.from(new Set(colors.filter(isHexColor).map((color) => color.toUpperCase())));
 }
 
+function uniqueStickers(stickers: string[]) {
+  return Array.from(new Set(stickers.filter((sticker) => sticker.trim().length > 0)));
+}
+
 function readSavedTemplates() {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(editorTemplateStorageKey) ?? "[]");
@@ -542,6 +549,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const [selectedOutlineColorDraft, setSelectedOutlineColorDraft] = useState("#0F172A");
   const [brandColors, setBrandColors] = useState<string[]>([]);
   const [recentColors, setRecentColors] = useState<string[]>([]);
+  const [recentStickers, setRecentStickers] = useState<string[]>([]);
+  const [stickerSearch, setStickerSearch] = useState("");
   const [savedTemplates, setSavedTemplates] = useState<SavedEditorTemplate[]>([]);
   const [templateName, setTemplateName] = useState("");
   const [activeDesignRecipeId, setActiveDesignRecipeId] = useState("");
@@ -575,6 +584,16 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   ].filter((group) => group.colors.length > 0), [brandColors, recentColors]);
   const activeCropPreset = cropPresets.find((preset) => preset.id === crop.presetId) ?? cropPresets[0];
   const activeOverlayPreset = overlayPresets.find((preset) => preset.mode === overlay.mode) ?? overlayPresets[0];
+  const filteredStickerPacks = useMemo(() => {
+    const query = stickerSearch.trim().toLowerCase();
+    if (!query) return stickerPacks;
+    return stickerPacks
+      .map((pack) => ({
+        ...pack,
+        stickers: pack.stickers.filter((sticker) => `${pack.label} ${sticker}`.toLowerCase().includes(query))
+      }))
+      .filter((pack) => pack.stickers.length > 0);
+  }, [stickerSearch]);
   const editorWorkflowItems = [
     { label: "تصویر", value: activeCropPreset.label },
     { label: "طراحی", value: activeDesignRecipe?.label ?? "آزاد" },
@@ -619,6 +638,12 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       if (Array.isArray(parsed)) setRecentColors(uniqueColors(parsed).slice(0, 10));
     } catch {
       setRecentColors([]);
+    }
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(recentStickerStorageKey) ?? "[]");
+      if (Array.isArray(parsed)) setRecentStickers(uniqueStickers(parsed).slice(0, 12));
+    } catch {
+      setRecentStickers([]);
     }
     setSavedTemplates(readSavedTemplates());
   }, []);
@@ -1033,6 +1058,9 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setLayers((current) => [...current, layer]);
     setSelectedLayerId(layer.id);
     setSelectedLayerIds([layer.id]);
+    const nextRecentStickers = uniqueStickers([value, ...recentStickers]).slice(0, 12);
+    setRecentStickers(nextRecentStickers);
+    window.localStorage.setItem(recentStickerStorageKey, JSON.stringify(nextRecentStickers));
   }
 
   function createStickerLayer(value: string, x: number, y: number, indexOffset = 0): EditorLayer | null {
@@ -1792,14 +1820,51 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
             </section>
 
             <section id="editor-stickers" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
-              <div className="flex items-center gap-2">
-                <SmilePlus className="h-4 w-4 text-app-primary" aria-hidden="true" />
-                <h3 className="text-xs font-black text-app-text">استیکر و ایموجی</h3>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <SmilePlus className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                  <div>
+                    <h3 className="text-xs font-black text-app-text">استیکر و ایموجی</h3>
+                    <p className="mt-0.5 text-[10px] font-bold text-app-muted">نمادهای سریع برای کمپین و فروش</p>
+                  </div>
+                </div>
+                <span className="rounded-full bg-app-surfaceMuted px-2 py-1 text-[10px] font-black text-app-muted">
+                  {stickerPacks.reduce((count, pack) => count + pack.stickers.length, 0)}
+                </span>
               </div>
+              <label className="mt-3 block">
+                <span className="sr-only">جست‌وجوی استیکر</span>
+                <input
+                  value={stickerSearch}
+                  onChange={(event) => setStickerSearch(event.target.value)}
+                  placeholder="جست‌وجو در دسته‌ها..."
+                  className="h-9 w-full rounded-md border border-app-border bg-app-canvas px-3 text-xs font-bold text-app-text outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                />
+              </label>
+              {recentStickers.length ? (
+                <div className="mt-3 rounded-md border border-blue-100 bg-blue-50/70 p-2 shadow-hairline">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-black text-app-primary">اخیراً استفاده‌شده</p>
+                    <button type="button" onClick={() => { setRecentStickers([]); window.localStorage.removeItem(recentStickerStorageKey); }} className="app-interactive rounded px-1.5 py-0.5 text-[9px] font-black text-app-muted hover:bg-white hover:text-rose-700">
+                      پاک‌کردن
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-8 gap-1.5">
+                    {recentStickers.map((sticker) => (
+                      <button key={`recent-${sticker}`} type="button" onClick={() => addSticker(sticker)} className="app-interactive flex aspect-square items-center justify-center rounded-md bg-white text-lg shadow-hairline hover:bg-blue-100" title={`افزودن ${sticker}`}>
+                        {sticker}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <div className="mt-3 space-y-3">
-                {stickerPacks.map((pack) => (
+                {filteredStickerPacks.map((pack) => (
                   <div key={pack.label} className="rounded-md border border-app-border bg-white p-2 shadow-hairline">
-                    <p className="mb-2 text-[10px] font-black text-app-muted">{pack.label}</p>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="text-[10px] font-black text-app-muted">{pack.label}</p>
+                      <span className="rounded bg-app-surfaceMuted px-1.5 py-0.5 text-[9px] font-black text-app-muted">{pack.stickers.length}</span>
+                    </div>
                     <div className="grid grid-cols-6 gap-1.5">
                       {pack.stickers.map((sticker) => (
                         <button key={`${pack.label}-${sticker}`} type="button" onClick={() => addSticker(sticker)} className="app-interactive flex aspect-square items-center justify-center rounded-md bg-app-surfaceMuted text-lg hover:bg-blue-50" title={`افزودن ${sticker}`}>
@@ -1809,6 +1874,11 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                     </div>
                   </div>
                 ))}
+                {!filteredStickerPacks.length ? (
+                  <p className="rounded-md border border-dashed border-app-border bg-app-surfaceMuted px-3 py-3 text-center text-[11px] font-bold text-app-muted">
+                    استیکری با این جست‌وجو پیدا نشد.
+                  </p>
+                ) : null}
               </div>
             </section>
 
