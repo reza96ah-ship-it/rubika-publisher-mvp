@@ -1026,7 +1026,10 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
   function applyOverlayPreset(mode: ImageOverlayMode) {
     remember();
-    setOverlay((current) => ({ ...current, mode, strength: mode === "none" ? current.strength : Math.max(current.strength, 46) }));
+    setOverlay((current) => {
+      const nextMode = current.mode === mode && mode !== "none" ? "none" : mode;
+      return { ...current, mode: nextMode, strength: nextMode === "none" ? current.strength : Math.max(current.strength, 46) };
+    });
   }
 
   function applyCropPreset(presetId: CropPresetId) {
@@ -1228,8 +1231,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 overflow-auto lg:grid-cols-[240px_minmax(320px,1fr)_300px]">
-          <aside className="space-y-4 border-b border-app-border bg-white p-4 lg:border-b-0 lg:border-l">
+        <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[240px_minmax(320px,1fr)_300px]">
+          <aside className="min-h-0 space-y-4 overflow-y-auto border-b border-app-border bg-white p-4 lg:border-b-0 lg:border-l">
             <section>
               <div className="flex items-center gap-2">
                 <Crop className="h-4 w-4 text-app-primary" aria-hidden="true" />
@@ -1391,7 +1394,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
             </section>
           </aside>
 
-          <div ref={viewportRef} className="app-studio-grid relative flex min-h-[440px] items-center justify-center overflow-auto bg-slate-100 p-4 lg:p-6">
+          <div ref={viewportRef} className="app-studio-grid relative flex min-h-[440px] min-w-0 items-center justify-center overflow-auto bg-slate-100 p-4 lg:p-6">
             {error ? <p className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
             <div
               ref={artboardRef}
@@ -1467,8 +1470,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
             </div>
           </div>
 
-          <aside className="min-h-0 border-t border-app-border bg-white lg:border-r lg:border-t-0">
-            <div className="max-h-full overflow-auto p-4">
+          <aside className="min-h-0 overflow-hidden border-t border-app-border bg-white lg:border-r lg:border-t-0">
+            <div className="h-full overflow-y-auto p-4">
               <section>
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
