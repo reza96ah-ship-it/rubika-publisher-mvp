@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
 from app.models import Campaign, InstagramAccount, Post, RubikaAccount, Store, User
-from app.routes.posts import apply_payload, approve_post, bulk_assign_campaign, bulk_change_status, change_status, post_response, request_post_changes, retry_all_failed_posts, retry_failed_post, router, schedule_post, submit_post_for_review
+from app.routes.posts import apply_payload, approve_post, bulk_assign_campaign, bulk_change_status, change_status, mark_manual_published, post_response, request_post_changes, retry_all_failed_posts, retry_failed_post, router, schedule_post, submit_post_for_review
 from app.schemas import BulkPostCampaignRequest, BulkPostStatusRequest, PostRequest, PostReviewRequest, PostScheduleRequest, PostStatusRequest
 
 
@@ -167,6 +167,28 @@ def test_schedule_post_allows_personal_instagram_reminder_mode() -> None:
 
         assert scheduled.status == "scheduled"
         assert scheduled.platform == "instagram"
+
+
+def test_mark_manual_published_completes_manual_ready_post() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime.utcnow()
+
+    with session_factory() as db:
+        store = Store(name="Main", created_at=now, updated_at=now)
+        db.add(store)
+        db.flush()
+        post = Post(store_id=store.id, title="Manual IG", status="manual_ready", platform="instagram", created_at=now, updated_at=now)
+        db.add(post)
+        db.commit()
+
+        response = mark_manual_published(post.id, store=store, db=db)
+
+        assert response.status == "published"
+        assert response.published_at is not None
+        assert post.status == "published"
+        assert post.last_error == ""
 
 
 def test_schedule_post_allows_mixed_channels_when_rubika_is_ready() -> None:

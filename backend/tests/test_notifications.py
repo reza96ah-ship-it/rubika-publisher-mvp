@@ -27,6 +27,7 @@ def test_notifications_group_action_required_and_recent_success_events() -> None
             [
                 Post(store_id=store.id, title="Failed", status="failed", last_error="Attached media file is missing", failed_at=now - timedelta(minutes=3), created_at=now, updated_at=now),
                 Post(store_id=store.id, title="Stale", status="publishing", created_at=now, updated_at=now - timedelta(minutes=20)),
+                Post(store_id=store.id, title="Manual", status="manual_ready", platform="instagram", created_at=now, updated_at=now - timedelta(minutes=2)),
                 Post(store_id=store.id, title="Published", status="published", published_at=now - timedelta(hours=1), created_at=now, updated_at=now),
                 Post(store_id=store.id, title="Old published", status="published", published_at=now - timedelta(days=2), created_at=now, updated_at=now),
             ]
@@ -37,13 +38,14 @@ def test_notifications_group_action_required_and_recent_success_events() -> None
 
         assert [item.id for item in result.notifications] == [
             f"post-failed-1-{int((now - timedelta(minutes=3)).timestamp())}",
+            f"post-manual-ready-3-{int((now - timedelta(minutes=2)).timestamp())}",
             f"post-stale-2-{int((now - timedelta(minutes=20)).timestamp())}",
-            f"post-published-3-{int((now - timedelta(hours=1)).timestamp())}",
+            f"post-published-4-{int((now - timedelta(hours=1)).timestamp())}",
         ]
-        assert result.summary.total == 3
-        assert result.summary.action_required == 2
+        assert result.summary.total == 4
+        assert result.summary.action_required == 3
         assert result.summary.critical == 1
-        assert result.summary.warning == 1
+        assert result.summary.warning == 2
         assert result.summary.info == 1
 
 

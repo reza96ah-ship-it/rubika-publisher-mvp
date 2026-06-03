@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CalendarClock, CheckCircle2, ImageIcon, ListChecks, RefreshCw, RotateCcw, TimerReset, XCircle } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, Clipboard, ExternalLink, ImageIcon, ListChecks, RefreshCw, RotateCcw, TimerReset, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
@@ -15,7 +15,7 @@ import { Button } from "../../components/ui/button";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, Timeline, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { notifyNotificationsUpdated } from "../../lib/notifications";
-import { apiUrl, approvalBlocksPublishing, approvalConfig, authHeaders, formatDateTime, readApiError, recoveryGuidance, type Post } from "../../lib/posts";
+import { apiUrl, approvalBlocksPublishing, approvalConfig, authHeaders, formatDateTime, postFinalText, readApiError, recoveryGuidance, type Post } from "../../lib/posts";
 
 type QueueFilter = "all" | "ready" | "scheduled" | "publishing" | "manual_ready" | "failed";
 
@@ -81,6 +81,7 @@ export default function QueuePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [retryingPostId, setRetryingPostId] = useState<number | null>(null);
   const [retryingAll, setRetryingAll] = useState(false);
+  const [markingManualPostId, setMarkingManualPostId] = useState<number | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -231,6 +232,45 @@ export default function QueuePage() {
     showToast({ title: "پست از صف خارج شد", description: post.title, tone: "success" });
     notifyNotificationsUpdated();
     await loadQueue();
+  }
+
+  async function copyManualCaption(post: Post) {
+    const text = postFinalText(post) || post.title;
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast({ title: "کپشن کپی شد", description: "حالا می‌توانید آن را در Instagram جای‌گذاری کنید.", tone: "success" });
+    } catch {
+      showToast({ title: "کپی خودکار ناموفق بود", description: "کپشن را از پنل بازبین انتخاب و دستی کپی کنید.", tone: "warning" });
+    }
+  }
+
+  function openInstagram() {
+    window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+  }
+
+  async function markManualPublished(post: Post) {
+    setMessage("");
+    setError("");
+    setMarkingManualPostId(post.id);
+    const response = await fetch(`${apiUrl}/posts/${post.id}/manual-published`, {
+      method: "POST",
+      headers: authHeaders()
+    });
+    if (!response.ok) {
+      const detail = await readApiError(response, "ثبت انتشار دستی ناموفق بود");
+      setError(detail);
+      setMarkingManualPostId(null);
+      showToast({ title: "ثبت انتشار دستی ناموفق بود", description: detail, tone: "alert" });
+      return;
+    }
+    const updated = (await response.json()) as Post;
+    setPosts((current) => current.filter((item) => item.id !== updated.id));
+    setSelectedPostId((current) => current === updated.id ? null : current);
+    setMessage("پست به عنوان منتشرشده ثبت شد");
+    setMarkingManualPostId(null);
+    notifyNotificationsUpdated();
+    showToast({ title: "انتشار دستی ثبت شد", description: updated.title, tone: "success" });
+    await loadQueue(true);
   }
 
   const filteredPosts = useMemo(() => {
@@ -575,6 +615,27 @@ export default function QueuePage() {
                           {approvalConfig(selectedPost.approval_status).description}
                         </NoticeBanner>
                       ) : null}
+                      {selectedPost.status === "manual_ready" ? (
+                        <div className="mt-4 space-y-3">
+                          <NoticeBanner tone="info" title="آماده انتشار دستی اینستاگرام">
+                            کپشن را کپی کنید، تصویر را در Instagram انتخاب کنید و پس از انتشار، این پست را به عنوان منتشرشده ثبت کنید.
+                          </NoticeBanner>
+                          <div className="grid gap-2">
+                            <Button type="button" onClick={() => copyManualCaption(selectedPost)}>
+                              <Clipboard className="ml-2 h-4 w-4" aria-hidden="true" />
+                              کپی کپشن
+                            </Button>
+                            <Button type="button" variant="secondary" onClick={openInstagram}>
+                              <ExternalLink className="ml-2 h-4 w-4" aria-hidden="true" />
+                              باز کردن Instagram
+                            </Button>
+                            <Button type="button" variant="secondary" disabled={markingManualPostId === selectedPost.id} onClick={() => markManualPublished(selectedPost)}>
+                              <CheckCircle2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                              {markingManualPostId === selectedPost.id ? "در حال ثبت" : "ثبت به عنوان منتشرشده"}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
                       <div className="mt-4 grid gap-2">
                         <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary">باز کردن پست</Button>
                         {selectedPost.status === "failed" ? (
@@ -583,7 +644,7 @@ export default function QueuePage() {
                             {retryingPostId === selectedPost.id ? "در حال ورود به صف" : "تلاش مجدد انتشار"}
                           </Button>
                         ) : null}
-                        {["ready", "scheduled"].includes(selectedPost.status) ? (
+                        {["ready", "scheduled", "manual_ready"].includes(selectedPost.status) ? (
                           <Button type="button" variant="ghost" onClick={() => cancelPost(selectedPost)}>
                             لغو از صف
                           </Button>

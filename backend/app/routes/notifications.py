@@ -88,6 +88,22 @@ def build_operational_notifications(db: Session, store: Store, now: datetime | N
                     action_required=True,
                 )
             )
+        elif post.status == "manual_ready":
+            notifications.append(
+                OperationalNotificationResponse(
+                    id=f"post-manual-ready-{post.id}-{int(post.updated_at.timestamp())}",
+                    category="publishing",
+                    severity="warning",
+                    title=f"«{post.title}» آماده انتشار دستی است",
+                    description="این پست برای اکانت معمولی اینستاگرام آماده شده و باید دستی در Instagram منتشر شود.",
+                    recovery_hint="کپشن را کپی کنید، Instagram را باز کنید و بعد از انتشار، پست را به عنوان منتشرشده علامت بزنید.",
+                    action_label="باز کردن صف انتشار",
+                    action_href="/queue",
+                    post_id=post.id,
+                    created_at=post.updated_at,
+                    action_required=True,
+                )
+            )
         elif post.status == "published" and post.published_at and post.published_at >= recent_cutoff:
             notifications.append(
                 OperationalNotificationResponse(

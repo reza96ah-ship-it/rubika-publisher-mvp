@@ -281,6 +281,22 @@ def schedule_post(post_id: int, payload: PostScheduleRequest, store: Store = Dep
     return post_response(post)
 
 
+@router.post("/{post_id}/manual-published", response_model=PostResponse)
+def mark_manual_published(post_id: int, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostResponse:
+    post = get_store_post(db, store, post_id)
+    if post.status != "manual_ready":
+        raise HTTPException(status_code=400, detail="Only manual-ready posts can be marked as manually published")
+    now = datetime.utcnow()
+    post.status = "published"
+    post.published_at = now
+    post.failed_at = None
+    post.last_error = ""
+    post.updated_at = now
+    db.commit()
+    db.refresh(post)
+    return post_response(post)
+
+
 @router.post("/{post_id}/retry", response_model=PostResponse)
 def retry_failed_post(post_id: int, store: Store = Depends(get_active_store), db: Session = Depends(get_db)) -> PostResponse:
     post = get_store_post(db, store, post_id)
