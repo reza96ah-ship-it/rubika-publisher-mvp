@@ -203,6 +203,58 @@ const cropPresets: Array<{ id: CropPresetId; label: string; detail: string; widt
   { id: "story", label: "استوری", detail: "1080×1920 · تمام‌صفحه", width: 1080, height: 1920, icon: RectangleHorizontal },
   { id: "landscape", label: "بنر افقی", detail: "1200×675 · کمپین", width: 1200, height: 675, icon: RectangleHorizontal }
 ];
+const designRecipes = [
+  {
+    label: "آفر فوری",
+    detail: "تیتر، قیمت، CTA",
+    cropPresetId: "rubika" as CropPresetId,
+    overlay: { mode: "gradient" as ImageOverlayMode, strength: 58 },
+    adjustments: { brightness: 102, contrast: 108, saturation: 112 },
+    texts: [
+      { presetIndex: 0, y: 0.2, boxWidth: 0.76 },
+      { presetIndex: 1, y: 0.68, boxWidth: 0.6 },
+      { presetIndex: 2, y: 0.85, boxWidth: 0.66 }
+    ],
+    stickers: [{ value: "🔥", x: 0.14, y: 0.16 }]
+  },
+  {
+    label: "لوکس محصول",
+    detail: "وینیت، لیبل لوکس",
+    cropPresetId: "portrait" as CropPresetId,
+    overlay: { mode: "vignette" as ImageOverlayMode, strength: 54 },
+    adjustments: { brightness: 98, contrast: 112, saturation: 96 },
+    texts: [
+      { presetIndex: 5, y: 0.18, boxWidth: 0.68 },
+      { presetIndex: 6, y: 0.82, boxWidth: 0.72 }
+    ],
+    stickers: [{ value: "💎", x: 0.86, y: 0.18 }]
+  },
+  {
+    label: "استوری لانچ",
+    detail: "تمام‌صفحه، CTA پایین",
+    cropPresetId: "story" as CropPresetId,
+    overlay: { mode: "spotlight" as ImageOverlayMode, strength: 62 },
+    adjustments: { brightness: 104, contrast: 104, saturation: 110 },
+    texts: [
+      { presetIndex: 4, y: 0.16, boxWidth: 0.78 },
+      { presetIndex: 3, y: 0.28, boxWidth: 0.7 },
+      { presetIndex: 2, y: 0.88, boxWidth: 0.74 }
+    ],
+    stickers: [{ value: "✨", x: 0.18, y: 0.12 }, { value: "🎁", x: 0.84, y: 0.82 }]
+  },
+  {
+    label: "کاتالوگ تمیز",
+    detail: "خوانا و مینیمال",
+    cropPresetId: "portrait" as CropPresetId,
+    overlay: { mode: "lightWash" as ImageOverlayMode, strength: 34 },
+    adjustments: { brightness: 106, contrast: 100, saturation: 98 },
+    texts: [
+      { presetIndex: 6, y: 0.16, boxWidth: 0.74 },
+      { presetIndex: 7, y: 0.84, boxWidth: 0.58 }
+    ],
+    stickers: [{ value: "✅", x: 0.84, y: 0.84 }]
+  }
+];
 
 function createLayerId() {
   return `layer-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -883,6 +935,78 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setSelectedLayerIds([layer.id]);
   }
 
+  function createStickerLayer(value: string, x: number, y: number, indexOffset = 0): EditorLayer | null {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    return {
+      id: createLayerId(),
+      type: "sticker",
+      value,
+      x,
+      y,
+      color: "#FFFFFF",
+      backgroundColor: "#0F172A",
+      backgroundOpacity: 0,
+      fontFamily: "Arial",
+      fontSize: Math.max(36, Math.round(canvas.width / 14)),
+      fontWeight: 700,
+      lineHeight: 1,
+      letterSpacing: 0,
+      boxWidth: Math.max(120, Math.round(canvas.width * 0.24)),
+      padding: 0,
+      radius: 0,
+      outlineColor: "#0F172A",
+      outlineWidth: 0,
+      shadowColor: "rgba(15, 23, 42, 0.32)",
+      shadowBlur: Math.max(2, Math.round(canvas.width / 220)),
+      shadowOffsetY: 2,
+      align: "center",
+      rotation: 0,
+      name: `استیکر ${layers.filter((item) => item.type === "sticker").length + indexOffset + 1}`,
+      visible: true,
+      locked: false,
+      opacity: 100
+    };
+  }
+
+  function applyDesignRecipe(recipe: typeof designRecipes[number]) {
+    const image = imageRef.current;
+    const canvas = canvasRef.current;
+    if (!image || !canvas) return;
+    const preset = cropPresets.find((item) => item.id === recipe.cropPresetId) ?? cropPresets[0];
+    const nextSize = preset.id === "original" ? originalCanvasSize(image) : { width: preset.width, height: preset.height };
+    remember();
+    canvas.width = nextSize.width;
+    canvas.height = nextSize.height;
+    setCanvasSize(nextSize);
+    setCrop((current) => ({ ...current, presetId: preset.id, offsetX: 0, offsetY: 0, scale: 100 }));
+    setOverlay(recipe.overlay);
+    setAdjustments((current) => ({ ...current, ...recipe.adjustments }));
+
+    const nextTextLayers = recipe.texts
+      .map((item) => {
+        const textPreset = textStylePresets[item.presetIndex];
+        const layer = textPreset ? createTextLayer(textPreset.value, textPreset) : null;
+        if (!layer) return null;
+        return {
+          ...layer,
+          x: nextSize.width / 2,
+          y: Math.round(nextSize.height * item.y),
+          boxWidth: Math.max(220, Math.round(nextSize.width * item.boxWidth))
+        };
+      })
+      .filter(Boolean) as EditorLayer[];
+    const nextStickerLayers = recipe.stickers
+      .map((item, index) => createStickerLayer(item.value, Math.round(nextSize.width * item.x), Math.round(nextSize.height * item.y), index))
+      .filter(Boolean) as EditorLayer[];
+    const nextLayers = [...nextTextLayers, ...nextStickerLayers];
+    setLayers((current) => [...current, ...nextLayers]);
+    setSelectedLayerIds(nextLayers.map((layer) => layer.id));
+    setSelectedLayerId(nextLayers[0]?.id ?? "");
+    setFitMode("fit");
+    window.setTimeout(() => fitCanvas(nextSize, "fit"), 0);
+  }
+
   function makeSelectedTitleReadable() {
     if (!selectedLayer || selectedLayer.type !== "text" || selectedLayer.locked) return;
     remember();
@@ -1336,6 +1460,26 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                     className="app-interactive rounded-md border border-app-border bg-white px-2 py-2 text-right text-[11px] font-black text-app-text shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary"
                   >
                     {preset.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="border-t border-app-border pt-4">
+              <div className="flex items-center gap-2">
+                <Layers3 className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                <h3 className="text-xs font-black text-app-text">ترکیب آماده</h3>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {designRecipes.map((recipe) => (
+                  <button
+                    key={recipe.label}
+                    type="button"
+                    onClick={() => applyDesignRecipe(recipe)}
+                    className="app-interactive rounded-md border border-app-border bg-white p-2 text-right shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary"
+                  >
+                    <span className="block text-[11px] font-black text-app-text">{recipe.label}</span>
+                    <span className="mt-1 block text-[10px] font-bold text-app-muted">{recipe.detail}</span>
                   </button>
                 ))}
               </div>
