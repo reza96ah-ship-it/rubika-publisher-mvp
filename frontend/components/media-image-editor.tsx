@@ -86,6 +86,7 @@ type CanvasGuides = {
 const colorSwatches = ["#FFFFFF", "#0F172A", "#0F766E", "#2563EB", "#E11D48", "#F59E0B", "#7C3AED", "#16A34A"];
 const labelSwatches = ["#0F172A", "#0F766E", "#2563EB", "#E11D48", "#F59E0B", "#FFFFFF"];
 const stickers = ["✨", "🔥", "🎉", "❤️", "⭐", "✅", "📣", "🛍️", "🎁", "💎", "🌿", "☀️"];
+const fontSampleText = "فروش ویژه محصول";
 const fontOptions = [
   { label: "وزیرمتن", value: "Vazirmatn" },
   { label: "لاله‌زار", value: "Lalezar" },
@@ -871,7 +872,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       <div aria-hidden="true" className="pointer-events-none fixed -top-96 h-0 w-0 overflow-hidden opacity-0">
         {fontOptions.map((font) => (
           <span key={font.value} style={{ fontFamily: `"${font.value}"`, fontWeight: font.value.includes("Bold") ? 700 : 400 }}>
-            فروش ویژه محصول
+            {fontSampleText}
           </span>
         ))}
       </div>
@@ -1176,12 +1177,30 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                           متن
                           <textarea value={selectedLayer.value} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ value: event.target.value })} className="mt-2 min-h-20 w-full resize-y rounded-md border border-app-border bg-app-canvas px-3 py-2 text-sm leading-6 text-app-text outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60" dir="rtl" />
                         </label>
-                        <label className="block text-xs font-bold text-app-muted">
+                        <div className="block text-xs font-bold text-app-muted">
                           فونت فارسی
-                          <select value={selectedLayer.fontFamily} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ fontFamily: event.target.value })} className="mt-2 w-full rounded-md border border-app-border bg-white px-3 py-2 text-sm text-app-text outline-none focus:border-blue-300 disabled:opacity-60">
-                            {fontOptions.map((font) => <option key={font.value} value={font.value}>{font.label}</option>)}
-                          </select>
-                        </label>
+                          <div className="mt-2 max-h-56 space-y-1 overflow-y-auto rounded-md border border-app-border bg-white p-1 shadow-hairline" role="radiogroup" aria-label="فونت فارسی">
+                            {fontOptions.map((font) => {
+                              const active = selectedLayer.fontFamily === font.value;
+                              return (
+                                <button
+                                  key={font.value}
+                                  type="button"
+                                  disabled={selectedLayer.locked}
+                                  onClick={() => updateSelectedLayer({ fontFamily: font.value })}
+                                  className={`app-interactive flex w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-right disabled:cursor-not-allowed disabled:opacity-50 ${active ? "bg-blue-50 text-app-primary ring-1 ring-blue-200" : "text-app-text hover:bg-app-surfaceMuted"}`}
+                                  role="radio"
+                                  aria-checked={active}
+                                >
+                                  <span className="shrink-0 text-[11px] font-black">{font.label}</span>
+                                  <span className="min-w-0 flex-1 truncate text-left text-lg leading-6 text-app-text" style={{ fontFamily: `"${font.value}"`, fontWeight: font.value.includes("Bold") ? 700 : selectedLayer.fontWeight }}>
+                                    {fontSampleText}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
                         <label className="block text-xs font-bold text-app-muted">
                           وزن فونت
                           <select value={selectedLayer.fontWeight} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ fontWeight: Number(event.target.value) })} className="mt-2 w-full rounded-md border border-app-border bg-white px-3 py-2 text-sm text-app-text outline-none focus:border-blue-300 disabled:opacity-60">
