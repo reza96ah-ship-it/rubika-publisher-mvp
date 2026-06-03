@@ -151,7 +151,7 @@ export default function HomePage() {
                   <WorkspaceAvatar name={store?.name || "فضای کاری روبیکا"} size="lg" color={brandColor} imageUrl={brandImageUrl} />
                   <div className="min-w-0">
                     <p className="text-[10px] font-black text-app-muted">فضای کاری فعال</p>
-                    <p className="mt-1 truncate text-base font-black text-app-text">{store?.name || "پروفایل فروشگاه"}</p>
+                    <p className="mt-1 truncate text-base font-black text-app-text">{store?.name || "فضای کاری اجتماعی"}</p>
                     <p className="mt-0.5 truncate text-xs text-app-muted">{store?.category || store?.brand_voice || "هویت برند را از تنظیمات فروشگاه کامل کنید."}</p>
                   </div>
                 </div>
@@ -162,12 +162,12 @@ export default function HomePage() {
                   </StatusToken>
                   <StatusToken tone={rubikaReady ? "success" : "warning"} className="gap-1">
                     <PlugZap className="h-3.5 w-3.5" aria-hidden="true" />
-                    روبیکا {rubikaReady ? "متصل" : "نیازمند بررسی"}
+                    کانال‌ها {rubikaReady ? "آماده" : "نیازمند بررسی"}
                   </StatusToken>
                   {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
                 </div>
-                <p className="app-section-kicker mt-4 text-[10px] font-black">Rubika Content Operations</p>
-                <h1 className="mt-2 text-2xl font-black text-app-text">مرکز فرمان انتشار</h1>
+                <p className="app-section-kicker mt-4 text-[10px] font-black">Multi-channel Social Operations</p>
+                <h1 className="mt-2 text-2xl font-black text-app-text">مرکز فرمان شبکه‌های اجتماعی</h1>
                 <p className="mt-2 max-w-3xl text-sm leading-7 text-app-muted">{briefing}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button href="/queue">باز کردن صف عملیات</Button>
@@ -256,7 +256,7 @@ export default function HomePage() {
 
               <WorkspacePanel title="هویت برند فعال" description="برند جاری که در composer و پیش‌نمایش انتشار استفاده می‌شود." bodyClassName="p-4">
                 <div className="flex items-center gap-3">
-                  <WorkspaceAvatar name={store?.name || "فضای کاری روبیکا"} size="lg" color={brandColor} imageUrl={brandImageUrl} />
+                    <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandImageUrl} />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-black text-app-text">{store?.name || "پروفایل فروشگاه"}</p>
                     <p className="mt-1 truncate text-xs text-app-muted">{store?.brand_voice || "لحن برند هنوز تعریف نشده است."}</p>

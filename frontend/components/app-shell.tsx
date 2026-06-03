@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, BellRing, ChevronDown, ChevronLeft, Instagram, LogOut, PlugZap, Search, Settings2, Sparkles } from "lucide-react";
+import { AlertCircle, BellRing, ChevronDown, ChevronLeft, LogOut, Network, Search, Settings2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -131,7 +131,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const storeReady = !overviewLoading && isStoreConfigured(overview.store);
   const rubikaReady = !overviewLoading && isRubikaConnected(overview.rubika);
   const shellReady = storeReady && rubikaReady;
-  const setupHref = !storeReady ? "/store" : !rubikaReady ? "/rubika" : "/compose";
+  const setupHref = !storeReady ? "/store" : !rubikaReady ? "/channels" : "/compose";
   const showSetupAction = !overviewLoading && !shellReady;
   const brandAssetId = overview.store?.avatar_asset_id ?? overview.store?.logo_asset_id ?? null;
   const brandImageUrl = useMediaPreviewUrl(brandAssetId);
@@ -151,7 +151,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <header className="sticky top-0 z-20 border-b border-app-border/90 bg-[#F9FCFC]/92 shadow-[0_8px_24px_rgba(38,75,88,0.055)] backdrop-blur-xl">
             <div className="flex min-h-[68px] items-center justify-between gap-3 px-4 py-2 lg:px-6">
               <div className="flex min-w-0 items-center gap-3">
-                <Link href="/" className="lg:hidden" aria-label="Rubika Publisher">
+                <Link href="/" className="lg:hidden" aria-label="SocialOps Studio">
                   <ProductMark />
                 </Link>
                 <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-app-teal shadow-hairline lg:flex" style={brandColor ? { color: brandColor } : undefined}>
@@ -189,16 +189,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </button>
 
                 <Link
-                  href="/rubika"
+                  href="/channels"
                   className={`app-interactive hidden h-9 items-center gap-2 rounded-md px-2.5 text-xs font-bold shadow-hairline sm:flex ${
                     rubikaReady
                       ? "bg-teal-50 text-teal-700 hover:bg-teal-100"
                       : "bg-amber-50 text-amber-700 hover:bg-amber-100"
                   }`}
                 >
-                  <PlugZap className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span className="hidden xl:inline">روبیکا</span>
-                  <span>{rubikaReady ? "متصل" : "نیازمند بررسی"}</span>
+                  <Network className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span className="hidden xl:inline">کانال‌ها</span>
+                  <span>{rubikaReady ? "آماده" : "نیازمند بررسی"}</span>
                 </Link>
 
                 {showSetupAction ? (
@@ -254,13 +254,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           <Settings2 className="h-3.5 w-3.5" aria-hidden="true" />
                           تنظیمات فضای کاری
                         </Link>
-                        <Link href="/rubika" className="app-interactive flex items-center gap-2 rounded px-2.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-app-text">
-                          <PlugZap className="h-3.5 w-3.5" aria-hidden="true" />
-                          اتصال روبیکا
-                        </Link>
-                        <Link href="/instagram" className="app-interactive flex items-center gap-2 rounded px-2.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-app-text">
-                          <Instagram className="h-3.5 w-3.5" aria-hidden="true" />
-                          اتصال اینستاگرام
+                        <Link href="/channels" className="app-interactive flex items-center gap-2 rounded px-2.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-app-text">
+                          <Network className="h-3.5 w-3.5" aria-hidden="true" />
+                          مدیریت کانال‌ها
                         </Link>
                         <button
                           type="button"

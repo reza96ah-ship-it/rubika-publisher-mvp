@@ -1,6 +1,6 @@
 import { apiUrl, authHeaders, Post } from "./posts";
 
-export const workspaceUpdatedEvent = "rubika-publisher:workspace-updated";
+export const workspaceUpdatedEvent = "socialops-studio:workspace-updated";
 
 export type StoreProfile = {
   id: number;
@@ -90,9 +90,9 @@ export function buildReadinessSteps(
     },
     {
       key: "rubika",
-      label: "اتصال روبیکا",
-      description: "توکن و مقصد تست شده‌اند.",
-      href: "/rubika",
+      label: "کانال‌های انتشار",
+      description: "کانال اصلی انتشار تست شده و آماده است.",
+      href: "/channels",
       done: isRubikaConnected(overview.rubika)
     },
     {

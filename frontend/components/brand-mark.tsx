@@ -1,6 +1,6 @@
 function initials(label: string) {
   const words = label.trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return "RP";
+  if (!words.length) return "SO";
   if (words.length === 1) return words[0].slice(0, 2).toLocaleUpperCase();
   return `${words[0][0]}${words.at(-1)?.[0] ?? ""}`.toLocaleUpperCase();
 }
@@ -13,7 +13,7 @@ const sizeClasses = {
 
 export function ProductMark({ size = "md", className = "" }: { size?: keyof typeof sizeClasses; className?: string }) {
   return (
-    <span className={`relative inline-flex shrink-0 overflow-hidden bg-app-primary shadow-accent ${sizeClasses[size]} ${className}`} aria-label="Rubika Publisher">
+    <span className={`relative inline-flex shrink-0 overflow-hidden bg-app-primary shadow-accent ${sizeClasses[size]} ${className}`} aria-label="SocialOps Studio">
       <span className="absolute inset-y-[22%] right-[24%] w-[12%] rounded-full bg-white/95" />
       <span className="absolute inset-y-[22%] right-[47%] w-[12%] rounded-full bg-white/75" />
       <span className="absolute right-[24%] top-[22%] h-[12%] w-[36%] rounded-full bg-white/95" />

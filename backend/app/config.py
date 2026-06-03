@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Rubika Publisher MVP"
+    app_name: str = "SocialOps Studio"
     app_env: str = "local"
     app_secret_key: str = "change_this_secret_key"
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, CalendarDays, FileImage, FileText, Instagram, ListChecks, Search, Settings2, Store, Target, X } from "lucide-react";
+import { BarChart3, CalendarDays, FileImage, FileText, ListChecks, Network, Search, Settings2, Store, Target, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, authHeaders, type Post } from "../lib/posts";
@@ -17,10 +17,11 @@ const commands = [
   { label: "لیست محتوا", detail: "مدیریت پست‌ها و وضعیت‌ها", href: "/content", icon: FileText },
   { label: "صف انتشار", detail: "بررسی زمان‌بندی و بازیابی خطا", href: "/queue", icon: ListChecks },
   { label: "رسانه‌ها", detail: "کتابخانه تصاویر", href: "/media", icon: FileImage },
+  { label: "کانال‌ها", detail: "روبیکا، اینستاگرام و قابلیت‌های انتشار", href: "/channels", icon: Network },
   { label: "تحلیل عملکرد", detail: "کیفیت و روند انتشار", href: "/analytics", icon: BarChart3 },
-  { label: "پروفایل فروشگاه", detail: "هویت برند و متن‌های پایه", href: "/store", icon: Store },
-  { label: "اتصال روبیکا", detail: "اعتبارنامه و تست کانال", href: "/rubika", icon: Settings2 },
-  { label: "اتصال اینستاگرام", detail: "آماده‌سازی Meta OAuth و حساب حرفه‌ای", href: "/instagram", icon: Instagram }
+  { label: "پروفایل و برند", detail: "هویت برند و متن‌های پایه", href: "/store", icon: Store },
+  { label: "تنظیمات روبیکا", detail: "اعتبارنامه و تست کانال روبیکا", href: "/rubika", icon: Settings2 },
+  { label: "تنظیمات اینستاگرام", detail: "حالت دستی یا اتصال حرفه‌ای", href: "/instagram", icon: Settings2 }
 ];
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {

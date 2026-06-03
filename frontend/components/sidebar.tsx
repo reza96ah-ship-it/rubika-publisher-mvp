@@ -7,12 +7,11 @@ import {
   ChevronLeft,
   FileText,
   GalleryHorizontalEnd,
-  Instagram,
   LayoutDashboard,
   ListChecks,
   LucideIcon,
+  Network,
   PenLine,
-  Plug,
   ScrollText,
   Settings2,
   Store,
@@ -58,6 +57,7 @@ const primaryNavGroups: NavGroup[] = [
     title: "کتابخانه و گزارش",
     items: [
       { label: "رسانه‌ها", href: "/media", icon: GalleryHorizontalEnd },
+      { label: "کانال‌ها", href: "/channels", icon: Network },
       { label: "تحلیل عملکرد", href: "/analytics", icon: BarChart3 },
       { label: "هشدارهای عملیات", href: "/inbox", icon: BellRing },
       { label: "سلامت انتشار", href: "/logs", icon: ScrollText }
@@ -66,9 +66,7 @@ const primaryNavGroups: NavGroup[] = [
 ];
 
 const settingsNavItems: NavItem[] = [
-  { label: "پروفایل فروشگاه", href: "/store", icon: Store },
-  { label: "اتصال روبیکا", href: "/rubika", icon: Plug },
-  { label: "اتصال اینستاگرام", href: "/instagram", icon: Instagram }
+  { label: "پروفایل و برند", href: "/store", icon: Store }
 ];
 
 const composeNavItem: NavItem = { label: "پست جدید", href: "/compose", icon: PenLine };
@@ -77,6 +75,9 @@ const publishingRouteItems: NavItem[] = [
   { label: "کمپین‌ها", href: "/campaigns", icon: Target },
   { label: "لیست محتوا", href: "/content", icon: FileText },
   { label: "صف انتشار", href: "/queue", icon: ListChecks }
+];
+const channelRouteItems: NavItem[] = [
+  { label: "کانال‌ها", href: "/channels", icon: Network }
 ];
 const navGroups = [
   ...primaryNavGroups,
@@ -96,6 +97,10 @@ export function getActiveNav(pathname: string) {
   const publishingRoute = publishingRouteItems.find((item) => isActiveRoute(pathname, item.href));
   if (publishingRoute) {
     return { group: { title: "انتشار", items: publishingRouteItems }, item: publishingRoute };
+  }
+
+  if (isActiveRoute(pathname, "/channels") || isActiveRoute(pathname, "/rubika") || isActiveRoute(pathname, "/instagram")) {
+    return { group: { title: "کانال‌ها", items: channelRouteItems }, item: channelRouteItems[0] };
   }
 
   for (const group of navGroups) {
@@ -132,8 +137,8 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
         <Link href="/" className="flex items-center gap-2.5 rounded-md px-1 py-1">
           <ProductMark />
           <div className="min-w-0">
-            <p className="truncate text-sm font-black text-app-text">Rubika Publisher</p>
-            <p className="mt-0.5 text-[10px] font-bold text-app-teal">Content operations studio</p>
+            <p className="truncate text-sm font-black text-app-text">SocialOps Studio</p>
+            <p className="mt-0.5 text-[10px] font-bold text-app-teal">Multi-channel operations</p>
           </div>
         </Link>
 
@@ -166,6 +171,8 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
               {group.items.map((item) => {
                 const active = item.href === "/calendar"
                   ? isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue")
+                  : item.href === "/channels"
+                    ? isActiveRoute(pathname, "/channels") || isActiveRoute(pathname, "/rubika") || isActiveRoute(pathname, "/instagram")
                   : isActiveRoute(pathname, item.href);
                 return <NavEntry key={item.href} item={item} active={active} />;
               })}
@@ -182,11 +189,11 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
         <div className="space-y-0.5">
           {settingsNavItems.map((item) => <NavEntry key={item.href} item={item} active={isActiveRoute(pathname, item.href)} />)}
         </div>
-        <Link href="/rubika" className={`app-interactive mt-3 flex items-center gap-2 rounded-md px-2.5 py-2 text-xs font-bold shadow-hairline ${
+        <Link href="/channels" className={`app-interactive mt-3 flex items-center gap-2 rounded-md px-2.5 py-2 text-xs font-bold shadow-hairline ${
           ready ? "bg-teal-50 text-teal-700" : "bg-amber-50 text-amber-700"
         }`}>
           <span className={`h-2 w-2 rounded-full ${ready ? "bg-teal-500" : "app-status-pulse bg-amber-500"}`} />
-          {ready ? "فضای کاری آماده انتشار" : "تکمیل آماده‌سازی"}
+          {ready ? "کانال‌ها آماده انتشار" : "تکمیل کانال‌ها"}
         </Link>
       </div>
     </aside>

@@ -17,7 +17,7 @@ export const channelOptions: ChannelOption[] = [
     value: "rubika",
     label: "روبیکا",
     shortLabel: "Rubika",
-    description: "کانال فعلی انتشار خودکار با worker فعال.",
+    description: "کانال انتشار خودکار با worker فعال و تست سلامت 24 ساعته.",
     tone: "primary",
     icon: Send
   },
@@ -25,7 +25,7 @@ export const channelOptions: ChannelOption[] = [
     value: "instagram",
     label: "اینستاگرام",
     shortLabel: "Instagram",
-    description: "آماده‌سازی کانال؛ انتشار واقعی نیازمند Meta OAuth است.",
+    description: "اکانت معمولی با یادآوری دستی؛ انتشار مستقیم فقط بعد از Meta OAuth.",
     tone: "warning",
     icon: Instagram
   }
