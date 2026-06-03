@@ -574,6 +574,12 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   ].filter((group) => group.colors.length > 0), [brandColors, recentColors]);
   const activeCropPreset = cropPresets.find((preset) => preset.id === crop.presetId) ?? cropPresets[0];
   const activeOverlayPreset = overlayPresets.find((preset) => preset.mode === overlay.mode) ?? overlayPresets[0];
+  const editorWorkflowItems = [
+    { label: "تصویر", value: activeCropPreset.label },
+    { label: "طراحی", value: activeDesignRecipe?.label ?? "آزاد" },
+    { label: "لایه", value: selectedLayer ? selectedLayer.name : "انتخاب نشده" },
+    { label: "خروجی", value: `${canvasSize.width}×${canvasSize.height}` }
+  ];
 
   const snapshot = useCallback((): EditorSnapshot => ({
     layers: cloneLayers(layers),
@@ -1491,7 +1497,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   }
 
   return createPortal((
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="ویرایشگر تصویر">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 p-2 backdrop-blur-sm sm:p-3" role="dialog" aria-modal="true" aria-label="ویرایشگر تصویر">
       <div aria-hidden="true" className="pointer-events-none fixed -top-96 h-0 w-0 overflow-hidden opacity-0">
         {fontOptions.map((font) => (
           <span key={font.value} style={fontPreviewStyle(font.value, font.value.includes("Bold") ? 700 : 400)}>
@@ -1499,14 +1505,25 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
           </span>
         ))}
       </div>
-      <section className="flex h-[96vh] w-full max-w-[1480px] flex-col overflow-hidden rounded-lg border border-app-border bg-app-canvas shadow-2xl">
-        <header className="flex flex-col justify-between gap-3 border-b border-app-border bg-white px-4 py-3 lg:flex-row lg:items-center">
-          <div>
-            <p className="text-[10px] font-black text-app-primary">استودیوی خلاقه</p>
-            <h2 className="mt-1 text-lg font-black text-app-text">ویرایش تصویر</h2>
-            <p className="mt-1 text-xs text-app-muted">{filename} · نسخه جدید در کتابخانه ذخیره می‌شود و فایل اصلی دست‌نخورده می‌ماند.</p>
+      <section className="flex h-[97vh] w-full max-w-[1580px] flex-col overflow-hidden rounded-xl border border-white/70 bg-app-canvas shadow-2xl ring-1 ring-slate-900/10">
+        <header className="border-b border-app-border bg-white/95 px-4 py-3 backdrop-blur">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black text-app-primary">Creative Studio</p>
+              <h2 className="mt-1 truncate text-lg font-black text-app-text">ویرایش تصویر حرفه‌ای</h2>
+              <p className="mt-1 truncate text-xs text-app-muted">{filename} · خروجی جدید ذخیره می‌شود و فایل اصلی دست‌نخورده می‌ماند.</p>
+            </div>
+            <div className="grid min-w-0 grid-cols-2 gap-2 md:grid-cols-4 xl:min-w-[520px]">
+              {editorWorkflowItems.map((item) => (
+                <div key={item.label} className="min-w-0 rounded-md border border-app-border bg-app-surfaceMuted px-3 py-2 shadow-hairline">
+                  <span className="block text-[9px] font-black text-app-muted">{item.label}</span>
+                  <span className="mt-0.5 block truncate text-[11px] font-black text-app-text">{item.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
             <StatusToken tone={layers.length ? "primary" : "neutral"}>{layers.length} لایه</StatusToken>
             <StatusToken tone="neutral">{canvasSize.width}×{canvasSize.height}</StatusToken>
             <button type="button" onClick={undo} disabled={!past.length} className="app-interactive flex h-8 w-8 items-center justify-center rounded-md border border-app-border bg-white text-slate-600 shadow-hairline hover:bg-blue-50 hover:text-app-primary disabled:pointer-events-none disabled:opacity-40" aria-label="بازگشت" title="بازگشت (Ctrl+Z)">
@@ -1518,6 +1535,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
             <button type="button" onClick={() => setShowSafeZone((current) => !current)} className={`app-interactive flex h-8 w-8 items-center justify-center rounded-md border shadow-hairline ${showSafeZone ? "border-blue-200 bg-blue-50 text-app-primary" : "border-app-border bg-white text-slate-600 hover:bg-blue-50 hover:text-app-primary"}`} aria-label="نمایش محدوده امن" title="محدوده امن روبیکا">
               <ShieldCheck className="h-4 w-4" aria-hidden="true" />
             </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
             <Button type="button" variant="secondary" size="sm" onClick={resetEditor}>
               <RotateCcw className="ml-1.5 h-4 w-4" aria-hidden="true" />
               بازنشانی
@@ -1529,12 +1548,32 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
             <button type="button" onClick={onClose} className="app-interactive flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-app-text" aria-label="بستن ویرایشگر" title="بستن ویرایشگر">
               <X className="h-4 w-4" aria-hidden="true" />
             </button>
+            </div>
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 overflow-hidden max-lg:grid-rows-[minmax(320px,1fr)_minmax(180px,28vh)_minmax(180px,28vh)] lg:grid-cols-[240px_minmax(320px,1fr)_300px]">
-          <aside className="min-h-0 space-y-4 overflow-y-auto border-b border-app-border bg-white p-4 max-lg:order-2 lg:border-b-0 lg:border-l">
-            <section>
+        <div className="grid min-h-0 flex-1 overflow-hidden bg-app-canvas max-lg:grid-rows-[minmax(340px,1fr)_minmax(220px,30vh)_minmax(220px,30vh)] lg:grid-cols-[286px_minmax(420px,1fr)_340px]">
+          <aside className="min-h-0 space-y-4 overflow-y-auto border-b border-app-border bg-app-surfaceMuted p-4 max-lg:order-2 lg:border-b-0 lg:border-l">
+            <nav className="sticky top-0 z-20 -mx-4 -mt-4 border-b border-app-border bg-app-surfaceMuted/95 px-4 py-3 backdrop-blur" aria-label="ابزارهای ویرایشگر">
+              <div className="grid grid-cols-4 gap-1">
+                {[
+                  { href: "#editor-crop", label: "تصویر", icon: Crop },
+                  { href: "#editor-text", label: "متن", icon: Type },
+                  { href: "#editor-recipes", label: "قالب", icon: Layers3 },
+                  { href: "#editor-effects", label: "افکت", icon: Palette }
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <a key={item.href} href={item.href} className="app-interactive flex flex-col items-center justify-center gap-1 rounded-md border border-app-border bg-white px-1.5 py-2 text-[10px] font-black text-app-muted shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary">
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                      {item.label}
+                    </a>
+                  );
+                })}
+              </div>
+            </nav>
+
+            <section id="editor-crop" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
               <div className="flex items-center gap-2">
                 <Crop className="h-4 w-4 text-app-primary" aria-hidden="true" />
                 <h3 className="text-xs font-black text-app-text">کراپ و خروجی</h3>
@@ -1585,7 +1624,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
               </div>
             </section>
 
-            <section>
+            <section id="editor-text" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
               <div className="flex items-center gap-2">
                 <Type className="h-4 w-4 text-app-primary" aria-hidden="true" />
                 <h3 className="text-xs font-black text-app-text">متن فارسی</h3>
@@ -1609,7 +1648,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
               </div>
             </section>
 
-            <section className="border-t border-app-border pt-4">
+            <section id="editor-recipes" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Layers3 className="h-4 w-4 text-app-primary" aria-hidden="true" />
@@ -1676,7 +1715,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
               ) : null}
             </section>
 
-            <section className="border-t border-app-border pt-4">
+            <section id="editor-templates" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
               <div className="flex items-center gap-2">
                 <Save className="h-4 w-4 text-app-primary" aria-hidden="true" />
                 <h3 className="text-xs font-black text-app-text">قالب‌های من</h3>
@@ -1715,7 +1754,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
               </div>
             </section>
 
-            <section className="border-t border-app-border pt-4">
+            <section id="editor-actions" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
               <div className="flex items-center gap-2">
                 <Zap className="h-4 w-4 text-app-primary" aria-hidden="true" />
                 <h3 className="text-xs font-black text-app-text">اقدام سریع</h3>
@@ -1739,7 +1778,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
               </div>
             </section>
 
-            <section className="border-t border-app-border pt-4">
+            <section id="editor-stickers" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
               <div className="flex items-center gap-2">
                 <SmilePlus className="h-4 w-4 text-app-primary" aria-hidden="true" />
                 <h3 className="text-xs font-black text-app-text">استیکر و ایموجی</h3>
@@ -1760,7 +1799,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
               </div>
             </section>
 
-            <section className="border-t border-app-border pt-4">
+            <section id="editor-tuning" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
               <div className="flex items-center gap-2">
                 <Palette className="h-4 w-4 text-app-primary" aria-hidden="true" />
                 <h3 className="text-xs font-black text-app-text">تنظیم تصویر</h3>
@@ -1773,7 +1812,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
               ))}
             </section>
 
-            <section className="border-t border-app-border pt-4">
+            <section id="editor-effects" className="scroll-mt-24 rounded-md border border-app-border bg-white p-3 shadow-hairline">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-app-primary" aria-hidden="true" />
                 <h3 className="text-xs font-black text-app-text">افکت پس‌زمینه</h3>
@@ -1801,16 +1840,22 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
             </section>
           </aside>
 
-          <div ref={viewportRef} className="app-studio-grid relative flex min-h-[320px] min-w-0 items-center justify-center overflow-auto bg-slate-100 p-4 max-lg:order-1 lg:min-h-[440px] lg:p-6">
+          <div ref={viewportRef} className="app-studio-grid relative flex min-h-[340px] min-w-0 items-center justify-center overflow-auto bg-[#eef2f7] p-4 max-lg:order-1 lg:min-h-[520px] lg:p-8">
             {error ? <p className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
-            <div className="absolute right-3 top-3 z-10 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-1.5 rounded-md border border-app-border bg-white/95 px-2 py-1 shadow-soft backdrop-blur">
-              <span className="rounded bg-app-surfaceMuted px-2 py-1 text-[10px] font-black text-app-text">{activeCropPreset.label}</span>
-              <span className={`rounded px-2 py-1 text-[10px] font-black ${overlay.mode === "none" ? "bg-app-surfaceMuted text-app-muted" : "bg-blue-50 text-app-primary"}`}>{activeOverlayPreset.label}</span>
-              <span className="rounded bg-app-surfaceMuted px-2 py-1 text-[10px] font-black text-app-muted">{zoom}%</span>
+            <div className="absolute inset-x-4 top-4 z-10 flex flex-wrap items-center justify-between gap-2 rounded-md border border-white/80 bg-white/90 px-3 py-2 shadow-soft backdrop-blur lg:inset-x-8">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black text-app-primary">بوم طراحی</p>
+                <p className="mt-0.5 truncate text-[11px] font-bold text-app-muted">{activeDesignRecipe?.bestFor ?? "چیدمان آزاد تصویر، متن و استیکر"}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="rounded bg-app-surfaceMuted px-2 py-1 text-[10px] font-black text-app-text">{activeCropPreset.label}</span>
+                <span className={`rounded px-2 py-1 text-[10px] font-black ${overlay.mode === "none" ? "bg-app-surfaceMuted text-app-muted" : "bg-blue-50 text-app-primary"}`}>{activeOverlayPreset.label}</span>
+                <span className="rounded bg-app-surfaceMuted px-2 py-1 text-[10px] font-black text-app-muted">{zoom}%</span>
+              </div>
             </div>
             <div
               ref={artboardRef}
-              className={`relative shrink-0 overflow-visible rounded-md bg-white shadow-lift ${imageReady ? "" : "hidden"}`}
+              className={`relative shrink-0 overflow-visible rounded-lg bg-white shadow-2xl ring-1 ring-slate-900/10 ${imageReady ? "" : "hidden"}`}
               style={{ width: `${Math.round((canvasSize.width * zoom) / 100)}px`, height: `${Math.round((canvasSize.height * zoom) / 100)}px` }}
             >
               <canvas
@@ -1819,7 +1864,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                 onPointerMove={dragLayer}
                 onPointerUp={stopDrag}
                 onPointerCancel={stopDrag}
-                className="h-full w-full cursor-move rounded-md"
+                className="h-full w-full cursor-move rounded-lg"
               />
               {showSafeZone ? (
                 <div className="pointer-events-none absolute inset-[8%] rounded border border-dashed border-emerald-400/90">
@@ -1868,7 +1913,13 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                 </div>
               ) : null}
             </div>
-            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 flex-wrap items-center justify-center gap-1 rounded-md border border-app-border bg-white/95 p-1 shadow-soft">
+            {!imageReady ? (
+              <div className="rounded-lg border border-dashed border-app-borderStrong bg-white/80 px-6 py-8 text-center shadow-soft">
+                <p className="text-sm font-black text-app-text">در حال آماده‌سازی تصویر</p>
+                <p className="mt-2 text-xs font-bold text-app-muted">بعد از بارگذاری، بوم و ابزارها فعال می‌شوند.</p>
+              </div>
+            ) : null}
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 flex-wrap items-center justify-center gap-1 rounded-lg border border-white/80 bg-white/95 p-1.5 shadow-soft">
               <button type="button" onClick={() => { setFitMode("custom"); setZoom((current) => Math.max(20, current - 10)); }} className="app-interactive flex h-7 w-7 items-center justify-center rounded text-slate-600 hover:bg-blue-50 hover:text-app-primary" aria-label="کوچک‌نمایی" title="کوچک‌نمایی">
                 <Minus className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -1890,7 +1941,31 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
           <aside className="min-h-0 overflow-hidden border-t border-app-border bg-white max-lg:order-3 lg:border-r lg:border-t-0">
             <div className="h-full overflow-y-auto p-4">
-              <section>
+              <div className="sticky top-0 z-20 -mx-4 -mt-4 border-b border-app-border bg-white/95 px-4 py-3 backdrop-blur">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black text-app-primary">Inspector</p>
+                    <h3 className="mt-1 truncate text-sm font-black text-app-text">{selectedLayer ? selectedLayer.name : "لایه‌ای انتخاب نشده"}</h3>
+                  </div>
+                  <StatusToken tone={selectedLayerIds.length > 1 ? "primary" : selectedLayer ? "neutral" : "neutral"}>{selectedLayerIds.length || 0} انتخاب</StatusToken>
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <div className="rounded-md bg-app-surfaceMuted px-2 py-1.5">
+                    <span className="block text-[9px] font-black text-app-muted">نوع</span>
+                    <span className="mt-0.5 block truncate text-[10px] font-black text-app-text">{selectedLayer?.type === "text" ? "متن" : selectedLayer ? "استیکر" : "هیچ"}</span>
+                  </div>
+                  <div className="rounded-md bg-app-surfaceMuted px-2 py-1.5">
+                    <span className="block text-[9px] font-black text-app-muted">قفل</span>
+                    <span className="mt-0.5 block truncate text-[10px] font-black text-app-text">{selectedLayer?.locked ? "فعال" : "باز"}</span>
+                  </div>
+                  <div className="rounded-md bg-app-surfaceMuted px-2 py-1.5">
+                    <span className="block text-[9px] font-black text-app-muted">شفافیت</span>
+                    <span className="mt-0.5 block truncate text-[10px] font-black text-app-text">{selectedLayer ? `${selectedLayer.opacity}%` : "-"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <section className="mt-4 rounded-md border border-app-border bg-white p-3 shadow-hairline">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <Layers3 className="h-4 w-4 text-app-primary" aria-hidden="true" />
@@ -1969,7 +2044,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                 </div>
               </section>
 
-              <section className="mt-5 border-t border-app-border pt-4">
+              <section className="mt-4 rounded-md border border-app-border bg-white p-3 shadow-hairline">
                 <div className="flex items-center gap-2">
                   <Redo2 className="h-4 w-4 text-app-primary" aria-hidden="true" />
                   <h3 className="text-xs font-black text-app-text">تنظیم لایه</h3>
