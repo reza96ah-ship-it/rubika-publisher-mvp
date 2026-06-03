@@ -317,6 +317,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const [guides, setGuides] = useState<CanvasGuides>({ centerX: false, centerY: false });
   const [imageReady, setImageReady] = useState(false);
   const [error, setError] = useState("");
+  const [fontSearch, setFontSearch] = useState("");
 
   const selectedLayer = useMemo(() => layers.find((layer) => layer.id === selectedLayerId) ?? null, [layers, selectedLayerId]);
   const selectedBounds = selectedLayer?.visible ? layerBounds(selectedLayer) : null;
@@ -324,6 +325,16 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     if (!selectedLayer || selectedLayer.type !== "text") return null;
     return fontOptions.find((font) => font.value === selectedLayer.fontFamily) ?? fontOptions[0];
   }, [selectedLayer]);
+  const selectedFontPreviewText = useMemo(() => {
+    if (!selectedLayer || selectedLayer.type !== "text") return fontSampleText;
+    const normalized = selectedLayer.value.replace(/\s+/g, " ").trim();
+    return normalized ? normalized.slice(0, 48) : fontSampleText;
+  }, [selectedLayer]);
+  const filteredFontOptions = useMemo(() => {
+    const query = fontSearch.trim().toLowerCase();
+    if (!query) return fontOptions;
+    return fontOptions.filter((font) => `${font.label} ${font.value}`.toLowerCase().includes(query));
+  }, [fontSearch]);
 
   const snapshot = useCallback((): EditorSnapshot => ({
     layers: cloneLayers(layers),
@@ -1207,7 +1218,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                                 <span className="rounded bg-white px-2 py-1 text-[10px] font-black text-app-muted shadow-hairline">{selectedFontOption.label}</span>
                               </div>
                               <p className="mt-2 truncate text-2xl leading-9 text-app-text" style={fontPreviewStyle(selectedFontOption.value, selectedLayer.fontWeight)}>
-                                {fontSampleText}
+                                {selectedFontPreviewText}
                               </p>
                             </div>
                           ) : null}
@@ -1228,8 +1239,20 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                               );
                             })}
                           </div>
+                          <label className="mt-2 block">
+                            <span className="sr-only">جست‌وجوی فونت</span>
+                            <input
+                              type="search"
+                              value={fontSearch}
+                              disabled={selectedLayer.locked}
+                              onChange={(event) => setFontSearch(event.target.value)}
+                              placeholder="جست‌وجوی فونت..."
+                              className="w-full rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-text outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                              dir="ltr"
+                            />
+                          </label>
                           <div className="mt-2 max-h-56 space-y-1 overflow-y-auto rounded-md border border-app-border bg-white p-1 shadow-hairline" role="radiogroup" aria-label="فونت فارسی">
-                            {fontOptions.map((font) => {
+                            {filteredFontOptions.map((font) => {
                               const active = selectedLayer.fontFamily === font.value;
                               return (
                                 <button
@@ -1243,11 +1266,16 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                                 >
                                   <span className="shrink-0 text-[11px] font-black">{font.label}</span>
                                   <span className="min-w-0 flex-1 truncate text-left text-lg leading-6 text-app-text" style={fontPreviewStyle(font.value, font.value.includes("Bold") ? 700 : selectedLayer.fontWeight)}>
-                                    {fontSampleText}
+                                    {selectedFontPreviewText}
                                   </span>
                                 </button>
                               );
                             })}
+                            {!filteredFontOptions.length ? (
+                              <div className="rounded-md bg-app-surfaceMuted px-3 py-4 text-center text-xs font-bold text-app-muted">
+                                فونتی پیدا نشد
+                              </div>
+                            ) : null}
                           </div>
                         </div>
                         <label className="block text-xs font-bold text-app-muted">
