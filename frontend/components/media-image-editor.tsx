@@ -139,12 +139,12 @@ const textStylePresets = [
   { label: "زیرتیتر", value: "ارسال سریع و تضمین کیفیت", color: "#FFFFFF", backgroundColor: "#0F172A", fontFamily: "BNazanin", fontWeight: 700, fontSizeRatio: 24, radius: 12, padding: 14, outlineWidth: 1, shadowBlur: 4 }
 ];
 const fontRolePresets = [
-  { label: "تیتر", fontFamily: "BTitrBold", fontWeight: 900 },
-  { label: "قیمت", fontFamily: "BYekan", fontWeight: 800 },
-  { label: "کپشن", fontFamily: "BNazanin", fontWeight: 700 },
-  { label: "دست‌نویس", fontFamily: "BBaran", fontWeight: 700 },
-  { label: "لوکس", fontFamily: "BLotus", fontWeight: 700 },
-  { label: "خوانا", fontFamily: "Vazirmatn", fontWeight: 800 }
+  { label: "تیتر", fontFamily: "BTitrBold", fontWeight: 900, lineHeight: 1.05, letterSpacing: 0, padding: 18, radius: 14, backgroundOpacity: 82 },
+  { label: "قیمت", fontFamily: "BYekan", fontWeight: 800, lineHeight: 1.12, letterSpacing: 0, padding: 16, radius: 16, backgroundOpacity: 92 },
+  { label: "کپشن", fontFamily: "BNazanin", fontWeight: 700, lineHeight: 1.38, letterSpacing: 0, padding: 12, radius: 10, backgroundOpacity: 54 },
+  { label: "دست‌نویس", fontFamily: "BBaran", fontWeight: 700, lineHeight: 1.2, letterSpacing: 1, padding: 14, radius: 18, backgroundOpacity: 68 },
+  { label: "لوکس", fontFamily: "BLotus", fontWeight: 700, lineHeight: 1.22, letterSpacing: 2, padding: 16, radius: 8, backgroundOpacity: 64 },
+  { label: "خوانا", fontFamily: "Vazirmatn", fontWeight: 800, lineHeight: 1.26, letterSpacing: 0, padding: 14, radius: 12, backgroundOpacity: 72 }
 ];
 const headlineFontValues = new Set(["Lalezar", "BEsfehanBold", "BJadidBold", "BKoodakBold", "BMehrBold", "BNasimBold", "BSetarehBold", "BSinaBold", "BTitrBold", "BTitrTGEBold", "BTraffic", "BYekan"]);
 const bodyFontValues = new Set(["Vazirmatn", "BBadr", "BHoma", "BLotus", "BMitra", "BNazanin", "BRoya", "BYekan", "BZar", "Tahoma"]);
@@ -1246,7 +1246,15 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                                   key={preset.label}
                                   type="button"
                                   disabled={selectedLayer.locked}
-                                  onClick={() => updateSelectedLayer({ fontFamily: preset.fontFamily, fontWeight: preset.fontWeight })}
+                                  onClick={() => updateSelectedLayer({
+                                    fontFamily: preset.fontFamily,
+                                    fontWeight: preset.fontWeight,
+                                    lineHeight: preset.lineHeight,
+                                    letterSpacing: preset.letterSpacing,
+                                    padding: preset.padding,
+                                    radius: preset.radius,
+                                    backgroundOpacity: preset.backgroundOpacity
+                                  })}
                                   className={`app-interactive rounded-md border px-2 py-1.5 text-[10px] font-black shadow-hairline disabled:cursor-not-allowed disabled:opacity-50 ${active ? "border-blue-200 bg-blue-50 text-app-primary" : "border-app-border bg-white text-app-muted hover:bg-app-surfaceMuted"}`}
                                   style={fontPreviewStyle(preset.fontFamily, preset.fontWeight)}
                                 >
