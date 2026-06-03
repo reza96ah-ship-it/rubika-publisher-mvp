@@ -742,6 +742,7 @@ export default function MediaPage() {
                       const linkedPost = asset.post_id ? postById.get(asset.post_id) : null;
                       const selected = selectedAssetId === String(asset.id);
                       const edited = isEditedAsset(asset);
+                      const canEditImage = Boolean(previewUrl && asset.content_type.startsWith("image/"));
 
                       return (
                         <button
@@ -758,9 +759,16 @@ export default function MediaPage() {
                               setConfirmDeleteAssetId(null);
                             }
                           }}
+                          onDoubleClick={() => {
+                            if (!canEditImage) return;
+                            setSelectedAssetId(String(asset.id));
+                            setInspectorTab("details");
+                            setConfirmDeleteAssetId(null);
+                            setEditingAsset(asset);
+                          }}
                           onDragStart={(event) => startDraggingAsset(event, asset.id)}
                           onDragEnd={stopDraggingAsset}
-                          title="برای اتصال سریع، رسانه را روی پست مقصد بکشید."
+                          title={canEditImage ? "یک کلیک برای انتخاب، دوبار کلیک برای ویرایش، کشیدن برای اتصال به پست." : "برای اتصال سریع، رسانه را روی پست مقصد بکشید."}
                           className={`cursor-grab overflow-hidden rounded-md bg-white text-right shadow-hairline transition active:cursor-grabbing hover:shadow-soft ${
                             mediaView === "list" ? "flex min-w-0 items-stretch" : ""
                           } ${
@@ -781,6 +789,12 @@ export default function MediaPage() {
                             {edited ? (
                               <span className="absolute bottom-2 right-2">
                                 <Tag tone="primary">نسخه ویرایش‌شده</Tag>
+                              </span>
+                            ) : null}
+                            {canEditImage ? (
+                              <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded bg-white/95 px-2 py-1 text-[10px] font-black text-app-text shadow-hairline ring-1 ring-app-border">
+                                <PencilLine className="h-3 w-3 text-app-primary" aria-hidden="true" />
+                                دوبار کلیک برای ویرایش
                               </span>
                             ) : null}
                             {selected ? <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-app-primary text-white shadow-sm"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span> : null}
