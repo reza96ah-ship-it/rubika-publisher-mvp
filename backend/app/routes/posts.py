@@ -14,7 +14,7 @@ from app.store_scope import get_store_post
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
-WORKFLOW_STATUSES = {"draft", "ready", "scheduled", "publishing", "published", "failed", "cancelled"}
+WORKFLOW_STATUSES = {"draft", "ready", "scheduled", "publishing", "published", "partially_published", "failed", "cancelled"}
 EDITABLE_STATUSES = {"draft", "ready", "scheduled", "failed"}
 APPROVAL_STATUSES = {"not_required", "pending", "approved", "rejected", "changes_requested"}
 PUBLISHABLE_APPROVAL_STATUSES = {"not_required", "approved"}

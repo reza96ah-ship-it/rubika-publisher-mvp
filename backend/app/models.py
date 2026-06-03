@@ -140,6 +140,7 @@ class PublishAttempt(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"), nullable=False, index=True)
+    channel: Mapped[str] = mapped_column(String(64), nullable=False, default="rubika", index=True)
     action: Mapped[str] = mapped_column(String(64), nullable=False, default="manual")
     status: Mapped[str] = mapped_column(String(64), nullable=False, default="created", index=True)
     request_payload: Mapped[str] = mapped_column(Text, nullable=False, default="")

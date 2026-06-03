@@ -118,10 +118,11 @@ def rubika_response_error(payload: dict) -> str:
     return ""
 
 
-def start_attempt(db: Session, post: Post, request_payload: dict, action: str) -> PublishAttempt:
+def start_attempt(db: Session, post: Post, request_payload: dict, action: str, channel: str = "rubika") -> PublishAttempt:
     now = datetime.utcnow()
     attempt = PublishAttempt(
         post_id=post.id,
+        channel=channel,
         action=action,
         status="started",
         request_payload=json_text(request_payload),
@@ -141,11 +142,8 @@ def finish_success(db: Session, post: Post, attempt: PublishAttempt, response_pa
     attempt.status = "success"
     attempt.response_payload = json_text(response_payload)
     attempt.finished_at = now
-    post.status = "published"
-    post.published_at = now
-    post.failed_at = None
-    post.last_error = ""
-    post.rubika_message_id = extract_message_id(response_payload)
+    if attempt.channel == "rubika":
+        post.rubika_message_id = extract_message_id(response_payload)
     post.updated_at = now
     db.commit()
 
@@ -155,9 +153,30 @@ def finish_failure(db: Session, post: Post, attempt: PublishAttempt, error: str)
     attempt.status = "failed"
     attempt.error = error
     attempt.finished_at = now
-    post.status = "failed"
-    post.failed_at = now
-    post.last_error = error
+    post.updated_at = now
+    db.commit()
+
+
+def finish_post_after_channel_attempts(db: Session, post: Post, results: list[dict]) -> None:
+    now = datetime.utcnow()
+    failures = [result for result in results if not result.get("ok")]
+    successes = [result for result in results if result.get("ok")]
+
+    if not failures:
+        post.status = "published"
+        post.published_at = now
+        post.failed_at = None
+        post.last_error = ""
+    elif successes:
+        post.status = "partially_published"
+        post.published_at = post.published_at or now
+        post.failed_at = now
+        post.last_error = "; ".join(str(result.get("error") or "Unknown channel error") for result in failures)
+    else:
+        post.status = "failed"
+        post.failed_at = now
+        post.last_error = "; ".join(str(result.get("error") or "Unknown channel error") for result in failures)
+
     post.updated_at = now
     db.commit()
 
@@ -201,16 +220,16 @@ def recover_stale_publishing_posts(db: Session, now: datetime, stale_after_minut
     return len(posts)
 
 
-def publish_text_post(db: Session, post: Post, action: str = "scheduled") -> dict:
+def publish_text_post(db: Session, post: Post, action: str = "scheduled", channel: str = "rubika") -> dict:
     account = get_active_rubika_account(db)
     text = build_post_text(post)
-    request_payload = {"post_id": post.id, "text": text, "chat_id": account.chat_id if account else ""}
-    attempt = start_attempt(db, post, request_payload, action)
+    request_payload = {"post_id": post.id, "channel": channel, "text": text, "chat_id": account.chat_id if account else ""}
+    attempt = start_attempt(db, post, request_payload, action, channel)
 
     if account is None or not account.bot_token.strip() or not account.chat_id.strip():
         error = "Rubika account is not configured"
         finish_failure(db, post, attempt, error)
-        return {"ok": False, "post_id": post.id, "error": error}
+        return {"ok": False, "post_id": post.id, "channel": channel, "error": error}
 
     try:
         client = RubikaClient(account.bot_token)
@@ -218,22 +237,23 @@ def publish_text_post(db: Session, post: Post, action: str = "scheduled") -> dic
         response_error = rubika_response_error(response_payload)
         if response_error:
             finish_failure(db, post, attempt, response_error)
-            return {"ok": False, "post_id": post.id, "error": response_error}
+            return {"ok": False, "post_id": post.id, "channel": channel, "error": response_error}
         finish_success(db, post, attempt, response_payload)
-        return {"ok": True, "post_id": post.id, "message_id": post.rubika_message_id}
+        return {"ok": True, "post_id": post.id, "channel": channel, "message_id": post.rubika_message_id}
     except Exception as exc:
         error = str(exc)
         finish_failure(db, post, attempt, error)
-        return {"ok": False, "post_id": post.id, "error": error}
+        return {"ok": False, "post_id": post.id, "channel": channel, "error": error}
 
 
-def publish_media_post(db: Session, post: Post, asset: MediaAsset, action: str = "scheduled") -> dict:
+def publish_media_post(db: Session, post: Post, asset: MediaAsset, action: str = "scheduled", channel: str = "rubika") -> dict:
     account = get_active_rubika_account(db)
     text = build_post_text(post)
     file_type = rubika_file_type(asset)
     request_payload = {
         "post_id": post.id,
         "mode": "media",
+        "channel": channel,
         "chat_id": account.chat_id if account else "",
         "text": text,
         "media_asset_id": asset.id,
@@ -242,17 +262,17 @@ def publish_media_post(db: Session, post: Post, asset: MediaAsset, action: str =
         "size_bytes": asset.size_bytes,
         "file_type": file_type,
     }
-    attempt = start_attempt(db, post, request_payload, action)
+    attempt = start_attempt(db, post, request_payload, action, channel)
 
     if account is None or not account.bot_token.strip() or not account.chat_id.strip():
         error = "Rubika account is not configured"
         finish_failure(db, post, attempt, error)
-        return {"ok": False, "post_id": post.id, "error": error}
+        return {"ok": False, "post_id": post.id, "channel": channel, "error": error}
 
     if not Path(asset.file_path).is_file():
         error = "Attached media file is missing"
         finish_failure(db, post, attempt, error)
-        return {"ok": False, "post_id": post.id, "error": error}
+        return {"ok": False, "post_id": post.id, "channel": channel, "error": error}
 
     try:
         client = RubikaClient(account.bot_token)
@@ -260,51 +280,62 @@ def publish_media_post(db: Session, post: Post, asset: MediaAsset, action: str =
         upload_request_error = rubika_response_error(upload_request_payload)
         if upload_request_error:
             finish_failure(db, post, attempt, upload_request_error)
-            return {"ok": False, "post_id": post.id, "error": upload_request_error}
+            return {"ok": False, "post_id": post.id, "channel": channel, "error": upload_request_error}
 
         upload_url = extract_upload_url(upload_request_payload)
         if not upload_url:
             error = "Rubika did not return an upload URL"
             finish_failure(db, post, attempt, error)
-            return {"ok": False, "post_id": post.id, "error": error}
+            return {"ok": False, "post_id": post.id, "channel": channel, "error": error}
 
         upload_payload = asyncio.run(client.upload_file(upload_url, asset.file_path, asset.content_type, asset.original_filename))
         upload_error = rubika_response_error(upload_payload)
         if upload_error:
             finish_failure(db, post, attempt, upload_error)
-            return {"ok": False, "post_id": post.id, "error": upload_error}
+            return {"ok": False, "post_id": post.id, "channel": channel, "error": upload_error}
 
         file_id = extract_file_id(upload_payload)
         if not file_id:
             error = "Rubika did not return a file ID"
             finish_failure(db, post, attempt, error)
-            return {"ok": False, "post_id": post.id, "error": error}
+            return {"ok": False, "post_id": post.id, "channel": channel, "error": error}
 
         send_payload = asyncio.run(client.send_file(account.chat_id, file_id, text))
         send_error = rubika_response_error(send_payload)
         if send_error:
             finish_failure(db, post, attempt, send_error)
-            return {"ok": False, "post_id": post.id, "error": send_error}
+            return {"ok": False, "post_id": post.id, "channel": channel, "error": send_error}
 
         response_payload = {"upload_request": upload_request_payload, "upload": upload_payload, "send": send_payload, "file_id": file_id}
         finish_success(db, post, attempt, response_payload)
-        return {"ok": True, "post_id": post.id, "message_id": post.rubika_message_id, "media_asset_id": asset.id}
+        return {"ok": True, "post_id": post.id, "channel": channel, "message_id": post.rubika_message_id, "media_asset_id": asset.id}
     except Exception as exc:
         error = str(exc)
         finish_failure(db, post, attempt, error)
-        return {"ok": False, "post_id": post.id, "error": error}
+        return {"ok": False, "post_id": post.id, "channel": channel, "error": error}
+
+
+def publish_instagram_placeholder(db: Session, post: Post, action: str = "scheduled") -> dict:
+    error = "Instagram publishing requires Meta OAuth before worker delivery"
+    request_payload = {
+        "post_id": post.id,
+        "channel": "instagram",
+        "mode": "placeholder",
+        "required": ["Meta OAuth", "instagram_content_publish", "professional_account_id"],
+    }
+    attempt = start_attempt(db, post, request_payload, action, "instagram")
+    finish_failure(db, post, attempt, error)
+    return {"ok": False, "post_id": post.id, "channel": "instagram", "error": error}
 
 
 def publish_post(db: Session, post: Post, action: str = "scheduled") -> dict:
-    if "instagram" in channel_list(post.platform):
-        post.status = "failed"
-        post.failed_at = datetime.utcnow()
-        post.last_error = "Instagram publishing requires Meta OAuth before worker delivery"
-        post.updated_at = datetime.utcnow()
-        db.commit()
-        return {"ok": False, "post_id": post.id, "error": post.last_error}
-
+    results: list[dict] = []
     asset = get_primary_media_asset(db, post)
-    if asset is not None:
-        return publish_media_post(db, post, asset, action)
-    return publish_text_post(db, post, action)
+    for channel in channel_list(post.platform):
+        if channel == "rubika":
+            results.append(publish_media_post(db, post, asset, action, channel) if asset is not None else publish_text_post(db, post, action, channel))
+        elif channel == "instagram":
+            results.append(publish_instagram_placeholder(db, post, action))
+
+    finish_post_after_channel_attempts(db, post, results)
+    return {"ok": all(result.get("ok") for result in results), "post_id": post.id, "status": post.status, "channels": results}

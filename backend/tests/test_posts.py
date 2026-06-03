@@ -128,7 +128,27 @@ def test_schedule_post_rejects_stale_rubika_connection() -> None:
             retry_failed_post(post.id, store=store, db=db)
 
 
-def test_schedule_post_rejects_instagram_until_oauth_is_connected() -> None:
+def test_schedule_post_rejects_instagram_only_until_oauth_is_connected() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime.utcnow()
+
+    with session_factory() as db:
+        store = Store(name="Main", created_at=now, updated_at=now)
+        db.add(store)
+        db.flush()
+        post = Post(store_id=store.id, title="Launch", status="draft", platform="instagram", created_at=now, updated_at=now)
+        db.add(post)
+        db.add(RubikaAccount(bot_token="token", chat_id="channel", status="connected", last_test_at=now))
+        db.add(InstagramAccount(store_id=store.id, username="brand", status="oauth_required", created_at=now, updated_at=now))
+        db.commit()
+
+        with pytest.raises(HTTPException, match="Instagram publishing requires Meta OAuth"):
+            schedule_post(post.id, PostScheduleRequest(scheduled_at=now + timedelta(hours=1)), store=store, db=db)
+
+
+def test_schedule_post_allows_mixed_channels_when_rubika_is_ready() -> None:
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine)
@@ -141,11 +161,12 @@ def test_schedule_post_rejects_instagram_until_oauth_is_connected() -> None:
         post = Post(store_id=store.id, title="Launch", status="draft", platform="rubika,instagram", created_at=now, updated_at=now)
         db.add(post)
         db.add(RubikaAccount(bot_token="token", chat_id="channel", status="connected", last_test_at=now))
-        db.add(InstagramAccount(store_id=store.id, username="brand", status="oauth_required", created_at=now, updated_at=now))
         db.commit()
 
-        with pytest.raises(HTTPException, match="Instagram publishing requires Meta OAuth"):
-            schedule_post(post.id, PostScheduleRequest(scheduled_at=now + timedelta(hours=1)), store=store, db=db)
+        scheduled = schedule_post(post.id, PostScheduleRequest(scheduled_at=now + timedelta(hours=1)), store=store, db=db)
+
+        assert scheduled.status == "scheduled"
+        assert scheduled.platform == "rubika,instagram"
 
 
 def test_review_workflow_controls_scheduling() -> None:

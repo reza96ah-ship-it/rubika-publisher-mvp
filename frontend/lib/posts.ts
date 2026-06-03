@@ -1,6 +1,6 @@
 export const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-export type PostStatus = "draft" | "ready" | "scheduled" | "publishing" | "published" | "failed" | "cancelled";
+export type PostStatus = "draft" | "ready" | "scheduled" | "publishing" | "published" | "partially_published" | "failed" | "cancelled";
 export type ApprovalStatus = "not_required" | "pending" | "approved" | "rejected" | "changes_requested";
 
 export type Post = {
@@ -38,6 +38,7 @@ export type PostStats = {
   scheduled: number;
   publishing: number;
   published: number;
+  partially_published: number;
   failed: number;
   cancelled: number;
 };
@@ -49,6 +50,7 @@ export const workflowTabs: Array<{ label: string; value: "all" | PostStatus }> =
   { label: "زمان‌بندی‌شده", value: "scheduled" },
   { label: "در حال انتشار", value: "publishing" },
   { label: "منتشرشده", value: "published" },
+  { label: "نیمه‌منتشر", value: "partially_published" },
   { label: "ناموفق", value: "failed" },
   { label: "لغوشده", value: "cancelled" }
 ];

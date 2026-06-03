@@ -41,11 +41,18 @@ def get_active_instagram_account(db: Session, store_id: int) -> InstagramAccount
 
 def require_channel_readiness(db: Session, store_id: int, platform: str | None) -> None:
     channels = channel_list(platform)
+    ready_channels: list[str] = []
 
-    if "rubika" in channels and not is_rubika_account_ready(get_active_rubika_account(db)):
-        raise HTTPException(status_code=400, detail="Rubika connection must be tested successfully within the last 24 hours")
+    if "rubika" in channels:
+        if is_rubika_account_ready(get_active_rubika_account(db)):
+            ready_channels.append("rubika")
 
     if "instagram" in channels:
         instagram = get_active_instagram_account(db, store_id)
-        if instagram is None or instagram.status != "connected":
-            raise HTTPException(status_code=400, detail=INSTAGRAM_OAUTH_REQUIRED_DETAIL)
+        if instagram is not None and instagram.status == "connected":
+            ready_channels.append("instagram")
+
+    if not ready_channels:
+        if "rubika" in channels:
+            raise HTTPException(status_code=400, detail="Rubika connection must be tested successfully within the last 24 hours")
+        raise HTTPException(status_code=400, detail=INSTAGRAM_OAUTH_REQUIRED_DETAIL)

@@ -18,6 +18,7 @@ type PublishAttempt = {
   post_id: number;
   post_title: string;
   post_platform: string;
+  channel: string;
   action: string;
   status: string;
   request_payload: string;
@@ -29,7 +30,7 @@ type PublishAttempt = {
 };
 
 type ParsedPayload = Record<string, unknown> | null;
-type LogMode = "all" | "text" | "media";
+type LogMode = "all" | "text" | "media" | "channel";
 type TimelineStageState = "done" | "failed" | "active" | "pending";
 type TimelineStage = {
   label: string;
@@ -40,7 +41,8 @@ type TimelineStage = {
 const modeFilters: Array<{ label: string; value: LogMode }> = [
   { label: "همه نوع‌ها", value: "all" },
   { label: "متنی", value: "text" },
-  { label: "رسانه‌ای", value: "media" }
+  { label: "رسانه‌ای", value: "media" },
+  { label: "اتصال کانال", value: "channel" }
 ];
 const logsHeaderGrid = "grid-cols-[minmax(0,1.2fr)_160px_190px_130px]";
 const logsRowGrid = "lg:grid-cols-[minmax(0,1.2fr)_160px_190px_130px]";
@@ -92,6 +94,7 @@ function payloadNumber(payload: ParsedPayload, key: string) {
 }
 
 function attemptMode(requestPayload: ParsedPayload): Exclude<LogMode, "all"> {
+  if (requestPayload?.mode === "placeholder") return "channel";
   if (requestPayload?.mode === "media" || requestPayload?.media_asset_id) return "media";
   return "text";
 }
@@ -191,6 +194,7 @@ function attemptSearchText(item: PreparedAttempt) {
   return [
     item.attempt.post_title,
     item.attempt.post_platform,
+    item.attempt.channel,
     item.attempt.post_id,
     item.attempt.action,
     item.attempt.status,
@@ -205,6 +209,7 @@ function attemptSearchText(item: PreparedAttempt) {
 }
 
 function modeLabel(mode: Exclude<LogMode, "all">) {
+  if (mode === "channel") return "اتصال کانال";
   return mode === "media" ? "رسانه‌ای" : "متنی";
 }
 
@@ -431,7 +436,7 @@ export default function LogsPage() {
 
                         <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
                           <StatusBadge status={attemptTone(attempt.status)} />
-                          <ChannelBadges platform={attempt.post_platform} compact />
+                          <ChannelBadges platform={attempt.channel} compact />
                           <StatusToken tone={mode === "media" ? "primary" : "neutral"} className="gap-1">
                             {mode === "media" ? (
                               <FileUp className="h-3.5 w-3.5" aria-hidden="true" />
@@ -469,7 +474,7 @@ export default function LogsPage() {
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={attemptTone(selectedAttempt.attempt.status)} />
-                        <ChannelBadges platform={selectedAttempt.attempt.post_platform} compact />
+                        <ChannelBadges platform={selectedAttempt.attempt.channel} compact />
                         <StatusToken tone={selectedAttempt.mode === "media" ? "primary" : "neutral"}>{modeLabel(selectedAttempt.mode)}</StatusToken>
                         <StatusToken tone="neutral">{actionLabel(selectedAttempt.attempt.action)}</StatusToken>
                       </div>

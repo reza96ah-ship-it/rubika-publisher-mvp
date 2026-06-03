@@ -193,6 +193,7 @@ class PostStatsResponse(BaseModel):
     scheduled: int
     publishing: int
     published: int
+    partially_published: int = 0
     failed: int
     cancelled: int
 
@@ -250,6 +251,7 @@ class PublishAttemptResponse(BaseModel):
     post_id: int
     post_title: str
     post_platform: str
+    channel: str
     action: str
     status: str
     request_payload: str

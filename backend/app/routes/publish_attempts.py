@@ -16,6 +16,7 @@ def attempt_response(attempt: PublishAttempt, post_title: str, post_platform: st
         post_id=attempt.post_id,
         post_title=post_title,
         post_platform=post_platform,
+        channel=attempt.channel,
         action=attempt.action,
         status=attempt.status,
         request_payload=attempt.request_payload,

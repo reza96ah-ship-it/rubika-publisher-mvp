@@ -59,7 +59,9 @@ export function channelValidationNotes(platform?: string | null) {
   const channels = normalizeChannels(platform);
   const notes = [];
   if (channels.includes("instagram")) {
-    notes.push("اینستاگرام هنوز به Meta OAuth متصل نیست؛ ذخیره پیش‌نویس ممکن است اما زمان‌بندی مسدود می‌شود.");
+    notes.push(channels.includes("rubika")
+      ? "در حالت چندکاناله، روبیکا می‌تواند منتشر شود و اینستاگرام تا اتصال Meta OAuth به عنوان نتیجه کانالی ناموفق/در انتظار ثبت می‌شود."
+      : "اینستاگرام هنوز به Meta OAuth متصل نیست؛ ذخیره پیش‌نویس ممکن است اما زمان‌بندی بدون کانال آماده مسدود می‌شود.");
   }
   if (channels.includes("rubika")) {
     notes.push("برای زمان‌بندی روبیکا، تست اتصال 24 ساعت اخیر لازم است.");

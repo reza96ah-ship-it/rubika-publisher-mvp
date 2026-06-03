@@ -150,11 +150,13 @@ function ComposePageContent() {
   const rubikaReady = isRubikaConnected(rubika);
   const selectedChannels = useMemo(() => normalizeChannels(form.platform), [form.platform]);
   const instagramSelected = hasChannel(form.platform, "instagram");
+  const rubikaSelected = hasChannel(form.platform, "rubika");
+  const hasReadyPublishingChannel = rubikaSelected && rubikaReady;
   const canMoveToReady = !editingPost || ["draft", "failed", "cancelled"].includes(editingPost.status);
   const reviewBlocksSchedule = editingPost ? approvalBlocksPublishing(editingPost) : false;
   const canSaveDraft = hasTitle;
   const canMarkReady = hasTitle && hasPostBody && canMoveToReady;
-  const canSchedule = canMarkReady && hasSchedule && rubikaReady && !reviewBlocksSchedule && !instagramSelected;
+  const canSchedule = canMarkReady && hasSchedule && hasReadyPublishingChannel && !reviewBlocksSchedule;
   const channelNotes = channelValidationNotes(form.platform);
   const readinessItems = [
     {
@@ -177,9 +179,9 @@ function ComposePageContent() {
     },
     {
       label: "کانال انتشار",
-      detail: instagramSelected ? "اینستاگرام در این فاز برای پیش‌نویس و آماده‌سازی فعال است؛ زمان‌بندی بعد از Meta OAuth باز می‌شود." : "کانال انتشار برای worker فعال انتخاب شده است.",
-      done: !instagramSelected,
-      required: instagramSelected
+      detail: instagramSelected && rubikaSelected ? "روبیکا منتشر می‌شود و اینستاگرام تا اتصال Meta OAuth به صورت نتیجه کانالی ثبت می‌شود." : instagramSelected ? "اینستاگرام در این فاز برای پیش‌نویس فعال است؛ زمان‌بندی بدون کانال آماده مسدود می‌شود." : "کانال انتشار برای worker فعال انتخاب شده است.",
+      done: !instagramSelected || hasReadyPublishingChannel,
+      required: instagramSelected && !hasReadyPublishingChannel
     },
     {
       label: "زمان انتشار",
@@ -222,7 +224,7 @@ function ComposePageContent() {
     },
     {
       label: "بازبینی نهایی",
-      helper: instagramSelected ? "کانال اینستاگرام برای زمان‌بندی به اتصال Meta نیاز دارد." : reviewBlocksSchedule ? "این پست قبل از زمان‌بندی باید تایید شود." : canSchedule ? "پست آماده ورود به صف انتشار است." : "پیش‌نمایش و الزام‌های انتشار را بررسی کنید.",
+      helper: instagramSelected && !hasReadyPublishingChannel ? "کانال اینستاگرام برای زمان‌بندی به اتصال Meta نیاز دارد." : reviewBlocksSchedule ? "این پست قبل از زمان‌بندی باید تایید شود." : canSchedule ? "پست آماده ورود به صف انتشار است." : "پیش‌نمایش و الزام‌های انتشار را بررسی کنید.",
       icon: ShieldCheck,
       state: canSchedule ? "done" : canMarkReady ? "active" : "pending"
     }
@@ -648,8 +650,8 @@ function ComposePageContent() {
       return;
     }
     if (action === "schedule" && !canSchedule) {
-      const scheduleError = instagramSelected
-        ? "زمان‌بندی اینستاگرام بعد از اتصال Meta OAuth فعال می‌شود. فعلاً پست را به عنوان پیش‌نویس یا آماده ذخیره کنید."
+      const scheduleError = instagramSelected && !hasReadyPublishingChannel
+        ? "زمان‌بندی اینستاگرام بعد از اتصال Meta OAuth یا انتخاب یک کانال آماده مثل روبیکا فعال می‌شود."
         : reviewBlocksSchedule
           ? "این پست برای زمان‌بندی باید تایید بازبینی داشته باشد."
           : rubikaReady

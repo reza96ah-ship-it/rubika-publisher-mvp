@@ -21,6 +21,10 @@ const statusMap: Record<string, { label: string; tone: "neutral" | "primary" | "
     label: "منتشر",
     tone: "success"
   },
+  partially_published: {
+    label: "نیمه‌منتشر",
+    tone: "warning"
+  },
   failed: {
     label: "ناموفق",
     tone: "alert"

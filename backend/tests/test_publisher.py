@@ -161,7 +161,12 @@ def test_publish_post_sends_attached_media(monkeypatch: pytest.MonkeyPatch, tmp_
         result = publish_post(db, post, action="scheduled")
         attempt = db.scalar(select(PublishAttempt).where(PublishAttempt.post_id == post.id))
 
-        assert result == {"ok": True, "post_id": post.id, "message_id": "msg-123", "media_asset_id": asset.id}
+        assert result == {
+            "ok": True,
+            "post_id": post.id,
+            "status": "published",
+            "channels": [{"ok": True, "post_id": post.id, "channel": "rubika", "message_id": "msg-123", "media_asset_id": asset.id}],
+        }
         assert post.status == "published"
         assert post.rubika_message_id == "msg-123"
         assert calls == [
@@ -171,6 +176,7 @@ def test_publish_post_sends_attached_media(monkeypatch: pytest.MonkeyPatch, tmp_
             ("send_file", "chat-123", "file-123", "Caption\n\n#tag"),
         ]
         assert attempt is not None
+        assert attempt.channel == "rubika"
         assert json.loads(attempt.request_payload)["mode"] == "media"
         assert json.loads(attempt.response_payload)["file_id"] == "file-123"
 
@@ -200,7 +206,12 @@ def test_publish_post_falls_back_to_text_without_media(monkeypatch: pytest.Monke
 
         result = publish_post(db, post, action="scheduled")
 
-        assert result == {"ok": True, "post_id": post.id, "message_id": "msg-text"}
+        assert result == {
+            "ok": True,
+            "post_id": post.id,
+            "status": "published",
+            "channels": [{"ok": True, "post_id": post.id, "channel": "rubika", "message_id": "msg-text"}],
+        }
         assert post.status == "published"
         assert post.rubika_message_id == "msg-text"
         assert calls == [("init", "token-123"), ("send_message", "chat-123", "Caption")]
@@ -234,8 +245,59 @@ def test_publish_post_fails_when_attached_media_file_is_missing() -> None:
         result = publish_post(db, post, action="scheduled")
         attempt = db.scalar(select(PublishAttempt).where(PublishAttempt.post_id == post.id))
 
-        assert result == {"ok": False, "post_id": post.id, "error": "Attached media file is missing"}
+        assert result == {
+            "ok": False,
+            "post_id": post.id,
+            "status": "failed",
+            "channels": [{"ok": False, "post_id": post.id, "channel": "rubika", "error": "Attached media file is missing"}],
+        }
         assert post.status == "failed"
         assert post.last_error == "Attached media file is missing"
         assert attempt is not None
+        assert attempt.channel == "rubika"
         assert json.loads(attempt.request_payload)["mode"] == "media"
+
+
+def test_publish_post_keeps_rubika_success_when_instagram_is_not_connected(monkeypatch: pytest.MonkeyPatch) -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+    now = datetime(2026, 1, 1, 12, 0, 0)
+    calls: list[tuple] = []
+
+    class FakeRubikaClient:
+        def __init__(self, token: str) -> None:
+            calls.append(("init", token))
+
+        async def send_message(self, chat_id: str, text: str) -> dict:
+            calls.append(("send_message", chat_id, text))
+            return {"status": "OK", "data": {"message_id": "msg-rubika"}}
+
+    monkeypatch.setattr("app.services.publisher.RubikaClient", FakeRubikaClient)
+
+    with session_factory() as db:
+        db.add(RubikaAccount(bot_token="token-123", chat_id="chat-123"))
+        post = Post(
+            store_id=1,
+            title="Multi channel",
+            caption="Caption",
+            platform="rubika,instagram",
+            status="publishing",
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(post)
+        db.commit()
+
+        result = publish_post(db, post, action="scheduled")
+        attempts = db.scalars(select(PublishAttempt).where(PublishAttempt.post_id == post.id).order_by(PublishAttempt.id.asc())).all()
+
+        assert result["ok"] is False
+        assert result["status"] == "partially_published"
+        assert post.status == "partially_published"
+        assert post.rubika_message_id == "msg-rubika"
+        assert "Instagram publishing requires Meta OAuth" in post.last_error
+        assert [attempt.channel for attempt in attempts] == ["rubika", "instagram"]
+        assert [attempt.status for attempt in attempts] == ["success", "failed"]
+        assert json.loads(attempts[1].request_payload)["mode"] == "placeholder"
+        assert calls == [("init", "token-123"), ("send_message", "chat-123", "Caption")]
