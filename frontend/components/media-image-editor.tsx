@@ -105,6 +105,21 @@ type SavedEditorTemplate = {
   canvasSize: { width: number; height: number };
 };
 
+type DesignRecipe = {
+  id: string;
+  label: string;
+  category: string;
+  detail: string;
+  bestFor: string;
+  accent: string;
+  surface: string;
+  cropPresetId: CropPresetId;
+  overlay: ImageOverlaySettings;
+  adjustments: Partial<ImageAdjustments>;
+  texts: Array<{ presetIndex: number; x?: number; y: number; boxWidth: number }>;
+  stickers: Array<{ value: string; x: number; y: number }>;
+};
+
 type StoreBrandColors = {
   brand_primary_color?: string;
   brand_accent_color?: string;
@@ -215,23 +230,33 @@ const cropPresets: Array<{ id: CropPresetId; label: string; detail: string; widt
   { id: "story", label: "استوری", detail: "1080×1920 · تمام‌صفحه", width: 1080, height: 1920, icon: RectangleHorizontal },
   { id: "landscape", label: "بنر افقی", detail: "1200×675 · کمپین", width: 1200, height: 675, icon: RectangleHorizontal }
 ];
-const designRecipes = [
+const designRecipes: DesignRecipe[] = [
   {
+    id: "flash-offer",
     label: "آفر فوری",
+    category: "فروش سریع",
     detail: "تیتر، قیمت، CTA",
+    bestFor: "کمپین تخفیف و فروش محدود",
+    accent: "#E11D48",
+    surface: "#FFF1F2",
     cropPresetId: "rubika" as CropPresetId,
     overlay: { mode: "gradient" as ImageOverlayMode, strength: 58 },
     adjustments: { brightness: 102, contrast: 108, saturation: 112 },
     texts: [
-      { presetIndex: 0, y: 0.2, boxWidth: 0.76 },
+      { presetIndex: 0, x: 0.52, y: 0.2, boxWidth: 0.76 },
       { presetIndex: 1, y: 0.68, boxWidth: 0.6 },
       { presetIndex: 2, y: 0.85, boxWidth: 0.66 }
     ],
     stickers: [{ value: "🔥", x: 0.14, y: 0.16 }]
   },
   {
+    id: "luxury-product",
     label: "لوکس محصول",
+    category: "برند پریمیوم",
     detail: "وینیت، لیبل لوکس",
+    bestFor: "کالکشن، اکسسوری و محصول گران‌تر",
+    accent: "#B45309",
+    surface: "#FFFBEB",
     cropPresetId: "portrait" as CropPresetId,
     overlay: { mode: "vignette" as ImageOverlayMode, strength: 54 },
     adjustments: { brightness: 98, contrast: 112, saturation: 96 },
@@ -242,8 +267,13 @@ const designRecipes = [
     stickers: [{ value: "💎", x: 0.86, y: 0.18 }]
   },
   {
+    id: "story-launch",
     label: "استوری لانچ",
+    category: "لانچ",
     detail: "تمام‌صفحه، CTA پایین",
+    bestFor: "معرفی محصول تازه و خبر فوری",
+    accent: "#7C3AED",
+    surface: "#F5F3FF",
     cropPresetId: "story" as CropPresetId,
     overlay: { mode: "spotlight" as ImageOverlayMode, strength: 62 },
     adjustments: { brightness: 104, contrast: 104, saturation: 110 },
@@ -255,8 +285,13 @@ const designRecipes = [
     stickers: [{ value: "✨", x: 0.18, y: 0.12 }, { value: "🎁", x: 0.84, y: 0.82 }]
   },
   {
+    id: "clean-catalog",
     label: "کاتالوگ تمیز",
+    category: "کاتالوگ",
     detail: "خوانا و مینیمال",
+    bestFor: "محصولات روزانه و تصویرهای شلوغ",
+    accent: "#0F766E",
+    surface: "#ECFDF5",
     cropPresetId: "portrait" as CropPresetId,
     overlay: { mode: "lightWash" as ImageOverlayMode, strength: 34 },
     adjustments: { brightness: 106, contrast: 100, saturation: 98 },
@@ -508,6 +543,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
   const [recentColors, setRecentColors] = useState<string[]>([]);
   const [savedTemplates, setSavedTemplates] = useState<SavedEditorTemplate[]>([]);
   const [templateName, setTemplateName] = useState("");
+  const [activeDesignRecipeId, setActiveDesignRecipeId] = useState("");
 
   const selectedLayer = useMemo(() => layers.find((layer) => layer.id === selectedLayerId) ?? null, [layers, selectedLayerId]);
   const selectedBounds = selectedLayer?.visible ? layerBounds(selectedLayer) : null;
@@ -529,6 +565,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
       return matchesCategory && matchesQuery;
     });
   }, [fontCategory, fontSearch]);
+  const activeDesignRecipe = useMemo(() => designRecipes.find((recipe) => recipe.id === activeDesignRecipeId) ?? null, [activeDesignRecipeId]);
   const textColorGroups = useMemo(() => [
     { label: "برند", detail: "از هویت فروشگاه", colors: brandColors },
     { label: "اخیر", detail: "رنگ‌های استفاده‌شده", colors: recentColors },
@@ -1013,7 +1050,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     };
   }
 
-  function applyDesignRecipe(recipe: typeof designRecipes[number]) {
+  function applyDesignRecipe(recipe: DesignRecipe) {
     const image = imageRef.current;
     const canvas = canvasRef.current;
     if (!image || !canvas) return;
@@ -1034,21 +1071,34 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
         if (!layer) return null;
         return {
           ...layer,
-          x: nextSize.width / 2,
+          x: Math.round(nextSize.width * (item.x ?? 0.5)),
           y: Math.round(nextSize.height * item.y),
-          boxWidth: Math.max(220, Math.round(nextSize.width * item.boxWidth))
+          boxWidth: Math.max(220, Math.round(nextSize.width * item.boxWidth)),
+          groupId: `recipe-${recipe.id}`
         };
       })
       .filter(Boolean) as EditorLayer[];
     const nextStickerLayers = recipe.stickers
       .map((item, index) => createStickerLayer(item.value, Math.round(nextSize.width * item.x), Math.round(nextSize.height * item.y), index))
+      .map((layer) => ({ ...layer, groupId: `recipe-${recipe.id}` }))
       .filter(Boolean) as EditorLayer[];
     const nextLayers = [...nextTextLayers, ...nextStickerLayers];
-    setLayers((current) => [...current, ...nextLayers]);
+    setLayers(nextLayers);
     setSelectedLayerIds(nextLayers.map((layer) => layer.id));
     setSelectedLayerId(nextLayers[0]?.id ?? "");
+    setActiveDesignRecipeId(recipe.id);
     setFitMode("fit");
     window.setTimeout(() => fitCanvas(nextSize, "fit"), 0);
+  }
+
+  function clearAppliedDesignRecipe() {
+    if (!activeDesignRecipeId) return;
+    remember();
+    const recipeGroupId = `recipe-${activeDesignRecipeId}`;
+    setLayers((current) => current.filter((layer) => layer.groupId !== recipeGroupId));
+    setSelectedLayerIds([]);
+    setSelectedLayerId("");
+    setActiveDesignRecipeId("");
   }
 
   function saveCurrentTemplate() {
@@ -1090,6 +1140,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setLayers(nextLayers);
     setSelectedLayerIds(nextLayers.map((layer) => layer.id));
     setSelectedLayerId(nextLayers[0]?.id ?? "");
+    setActiveDesignRecipeId("");
     setFitMode("fit");
     window.setTimeout(() => fitCanvas(nextSize, "fit"), 0);
   }
@@ -1559,23 +1610,70 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
             </section>
 
             <section className="border-t border-app-border pt-4">
-              <div className="flex items-center gap-2">
-                <Layers3 className="h-4 w-4 text-app-primary" aria-hidden="true" />
-                <h3 className="text-xs font-black text-app-text">ترکیب آماده</h3>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Layers3 className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                  <div>
+                    <h3 className="text-xs font-black text-app-text">ترکیب آماده</h3>
+                    <p className="mt-0.5 text-[10px] font-bold text-app-muted">قالب‌های سریع برای چیدمان حرفه‌ای تصویر</p>
+                  </div>
+                </div>
+                {activeDesignRecipe ? (
+                  <button
+                    type="button"
+                    onClick={clearAppliedDesignRecipe}
+                    className="app-interactive rounded-md border border-app-border bg-white px-2 py-1 text-[10px] font-black text-app-muted shadow-hairline hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+                  >
+                    حذف ترکیب
+                  </button>
+                ) : null}
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="mt-3 space-y-2">
                 {designRecipes.map((recipe) => (
                   <button
-                    key={recipe.label}
+                    key={recipe.id}
                     type="button"
                     onClick={() => applyDesignRecipe(recipe)}
-                    className="app-interactive rounded-md border border-app-border bg-white p-2 text-right shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary"
+                    className={`app-interactive w-full rounded-md border bg-white p-2 text-right shadow-hairline transition hover:-translate-y-0.5 hover:shadow-soft ${
+                      activeDesignRecipeId === recipe.id ? "border-blue-300 ring-2 ring-blue-100" : "border-app-border hover:border-blue-200"
+                    }`}
                   >
-                    <span className="block text-[11px] font-black text-app-text">{recipe.label}</span>
-                    <span className="mt-1 block text-[10px] font-bold text-app-muted">{recipe.detail}</span>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md border border-white shadow-hairline"
+                        style={{ background: `linear-gradient(135deg, ${recipe.surface}, #ffffff 58%, ${recipe.accent}22)` }}
+                        aria-hidden="true"
+                      >
+                        <span className="absolute inset-x-2 top-2 h-2 rounded-full" style={{ backgroundColor: recipe.accent }} />
+                        <span className="absolute right-2 top-5 h-3 w-8 rounded-full bg-white/90" />
+                        <span className="absolute bottom-2 left-2 h-3 w-7 rounded-full" style={{ backgroundColor: recipe.accent }} />
+                        {recipe.stickers.slice(0, 1).map((sticker) => (
+                          <span key={sticker.value} className="absolute left-1 top-1 text-sm leading-none">{sticker.value}</span>
+                        ))}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="truncate text-[12px] font-black text-app-text">{recipe.label}</span>
+                          <span className="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black" style={{ backgroundColor: recipe.surface, color: recipe.accent }}>
+                            {recipe.category}
+                          </span>
+                        </span>
+                        <span className="mt-1 block text-[10px] font-bold leading-5 text-app-muted">{recipe.bestFor}</span>
+                        <span className="mt-2 flex flex-wrap gap-1">
+                          <span className="rounded-full bg-app-surfaceMuted px-2 py-0.5 text-[9px] font-black text-app-muted">{recipe.detail}</span>
+                          <span className="rounded-full bg-app-surfaceMuted px-2 py-0.5 text-[9px] font-black text-app-muted">{recipe.texts.length + recipe.stickers.length} لایه</span>
+                          <span className="rounded-full bg-app-surfaceMuted px-2 py-0.5 text-[9px] font-black text-app-muted">{cropPresets.find((preset) => preset.id === recipe.cropPresetId)?.label ?? "قالب"}</span>
+                        </span>
+                      </span>
+                    </span>
                   </button>
                 ))}
               </div>
+              {activeDesignRecipe ? (
+                <div className="mt-3 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] font-bold leading-5 text-blue-900">
+                  ترکیب «{activeDesignRecipe.label}» فعال است. برای تغییر متن‌ها، هر لایه را از روی تصویر یا لیست لایه‌ها انتخاب کن.
+                </div>
+              ) : null}
             </section>
 
             <section className="border-t border-app-border pt-4">
