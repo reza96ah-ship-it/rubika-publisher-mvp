@@ -36,7 +36,7 @@ type PostOption = {
   campaign: string;
 };
 
-type MediaFilter = "all" | "attached" | "unused";
+type MediaFilter = "all" | "attached" | "unused" | "edited";
 type MediaView = "grid" | "list";
 type InspectorTab = "details" | "attach";
 
@@ -373,7 +373,7 @@ export default function MediaPage() {
       const savedAsset = (await response.json()) as MediaAsset;
       setEditingAsset(null);
       setSelectedAssetId(String(savedAsset.id));
-      setMediaFilter("all");
+      setMediaFilter("edited");
       setFolderFilter("all");
       setSearchTerm("");
       setMessage("نسخه ویرایش‌شده به کتابخانه رسانه اضافه شد");
@@ -407,6 +407,7 @@ export default function MediaPage() {
   const selectedLinkedCampaign = selectedLinkedPost ? campaignLabelForPost(selectedLinkedPost, campaigns) : "";
   const attachedCount = assets.filter((asset) => asset.post_id).length;
   const unusedCount = assets.length - attachedCount;
+  const editedCount = assets.filter(isEditedAsset).length;
   const totalSizeBytes = assets.reduce((total, asset) => total + asset.size_bytes, 0);
   const folders = useMemo(() => Array.from(new Set(assets.map((asset) => asset.folder.trim()).filter(Boolean))).sort(), [assets]);
   const campaignAssetOptions = useMemo(() => {
@@ -425,6 +426,7 @@ export default function MediaPage() {
     { label: "همه رسانه‌ها", detail: "دارایی‌های فضای کاری", value: "all" as const, count: assets.length, icon: Images, tone: "text-app-primary" },
     { label: "رسانه آزاد", detail: "آماده استفاده در پست", value: "unused" as const, count: unusedCount, icon: FileImage, tone: unusedCount ? "text-emerald-700" : "text-slate-500" },
     { label: "متصل به پست", detail: "در حال استفاده", value: "attached" as const, count: attachedCount, icon: Link2, tone: attachedCount ? "text-sky-700" : "text-slate-500" },
+    { label: "ویرایش‌شده", detail: "خروجی‌های استودیو", value: "edited" as const, count: editedCount, icon: PencilLine, tone: editedCount ? "text-violet-700" : "text-slate-500" },
     { label: "حجم کتابخانه", detail: "مصرف فایل‌های رسانه‌ای", value: null, count: formatSize(totalSizeBytes), icon: ImageIcon, tone: "text-slate-700" }
   ];
 
@@ -434,7 +436,8 @@ export default function MediaPage() {
       const matchesFilter =
         mediaFilter === "all" ||
         (mediaFilter === "attached" && asset.post_id) ||
-        (mediaFilter === "unused" && !asset.post_id);
+        (mediaFilter === "unused" && !asset.post_id) ||
+        (mediaFilter === "edited" && isEditedAsset(asset));
       const matchesFolder = folderFilter === "all" || asset.folder === folderFilter;
       const linkedPost = asset.post_id ? postById.get(asset.post_id) : null;
       const matchesCampaign = campaignFilter === "all" || (linkedPost?.campaign_id ? campaignFilter === `id:${linkedPost.campaign_id}` : false);
@@ -510,7 +513,7 @@ export default function MediaPage() {
           {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
-          <section className="app-studio-surface grid overflow-hidden rounded-lg sm:grid-cols-2 xl:grid-cols-4">
+          <section className="app-studio-surface grid overflow-hidden rounded-lg sm:grid-cols-2 xl:grid-cols-5">
             {mediaSummary.map((item) => {
               const Icon = item.icon;
               const active = item.value === mediaFilter;
