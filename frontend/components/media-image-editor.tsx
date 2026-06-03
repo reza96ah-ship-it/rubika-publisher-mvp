@@ -716,10 +716,15 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setSelectedLayerIds([layer.id]);
   }
 
-  function updateSelectedLayer(patch: Partial<EditorLayer>) {
+  function updateSelectedLayer(patch: Partial<EditorLayer>, withHistory = true) {
+    if (!selectedLayerId || selectedLayer?.locked) return;
+    if (withHistory) remember();
+    setLayers((current) => current.map((layer) => layer.id === selectedLayerId ? { ...layer, ...patch } : layer));
+  }
+
+  function beginSelectedLayerLiveEdit() {
     if (!selectedLayerId || selectedLayer?.locked) return;
     remember();
-    setLayers((current) => current.map((layer) => layer.id === selectedLayerId ? { ...layer, ...patch } : layer));
   }
 
   const removeSelectedLayer = useCallback(() => {
@@ -757,8 +762,8 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     setError("");
   }
 
-  function updateAdjustment(field: keyof ImageAdjustments, value: number) {
-    remember();
+  function updateAdjustment(field: keyof ImageAdjustments, value: number, withHistory = true) {
+    if (withHistory) remember();
     setAdjustments((current) => ({ ...current, [field]: value }));
   }
 
@@ -780,9 +785,13 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     window.setTimeout(() => fitCanvas(nextSize), 0);
   }
 
-  function updateCrop(patch: Partial<ImageCropSettings>) {
-    remember();
+  function updateCrop(patch: Partial<ImageCropSettings>, withHistory = true) {
+    if (withHistory) remember();
     setCrop((current) => ({ ...current, ...patch }));
+  }
+
+  function beginCanvasLiveEdit() {
+    remember();
   }
 
   function rotateImage() {
@@ -987,15 +996,15 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
               <div className="mt-3 rounded-md bg-app-surfaceMuted p-3 shadow-hairline">
                 <label className="block text-xs font-bold text-app-muted">
                   بزرگ‌نمایی تصویر · {crop.scale}%
-                  <input type="range" min="100" max="220" value={crop.scale} onChange={(event) => updateCrop({ scale: Number(event.target.value) })} className="mt-2 w-full accent-blue-600" />
+                  <input type="range" min="100" max="220" value={crop.scale} onPointerDown={beginCanvasLiveEdit} onFocus={beginCanvasLiveEdit} onChange={(event) => updateCrop({ scale: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600" />
                 </label>
                 <label className="mt-3 block text-xs font-bold text-app-muted">
                   جابه‌جایی افقی · {crop.offsetX}
-                  <input type="range" min="-100" max="100" value={crop.offsetX} onChange={(event) => updateCrop({ offsetX: Number(event.target.value) })} className="mt-2 w-full accent-blue-600" />
+                  <input type="range" min="-100" max="100" value={crop.offsetX} onPointerDown={beginCanvasLiveEdit} onFocus={beginCanvasLiveEdit} onChange={(event) => updateCrop({ offsetX: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600" />
                 </label>
                 <label className="mt-3 block text-xs font-bold text-app-muted">
                   جابه‌جایی عمودی · {crop.offsetY}
-                  <input type="range" min="-100" max="100" value={crop.offsetY} onChange={(event) => updateCrop({ offsetY: Number(event.target.value) })} className="mt-2 w-full accent-blue-600" />
+                  <input type="range" min="-100" max="100" value={crop.offsetY} onPointerDown={beginCanvasLiveEdit} onFocus={beginCanvasLiveEdit} onChange={(event) => updateCrop({ offsetY: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600" />
                 </label>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <Button type="button" variant="secondary" size="sm" onClick={rotateImage}>
@@ -1056,7 +1065,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
               {(["brightness", "contrast", "saturation"] as const).map((field) => (
                 <label key={field} className="mt-3 block text-xs font-bold text-app-muted">
                   {field === "brightness" ? "روشنایی" : field === "contrast" ? "کنتراست" : "اشباع رنگ"} · {adjustments[field]}%
-                  <input type="range" min="50" max="150" value={adjustments[field]} onChange={(event) => updateAdjustment(field, Number(event.target.value))} className="mt-2 w-full accent-blue-600" />
+                  <input type="range" min="50" max="150" value={adjustments[field]} onPointerDown={beginCanvasLiveEdit} onFocus={beginCanvasLiveEdit} onChange={(event) => updateAdjustment(field, Number(event.target.value), false)} className="mt-2 w-full accent-blue-600" />
                 </label>
               ))}
             </section>
@@ -1336,26 +1345,26 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
 
                     <label className="block text-xs font-bold text-app-muted">
                       شفافیت · {selectedLayer.opacity}%
-                      <input type="range" min="10" max="100" value={selectedLayer.opacity} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ opacity: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                      <input type="range" min="10" max="100" value={selectedLayer.opacity} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ opacity: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
                     </label>
                     <label className="block text-xs font-bold text-app-muted">
                       اندازه · {selectedLayer.fontSize}px
-                      <input type="range" min="20" max="180" value={selectedLayer.fontSize} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ fontSize: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                      <input type="range" min="20" max="180" value={selectedLayer.fontSize} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ fontSize: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
                     </label>
                     {selectedLayer.type === "text" ? (
                       <>
                         <label className="block text-xs font-bold text-app-muted">
                           عرض جعبه متن · {selectedLayer.boxWidth}px
-                          <input type="range" min="160" max={Math.max(320, canvasSize.width)} value={selectedLayer.boxWidth} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ boxWidth: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                          <input type="range" min="160" max={Math.max(320, canvasSize.width)} value={selectedLayer.boxWidth} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ boxWidth: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
                         </label>
                         <div className="grid grid-cols-2 gap-2">
                           <label className="block text-xs font-bold text-app-muted">
                             فاصله خطوط · {selectedLayer.lineHeight.toFixed(2)}
-                            <input type="range" min="0.9" max="1.8" step="0.05" value={selectedLayer.lineHeight} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ lineHeight: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                            <input type="range" min="0.9" max="1.8" step="0.05" value={selectedLayer.lineHeight} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ lineHeight: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
                           </label>
                           <label className="block text-xs font-bold text-app-muted">
                             فاصله حروف · {selectedLayer.letterSpacing}px
-                            <input type="range" min="-2" max="8" value={selectedLayer.letterSpacing} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ letterSpacing: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                            <input type="range" min="-2" max="8" value={selectedLayer.letterSpacing} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ letterSpacing: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
                           </label>
                         </div>
                       </>
@@ -1381,7 +1390,7 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                         </div>
                         <label className="mt-3 flex items-center justify-between gap-3 rounded-md bg-app-surfaceMuted px-3 py-2 text-xs font-bold text-app-muted shadow-hairline">
                           رنگ دلخواه
-                          <input type="color" value={selectedLayer.color} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ color: event.target.value })} className="h-7 w-12 cursor-pointer rounded border-0 bg-transparent p-0 disabled:opacity-50" />
+                          <input type="color" value={selectedLayer.color} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ color: event.target.value }, false)} className="h-7 w-12 cursor-pointer rounded border-0 bg-transparent p-0 disabled:opacity-50" />
                         </label>
                         <div className="mt-3 grid grid-cols-3 gap-2">
                           {([
@@ -1406,31 +1415,31 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
                           </div>
                           <label className="mt-3 block text-xs font-bold text-app-muted">
                             شفافیت پس‌زمینه · {selectedLayer.backgroundOpacity}%
-                            <input type="range" min="0" max="100" value={selectedLayer.backgroundOpacity} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ backgroundOpacity: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                            <input type="range" min="0" max="100" value={selectedLayer.backgroundOpacity} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ backgroundOpacity: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
                           </label>
                           <div className="mt-3 grid grid-cols-2 gap-2">
                             <label className="block text-xs font-bold text-app-muted">
                               فاصله داخلی · {selectedLayer.padding}px
-                              <input type="range" min="0" max="44" value={selectedLayer.padding} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ padding: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                              <input type="range" min="0" max="44" value={selectedLayer.padding} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ padding: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
                             </label>
                             <label className="block text-xs font-bold text-app-muted">
                               گردی · {selectedLayer.radius}px
-                              <input type="range" min="0" max="48" value={selectedLayer.radius} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ radius: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                              <input type="range" min="0" max="48" value={selectedLayer.radius} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ radius: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
                             </label>
                           </div>
                           <div className="mt-3 grid grid-cols-2 gap-2">
                             <label className="block text-xs font-bold text-app-muted">
                               دورخط · {selectedLayer.outlineWidth}px
-                              <input type="range" min="0" max="8" value={selectedLayer.outlineWidth} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ outlineWidth: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                              <input type="range" min="0" max="8" value={selectedLayer.outlineWidth} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ outlineWidth: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
                             </label>
                             <label className="flex items-end justify-between gap-2 text-xs font-bold text-app-muted">
                               رنگ دورخط
-                              <input type="color" value={selectedLayer.outlineColor} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ outlineColor: event.target.value })} className="h-8 w-12 cursor-pointer rounded border-0 bg-transparent p-0 disabled:opacity-50" />
+                              <input type="color" value={selectedLayer.outlineColor} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ outlineColor: event.target.value }, false)} className="h-8 w-12 cursor-pointer rounded border-0 bg-transparent p-0 disabled:opacity-50" />
                             </label>
                           </div>
                           <label className="mt-3 block text-xs font-bold text-app-muted">
                             سایه متن · {selectedLayer.shadowBlur}px
-                            <input type="range" min="0" max="24" value={selectedLayer.shadowBlur} disabled={selectedLayer.locked} onChange={(event) => updateSelectedLayer({ shadowBlur: Number(event.target.value) })} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
+                            <input type="range" min="0" max="24" value={selectedLayer.shadowBlur} disabled={selectedLayer.locked} onPointerDown={beginSelectedLayerLiveEdit} onFocus={beginSelectedLayerLiveEdit} onChange={(event) => updateSelectedLayer({ shadowBlur: Number(event.target.value) }, false)} className="mt-2 w-full accent-blue-600 disabled:opacity-60" />
                           </label>
                         </div>
                       </div>

@@ -372,6 +372,7 @@ export default function CampaignsPage() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<number | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>("edit");
   const [campaignForm, setCampaignForm] = useState<CampaignForm>(emptyCampaignForm);
+  const [campaignColorDraft, setCampaignColorDraft] = useState(emptyCampaignForm.color);
   const [openCampaignCalendar, setOpenCampaignCalendar] = useState<CampaignDateField | null>(null);
   const [savingCampaign, setSavingCampaign] = useState(false);
   const [assignmentSearch, setAssignmentSearch] = useState("");
@@ -496,6 +497,10 @@ export default function CampaignsPage() {
   }, [editorMode, selectedRow]);
 
   useEffect(() => {
+    setCampaignColorDraft(/^#[0-9A-Fa-f]{6}$/.test(campaignForm.color) ? campaignForm.color : emptyCampaignForm.color);
+  }, [campaignForm.color]);
+
+  useEffect(() => {
     setAssignmentSearch("");
     setSelectedAssignIds(new Set());
   }, [selectedCampaignId]);
@@ -618,6 +623,11 @@ export default function CampaignsPage() {
   function updateCampaignField<K extends keyof CampaignForm>(field: K, value: CampaignForm[K]) {
     setCampaignForm((current) => ({ ...current, [field]: value }));
     if (message) setMessage("");
+  }
+
+  function commitCampaignColor(value: string) {
+    if (!/^#[0-9A-Fa-f]{6}$/.test(value)) return;
+    updateCampaignField("color", value.toUpperCase());
   }
 
   function focusCampaignEditor() {
@@ -1070,7 +1080,15 @@ export default function CampaignsPage() {
                       <Input id="campaign-name-input" value={campaignForm.name} onChange={(event) => updateCampaignField("name", event.target.value)} placeholder="مثلاً لانچ تابستان" required />
                     </Field>
                     <Field label="رنگ">
-                      <Input value={campaignForm.color} onChange={(event) => updateCampaignField("color", event.target.value)} type="color" className="h-[42px] p-1" aria-label="رنگ کمپین" />
+                      <Input
+                        value={campaignColorDraft}
+                        onInput={(event) => setCampaignColorDraft(event.currentTarget.value)}
+                        onChange={(event) => setCampaignColorDraft(event.target.value)}
+                        onBlur={(event) => commitCampaignColor(event.currentTarget.value)}
+                        type="color"
+                        className="h-[42px] p-1"
+                        aria-label="رنگ کمپین"
+                      />
                     </Field>
                   </div>
 

@@ -288,6 +288,8 @@ export default function StorePage() {
   const { showToast } = useToast();
   const [form, setForm] = useState<StoreForm>(emptyStore);
   const [savedForm, setSavedForm] = useState<StoreForm>(emptyStore);
+  const [brandPrimaryColorDraft, setBrandPrimaryColorDraft] = useState(emptyStore.brand_primary_color);
+  const [brandAccentColorDraft, setBrandAccentColorDraft] = useState(emptyStore.brand_accent_color);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -323,6 +325,14 @@ export default function StorePage() {
       setLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    setBrandPrimaryColorDraft(isHexColor(form.brand_primary_color) ? form.brand_primary_color : "#0F766E");
+  }, [form.brand_primary_color]);
+
+  useEffect(() => {
+    setBrandAccentColorDraft(isHexColor(form.brand_accent_color) ? form.brand_accent_color : "#2563EB");
+  }, [form.brand_accent_color]);
 
   const readinessItems = useMemo(() => buildReadiness(form), [form]);
   const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(savedForm), [form, savedForm]);
@@ -377,6 +387,11 @@ export default function StorePage() {
   function updateField(field: keyof StoreForm, value: StoreForm[keyof StoreForm]) {
     setMessage("");
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function commitBrandColor(field: "brand_primary_color" | "brand_accent_color", value: string) {
+    if (!isHexColor(value)) return;
+    updateField(field, value.toUpperCase());
   }
 
   async function uploadBrandAsset(kind: BrandAssetKind, file: File | undefined) {
@@ -586,8 +601,10 @@ export default function StorePage() {
                         <div className="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] items-center gap-3">
                           <Input
                             type="color"
-                            value={isHexColor(form.brand_primary_color) ? form.brand_primary_color : "#0F766E"}
-                            onChange={(event) => updateField("brand_primary_color", event.target.value)}
+                            value={isHexColor(brandPrimaryColorDraft) ? brandPrimaryColorDraft : "#0F766E"}
+                            onInput={(event) => setBrandPrimaryColorDraft(event.currentTarget.value)}
+                            onChange={(event) => setBrandPrimaryColorDraft(event.target.value)}
+                            onBlur={(event) => commitBrandColor("brand_primary_color", event.currentTarget.value)}
                             className="h-11 w-16 shrink-0 p-1"
                             aria-label="رنگ اصلی برند"
                           />
@@ -604,8 +621,10 @@ export default function StorePage() {
                         <div className="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] items-center gap-3">
                           <Input
                             type="color"
-                            value={isHexColor(form.brand_accent_color) ? form.brand_accent_color : "#2563EB"}
-                            onChange={(event) => updateField("brand_accent_color", event.target.value)}
+                            value={isHexColor(brandAccentColorDraft) ? brandAccentColorDraft : "#2563EB"}
+                            onInput={(event) => setBrandAccentColorDraft(event.currentTarget.value)}
+                            onChange={(event) => setBrandAccentColorDraft(event.target.value)}
+                            onBlur={(event) => commitBrandColor("brand_accent_color", event.currentTarget.value)}
                             className="h-11 w-16 shrink-0 p-1"
                             aria-label="رنگ مکمل برند"
                           />
