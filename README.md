@@ -1,19 +1,39 @@
-# Rubika Publisher MVP
+# Multi-Channel Social Operations Studio
 
-یک وب‌اپ فارسی و راست‌به‌چپ برای مدیریت، آماده‌سازی، زمان‌بندی و انتشار خودکار پست در روبیکا.
+یک وب‌اپ فارسی، راست‌به‌چپ و چندکاناله برای مدیریت محتوا، کمپین، رسانه، زمان‌بندی، انتشار، بازیابی خطا، اینباکس و تحلیل شبکه‌های اجتماعی.
 
-## هدف MVP
+این پروژه از یک MVP روبیکا شروع شد، اما جهت محصول اکنون **مدیریت چندکاناله شبکه‌های اجتماعی** است. روبیکا یکی از کانال‌های انتشار است و Instagram نیز به عنوان کانال دوم با حالت‌های API/دستی در حال اضافه شدن است.
 
-در نسخه MVP، سیستم باید بتواند:
+## Current Product Scope
 
-- ورود ادمین داشته باشد.
-- اطلاعات فروشگاه را نگه دارد.
-- اتصال ربات روبیکا را تست کند.
-- پست متنی و تصویری بسازد.
-- رسانه را آپلود و به پست متصل کند.
-- پست را زمان‌بندی کند.
-- در زمان مقرر، محتوا را از طریق Rubika API منتشر کند.
-- وضعیت انتشار، خطاها و `message_id` روبیکا را ذخیره کند.
+The app currently includes:
+
+- Admin authentication.
+- Store/workspace profile and brand defaults.
+- Rubika channel setup and publishing.
+- Instagram channel foundation with account modes and manual publishing workflow.
+- Composer for post creation, media selection, schedule, preview, and readiness.
+- Campaign manager.
+- Calendar/planner.
+- Content library.
+- Media library and Persian-first image editor.
+- Queue, publish attempts, logs, notifications, and retry/recovery.
+- Analytics and inbox foundations.
+
+## Target Product Direction
+
+The target product should compete as a professional Persian-first social management platform:
+
+- Command Center.
+- Multi-channel Channels Hub.
+- Multi-channel Composer Studio.
+- Visual Planner.
+- Campaign OS.
+- Media Studio and creative variants.
+- Approvals and collaboration.
+- Reliable publishing operations.
+- Inbox and engagement.
+- Analytics, reports, listening-lite, and AI-assisted insights.
 
 ## Stack
 
@@ -24,7 +44,7 @@
 - Worker: Celery
 - Local runtime: Docker Compose on Windows WSL2 Ubuntu
 
-## اجرای لوکال
+## Run Locally
 
 ```bash
 cp .env.example .env
@@ -37,7 +57,7 @@ Frontend:
 http://localhost:3000
 ```
 
-Backend:
+Backend health:
 
 ```text
 http://localhost:8000/health
@@ -56,47 +76,34 @@ docker compose exec backend alembic current
 docker compose exec backend alembic upgrade head
 ```
 
-## Product architecture docs
+## Verification
 
-The original README still describes the MVP baseline. The professional rebuild plan now lives in:
+Frontend:
+
+```bash
+docker compose exec frontend npm run check
+```
+
+Backend:
+
+```bash
+docker compose exec backend python -m compileall app
+docker compose exec backend python -m pytest
+```
+
+## Product Docs
 
 - [Product Architecture](docs/PRODUCT_ARCHITECTURE.md)
 - [Roadmap](docs/ROADMAP.md)
+- [Multi-Channel RFP](docs/MULTI_CHANNEL_RFP.md)
 - [Domain Model](docs/DOMAIN_MODEL.md)
 - [UI/UX System](docs/UI_UX_SYSTEM.md)
+- [Image Editor Roadmap](docs/IMAGE_EDITOR_ROADMAP.md)
 
-The Excel roadmap/RFP/backlog artifact is available at:
+The older Excel roadmap/RFP/backlog artifact is still available, but the Markdown docs above are now the source of truth:
 
-- [Rubika Publisher Professional Webapp Roadmap RFP Backlog](outputs/pro_roadmap/Rubika_Publisher_Professional_Webapp_Roadmap_RFP_Backlog.xlsx)
+- [Professional Webapp Roadmap RFP Backlog](outputs/pro_roadmap/Rubika_Publisher_Professional_Webapp_Roadmap_RFP_Backlog.xlsx)
 
-## فاز فعلی
+## Current Strategic Gap
 
-Phase 3 — Composer-Centric Creation and Post Management
-
-در این فاز تمرکز روی جدا کردن جریان ساخت پست از صفحه مدیریت پست‌ها است. ایجاد پست جدید از مسیر `/compose` انجام می‌شود و صفحه `/posts` فقط برای مشاهده و مدیریت پست‌های موجود استفاده می‌شود.
-
-### انجام‌شده تا این فاز
-
-- ساختار اولیه پروژه، Docker Compose، فرانت‌اند و بک‌اند.
-- احراز هویت ادمین و seed کاربر اولیه.
-- پروفایل فروشگاه و تنظیمات پایه کپشن/هشتگ.
-- تنظیمات ربات روبیکا و تست اتصال.
-- CRUD پیش‌نویس پست‌ها.
-- آپلود رسانه تصویری و اتصال رسانه به پست.
-- سیستم طراحی پایه برای دکمه‌ها، فرم‌ها، کارت‌ها و وضعیت‌ها.
-- صفحه composer برای ساخت پست، انتخاب/آپلود تصویر، پیش‌نمایش روبیکا و ذخیره پیش‌نویس.
-- صفحه مدیریت پست‌ها برای فهرست، وضعیت، تصویر بندانگشتی و حذف پیش‌نویس‌ها.
-
-### هنوز انجام نشده
-
-- زمان‌بندی واقعی پست‌ها.
-- انتشار واقعی از طریق worker و Rubika API.
-- ذخیره `message_id` روبیکا بعد از انتشار.
-- ثبت خطاهای انتشار و تلاش مجدد.
-- صفحه ویرایش کامل پست بعد از ساخت پیش‌نویس.
-
-## فاز بعدی پیشنهادی
-
-Phase 4 — Scheduling and Publish Pipeline
-
-در فاز بعدی باید مدل داده پست با فیلدهای زمان‌بندی و نتیجه انتشار کامل شود، worker/Celery به جریان انتشار متصل شود، و وضعیت‌های `scheduled`، `publishing`، `published` و `failed` به صورت واقعی مدیریت شوند.
+The codebase already contains multi-channel features, but some labels, docs, and architecture still reflect the old Rubika-only MVP identity. The next product phase should reset identity and shell/navigation around a Channels Hub before adding more page-level polish.

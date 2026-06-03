@@ -1,4 +1,4 @@
-# Rubika Publisher Domain Model
+# Multi-Channel Social Operations Domain Model
 
 This document defines the target product entities for the professional rebuild. It is intentionally broader than the current database so future phases can add durable product capability without guessing.
 
@@ -58,7 +58,7 @@ Target direction:
 
 ### RubikaAccount
 
-Current purpose: Rubika bot connection settings.
+Current purpose: Rubika bot/channel connection settings.
 
 Current fields:
 
@@ -78,11 +78,12 @@ Target direction:
 - Encrypt token storage.
 - Add token rotation metadata.
 - Add connection test audit.
-- Add channel/account abstraction only after Rubika single-platform publishing is reliable.
+- Move under shared `ChannelAccount` abstraction so Rubika becomes one account type in the Channels Hub.
+- Keep Rubika-specific fields and health checks behind channel-specific metadata.
 
 ### Post
 
-Current purpose: content record and publish status.
+Current purpose: source content record and publish status summary.
 
 Current fields:
 
@@ -116,6 +117,7 @@ Target direction:
 - Add publish eligibility/readiness metadata.
 - Move publish execution to `PublishJob`.
 - Track changes through `PostVersion`.
+- Split per-channel copy/media/schedule into `PostChannelVariant` so one idea can produce Rubika, Instagram, and future network variants.
 
 ### MediaAsset
 
@@ -146,7 +148,7 @@ Target direction:
 
 ### PublishAttempt
 
-Current purpose: log an attempt to publish a post.
+Current purpose: log an attempt to publish a post or post variant to one channel.
 
 Current fields:
 
@@ -164,11 +166,73 @@ Current fields:
 Target direction:
 
 - Keep attempts as child records of durable `PublishJob`.
+- Link attempts to `ChannelAccount` and `PostChannelVariant`.
 - Add failure class.
 - Add request hash or idempotency reference.
 - Keep payloads masked/safe where secrets may appear.
 
+### InstagramAccount
+
+Current purpose: Instagram connection/mode foundation.
+
+Target direction:
+
+- Move into `ChannelAccount`.
+- Preserve account mode: API-capable professional account, manual personal reminder, disconnected.
+- Do not represent personal Instagram account publishing as automatic API publishing.
+- Store Meta OAuth/token metadata only for eligible professional accounts after official setup.
+
 ## Target Entities
+
+### ChannelAccount
+
+Purpose: unified account/configuration record for Rubika, Instagram, and future channels.
+
+Suggested fields:
+
+- `id`
+- `store_id`
+- `channel`
+- `display_name`
+- `external_account_id`
+- `mode`
+- `status`
+- `capabilities`
+- `limitations`
+- `credentials_ref`
+- `token_expires_at`
+- `last_test_at`
+- `last_error`
+- `is_active`
+- `created_at`
+- `updated_at`
+
+Mode examples:
+
+- `rubika_bot`
+- `instagram_professional_api`
+- `instagram_personal_manual`
+- `manual_reminder`
+- `disconnected`
+
+Capability examples:
+
+- `schedule`
+- `auto_publish`
+- `manual_publish`
+- `image_post`
+- `video_post`
+- `analytics`
+- `inbox`
+- `comments`
+
+Relationships:
+
+- Belongs to `Store`.
+- Has many `PublishJob`.
+- Has many `PublishAttempt`.
+
+Phase: Channels Hub And Account Capability Model.
 
 ### BrandKit
 
@@ -214,6 +278,13 @@ Suggested fields:
 - `starts_at`
 - `ends_at`
 - `notes`
+- `audience`
+- `channel_mix`
+- `kpi_targets`
+- `budget`
+- `landing_url`
+- `content_pillars`
+- `report_cadence`
 - `created_at`
 - `updated_at`
 
@@ -258,6 +329,39 @@ Relationships:
 - Can be referenced by `Post`.
 
 Phase: Composer Studio Pro.
+
+### PostChannelVariant
+
+Purpose: channel-specific version of a source post.
+
+Suggested fields:
+
+- `id`
+- `post_id`
+- `channel_account_id`
+- `channel`
+- `caption`
+- `hashtags`
+- `first_comment`
+- `alt_text`
+- `link_url`
+- `media_asset_id`
+- `media_variant_id`
+- `scheduled_at`
+- `readiness_state`
+- `validation_errors`
+- `status`
+- `created_at`
+- `updated_at`
+
+Relationships:
+
+- Belongs to `Post`.
+- Optionally belongs to `ChannelAccount`.
+- References media/variant records.
+- Has many `PublishJob`.
+
+Phase: Multi-Channel Composer Studio.
 
 ### PostVersion
 
@@ -343,13 +447,16 @@ Phase: Approvals And Collaboration.
 
 ### PublishJob
 
-Purpose: durable background publishing state machine.
+Purpose: durable background publishing state machine for one post/channel variant.
 
 Suggested fields:
 
 - `id`
 - `post_id`
+- `post_channel_variant_id`
 - `store_id`
+- `channel_account_id`
+- `channel`
 - `status`
 - `scheduled_at`
 - `started_at`
@@ -370,6 +477,9 @@ States:
 - `locked`
 - `publishing`
 - `published`
+- `manual_ready`
+- `manual_completed`
+- `manual_cancelled`
 - `retry_wait`
 - `failed`
 - `dead_letter`
@@ -378,9 +488,41 @@ States:
 Relationships:
 
 - Belongs to `Post`.
+- Optionally belongs to `PostChannelVariant`.
+- Belongs to `ChannelAccount`.
 - Has many `PublishAttempt`.
 
 Phase: Publishing Reliability.
+
+### ManualPublishTask
+
+Purpose: explicit task for channels that cannot be auto-published, such as normal personal Instagram account workflows.
+
+Suggested fields:
+
+- `id`
+- `publish_job_id`
+- `post_channel_variant_id`
+- `channel_account_id`
+- `status`
+- `instructions`
+- `copy_payload`
+- `external_url`
+- `remind_at`
+- `completed_at`
+- `completed_by_user_id`
+- `created_at`
+- `updated_at`
+
+States:
+
+- `ready`
+- `reminded`
+- `completed`
+- `cancelled`
+- `expired`
+
+Phase: Publishing Reliability And Operations.
 
 ### Notification
 
@@ -420,6 +562,8 @@ Suggested fields:
 - `store_id`
 - `post_id`
 - `campaign_id`
+- `channel_account_id`
+- `post_channel_variant_id`
 - `event_type`
 - `source`
 - `metric_name`
@@ -438,6 +582,25 @@ Event examples:
 - `report_exported`
 
 Phase: Analytics, Reporting And AI Optimization.
+
+### MetricSnapshot
+
+Purpose: normalized point-in-time performance data for posts, variants, campaigns, and channels.
+
+Suggested fields:
+
+- `id`
+- `store_id`
+- `resource_type`
+- `resource_id`
+- `channel`
+- `metric_name`
+- `metric_value`
+- `source`
+- `captured_at`
+- `created_at`
+
+Phase: Analytics, Reporting, Listening, And AI Insight.
 
 ### AuditLog
 
@@ -505,31 +668,40 @@ Phase: Inbox And Engagement.
 
 Recommended order:
 
-1. `BrandKit`
-2. `Campaign`
-3. `PostTemplate`
-4. `PostVersion`
-5. `PublishJob`
-6. `Notification`
-7. `Team/UserRole`
-8. `Approval`
-9. `Comment`
-10. `AnalyticsEvent`
-11. `InboxThread` and `InboxMessage`
-12. `AuditLog`
+1. Product rename/config cleanup
+2. `ChannelAccount`
+3. Migrate Rubika and Instagram settings into channel accounts
+4. `BrandKit`
+5. Campaign strategy fields
+6. `PostChannelVariant`
+7. `PostTemplate`
+8. `PostVersion`
+9. `PublishJob`
+10. `ManualPublishTask`
+11. `Notification`
+12. `Team/UserRole`
+13. `Approval`
+14. `Comment`
+15. `AnalyticsEvent` and `MetricSnapshot`
+16. `InboxThread` and `InboxMessage`
+17. `AuditLog`
 
 ## State Ownership
 
 | State | Owner entity | Notes |
 | --- | --- | --- |
 | Draft content | Post | Content can exist before scheduling |
+| Channel-specific content | PostChannelVariant | Keeps one source idea from turning into duplicated posts |
+| Channel setup/capability | ChannelAccount | Rubika and Instagram should share the same account abstraction |
 | Brand defaults | BrandKit | Applied into new posts, not copied blindly forever |
 | Campaign planning | Campaign | Campaign owns goal/date/color/reporting context |
 | Review state | Approval | Do not overload post status with approval |
 | Publish execution | PublishJob | Post status can summarize latest job, but job owns execution |
+| Manual publishing | ManualPublishTask | Personal Instagram/manual channels need an explicit task lifecycle |
 | Attempt details | PublishAttempt | Attempt is historical evidence |
 | Operational alert | Notification | Persist important notices instead of deriving all UI notifications |
-| Performance metric | AnalyticsEvent | Reports should not scrape UI state |
+| Performance event | AnalyticsEvent | Reports should not scrape UI state |
+| Performance snapshot | MetricSnapshot | Metrics should be comparable over time |
 | Security history | AuditLog | Sensitive changes and workflow decisions |
 
 ## Backend API Principles

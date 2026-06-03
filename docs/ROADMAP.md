@@ -1,367 +1,326 @@
-# Professional Rebuild Roadmap
+# Multi-Channel Social Operations Roadmap
 
-This roadmap replaces the previous UI-polish loop with capability-driven phases. Each phase should be committed and pushed as a restore checkpoint.
+This roadmap replaces the Rubika-only product direction with a multi-channel social management rebuild. Every implementation slice should be committed and pushed as a restore checkpoint.
 
-## Phase 1: Product Architecture Freeze
+## Benchmark-Derived Product Score
 
-Goal: create the product map before more implementation.
+Current app score against top multi-channel tools: **6 / 10**.
 
-Scope:
+Why it is no longer low:
 
-- Product architecture.
-- Domain model.
-- UI/UX system.
-- Professional roadmap and backlog.
-- Non-duplicate module list.
+- It has real modules: composer, planner, campaigns, content, media, image editor, queue, logs, analytics, inbox, notifications, Rubika, and Instagram foundation.
+- It has a maturing RTL/Persian design system.
+- It has backend tests and real publishing reliability work started.
 
-Acceptance criteria:
+Why it is not yet world-class:
 
-- Product docs exist in `docs/`.
-- Future coding phases map to a product capability.
-- No next task is described only as "make UI more professional".
-- Data model direction is clear before migrations.
+- The product identity is still Rubika-first in names, docs, and shell language.
+- Channels are not unified under one account/capability model.
+- Composer is not yet a true multi-channel variant studio.
+- Analytics and inbox are not deep enough for daily business decisions.
+- The UI has consistency, but not yet enough product-specific visual identity, reporting polish, and guided user journey.
+- Governance, permissions, durable publish jobs, and auditability still need depth.
 
-Status: completed.
+## Phase 1: Product Identity And App Shell Reset
 
-## Phase 2: Brand Kit Pro
-
-Goal: make the workspace identity reusable across composer, preview, dashboard, content, reports, and empty states.
+Goal: make the app feel like a multi-channel social operations product, not a renamed MVP.
 
 Scope:
 
-- Add brand kit fields or entity.
-- Store logo/avatar reference.
-- Store brand color and accent.
-- Tone of voice.
-- Default CTA.
-- Default hashtags and caption footer.
-- Brand readiness panel.
-- Apply brand defaults in composer.
+- Rename product surfaces from Rubika Publisher to a neutral working name.
+- Update README, docs, app shell, sidebar, login, metadata, and environment defaults.
+- Replace standalone Rubika/Instagram identity in navigation with a Channels mental model.
+- Pin Settings and account actions without scroll problems.
+- Remove duplicate primary actions across header/body.
+- Create a first-run onboarding route for workspace, brand, channel, campaign, and first post.
 
 Acceptance criteria:
 
-- Brand settings persist in backend.
-- Composer can start from brand defaults.
-- Rubika preview reflects brand avatar/name/default footer.
-- Dashboard shows brand readiness.
-- Store settings fields are clean and non-messy.
+- User sees a multi-channel product identity on first load.
+- Rubika and Instagram appear as channels, not the app name.
+- Settings are always reachable.
+- One global create action exists.
+- Onboarding explains next step clearly.
 
-Risk: medium.
+Priority: P0.
+
+## Phase 2: Channels Hub And Account Capability Model
+
+Goal: make every network explicit, inspectable, and honest.
+
+Scope:
+
+- `ChannelAccount` abstraction for Rubika, Instagram, and future networks.
+- Account mode: bot/API/manual reminder/disconnected.
+- Capability matrix: publish, schedule, media types, analytics, inbox, comments, manual-only.
+- Connection health, token age, last test, limitation notes, and recovery actions.
+- Move Rubika and Instagram setup into Channels Hub tabs.
+- Keep existing Rubika and Instagram routes as redirects or compatibility pages during migration.
+
+Acceptance criteria:
+
+- Channels Hub shows every account and what it can do.
+- Personal Instagram is clearly manual/reminder publishing, not automatic API publishing.
+- Composer, planner, queue, and logs read channel capabilities from one model.
+- Channel failures link to exact recovery action.
 
 Priority: P0.
 
 Current implementation status:
 
-- Store brand color, accent color, tone of voice, default CTA, and content guidelines persist in the backend.
-- Store logo and avatar can reference existing media assets or freshly uploaded brand images.
-- Store settings has a clean Brand Kit panel with color controls and brand copy fields.
-- Composer uses brand defaults, brand color, and brand avatar/logo for starter panels and preview identity.
-- App shell and dashboard now use the active brand avatar/logo and primary color.
-- Analytics/report views now use the active brand avatar/logo and brand color for report identity.
-- The next Brand Kit slice should apply the same visual identity to analytics exports and campaign workspaces.
+- Rubika settings and Instagram account modes exist separately.
+- Per-channel publish attempts exist.
+- Manual-ready Instagram workflow exists in queue.
+- Shared channel abstraction is not implemented yet.
 
-## Phase 3: Campaign OS
+## Phase 3: Multi-Channel Composer Studio
 
-Goal: replace free-text campaign labels with a first-class campaign planning module.
+Goal: turn one idea into channel-ready variants.
 
 Scope:
 
-- Campaign model and CRUD API.
-- Campaign color, status, goal, date range, owner, notes.
-- Campaign picker in composer.
-- Campaign filters in content, queue, calendar, analytics.
-- Campaign detail workspace.
-- Campaign health score.
+- Source post idea plus per-channel variant fields.
+- Channel tabs for Rubika, Instagram, and future networks.
+- Per-channel caption, hashtag, media, alt text, first comment, link, and schedule rules.
+- Channel readiness checks using the capability matrix.
+- Template picker by objective: launch, sale, reminder, education, announcement, support, story/reel.
+- Autosave, draft recovery, and version history.
+- Media editor opens inline for selected variant.
 
 Acceptance criteria:
 
-- Posts reference `campaign_id`.
-- Calendar can show campaign lanes or campaign filters.
-- Analytics can summarize campaign health.
-- Content and queue can use campaign object metadata.
-
-Risk: medium.
-
-Priority: P0.
-
-Current implementation status:
-
-- Campaign model, migration, and scoped CRUD API exist.
-- Posts can reference `campaign_id` while the legacy free-text `campaign` field remains supported.
-- Existing free-text campaign names are backfilled into Campaign records during migration.
-- Composer can now load campaigns, attach a post to a real campaign, and quick-create a campaign without leaving the studio.
-- Content, queue, calendar, and analytics now share campaign-aware filters that understand `campaign_id` and legacy text campaigns.
-- A dedicated Campaign Center now shows campaign health, timeline, linked posts, and linked media assets.
-- Campaign Center can create and edit campaign name, goal, status, color, owner, date range, and notes.
-- Campaign details now include a compact performance funnel for media coverage, queue, successful publishing, and active risk.
-- Campaign Center now supports bulk assigning posts to the selected campaign and removing linked posts from that campaign.
-- Campaign Center now includes selected-campaign analytics for delivery rate, media coverage, attempt success, weekly risk, activity trend, status mix, and priority posts.
-- Campaign Center can export the selected campaign as CSV or a print-ready HTML report with metrics, trend, risks, and linked posts.
-- The next Campaign OS slice should add deeper benchmark comparisons and report scheduling.
-
-## Phase 4: Composer Studio Pro
-
-Goal: make content creation the strongest workflow.
-
-Scope:
-
-- Three-pane composer layout.
-- Template picker.
-- Brand-aware defaults.
-- Media panel and preview.
-- Schedule/readiness panel.
-- Autosave.
-- Draft recovery.
-- Version history.
-- Optional AI assist with human confirmation.
-
-Acceptance criteria:
-
-- Create-to-schedule workflow is clear and fast.
-- No messy field clusters.
-- Composer shows missing items before scheduling.
-- Refresh does not lose active draft.
-- Template fills structured post fields.
-
-Risk: high.
+- User can create one campaign post and tailor it per channel.
+- Validation explains why a channel can or cannot publish.
+- Draft survives refresh.
+- Saved versions can be restored.
+- The UI has three clear zones: idea/media, content variants, schedule/preview/readiness.
 
 Priority: P0.
 
-## Phase 5: Planner Pro
+## Phase 4: Visual Planner And Campaign Timeline
 
-Goal: turn the calendar into a real planner.
+Goal: match top products' calendar and campaign planning depth.
 
 Scope:
 
-- Month/week/list/campaign lane views.
-- Drag/drop reschedule.
-- Compact toolbar.
-- Right-side inspector.
-- Conflict warnings.
+- Month, week, list, grid/feed, and campaign-lane views.
+- Channel-colored and campaign-colored visual rails.
+- Drag/drop rescheduling with conflict warnings.
 - Best-time suggestions v1.
-- Bulk scheduling.
-
-Current implementation status:
-
-- Calendar has month, week, and list views with drag-and-drop rescheduling.
-- Calendar planning now exposes campaign workload, campaign-colored post rails, campaign-aware quick-create, and a direct Campaign Manager action.
-- Calendar inspector now warns about tight post spacing, failed posts, missing media, and suggests open publish-time slots for the selected day.
-- Calendar planner now checks Rubika readiness and points stale or missing connections to the Rubika setup page before scheduled posts are at risk.
+- Bulk schedule and bulk move.
+- Campaign timeline with planned, approved, scheduled, published, and failed states.
+- Saved planner views.
 
 Acceptance criteria:
 
-- Scheduled posts can be moved safely.
-- Labels do not clip.
-- Campaign and status filters work.
-- Planner warns about missing media, invalid connection, or tight spacing.
-
-Risk: high.
+- Planner can be filtered by channel, campaign, status, owner, and approval.
+- Labels are readable in Persian and never clipped.
+- Moving a post updates schedule safely.
+- Campaign lane gives a strategic view, not only date boxes.
 
 Priority: P1.
-
-## Phase 6: Media DAM Pro
-
-Goal: make media a reusable asset system, not only uploads.
-
-Detailed image editor roadmap: [Professional Image Editor Roadmap](./IMAGE_EDITOR_ROADMAP.md).
-
-Scope:
-
-- Collections.
-- Usage map.
-- Campaign-linked assets.
-- Better inspector.
-- Safe delete warnings.
-- Crop/variant presets.
-- Storage abstraction.
-
-Acceptance criteria:
-
-- Every asset shows where it is used.
-- Assets can be grouped and reused.
-- Deleting an asset with usage requires confirmation.
-- Composer can pull media by campaign/collection.
 
 Current implementation status:
 
-- Media library supports folders, tags, grid/list views, and attaching assets to posts.
-- Media inspector now exposes a usage map and safe delete flow; attached assets are blocked by the backend unless deletion is explicitly forced after confirmation.
-- Media Library can filter attached assets by campaign, and Campaign Center opens the library already scoped to the selected campaign.
-- Composer media picker now filters reusable assets by folder and campaign, defaulting to the post's selected campaign when available.
-- Media inspector now detects selected image dimensions and scores square, landscape, vertical, and portrait variant readiness.
-- Media file persistence now goes through a local storage service, preparing the backend for later S3/MinIO/CDN storage adapters.
-- Media inspector now opens a non-destructive image editor with movable Persian text layers, bundled Persian fonts, color controls, stickers, emojis, image adjustments, and save-as-new-version output.
+- Calendar has month/week/list views, drag/drop, filters, inspector, campaign context, and Rubika readiness warnings.
+- It needs channel capability integration, saved views, and stronger visual campaign lanes.
 
-Risk: medium.
+## Phase 5: Campaign OS Pro
 
-Priority: P1.
-
-## Phase 7: Approvals And Collaboration
-
-Goal: reduce publishing risk and support teams.
+Goal: make campaigns the strategic center of the product.
 
 Scope:
 
-- Team/user roles.
-- Permissions.
-- Submit for review.
-- Approve/reject/request changes.
-- Comments and mentions.
+- Campaign strategy fields: goal, audience, KPI target, channel mix, budget, landing link, content pillars, report cadence.
+- Campaign dashboard with content plan, media, approvals, schedule health, risk, and performance.
+- Campaign templates.
+- Campaign brief and printable/exportable report.
+- Competitor/listening-lite notes for campaign planning.
+
+Acceptance criteria:
+
+- Campaign page can answer: what are we doing, where, when, why, and how is it performing?
+- Posts, media, analytics, and reports are linked to the campaign.
+- Campaign report can be shared with a manager/client.
+
+Priority: P1.
+
+Current implementation status:
+
+- Campaign model, CRUD, filters, health, linked media/posts, analytics, bulk assignment, CSV, and print report exist.
+- Strategy fields and report scheduling are not implemented yet.
+
+## Phase 6: Media Studio And Creative System
+
+Goal: make media assets and image editing feel like a real creative workflow.
+
+Scope:
+
+- Source asset and variant relationship.
+- Multi-channel crop/export presets.
+- Brand blocks, templates, logo/watermark, reusable text styles.
+- Asset rights/owner/lifecycle metadata.
+- Collections and campaign usage map.
+- Batch variant generation.
+- Creative QA: aspect ratio, file size, safe zone, text density, missing alt text.
+
+Acceptance criteria:
+
+- User can create Rubika and Instagram variants from one source.
+- Each variant is linked to its source and campaign.
+- Composer can attach a variant without leaving the post flow.
+- Creative QA warns before schedule.
+
+Priority: P1.
+
+Current implementation status:
+
+- Media library, usage map, safe delete, campaign filters, storage abstraction, image editor, Persian fonts, stickers, variants, effects, brand colors, and composer editor access exist.
+- Source/variant relationship, templates, batch export, and channel QA need work.
+
+## Phase 7: Approvals, Collaboration, And Governance
+
+Goal: support teams, clients, and safer publishing.
+
+Scope:
+
+- Roles: owner, manager, creator, reviewer, viewer.
+- Permissions for channel setup, approval, publishing, deletion, and reporting.
+- Comments and mentions on posts, campaigns, media, and reports.
 - Review queue.
-- Audit history.
+- Approval chains and request-changes workflow.
+- Audit log for sensitive actions.
 
 Acceptance criteria:
 
-- Only permitted roles can approve.
-- Approval state controls scheduling/publishing.
-- Comments and approval decisions are recorded.
-- Notifications link to the exact post.
-
-Current implementation status:
-
-- Posts now have approval status, review notes, submitted/reviewed timestamps, and reviewer identity fields.
-- Backend review actions can submit, approve, reject, or request changes; pending/rejected review states block scheduling.
-- Content, queue, and composer screens now surface approval state; the content inspector supports submit, approve, reject, and request-changes actions.
-
-Risk: high.
+- Only permitted users can approve/publish/channel-configure.
+- Review history is visible.
+- Comments link to exact resource.
+- Audit log records publishing and channel credential decisions.
 
 Priority: P1.
 
-## Phase 8: Publishing Reliability
+Current implementation status:
 
-Goal: make publishing safe, recoverable, and observable.
+- Approval status and review actions exist for posts.
+- Comments, roles, permissions, and audit logs do not exist yet.
+
+## Phase 8: Publishing Reliability And Operations
+
+Goal: make publishing recoverable, observable, and channel-safe.
 
 Scope:
 
-- Durable publish jobs.
-- Idempotency key.
-- Retry policy and backoff.
-- Worker heartbeat.
-- Queue depth.
+- Durable `PublishJob` state machine.
+- Idempotency keys and payload hashes.
+- Retry/backoff policy.
 - Dead-letter queue.
-- Failure classification.
-- Backend test harness fix.
+- Worker heartbeat and queue depth.
+- Per-channel failure classification.
+- Manual publishing task lifecycle.
+- Recovery playbooks in queue/logs.
 
 Acceptance criteria:
 
-- Retried jobs do not duplicate sends.
-- Failed jobs can be inspected and recovered.
+- Retries do not duplicate posts.
 - Worker health is visible.
-- Backend tests run in Docker.
-- Publish state transitions are deterministic.
-
-Risk: high.
+- Failed jobs can be recovered or dead-lettered.
+- Logs explain channel-specific failure.
+- Manual Instagram tasks can be completed, skipped, or reminded.
 
 Priority: P0.
 
-## Phase 9: Inbox And Engagement
+Current implementation status:
 
-Goal: make the inbox a real engagement workspace.
+- Worker, publish attempts, logs, retry, notifications, and per-channel attempts exist.
+- Durable jobs and dead-letter queue are not implemented yet.
+
+## Phase 9: Inbox, Engagement, And Notifications
+
+Goal: make the inbox a daily action surface, not a placeholder.
 
 Scope:
 
-- Message/comment model.
-- Unified inbox.
-- Assignment.
-- Saved replies.
-- Resolution state.
-- SLA metrics.
-- In-app notifications.
+- Unified thread model.
+- Messages/comments by channel.
+- Assignment, saved replies, internal notes, status, and SLA.
+- In-app push-style notifications.
+- Notification center with read/unread and resource links.
+- Engagement analytics: response time, unresolved count, top topics.
 
 Acceptance criteria:
 
-- Messages are persisted.
-- User can assign, resolve, and reply from inbox.
-- Response time and unresolved count are measurable.
-
-Risk: high.
+- User can triage, assign, reply, and resolve.
+- Notifications link to exact post/thread/job.
+- Inbox metrics appear in dashboard and analytics.
 
 Priority: P2.
 
-## Phase 10: Analytics, Reporting And AI Optimization
+Current implementation status:
 
-Goal: turn analytics into decision support.
+- In-app notifications exist.
+- Inbox UI exists but not a full threaded engagement system.
+
+## Phase 10: Analytics, Reporting, Listening, And AI Insight
+
+Goal: become decision-support software, not only a chart page.
 
 Scope:
 
-- Analytics event model.
-- Post engagement metrics.
-- Campaign reports.
-- Report builder.
-- XLSX/PDF export.
+- Analytics event and metric snapshot model.
+- Channel performance.
+- Campaign KPIs.
+- Content type and creative variant performance.
 - Best-time recommendations.
-- AI insight summaries.
 - Competitor/listening-lite tracker.
+- Report builder with XLSX/PDF/HTML export.
+- AI insight summaries grounded in visible metrics.
 
 Acceptance criteria:
 
-- Reports can be saved/exported.
-- Recommendations cite source metrics.
-- Campaign performance is clear.
-- Analytics shows what to do next, not only what happened.
-
-Risk: high.
+- Analytics says what happened, why it matters, and what to do next.
+- Reports are exportable and client-ready.
+- Recommendations cite the metric source.
+- Competitive/listening notes can inform campaign planning.
 
 Priority: P1.
 
-## Phase 11: Instagram Publishing Channel
+Current implementation status:
 
-Goal: add a real Instagram channel beside Rubika so users can create, schedule, queue, publish, and audit Instagram posts from the same workspace.
-
-Scope:
-
-- Meta app setup and OAuth connection flow.
-- Store Instagram account connection model.
-- Token storage, refresh/expiry checks, and disconnect/reconnect actions.
-- Instagram media container creation and publish workflow through the Instagram Graph API.
-- Platform-aware composer validation for image/video format, caption length, aspect ratio, and publishing eligibility.
-- Queue worker support for `channel=instagram` beside Rubika.
-- Retry/backoff, idempotency, and failure classification for Instagram jobs.
-- Published permalink/id capture for analytics and audit logs.
-- Calendar, queue, content, media, and analytics filters by channel.
-
-Acceptance criteria:
-
-- Store can connect a valid Instagram professional account.
-- Composer can select Rubika, Instagram, or both channels.
-- Scheduled Instagram posts publish through the worker without duplicate publishes.
-- Queue and logs show Instagram-specific status, external id, and failure reason.
-- Media editor/export warns when an output is not Instagram-ready.
-
-Implementation notes:
-
-- Use Meta's official Instagram Graph API Content Publishing flow: create a media container, wait for readiness where required, then publish the container.
-- Plan permissions and review early: Instagram publishing typically requires a professional Instagram account connected to a Facebook Page and Meta app permissions such as content publishing and account/page access.
-- Keep Instagram credentials separate from Rubika credentials, but reuse the publishing reliability architecture from Phase 8.
-- Re-check Meta's official documentation at implementation time because permissions, review requirements, rate limits, and supported media types can change.
-
-Reference:
-
-- Meta Instagram Platform Content Publishing documentation: https://developers.facebook.com/docs/instagram-platform/content-publishing/
-
-Risk: high.
-
-Priority: P0.
+- Analytics page exists with charts and drilldown improvements.
+- It needs real channel metrics, event storage, reports, recommendations, and listening/competitor support.
 
 ## Release Sequence
 
 | Release | Theme | Core result |
 | --- | --- | --- |
-| R0 | Stabilize current branch | Existing checks pass and current work is pushed |
-| R1 | Product architecture and brand kit | Workspace can become branded and publish-ready |
-| R2 | Campaign and composer | User can create campaign-based content quickly |
-| R3 | Planner and media DAM | User can plan and manage assets professionally |
-| R4 | Approvals and reliability | Team can publish safely |
-| R5 | Analytics and inbox | User can measure, report, and respond |
-| R6 | Instagram channel | User can publish to Instagram beside Rubika |
-| R7 | Hardening | Accessibility, E2E, visual regression, docs, backup/restore |
+| R0 | Stabilize | Current checks pass and branch is pushed |
+| R1 | Identity + Channels | Product becomes channel-neutral and setup becomes honest |
+| R2 | Composer + Planner | Users create and schedule channel variants professionally |
+| R3 | Campaign + Creative | Campaigns, media, and variants become strategic/reusable |
+| R4 | Governance + Reliability | Teams can approve, publish, recover, and audit safely |
+| R5 | Inbox + Analytics | Users can respond, report, and improve |
+| R6 | Advanced Integrations | More channels, exports, listening, smart links, AI summaries |
 
 ## Quality Gates For Every Phase
 
 - `docker compose exec frontend npm run check`
-- Backend compile/test path verified for backend changes.
+- Backend compile/test path for backend changes.
 - Migration upgrade/downgrade considered for schema changes.
 - Browser smoke on affected routes.
-- No horizontal overflow or clipped primary labels.
+- No horizontal overflow or clipped primary Persian labels.
+- Accessibility smoke: keyboard focus, reduced motion, contrast.
 - Git commit and push checkpoint.
-- Update docs when architecture changes.
+- Roadmap/RFP updated when architecture changes.
+
+## Naming Direction
+
+Temporary working names to evaluate:
+
+- ChannelFlow
+- Neshan Social
+- BazaarFlow
+- SocialOps Studio
+- Persian Social Studio
+
+Recommendation: use a neutral placeholder in code/docs first, such as **SocialOps Studio**, until final branding is chosen.

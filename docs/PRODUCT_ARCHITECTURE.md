@@ -1,273 +1,293 @@
-# Rubika Publisher Product Architecture
+# Multi-Channel Social Operations Product Architecture
 
 ## Purpose
 
-Rubika Publisher should evolve from a polished MVP into a professional publishing operating system for Persian, RTL, commerce-led social content teams. The next work must prioritize durable product capability over repeated page-level UI polish.
+The product is no longer a Rubika-only publisher. It should become a professional, Persian-first, RTL-native multi-channel social operations platform for commerce teams, creators, agencies, and small brands.
 
-The product should help a workspace:
+Rubika remains an important publishing channel, but the product identity should be broader:
 
-- Define its brand identity and content rules.
-- Plan campaigns with goals, dates, assets, and publishing cadence.
-- Create posts quickly from templates, brand defaults, and reusable media.
-- Review and approve content before publishing.
-- Publish reliably with recoverable background jobs.
-- Understand what happened through analytics, reports, and operational history.
-- Respond to audience activity from a unified inbox.
+- Plan campaigns across channels.
+- Create channel-specific content from one source idea.
+- Manage media, variants, brand assets, and Persian typography.
+- Schedule, approve, publish, recover, and audit posts.
+- Handle manual and API publishing paths honestly.
+- Monitor inbox, notifications, analytics, reports, and channel health.
+
+## Market Benchmark Summary
+
+Current benchmark leaders show a consistent product pattern:
+
+- Buffer: friendly scheduling, channel groups, understandable analytics, engagement inbox, and low-friction creation for small teams.
+- Hootsuite: unified publishing, engagement, analytics, listening, benchmarking, governance, and scalable team operations.
+- Sprout Social: publishing, engagement, analytics, listening, customer care, workflow management, and deeper AI-assisted intelligence.
+- Later: visual planning, media-first workflow, link-in-bio commerce, analytics, and platform-specific visual preview.
+- Metricool: planner, analytics, automated reports, inbox, smart links, campaigns, competitor tracking, and ad/campaign management in one workspace.
+- Planable: content collaboration, review, approval, comments, calendar/grid/feed previews, and client/team workflow.
+- Canva: content creation, templates, brand assets, planner, direct scheduling, social analytics, and design-to-publish continuity.
+
+The winning pattern is not "more colors." It is a connected operating model: create, plan, approve, publish, engage, measure, and improve without jumping between tools.
 
 ## Current Product Shape
 
-The current app has a strong MVP foundation:
+The current app is past the MVP baseline:
 
-- Next.js RTL frontend with shell, dashboard, composer, calendar, content, queue, media, logs, analytics, inbox, store, and Rubika settings.
-- FastAPI backend with users, stores, Rubika account settings, posts, media assets, and publish attempts.
-- Docker Compose local runtime with PostgreSQL, Redis, backend, worker, and frontend.
-- A maturing UI system with shared shell, panels, data views, tags, buttons, status badges, and media-aware tables.
+- Next.js RTL frontend with dashboard, composer, calendar, campaigns, content, media, queue, inbox, analytics, logs, store settings, Rubika settings, and Instagram settings.
+- FastAPI backend with stores, posts, campaigns, media assets, Rubika account settings, Instagram account modes, publish attempts, notifications, and worker publishing.
+- Professional UI components now exist for app shell, cards, data views, inspectors, status badges, planner, image editor, notifications, and Persian typography.
+- Media editor includes Persian fonts, text layers, stickers, effects, variants, and composer access.
+- Publishing now supports Rubika plus Instagram account modes, including manual-ready personal Instagram flow.
 
-The biggest gap is no longer visual polish. The gap is product depth:
+## Primary Product Gaps
 
-- Campaigns are text labels, not first-class planning objects.
-- Brand identity is basic store metadata, not a reusable brand kit.
-- Composer is functional but not a professional studio with templates, validation, autosave, and version history.
-- Publishing uses post status and attempts, but needs durable jobs, idempotency, retry policy, and dead-letter handling.
-- Analytics is mostly operational and publish-attempt based, not engagement/event/report based.
-- Collaboration, roles, approvals, comments, and audit history do not exist yet.
+### Strategic Identity
+
+- Product name, docs, shell labels, environment defaults, and onboarding still say "Rubika Publisher."
+- Navigation treats Rubika as a product pillar instead of one channel inside a channel hub.
+- The product has added Instagram but still lacks a shared channel/account abstraction in the UX and domain model.
+
+### User Journey
+
+- The app is still module-first instead of goal-first.
+- A professional daily journey should be: Command Center -> Campaign -> Create -> Review -> Schedule -> Publish/Recover -> Engage -> Report.
+- Current screens exist, but the handoff between them is still weaker than top tools.
+
+### UI/UX System
+
+- The visual system is more consistent than before, but it still lacks a memorable product identity.
+- It needs purposeful visual language: channel rails, campaign timeline patterns, content preview density, health maps, and report-quality surfaces.
+- It should not add random decorative art. Any art or pattern must explain brand state, channel state, content flow, or campaign rhythm.
+
+### Channel Management
+
+- Rubika and Instagram should live under a unified Channels area.
+- Each channel needs connection status, capabilities, limitations, account mode, publishing eligibility, rate limits, token health, and manual/API workflow disclosure.
+- Personal Instagram should be supported as a reminder/manual workflow, not misrepresented as automatic API publishing.
+
+### Composer
+
+- Composer should generate one source idea with per-channel variants.
+- It should expose per-channel caption, media, aspect ratio, link, hashtag, alt text, first comment, and scheduling validation.
+- It needs saved templates, brand styles, post versions, and stronger draft recovery.
+
+### Planner And Campaigns
+
+- Calendar exists, but market leaders emphasize visual planning, drag/drop rescheduling, campaign lanes, platform previews, approvals, and saved views.
+- Campaigns need stronger strategy fields: audience, goal, budget, landing link, channel mix, KPI targets, and report cadence.
+
+### Media And Creative
+
+- The image editor is becoming useful, but the broader creative system needs templates, reusable brand blocks, multi-format exports, and creative QA by channel.
+- The DAM needs asset relationships: source, variants, campaign usage, post usage, owner, rights, and lifecycle.
+
+### Inbox And Engagement
+
+- Inbox should become a core workspace with threads, comments/messages, assignment, SLA, saved replies, sentiment tags, and action history.
+- Current inbox is not yet competitive with Buffer, Hootsuite, Sprout, or Metricool engagement workflows.
+
+### Analytics And Reporting
+
+- Analytics must move from operational charts toward business reporting.
+- Need channel metrics, campaign KPIs, content type performance, best-time recommendations, competitor/listening-lite, exports, and AI-readable insight summaries.
+
+### Reliability And Governance
+
+- Publishing needs durable jobs, idempotency, retry/backoff, dead-letter queue, audit logs, role permissions, and recoverable channel failures.
+- Top tools feel professional because failed publishing, approvals, and permissions are explicit, not hidden.
 
 ## Product Pillars
 
-### 1. Brand Operating Layer
+### 1. Command Center
 
-The workspace needs a brand kit that controls defaults and visual identity across the app.
-
-Core capabilities:
-
-- Logo or avatar.
-- Brand color and secondary accent.
-- Tone of voice.
-- Default CTA.
-- Default hashtag sets.
-- Caption footer.
-- Product/category positioning.
-- Content rules and forbidden phrases.
-
-Primary surfaces:
-
-- Store settings.
-- Composer preview.
-- Dashboard readiness.
-- Content and queue rows.
-- Reports and exports.
-- Empty states.
-
-### 2. Campaign Operating Layer
-
-Campaigns should become the main planning object, not a free-text field.
+Daily executive view for a store/team.
 
 Core capabilities:
 
-- Campaign name, goal, status, date range, color, owner, and notes.
-- Campaign-specific post list.
-- Calendar campaign lanes.
-- Media collections linked to campaign.
-- Campaign health score.
-- Campaign analytics and report export.
+- Workspace readiness.
+- Channel health.
+- Today's publishing plan.
+- Risk and blocked items.
+- Notifications.
+- Campaign progress.
+- Next recommended action.
 
-Primary surfaces:
+### 2. Channels Hub
 
-- Campaign workspace.
-- Calendar.
-- Content library.
-- Analytics.
-- Dashboard.
-
-### 3. Composer Studio
-
-The composer should be the highest-quality workflow in the product.
+Unified home for Rubika, Instagram, and future networks.
 
 Core capabilities:
 
-- Three-pane layout: templates/media, editor, schedule/preview/readiness.
-- Template picker for launch, sale, reminder, educational, announcement, and support posts.
-- Brand-aware defaults.
-- Media readiness and validation.
-- Autosave and recovery.
-- Version history.
-- Optional AI assist with human confirmation.
+- Channel accounts.
+- Connection mode: API, bot, manual reminder, disconnected.
+- Capability matrix.
+- Token and health checks.
+- Publishing limitations.
+- Channel-specific setup checklist.
+- Channel logs and recovery.
 
-Primary surfaces:
+### 3. Campaign OS
 
-- `/compose`.
-- Calendar quick-create drawer.
-- Campaign detail page.
-- Content inspector.
-
-### 4. Planner
-
-The planner should be a professional calendar, not only a day-card view.
+Planning object that ties content, media, channels, goals, and reports together.
 
 Core capabilities:
 
-- Month, week, list, and campaign lane views.
+- Campaign strategy fields.
+- Channel mix.
+- Content pillars.
+- Visual timeline.
+- Post plan.
+- Media collection.
+- Approval status.
+- KPI targets and report export.
+
+### 4. Composer Studio
+
+Source idea to multi-channel post variants.
+
+Core capabilities:
+
+- Brand-aware templates.
+- Per-channel variants.
+- Media and creative editor integration.
+- Readiness checks.
+- Persian typography.
+- Autosave and versions.
+- Approval handoff.
+
+### 5. Planner
+
+Professional calendar and scheduling workspace.
+
+Core capabilities:
+
+- Month, week, list, grid/feed, and campaign lane views.
 - Drag/drop rescheduling.
-- Conflict warnings.
+- Channel/status/campaign filters.
 - Best-time suggestions.
+- Conflict warnings.
 - Bulk scheduling.
-- Post inspector.
-- Status and campaign filters.
 
-Primary surfaces:
+### 6. Media And Creative Studio
 
-- `/calendar`.
-- Campaign detail page.
-- Dashboard upcoming schedule.
-
-### 5. Media DAM
-
-The media library should become a lightweight digital asset manager.
+Lightweight DAM plus social image editor.
 
 Core capabilities:
 
 - Collections.
+- Source/variant relationships.
 - Usage map.
-- Tags and folders.
-- Campaign links.
-- Image variants and crop presets.
-- Asset health.
-- Safe delete with usage warning.
+- Channel format readiness.
+- Templates and brand blocks.
+- Persian fonts.
+- Social crops and batch variants.
 
-Primary surfaces:
+### 7. Approvals And Collaboration
 
-- `/media`.
-- Composer.
-- Content inspector.
-- Campaign media section.
-
-### 6. Approvals And Collaboration
-
-Professional apps reduce risk before publishing.
+Governance layer for teams and clients.
 
 Core capabilities:
 
 - Roles and permissions.
-- Submit for review.
-- Approve, reject, request changes.
+- Submit/review/approve/request changes.
 - Comments and mentions.
-- Reviewer notifications.
-- Approval audit history.
-
-Primary surfaces:
-
+- Approval history.
 - Review queue.
-- Composer.
-- Content inspector.
-- Notifications.
+- Audit log.
 
-### 7. Publishing Reliability
+### 8. Publishing Operations
 
-Publishing should be job-driven and recoverable.
+Reliable job-based publishing and recovery.
 
 Core capabilities:
 
-- Durable publish jobs.
-- Idempotency keys.
-- Retry policy and backoff.
+- Durable jobs.
+- Per-channel attempts.
+- Idempotency.
+- Retry/backoff.
 - Dead-letter queue.
-- Worker heartbeat.
-- Queue depth and latency.
-- Failure classification and recovery hints.
+- Manual publish tasks.
+- Worker health and logs.
 
-Primary surfaces:
+### 9. Inbox And Engagement
 
-- Queue.
-- Logs.
-- Dashboard operational health.
-- Notifications.
-
-### 8. Inbox And Engagement
-
-Inbox should eventually become the daily engagement workspace.
+Daily response workspace.
 
 Core capabilities:
 
-- Message/comment threads.
+- Unified threads.
 - Assignment.
 - Saved replies.
+- SLA.
 - Resolution state.
-- Response SLA.
-- Moderation notes.
-- In-app and push notifications.
+- Notifications.
+- Basic sentiment/topic tagging.
 
-Primary surfaces:
+### 10. Analytics, Reports, And Intelligence
 
-- `/inbox`.
-- Dashboard.
-- Analytics.
-
-### 9. Analytics And Reporting
-
-Analytics should explain what happened and what to do next.
+Decision support system.
 
 Core capabilities:
 
-- Analytics event model.
-- Post-level performance.
-- Campaign-level performance.
-- Publish reliability analytics.
-- Best-time recommendations.
-- Report builder.
-- XLSX/PDF export.
-- AI-assisted insight summaries.
-
-Primary surfaces:
-
-- `/analytics`.
+- Channel metrics.
 - Campaign reports.
-- Dashboard insights.
+- Content performance.
+- Best-time recommendations.
+- Competitor/listening-lite.
+- Exportable reports.
+- AI summaries with source metrics.
 
 ## Target Navigation
 
-Primary navigation should be workflow-first:
+Navigation should become workflow-first and channel-neutral:
 
 1. Command Center
-2. Compose
+2. Create
 3. Planner
 4. Campaigns
 5. Content
-6. Media
-7. Queue
+6. Media Studio
+7. Channels
 8. Inbox
 9. Analytics
-10. Settings
+10. Publishing Ops
+11. Settings
 
-Settings should remain reachable without scrolling through empty nav space.
+Rules:
 
-## Non-Goals For The Next Phase
-
-- Do not keep changing colors without adding product capability.
-- Do not add decorative art unless it clarifies a workflow or brand state.
-- Do not build multi-platform abstractions before Rubika publishing is reliable.
-- Do not add AI workflows before brand, templates, and human review are defined.
-- Do not create new one-off UI components where shared system components can be improved.
+- Settings must be pinned and reachable without scrolling.
+- Rubika and Instagram should be sub-items or tabs under Channels, not separate product identities forever.
+- Global "Create" should appear once in the shell, not duplicated on every page.
+- Channel status should be visible without hijacking the header.
 
 ## Architecture Decisions
 
 | Decision | Direction |
 | --- | --- |
-| Product focus | Single-platform Rubika depth first, multi-channel-ready data model second |
-| UI strategy | Light professional operational SaaS, not black-heavy or decorative |
-| Workflow model | Campaign and composer centered |
-| Publishing model | Durable job state machine, not post status alone |
-| Analytics model | Event-based analytics, not only publish attempts |
-| Collaboration model | Roles, approvals, comments, audit log |
-| Quality model | Tests, browser QA, visual regression, and migration verification per phase |
+| Product focus | Multi-channel social operations, Persian-first and RTL-native |
+| Channel model | Rubika, Instagram, and future networks as accounts under a shared Channels abstraction |
+| Instagram personal accounts | Manual/reminder workflow only unless official API capability exists for that account type |
+| UI strategy | Light, editorial-operational SaaS with purposeful content/campaign/channel patterns |
+| Workflow model | Campaign and composer centered, with command center as daily home |
+| Publishing model | Durable per-channel jobs and attempts, not post status alone |
+| Analytics model | Event and metric snapshots, not UI-derived summaries |
+| Collaboration model | Roles, approvals, comments, assignments, audit logs |
+| Creative model | DAM source assets plus non-destructive channel variants |
+
+## Non-Goals
+
+- Do not keep repainting pages without changing capability or workflow.
+- Do not make Rubika the product name when the product is multi-channel.
+- Do not imply automatic Instagram publishing for personal accounts.
+- Do not use decorative backgrounds as a substitute for real information design.
+- Do not add AI before data, brand rules, templates, and review controls are reliable.
+- Do not split every new channel into a one-off page and one-off data model.
 
 ## Definition Of Professional
 
-The app should feel professional when:
+The app becomes professional when:
 
-- A new workspace can become publish-ready without guessing what to configure.
-- A manager can see risk, readiness, and next action from the dashboard.
-- A creator can produce a branded post from a template quickly.
-- A reviewer can approve or reject content without leaving the app.
-- A failed publish can be recovered safely without duplicate sends.
-- A campaign can be planned, executed, measured, and exported.
-- Every screen is consistent, readable, fast, responsive, accessible, and RTL-safe.
+- A new user understands what to do in the first 3 minutes.
+- A daily user can create, schedule, recover, and report without guessing.
+- Every channel clearly shows what is possible, what is blocked, and why.
+- Visual design expresses content, campaigns, channels, and status rather than generic decoration.
+- Failures are recoverable and auditable.
+- Reports can be shown to a client or manager without rewriting them manually.
