@@ -117,7 +117,6 @@ type OperationStep = {
   href: string;
   icon: LucideIcon;
   tone: keyof typeof operationStepToneClasses;
-  live?: boolean;
 };
 
 function OperationsLane({ steps }: { steps: OperationStep[] }) {
@@ -134,20 +133,18 @@ function OperationsLane({ steps }: { steps: OperationStep[] }) {
       </div>
 
       <div className="mt-5">
-        <div className="operation-lane-track hidden sm:block" aria-hidden="true">
-          <span className="operation-lane-beam" />
-        </div>
-        <div className="mt-3 grid gap-2 sm:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-4">
           {steps.map((step) => {
             const Icon = step.icon;
+            const active = step.count > 0;
             return (
               <Link
                 key={step.label}
                 href={step.href}
-                className={`operation-lane-card app-interactive group flex min-w-0 items-center gap-3 rounded-lg border border-app-border bg-white p-3 shadow-hairline hover:border-blue-200 hover:bg-blue-50/35 sm:flex-col sm:text-center ${step.live ? "operation-lane-card-active" : ""}`}
-                style={step.live ? { "--operation-accent": operationStepAccent[step.tone] } as CSSProperties : undefined}
+                className={`operation-lane-card app-interactive group flex min-w-0 items-center gap-3 rounded-lg border border-app-border bg-white p-3 shadow-hairline hover:border-blue-200 hover:bg-blue-50/35 sm:flex-col sm:text-center ${active ? "operation-lane-card-active" : ""}`}
+                style={active ? { "--operation-accent": operationStepAccent[step.tone] } as CSSProperties : undefined}
               >
-                <span className={`operation-stage-orb relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 bg-white text-sm font-black shadow-hairline ${operationStepToneClasses[step.tone]} ${step.live ? "operation-stage-orb-live" : ""}`}>
+                <span className={`operation-stage-orb relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 bg-white text-sm font-black shadow-hairline ${operationStepToneClasses[step.tone]} ${active ? "operation-stage-orb-live" : ""}`}>
                   {step.count}
                 </span>
                 <span className="min-w-0">
@@ -267,8 +264,8 @@ export default function HomePage() {
   const operationSteps: OperationStep[] = [
     { label: "آماده", count: queueCounts.ready, detail: "قابل زمان‌بندی", icon: CheckCircle2, tone: "primary", href: "/content?status=ready" },
     { label: "زمان‌بندی", count: queueCounts.scheduled, detail: "در پلنر", icon: CalendarClock, tone: "warning", href: "/calendar" },
-    { label: "در انتشار", count: queueCounts.publishing, detail: "پردازش worker", icon: TimerReset, tone: "info", href: "/queue", live: queueCounts.publishing > 0 },
-    { label: "بازیابی", count: queueCounts.failed, detail: "نیازمند اقدام", icon: AlertTriangle, tone: "alert", href: "/queue", live: queueCounts.failed > 0 }
+    { label: "در انتشار", count: queueCounts.publishing, detail: "پردازش worker", icon: TimerReset, tone: "info", href: "/queue" },
+    { label: "بازیابی", count: queueCounts.failed, detail: "نیازمند اقدام", icon: AlertTriangle, tone: "alert", href: "/queue" }
   ];
 
   return (
