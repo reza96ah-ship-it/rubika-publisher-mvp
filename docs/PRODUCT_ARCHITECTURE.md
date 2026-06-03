@@ -41,21 +41,23 @@ The current app is past the MVP baseline:
 
 ### Strategic Identity
 
-- Product name, docs, shell labels, environment defaults, and onboarding still say "Rubika Publisher."
-- Navigation treats Rubika as a product pillar instead of one channel inside a channel hub.
-- The product has added Instagram but still lacks a shared channel/account abstraction in the UX and domain model.
+- Primary product identity must fully move from "Rubika Publisher" to a channel-neutral SocialOps workspace.
+- Any remaining Rubika naming should be treated as a channel-specific label, not the product brand.
+- Navigation, onboarding, settings, empty states, and docs should all reinforce one shared channel/account model.
 
 ### User Journey
 
 - The app is still module-first instead of goal-first.
 - A professional daily journey should be: Command Center -> Campaign -> Create -> Review -> Schedule -> Publish/Recover -> Engage -> Report.
 - Current screens exist, but the handoff between them is still weaker than top tools.
+- Setup progress should be a one-time guided flow or contextual assistant, not a permanent dashboard centerpiece after the workspace is ready.
 
 ### UI/UX System
 
 - The visual system is more consistent than before, but it still lacks a memorable product identity.
 - It needs purposeful visual language: channel rails, campaign timeline patterns, content preview density, health maps, and report-quality surfaces.
 - It should not add random decorative art. Any art or pattern must explain brand state, channel state, content flow, or campaign rhythm.
+- The product should use editorial light surfaces, precise typography, subtle motion, and operational diagrams instead of dark shells, generic cards, or decorative backgrounds.
 
 ### Channel Management
 
@@ -257,6 +259,18 @@ Rules:
 - Rubika and Instagram should be sub-items or tabs under Channels, not separate product identities forever.
 - Global "Create" should appear once in the shell, not duplicated on every page.
 - Channel status should be visible without hijacking the header.
+
+## Professional Product Document Set
+
+The product direction is now tracked across five connected documents:
+
+- `docs/BENCHMARK_RESEARCH.md`: market evidence, competitor patterns, and current score.
+- `docs/MULTI_CHANNEL_RFP.md`: formal product requirements and acceptance gates.
+- `docs/ROADMAP.md`: phase-by-phase rebuild plan.
+- `docs/PRODUCT_BACKLOG.md`: implementation epics and ordered backlog.
+- `docs/UI_UX_SYSTEM.md`: target theme, visual language, layout rules, and design QA.
+
+These documents should be updated together whenever the product scope changes. The roadmap defines sequence, the RFP defines acceptance, the backlog defines execution, the UI/UX system defines visual quality, and benchmark research prevents the team from drifting back into MVP-only thinking.
 
 ## Architecture Decisions
 

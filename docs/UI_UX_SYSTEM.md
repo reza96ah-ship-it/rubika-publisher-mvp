@@ -1,403 +1,389 @@
-# Multi-Channel Social Operations UI/UX System
+# SocialOps Studio UI/UX System
 
-This document defines the professional design direction for the multi-channel rebuild. It should be used before changing page-level UI so future work improves product experience rather than repainting screens.
+This document defines the professional visual and interaction direction for the product. It replaces the idea of "make it more colorful" with a domain-specific design system.
 
-## Design Goal
+## Design Thesis
 
-The product should feel like a calm, modern, Persian-first operations studio for social content teams.
+SocialOps Studio should feel like a calm Persian social operations studio:
 
-It should be:
-
-- RTL-native.
-- Multi-channel by default.
-- Operational, not decorative.
-- Light and clear, not black-heavy.
-- Brand-aware.
+- Light, focused, and work-ready.
+- RTL-native and Jalali-native.
 - Media-rich where content matters.
-- Dense enough for daily work.
-- Warm enough to avoid looking like a skeleton/template.
-- Accessible, keyboard-friendly, and reduced-motion safe.
+- Dense enough for daily operations.
+- Warm and branded without looking decorative.
+- Built around channel, campaign, content, report, and engagement objects.
+
+The app should not feel like:
+
+- A generic dashboard template.
+- A skeleton prototype.
+- A black/purple SaaS theme.
+- A pile of cards.
+- A one-time setup wizard living forever.
 
 ## Benchmark Lessons
 
-### Buffer
+| Product | UI lesson |
+| --- | --- |
+| Buffer | Simple daily flows and friendly creation matter more than decorative UI |
+| Hootsuite | Dense operations, inbox, approvals, and reporting need strong information hierarchy |
+| Sprout Social | Professional analytics should feel manager/client-ready |
+| Later | Visual planning and media previews create perceived product quality |
+| Planable | Collaboration and approval states must live directly on content |
+| Canva | Brand assets, templates, and creative continuity make the product feel polished |
 
-- Keep creation and scheduling friendly.
-- Make analytics easy to understand.
-- Use lightweight engagement workflows for small teams.
-- Avoid hiding basic actions behind enterprise complexity.
+## Theme Direction
 
-### Hootsuite
+Name: **Light Editorial Operations**.
 
-- A professional platform needs publishing, engagement, listening, analytics, approvals, benchmarking, and governance.
-- Dense calendars and bulk operations are expected.
-- Operational health and failure recovery are part of UX.
+Use:
 
-### Sprout Social
+- Light blue-gray app canvas.
+- White work surfaces.
+- Teal as primary operational color.
+- Blue for informational action.
+- Amber for attention/setup/manual tasks.
+- Rose for risk/failure.
+- Emerald for success.
+- Small, purposeful motion only.
 
-- Reporting, inbox, assignment, workflow, and listening make the product feel mature.
-- Analytics should look client/manager-ready.
-- Roles and permissions are not optional for teams.
+Avoid:
 
-### Later
+- Black-heavy chrome.
+- Decorative gradient blobs/orbs.
+- Random dotted backgrounds.
+- Large marketing hero sections in the logged-in app.
+- Full-page setup progress after setup completion.
+- Repeated “ready/100%” badges when nothing needs action.
 
-- Visual planning and media-first workflows make the product feel alive.
-- Feed/grid previews and channel-specific previews matter.
-- Link/CTA and commerce context are important for small businesses.
+## Core Tokens
 
-### Metricool
-
-- Planner, analytics, inbox, reports, smart links, campaigns, and competitor tracking can live in one workspace.
-- Good tools explain next action, not only raw metrics.
-
-### Planable
-
-- Collaboration UX matters: comments, approvals, versions, calendar, feed/grid preview, and client review are core.
-- Review status must be visible at content-card level.
-
-### Canva
-
-- Creative quality comes from templates, brand assets, media, and direct scheduling continuity.
-- The product does not need to become Canva, but it needs a design-to-publish bridge.
-
-## Recommended Theme
-
-Use a light editorial-operations theme.
-
-Core tokens:
-
-- App canvas: `#F5F8FA`
-- Surface: `#FFFFFF`
-- Raised surface: `#FBFDFE`
-- Text: `#17313B`
-- Muted text: `#5D7280`
-- Primary: `#0F766E`
-- Primary soft: `#DDF7F2`
-- Info blue: `#2563EB`
-- Success: `#15803D`
-- Warning: `#B7791F`
-- Danger: `#C24150`
-- Border: `#D7E2E7`
-
-Use channel colors only as accents:
-
-- Rubika: blue accent.
-- Instagram: warm gradient accent only in tiny channel marker, not whole backgrounds.
-- Manual workflow: amber/sky status.
-- Future channels: tokenized, never hard-coded into page layouts.
+| Token | Value | Use |
+| --- | --- | --- |
+| Canvas | `#EEF4F6` | App background |
+| Surface | `#FFFFFF` | Main work panels |
+| Surface muted | `#F2F8F8` | Toolbars, dashboard monitor heads |
+| Text | `#172332` | Primary copy |
+| Muted text | `#5D7280` | Secondary labels |
+| Primary teal | `#0F766E` | Main action, active route |
+| Info blue | `#2563EB` | Informational state/action |
+| Success | `#15803D` | Healthy/done |
+| Warning | `#B7791F` | Needs attention/manual |
+| Danger | `#C24150` | Failed/risk |
+| Border | `#D5E5E5` | Hairline structure |
 
 ## Product-Specific Visual Language
 
-The app should not rely on random dots, blobs, or generic cards. Use visual systems tied to the product domain.
-
 ### Channel Rail
 
-Small vertical or horizontal rails that show selected channels, connection health, and publish capability.
+Purpose: show selected channels, capability, and health without making a huge card.
+
+Use in:
+
+- Composer variants.
+- Planner chips.
+- Queue rows.
+- Content rows.
+- Campaign timeline.
+- Analytics filters.
+
+Rules:
+
+- Small vertical rail or compact horizontal badge group.
+- Channel colors are accents only.
+- Include capability/limitation state when relevant.
+
+### Campaign Timeline
+
+Purpose: show campaign rhythm and progress.
+
+Use in:
+
+- Command Center.
+- Planner campaign lane.
+- Campaign detail.
+- Reports.
+
+Rules:
+
+- Timeline bands should show date range, planned/scheduled/published/failed counts.
+- Use campaign color as a thin rail, not background flood.
+
+### Content Preview Tile
+
+Purpose: make the app visually rich using real content.
+
+Use in:
+
+- Content list.
+- Queue.
+- Media usage.
+- Analytics top posts.
+- Campaign linked posts.
+
+Rules:
+
+- Thumbnail first when available.
+- Caption/title truncated cleanly.
+- Status, channel, campaign, approval visible.
+- No image means a restrained placeholder, not a decorative illustration.
+
+### Health Map
+
+Purpose: show operational health only when action is useful.
+
+Use in:
+
+- Channels Hub.
+- Publishing Ops.
+- Incomplete onboarding.
+- Worker health.
+
+Rules:
+
+- Do not show completed setup progress permanently.
+- Completed health can be a quiet settings detail.
+- Warnings and blockers appear in dashboard only when action is needed.
+
+### Report Surface
+
+Purpose: make analytics/export pages feel client-ready.
+
+Use in:
+
+- Analytics.
+- Campaign report.
+- Export preview.
+
+Rules:
+
+- KPI strip.
+- Trend chart.
+- Top content thumbnails.
+- Insight notes.
+- Method/source notes.
+- Print/export-friendly spacing.
+
+### Collaboration Layer
+
+Purpose: make review feel native.
 
 Use in:
 
 - Composer.
-- Queue.
-- Planner.
-- Content rows.
+- Content inspector.
 - Campaign detail.
-
-### Campaign Timeline Pattern
-
-Subtle timeline bands showing campaign dates, content stages, and publishing rhythm.
-
-Use in:
-
-- Command Center.
-- Campaign detail.
-- Planner.
-- Analytics reports.
-
-### Content Preview Tiles
-
-Real media thumbnails, post previews, captions, status, approval, and channel badges should carry the visual richness.
-
-Use in:
-
-- Content.
-- Media.
-- Queue.
-- Campaign linked posts.
-- Analytics top content.
-
-### Health Map
-
-Compact readiness map for brand, channels, schedule, approvals, media, worker, and analytics.
-
-Use in:
-
-- Command Center.
-- Onboarding.
-- Channels Hub.
-- Publishing Ops.
-
-### Report Surface
-
-Analytics and campaign reports should use print/export-quality layouts with KPI strips, trend charts, thumbnail tables, and insight notes.
-
-Use in:
-
-- Analytics.
-- Campaign exports.
-- Dashboard summaries.
-
-## What To Avoid
-
-- Black-heavy app chrome for this product category.
-- Purple/blue gradient-heavy SaaS cliché.
-- Generic decorative dotted backgrounds everywhere.
-- Big marketing hero sections inside the logged-in app.
-- Cards inside cards.
-- Oversized setup boxes that break information density.
-- Duplicate primary buttons in header and body.
-- Permanent blinking or decorative animation.
-- Art that competes with tables, forms, or charts.
-
-## What To Use Instead
-
-- Calm canvas background.
-- White work surfaces.
-- Hairline borders.
-- Small status rails.
-- Campaign color dots and timeline strips.
-- Real media thumbnails.
-- Brand avatars/logos in relevant context.
-- Soft shadow only for active overlays, drawers, popovers, and selected inspectors.
-- Purposeful motion for active state, upload/progress, notification, and current creation step.
-
-## Global App Shell
-
-Purpose: orient the user and provide command access.
 
 Rules:
 
-- Shell title should be channel-neutral.
-- Sidebar should be compact and workflow-first.
-- Settings should be pinned.
-- Channels should group Rubika, Instagram, and future networks.
-- Global create action appears once.
-- Header should not duplicate page body CTAs.
-- Notification and command palette stay consistent across pages.
-- Channel health should appear as compact status, not a large header label.
+- Comments and approval state stay beside content.
+- Internal-only feedback is visually distinct but not loud.
+- Resolved comments collapse.
 
-Required shell sections:
+## Visual Asset Strategy
 
-- Command Center.
-- Create.
-- Planner.
-- Campaigns.
-- Content.
-- Media Studio.
+Use real product assets before decorative art:
+
+1. User media thumbnails.
+2. Brand logo/avatar.
+3. Campaign color rails.
+4. Channel icons/badges.
+5. Generated post/template thumbnails.
+6. Report charts and tables.
+7. Empty states with restrained line icons only.
+
+Do not add generic art unless it clarifies a product state. The app should gain beauty from organized content, not background decoration.
+
+## App Shell
+
+Rules:
+
+- Sidebar is compact, workflow-first, and not crowded.
+- Settings are pinned.
+- Channels are not a permanent primary item unless there is an issue.
+- Global create appears once.
+- Header status chips are alert-only where possible.
+- Completed setup does not occupy daily navigation.
+
+Primary navigation:
+
+1. Today
+2. Create
+3. Planner
+4. Content
+5. Media
+6. Inbox
+7. Reports
+8. Settings
+
+Advanced pages remain reachable by command palette and parent workspaces:
+
 - Channels.
-- Inbox.
-- Analytics.
-- Publishing Ops.
-- Settings.
+- Publishing Ops/Queue.
+- Logs.
+- Campaigns.
+- Onboarding.
 
-## Command Center
+## Page Patterns
 
-Purpose: daily start page.
+### Command Center
 
-Layout:
+Job: daily start page.
 
-- Top: workspace health map and next recommended action.
-- Middle: today/this week publishing plan with channel rail.
-- Middle: campaign progress and blocked work.
-- Bottom: recent activity, notifications, and top insight.
+Required sections:
+
+- Hero with workspace and highest priority action.
+- Publishing pulse.
+- Risk queue.
+- Upcoming schedule.
+- Campaign timeline preview.
+- Inbox alerts.
+- Insight card.
+
+Do not show:
+
+- Permanent setup progress when complete.
+- Large static readiness cards.
+- Duplicate create buttons.
+
+### Onboarding
+
+Job: temporary guided setup.
 
 Rules:
 
-- It should not be a marketing landing page.
-- It should not be a collection of oversized setup cards.
-- Every card must answer "what should I do next?"
+- Appears when setup is incomplete.
+- Can be reopened from command palette/settings.
+- Uses setup rail and concise side monitor.
+- Does not become daily dashboard.
 
-## Channels Hub
+### Channels Hub
 
-Purpose: account setup, capability, limitations, and health.
+Job: account/capability/recovery.
 
-Layout:
+Required:
 
-- Account cards with channel marker, mode, status, and next action.
+- Account cards.
 - Capability matrix.
-- Health timeline.
-- Setup checklist.
-- Logs/recovery panel.
+- Last test/last error.
+- Mode disclosure.
+- Recovery action.
+- Channel settings as tabs/drawers.
 
-Rules:
+### Composer Studio
 
-- Personal Instagram must say manual/reminder workflow.
-- API-capable accounts should show eligibility and token health.
-- Rubika settings should feel like a channel configuration, not a separate product.
-
-## Composer Studio
-
-Purpose: fastest path from idea to channel-ready post.
+Job: create channel variants.
 
 Target layout:
 
-- Left pane: campaign, template, media, brand kit.
-- Center pane: source idea and per-channel variants.
-- Right pane: preview, readiness, schedule, approval.
+- Left: campaign/template/media/brand.
+- Center: source idea and variants.
+- Right: preview/readiness/schedule/approval.
 
 Rules:
 
 - No messy field clusters.
-- Per-channel validation should be visible near the channel variant.
-- Media editor opens as an focused overlay or side-by-side workspace.
-- Current creation step uses a same-size filled circle with restrained pulse.
-- Autosave state must be clear but not noisy.
+- Variant validation appears near variant.
+- Media editor opens as focused workspace.
+- Current creation step uses same-size filled circle, not a tiny dot.
 
-## Planner
+### Planner
 
-Purpose: schedule management.
-
-Rules:
-
-- Month, week, list, grid/feed, and campaign lane views.
-- Compact toolbar.
-- Right inspector.
-- Drag/drop reschedule.
-- Channel/campaign/status filters.
-- Label readability is mandatory.
-- Mini date pickers should be true compact popovers and close on outside click.
-- Jalali date handling must be consistent.
-
-## Campaigns
-
-Purpose: strategic planning and reporting.
-
-Rules:
-
-- Campaign page should show brief, timeline, linked posts, media, KPIs, risk, and report actions.
-- Campaign create/edit should use compact sections and mini date/time popovers.
-- Channel mix should be visible.
-- Campaign health should be understandable without opening analytics.
-
-## Content And Queue
-
-Purpose: operational data views.
-
-Rules:
-
-- Shared professional table/list system.
-- Thumbnail, campaign marker, channel badges, approval, schedule, and status.
-- Inspector shows preview first, then metadata, then recovery/next action.
-- Manual publish tasks must show copy/open/mark-published actions.
-- Bulk actions appear only when selection exists.
-
-## Media Studio
-
-Purpose: DAM plus social creative workflow.
-
-Rules:
-
-- Grid/list with usage state.
-- Inspector with preview, variants, campaign usage, metadata, and safe delete.
-- Image editor should feel like a compact professional studio:
-  - Left asset/layer rail.
-  - Center canvas.
-  - Right inspector.
-  - Top toolbar.
-  - Bottom zoom/artboard.
-- Brand colors, Persian fonts, templates, and channel presets are first-class.
-
-## Inbox
-
-Purpose: daily engagement operations.
-
-Rules:
-
-- Thread list, conversation, assignment/status, saved replies, internal note.
-- SLA and unresolved indicators.
-- Notifications link to exact thread.
-- Empty states explain how channel connection affects inbox availability.
-
-## Analytics And Reports
-
-Purpose: decision support.
-
-Rules:
-
-- Start with insight cards and next actions.
-- Charts must have readable labels.
-- Use thumbnails for top content.
-- Support channel/campaign/date filters.
-- Chart click selection must unselect on outside click.
-- Reports should look export-ready.
-- AI insight must cite visible metrics.
-
-## Motion System
-
-Use motion for:
-
-- Panel entry.
-- Button hover/press.
-- Upload/progress.
-- Live notification pulse.
-- Current creation step.
-- Selection feedback.
-- Toasts.
-
-Do not use motion for:
-
-- Decorative background loops.
-- Constant blinking outside active/current state.
-- Large animated hero effects inside work surfaces.
-
-Every motion must respect reduced-motion preferences.
-
-## Art And Brand Direction
-
-The app does not need random image assets everywhere. It needs art and pattern only where it improves orientation.
-
-Use art/pattern in:
-
-- First-run onboarding.
-- Empty media library.
-- First campaign setup.
-- Channel disconnected state.
-- Brand readiness.
-- Report cover/export.
-
-Prefer:
-
-- Product-specific spot diagrams.
-- Channel capability maps.
-- Campaign rhythm/timeline patterns.
-- Real content thumbnails.
-- Brand avatars/logos.
-
-Avoid:
-
-- Generic stock-like illustrations.
-- Decorative blobs/orbs.
-- Noisy dot grids.
-- Backgrounds that make text or charts harder to read.
-
-## Layout Rules
-
-- Use full-width operational layouts, not narrow marketing layouts.
-- Cards are for repeated items, inspectors, modals, and actual tools.
-- Avoid cards inside cards.
-- Use `6px` to `8px` radius for professional controls.
-- Use stable dimensions for toolbars, thumbnails, buttons, grids, and charts.
-- Do not scale font size with viewport width.
-- Text must not overflow its container.
-- Persian/RTL labels must be checked in browser.
-
-## Accessibility Rules
+Job: visual schedule management.
 
 Required:
 
-- Keyboard navigation.
-- Visible focus states.
-- Button labels or tooltips for icons.
-- Color contrast for all token states.
-- ARIA labels for icon-only buttons.
-- Reduced-motion support.
-- Popovers close on outside click and Escape.
+- Month/week/list/feed/campaign lane views.
+- Compact toolbar.
+- Right inspector.
+- Channel/campaign/status filters.
+- Drag/drop with conflict warning.
+- Small Jalali date/time popovers.
+
+### Campaigns
+
+Job: strategy and report hub.
+
+Required:
+
+- Campaign brief.
+- Timeline.
+- Linked posts/media.
+- KPIs.
+- Risk panel.
+- Report/export action.
+
+### Media Studio
+
+Job: DAM plus creative workflow.
+
+Required:
+
+- Grid/list.
+- Inspector.
+- Source/variant relationship.
+- Usage map.
+- Creative QA.
+- Professional editor layout.
+
+### Inbox
+
+Job: engagement operations.
+
+Required:
+
+- Thread list.
+- Conversation.
+- Assignment/status/SLA.
+- Saved replies.
+- Internal notes.
+
+### Analytics
+
+Job: decision support.
+
+Required:
+
+- KPI strip.
+- Channel/campaign filters.
+- Trends.
+- Top/weak content.
+- Recommendations.
+- Report export.
+- Competitor/listening-lite.
+
+## Interaction Rules
+
+- Buttons use icons where expected.
+- Primary action is unique per page.
+- Filters are compact and consistent.
+- Bulk actions appear only after selection.
+- Popovers close on outside click.
+- Date/time popovers are compact and anchored.
+- Motion is subtle and state-driven.
+- Loading skeletons match final layout dimensions.
+- Text never scales with viewport width.
+
+## Accessibility And RTL
+
+- All controls keyboard reachable.
+- Focus ring visible.
+- Persian labels tested for overflow.
+- Tables/lists usable at 1280px and mobile.
+- Motion respects reduced-motion.
+- Color is not sole indicator.
+- Jalali dates are consistent.
+
+## Design QA Checklist
+
+Before shipping a UI phase:
+
+- Does this page have one primary job?
+- Is setup hidden if already complete?
+- Is visual richness tied to real content/status/campaign/channel?
+- Are there duplicate primary buttons?
+- Are Persian labels clipped?
+- Are cards nested inside cards?
+- Does the page use existing components?
+- Is the next action obvious?
+- Would a manager/client trust a report screenshot from this page?
