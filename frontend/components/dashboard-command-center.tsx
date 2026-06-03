@@ -114,20 +114,26 @@ export function SignalRibbon({ items }: { items: DashboardSignal[] }) {
 }
 
 export function LiveOperations({
-  setupScore,
   queueTotal,
-  rubikaReady,
+  channelReady,
+  workspaceReady,
+  activeCampaigns,
+  failedCount,
   nextWindow
 }: {
-  setupScore: number;
   queueTotal: number;
-  rubikaReady: boolean;
+  channelReady: boolean;
+  workspaceReady: boolean;
+  activeCampaigns: number;
+  failedCount: number;
   nextWindow: string;
 }) {
   const signals = [
-    ...(setupScore < 100 ? [{ label: "راه‌اندازی", value: `${setupScore}%`, healthy: false }] : []),
-    { label: "کانال اصلی", value: rubikaReady ? "آماده" : "نیازمند بررسی", healthy: rubikaReady },
-    { label: "حجم صف فعال", value: `${queueTotal} محتوا`, healthy: queueTotal < 10 },
+    { label: "فضای کاری", value: workspaceReady ? "آماده عملیات" : "نیازمند تکمیل", healthy: workspaceReady },
+    { label: "کانال‌های انتشار", value: channelReady ? "آماده" : "نیازمند بررسی", healthy: channelReady },
+    { label: "کمپین‌های فعال", value: `${activeCampaigns} کمپین`, healthy: activeCampaigns > 0 },
+    { label: "خطاهای باز", value: `${failedCount} مورد`, healthy: failedCount === 0 },
+    { label: "حجم صف فعال", value: `${queueTotal} محتوا`, healthy: queueTotal < 10 && failedCount === 0 },
     { label: "پنجره بعدی انتشار", value: nextWindow, healthy: true }
   ];
 
