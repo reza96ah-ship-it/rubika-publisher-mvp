@@ -7,15 +7,12 @@ import {
   CalendarClock,
   CheckCircle2,
   CircleAlert,
-  Layers3,
   Megaphone,
   MessageSquare,
   Network,
-  Palette,
   PlugZap,
   RefreshCw,
   Rocket,
-  Sparkles,
   Target,
   TimerReset,
   TrendingUp,
@@ -25,18 +22,15 @@ import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, us
 import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
 import { WorkspaceAvatar } from "../components/brand-mark";
-import { CountdownBadge } from "../components/countdown-badge";
-import { LiveOperations } from "../components/dashboard-command-center";
 import { Skeleton } from "../components/loading-skeleton";
 import { StatusBadge } from "../components/status-badge";
 import { Button } from "../components/ui/button";
-import { EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../components/workspace-ui";
+import { NoticeBanner, StatusToken, WorkspacePage } from "../components/workspace-ui";
 import { Campaign, loadCampaigns } from "../lib/campaigns";
 import {
   emptyOperationalNotifications,
   loadOperationalNotifications,
   loadReadNotificationIds,
-  OperationalNotification,
   OperationalNotifications
 } from "../lib/notifications";
 import { apiUrl, authHeaders, formatDateTime, Post } from "../lib/posts";
@@ -66,18 +60,6 @@ function dateFromPost(post: Post) {
 function percent(value: number, total: number) {
   if (!total) return 0;
   return Math.round((value / total) * 100);
-}
-
-function severityClasses(severity: string) {
-  if (severity === "critical") return "border-rose-100 bg-rose-50 text-rose-700";
-  if (severity === "warning") return "border-amber-100 bg-amber-50 text-amber-700";
-  return "border-blue-100 bg-blue-50 text-app-primary";
-}
-
-function AlertIcon({ severity }: { severity: string }) {
-  if (severity === "critical") return <CircleAlert className="h-4 w-4" aria-hidden="true" />;
-  if (severity === "warning") return <AlertTriangle className="h-4 w-4" aria-hidden="true" />;
-  return <CheckCircle2 className="h-4 w-4" aria-hidden="true" />;
 }
 
 const commandMetricToneClasses = {
@@ -110,7 +92,7 @@ function DashboardFocusItem({
   compact?: boolean;
 }) {
   return (
-    <article className={`${compact ? "min-h-[92px] p-3" : "min-h-[136px] p-4"} rounded-lg border border-app-border bg-white shadow-hairline`}>
+    <article className={`${compact ? "min-h-[76px] p-2.5 sm:min-h-[92px] sm:p-3" : "min-h-[136px] p-4"} rounded-lg border border-app-border bg-white shadow-hairline`}>
       <div className="flex h-full flex-col justify-between gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -121,7 +103,7 @@ function DashboardFocusItem({
             <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
         </div>
-        <p className="line-clamp-2 text-xs leading-5 text-app-muted">{detail}</p>
+        <p className={`${compact ? "hidden sm:line-clamp-2 sm:block" : "line-clamp-2"} text-xs leading-5 text-app-muted`}>{detail}</p>
       </div>
     </article>
   );
@@ -200,27 +182,56 @@ function MiniTrendChart({ values, labels }: { values: number[]; labels?: string[
   );
 }
 
-function InsightRow({
+function CompactDigestItem({
   icon: Icon,
   title,
-  description,
-  tone = "primary"
+  detail,
+  meta,
+  tone = "primary",
+  href
 }: {
   icon: LucideIcon;
   title: string;
-  description: string;
+  detail: string;
+  meta?: ReactNode;
   tone?: keyof typeof commandMetricToneClasses;
+  href?: string;
 }) {
-  return (
-    <article className="flex gap-3 rounded-lg border border-app-border bg-white px-3 py-3 shadow-hairline">
-      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${commandMetricToneClasses[tone]}`}>
+  const content = (
+    <article className="app-row flex min-h-[72px] items-center gap-3 rounded-md border border-app-border bg-slate-50/70 px-3 py-2.5">
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${commandMetricToneClasses[tone]}`}>
         <Icon className="h-4 w-4" aria-hidden="true" />
       </span>
-      <div className="min-w-0">
-        <h3 className="text-xs font-black text-app-text">{title}</h3>
-        <p className="mt-1 text-xs leading-5 text-app-muted">{description}</p>
-      </div>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-xs font-black text-app-text">{title}</span>
+        <span className="mt-1 block truncate text-[11px] font-bold text-app-muted">{detail}</span>
+      </span>
+      {meta ? <span className="shrink-0">{meta}</span> : null}
     </article>
+  );
+
+  return href ? <a href={href} className="block focus:outline-none focus:ring-2 focus:ring-app-primary/25">{content}</a> : content;
+}
+
+function CompactEmpty({
+  icon: Icon,
+  title,
+  detail
+}: {
+  icon: LucideIcon;
+  title: string;
+  detail: string;
+}) {
+  return (
+    <div className="flex min-h-[72px] items-center gap-3 rounded-md border border-dashed border-app-border bg-slate-50/60 px-3 py-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-emerald-100 bg-emerald-50 text-emerald-700">
+        <Icon className="h-4 w-4" aria-hidden="true" />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-xs font-black text-app-text">{title}</span>
+        <span className="mt-1 block text-[11px] leading-5 text-app-muted">{detail}</span>
+      </span>
+    </div>
   );
 }
 
@@ -246,15 +257,15 @@ function DonutStatusChart({
 
   return (
     <div className="flex flex-col items-center justify-center gap-3">
-      <div className="relative h-40 w-40 rounded-full shadow-hairline" style={{ background: `conic-gradient(${background})` } as CSSProperties}>
-        <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-white shadow-inner">
-          <span className="text-2xl font-black text-app-text">{total}</span>
+      <div className="relative h-32 w-32 rounded-full shadow-hairline sm:h-40 sm:w-40" style={{ background: `conic-gradient(${background})` } as CSSProperties}>
+        <div className="absolute inset-4 flex flex-col items-center justify-center rounded-full bg-white shadow-inner sm:inset-5">
+          <span className="text-xl font-black text-app-text sm:text-2xl">{total}</span>
           <span className="mt-1 text-[10px] font-bold text-app-muted">کل محتوا</span>
         </div>
       </div>
-      <div className="grid w-full grid-cols-2 gap-2 text-xs">
+      <div className="grid w-full grid-cols-3 gap-1.5 text-[10px] sm:grid-cols-2 sm:gap-2 sm:text-xs">
         {items.map((item) => (
-          <div key={item.label} className="flex items-center justify-between gap-2 rounded-md bg-slate-50 px-2.5 py-2">
+          <div key={item.label} className="flex items-center justify-between gap-1.5 rounded-md bg-slate-50 px-2 py-1.5 sm:gap-2 sm:px-2.5 sm:py-2">
             <span className="flex min-w-0 items-center gap-2 font-bold text-app-muted">
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
               {item.label}
@@ -332,7 +343,6 @@ export default function HomePage() {
   const workspaceReady = storeReady && rubikaReady;
   const brandColor = store?.brand_primary_color || "#0F766E";
   const brandImageUrl = useMediaPreviewUrl(store?.avatar_asset_id ?? store?.logo_asset_id);
-  const logoUrl = useMediaPreviewUrl(store?.logo_asset_id);
   const priorityAlerts = notifications.notifications.filter((item) => item.action_required).slice(0, 4);
   const unreadAlerts = notifications.notifications.filter((item) => item.action_required && !readIds.has(item.id)).length;
   const nextPosts = scheduledPosts.slice(0, 3);
@@ -404,7 +414,6 @@ export default function HomePage() {
     { label: "اینستاگرام", value: channelCounts.instagram || channelCounts.Instagram || 0, healthy: false, detail: "حالت دستی/قابلیت محدود" },
     { label: "عمومی", value: channelCounts["عمومی"] || channelCounts.general || 0, healthy: true, detail: "بدون کانال مشخص" }
   ];
-  const campaignPostTotal = activeCampaigns.reduce((sum, campaign) => sum + campaign.post_count, 0);
   const dashboardInsights = [
     queueCounts.failed
       ? { icon: AlertTriangle, title: "بازیابی قبل از تولید جدید", description: `${queueCounts.failed} آیتم ناموفق در صف وجود دارد. تا زمان بازیابی، سلامت انتشار پایین می‌ماند.`, tone: "alert" as const }
@@ -482,282 +491,201 @@ export default function HomePage() {
             {commandMetrics.map((metric) => <CommandMetric key={metric.label} {...metric} />)}
           </section>
 
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <section>
             <DashboardCard
               title="نمای هوشمند امروز"
-              description="خلاصه‌ای فشرده از سلامت تولید، زمان‌بندی و خروجی که روی یک لپ‌تاپ بدون اسکرول سنگین قابل خواندن است."
+              description="دونات وضعیت، شاخص‌های اصلی و روند هفته در یک باند فشرده."
               action={<StatusToken tone="info">داشبورد عملیاتی</StatusToken>}
             >
-              <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)]">
+              <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)_280px] lg:items-stretch">
                 <DonutStatusChart items={pipelineDistribution} total={pipelineTotal} />
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="hidden gap-2 sm:grid sm:grid-cols-2">
                   <DashboardFocusItem label="نرخ تکمیل" value={`${completionRate}%`} detail="منتشرشده نسبت به محتوای غیرپیش‌نویس" icon={TrendingUp} tone={completionRate > 65 ? "info" : "warning"} compact />
                   <DashboardFocusItem label="نرخ خطا" value={`${failureRate}%`} detail="خطا نسبت به صف فعال" icon={AlertTriangle} tone={failureRate ? "alert" : "info"} compact />
                   <DashboardFocusItem label="میانگین تلاش" value={averageAttempts} detail="تعداد تلاش انتشار برای هر محتوا" icon={Activity} tone="info" compact />
                   <DashboardFocusItem label="آخرین خروجی" value={latestPublishedPost?.title || "بدون خروجی موفق"} detail={latestPublishedPost?.published_at ? formatDateTime(latestPublishedPost.published_at) : "بعد از اولین انتشار تکمیل می‌شود"} icon={CheckCircle2} tone="primary" compact />
                 </div>
-              </div>
-
-              <div className="mt-4 rounded-lg border border-app-border bg-white p-3 shadow-hairline">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-black text-app-text">روند ۷ روزه</p>
-                    <p className="mt-1 text-[11px] leading-5 text-app-muted">حجم تولید، زمان‌بندی یا انتشار ثبت‌شده</p>
+                <div className="rounded-lg border border-app-border bg-white p-3 shadow-hairline">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-black text-app-text">روند ۷ روزه</p>
+                      <p className="mt-1 text-[11px] leading-5 text-app-muted">تولید، زمان‌بندی یا انتشار</p>
+                    </div>
+                    <StatusToken tone={weeklyActivity.some(Boolean) ? "success" : "neutral"}>{weeklyActivity.reduce((sum, value) => sum + value, 0)}</StatusToken>
                   </div>
-                  <StatusToken tone={weeklyActivity.some(Boolean) ? "success" : "neutral"}>{weeklyActivity.reduce((sum, value) => sum + value, 0)} رویداد</StatusToken>
+                  <MiniTrendChart values={weeklyActivity} labels={weeklyLabels} />
                 </div>
-                <MiniTrendChart values={weeklyActivity} labels={weeklyLabels} />
+              </div>
+            </DashboardCard>
+          </section>
+
+          <section className="md:hidden">
+            <DashboardCard
+              title="امروز در یک نگاه"
+              description="نسخه فشرده موبایل برای جلوگیری از اسکرول طولانی."
+              action={<Button href={nextAction.href} variant="secondary" size="sm">اقدام</Button>}
+            >
+              <div className="grid gap-2">
+                <CompactDigestItem
+                  icon={Network}
+                  title={channelItems[0].label}
+                  detail={channelItems[0].detail}
+                  tone={channelItems[0].healthy ? "success" : "warning"}
+                  href="/channels"
+                  meta={<StatusToken tone={channelItems[0].healthy ? "success" : "warning"}>{channelItems[0].value}</StatusToken>}
+                />
+                {priorityAlerts[0] ? (
+                  <CompactDigestItem
+                    icon={priorityAlerts[0].severity === "critical" ? CircleAlert : priorityAlerts[0].severity === "warning" ? AlertTriangle : CheckCircle2}
+                    title={priorityAlerts[0].title}
+                    detail={priorityAlerts[0].description}
+                    href={priorityAlerts[0].action_href}
+                    tone={priorityAlerts[0].severity === "critical" ? "alert" : priorityAlerts[0].severity === "warning" ? "warning" : "success"}
+                  />
+                ) : !workspaceReady ? (
+                  <CompactDigestItem icon={PlugZap} title="آماده‌سازی ناقص" detail="هویت یا کانال‌ها نیازمند تکمیل هستند." href="/onboarding" tone="warning" />
+                ) : (
+                  <CompactDigestItem icon={CheckCircle2} title="بدون مانع فوری" detail="وضعیت امروز پایدار است." href="/inbox" tone="success" />
+                )}
+                {nextPosts[0] ? (
+                  <CompactDigestItem
+                    icon={CalendarClock}
+                    title={nextPosts[0].title}
+                    detail={nextPosts[0].scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"}
+                    href={`/compose?postId=${nextPosts[0].id}`}
+                    tone="warning"
+                    meta={<StatusBadge status={nextPosts[0].status} />}
+                  />
+                ) : (
+                  <CompactDigestItem icon={CalendarClock} title="بدون انتشار آینده" detail="یک پست را زمان‌بندی کنید." href="/compose" tone="warning" />
+                )}
+                {activeCampaigns[0] ? (
+                  <CompactDigestItem
+                    icon={Megaphone}
+                    title={activeCampaigns[0].name}
+                    detail={activeCampaigns[0].goal || activeCampaigns[0].notes || "هدف کمپین هنوز ثبت نشده است."}
+                    href={`/campaigns?campaignId=${activeCampaigns[0].id}`}
+                    tone="primary"
+                    meta={<StatusToken tone={activeCampaigns[0].post_count ? "success" : "warning"}>{activeCampaigns[0].post_count}</StatusToken>}
+                  />
+                ) : (
+                  <CompactDigestItem icon={Megaphone} title="بدون کمپین فعال" detail="کمپین فعال فقط در صورت نیاز نمایش داده می‌شود." href="/campaigns" tone="primary" />
+                )}
+              </div>
+            </DashboardCard>
+          </section>
+
+          <section className="hidden gap-4 md:grid md:grid-cols-2 lg:grid-cols-4">
+            <DashboardCard
+              title="سلامت و اقدام"
+              description="کانال‌ها و ریسک اصلی امروز."
+              action={<Button href="/channels" variant="secondary" size="sm">کانال‌ها</Button>}
+            >
+              <div className="grid gap-2">
+                {channelItems.slice(0, 2).map((channel) => (
+                  <CompactDigestItem
+                    key={channel.label}
+                    icon={Network}
+                    title={channel.label}
+                    detail={channel.detail}
+                    tone={channel.healthy ? "success" : "warning"}
+                    href="/channels"
+                    meta={<StatusToken tone={channel.healthy ? "success" : "warning"}>{channel.value}</StatusToken>}
+                  />
+                ))}
+                <CompactDigestItem
+                  icon={dashboardInsights[0].icon}
+                  title={dashboardInsights[0].title}
+                  detail={dashboardInsights[0].description}
+                  tone={dashboardInsights[0].tone}
+                  href={queueCounts.failed ? "/queue" : "/analytics"}
+                />
               </div>
             </DashboardCard>
 
             <DashboardCard
-              title="سلامت و اقدام"
-              description="فقط مواردی که امروز تصمیم‌گیری را جلو می‌برند."
-              action={<Button href="/analytics" variant="secondary" size="sm">تحلیل کامل</Button>}
+              title="نیازمند رسیدگی"
+              description="حداکثر دو مانع مهم؛ بقیه داخل پیام‌ها."
+              action={<Button href="/inbox" variant="secondary" size="sm">پیام‌ها</Button>}
             >
-              <div className="grid gap-3">
-                {channelItems.map((channel) => (
-                  <div key={channel.label} className="flex items-center justify-between gap-3 rounded-md border border-app-border bg-slate-50/70 px-3 py-2.5">
-                    <span className="min-w-0">
-                      <span className="block text-xs font-black text-app-text">{channel.label}</span>
-                      <span className="mt-0.5 block truncate text-[11px] text-app-muted">{channel.detail}</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <span className={`h-2.5 w-2.5 rounded-full ${channel.healthy ? "bg-emerald-500" : "bg-amber-500"}`} />
-                      <span className="text-sm font-black text-app-text">{channel.value}</span>
-                    </span>
-                  </div>
-                ))}
-
-                <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
-                  <DashboardFocusItem label="کمپین فعال" value={campaignPostTotal} detail={`${activeCampaigns.length} کمپین در جریان`} icon={Megaphone} tone="primary" compact />
-                  <DashboardFocusItem label="بازبینی" value={pendingApprovalCount} detail="مسدودکننده‌های احتمالی انتشار" icon={MessageSquare} tone={pendingApprovalCount ? "warning" : "info"} compact />
-                  <DashboardFocusItem label="انتشار دستی" value={manualReadyCount} detail="وظایف آماده برای کانال‌های محدود" icon={Layers3} tone={manualReadyCount ? "warning" : "info"} compact />
-                </div>
-
-                <div className="grid gap-2">
-                  {dashboardInsights.slice(0, 2).map((insight) => <InsightRow key={insight.title} {...insight} />)}
-                </div>
-              </div>
-            </DashboardCard>
-          </section>
-
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
-            <div className="space-y-4">
-              <WorkspacePanel
-                title="نیازمند رسیدگی"
-                description="مهم‌ترین موارد عملیاتی برای تصمیم سریع در شروع روز."
-                action={<Button href="/inbox" variant="secondary" size="sm">مشاهده همه اعلان‌ها</Button>}
-                bodyClassName="p-0"
-              >
+              <div className="grid gap-2">
                 {priorityAlerts.length ? (
-                  <div className="divide-y divide-app-border">
-                    {priorityAlerts.map((alert) => <PriorityAlert key={alert.id} alert={alert} />)}
-                  </div>
+                  priorityAlerts.slice(0, 2).map((alert) => (
+                    <CompactDigestItem
+                      key={alert.id}
+                      icon={alert.severity === "critical" ? CircleAlert : alert.severity === "warning" ? AlertTriangle : CheckCircle2}
+                      title={alert.title}
+                      detail={alert.description}
+                      href={alert.action_href}
+                      tone={alert.severity === "critical" ? "alert" : alert.severity === "warning" ? "warning" : "success"}
+                      meta={<StatusToken tone={alert.severity === "critical" ? "alert" : "warning"}>{alert.action_label}</StatusToken>}
+                    />
+                  ))
                 ) : !workspaceReady ? (
-                  <div className="divide-y divide-app-border">
+                  <>
                     {!storeReady ? (
-                      <SetupNudge
-                        title="هویت فضای کاری کامل نیست"
-                        description="نام، دسته‌بندی و لحن برند باید قبل از گزارش و تولید حرفه‌ای کامل شود."
-                        href="/store"
-                        action="تکمیل هویت"
-                      />
+                      <CompactDigestItem icon={Target} title="هویت فضای کاری کامل نیست" detail="نام، دسته‌بندی و لحن برند را کامل کنید." href="/store" tone="warning" />
                     ) : null}
                     {!rubikaReady ? (
-                      <SetupNudge
-                        title="کانال اصلی نیازمند بررسی است"
-                        description="تا زمانی که کانال تست نشده باشد، انتشار خودکار و بازیابی صف قابل اعتماد نیست."
-                        href="/channels"
-                        action="بررسی کانال‌ها"
-                      />
+                      <CompactDigestItem icon={PlugZap} title="کانال اصلی آماده نیست" detail="اتصال کانال‌ها قبل از انتشار جدی بررسی شود." href="/channels" tone="warning" />
                     ) : null}
-                  </div>
+                  </>
                 ) : (
-                  <div className="p-4">
-                    <EmptyState
-                      icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
-                      title="مورد فوری برای رسیدگی وجود ندارد."
-                      description="اتصال، worker و صف انتشار در وضعیت پایدار هستند."
-                    />
-                  </div>
+                  <CompactEmpty icon={CheckCircle2} title="مورد فوری وجود ندارد" detail="صف، اتصال و آماده‌سازی در وضعیت قابل قبول هستند." />
                 )}
-              </WorkspacePanel>
+              </div>
+            </DashboardCard>
 
-              <WorkspacePanel
-                title="برنامه انتشار پیش رو"
-                description="سه انتشار بعدی را پیش از رسیدن زمان بررسی کنید."
-                action={<Button href="/calendar" variant="secondary" size="sm">باز کردن تقویم</Button>}
-                bodyClassName="p-0"
-              >
+            <DashboardCard
+              title="برنامه پیش رو"
+              description="دو انتشار نزدیک؛ تقویم برای نمای کامل."
+              action={<Button href="/calendar" variant="secondary" size="sm">تقویم</Button>}
+            >
+              <div className="grid gap-2">
                 {nextPosts.length ? (
-                  <div className="divide-y divide-app-border">
-                    {nextPosts.map((post) => (
-                      <article key={post.id} className="dashboard-schedule-row app-row grid gap-3 py-4 pr-8 pl-4 lg:grid-cols-[minmax(0,1fr)_180px] lg:items-center">
-                        <div className="min-w-0 border-r border-dashed border-teal-200 pr-4">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <StatusBadge status={post.status} />
-                            <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
-                          </div>
-                          <h3 className="mt-2 truncate font-black text-app-text">{post.title}</h3>
-                          <p className="mt-1 truncate text-xs text-app-muted">{formatDateTime(post.scheduled_at)}</p>
-                        </div>
-                        <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن پست</Button>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-4">
-                    <EmptyState
-                      icon={<CalendarClock className="h-5 w-5" aria-hidden="true" />}
-                      title="هنوز انتشار آینده‌ای زمان‌بندی نشده است."
-                      description="از استودیوی تولید محتوا یک پست را وارد برنامه انتشار کنید."
-                      action={<Button href="/compose">زمان‌بندی اولین پست</Button>}
+                  nextPosts.slice(0, 2).map((post) => (
+                    <CompactDigestItem
+                      key={post.id}
+                      icon={CalendarClock}
+                      title={post.title}
+                      detail={post.scheduled_at ? formatDateTime(post.scheduled_at) : "بدون زمان‌بندی"}
+                      href={`/compose?postId=${post.id}`}
+                      tone="warning"
+                      meta={<StatusBadge status={post.status} />}
                     />
-                  </div>
+                  ))
+                ) : (
+                  <CompactEmpty icon={CalendarClock} title="انتشار آینده‌ای ثبت نشده" detail="برای شروع برنامه روزانه، یک محتوا را زمان‌بندی کنید." />
                 )}
-              </WorkspacePanel>
+              </div>
+            </DashboardCard>
 
-              <WorkspacePanel
-                title="کمپین‌های فعال"
-                description="کمپین‌هایی که باید امروز محتوا، زمان‌بندی یا گزارش آن‌ها پیگیری شود."
-                action={<Button href="/campaigns" variant="secondary" size="sm">مدیریت کمپین‌ها</Button>}
-                bodyClassName="p-0"
-              >
+            <DashboardCard
+              title="کمپین‌های فعال"
+              description="کمپین‌های مهم امروز بدون باز کردن مدیر کمپین."
+              action={<Button href="/campaigns" variant="secondary" size="sm">کمپین‌ها</Button>}
+            >
+              <div className="grid gap-2">
                 {activeCampaigns.length ? (
-                  <div className="divide-y divide-app-border">
-                    {activeCampaigns.map((campaign) => (
-                      <article key={campaign.id} className="app-row grid gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_150px] lg:items-center">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="h-3 w-3 rounded-full shadow-hairline" style={{ backgroundColor: campaign.color || "#0F766E" }} aria-hidden="true" />
-                            <StatusToken tone="primary">فعال</StatusToken>
-                            <StatusToken tone={campaign.post_count ? "success" : "warning"}>{campaign.post_count} محتوا</StatusToken>
-                          </div>
-                          <h3 className="mt-2 truncate font-black text-app-text">{campaign.name}</h3>
-                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{campaign.goal || campaign.notes || "هدف کمپین هنوز ثبت نشده است."}</p>
-                          <p className="mt-2 flex flex-wrap gap-2 text-[11px] font-bold text-slate-400">
-                            {campaign.owner ? <span>مالک: {campaign.owner}</span> : null}
-                            {campaign.ends_at ? <span>پایان: {formatDateTime(campaign.ends_at)}</span> : null}
-                          </p>
-                        </div>
-                        <Button href={`/campaigns?campaignId=${campaign.id}`} variant="secondary" size="sm">باز کردن</Button>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-4">
-                    <EmptyState
-                      icon={<Target className="h-5 w-5" aria-hidden="true" />}
-                      title="کمپین فعالی برای هدایت برنامه وجود ندارد."
-                      description="برای حرفه‌ای شدن مسیر، محتوا باید زیر کمپین، هدف و KPI مشخص حرکت کند."
-                      action={<Button href="/campaigns">ساخت کمپین</Button>}
+                  activeCampaigns.slice(0, 2).map((campaign) => (
+                    <CompactDigestItem
+                      key={campaign.id}
+                      icon={Megaphone}
+                      title={campaign.name}
+                      detail={campaign.goal || campaign.notes || "هدف کمپین هنوز ثبت نشده است."}
+                      href={`/campaigns?campaignId=${campaign.id}`}
+                      tone="primary"
+                      meta={<StatusToken tone={campaign.post_count ? "success" : "warning"}>{campaign.post_count} محتوا</StatusToken>}
                     />
-                  </div>
+                  ))
+                ) : (
+                  <CompactEmpty icon={Megaphone} title="کمپین فعالی وجود ندارد" detail="کمپین‌ها فقط وقتی روی داشبورد می‌آیند که واقعا فعال باشند." />
                 )}
-              </WorkspacePanel>
-            </div>
-
-            <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-              <LiveOperations
-                queueTotal={queueTotal}
-                channelReady={rubikaReady}
-                workspaceReady={workspaceReady}
-                activeCampaigns={activeCampaigns.length}
-                failedCount={queueCounts.failed}
-                nextWindow={nextPosts[0]?.scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"}
-              />
-
-              <WorkspacePanel title="هویت برند فعال" description="برند جاری که در composer و پیش‌نمایش انتشار استفاده می‌شود." bodyClassName="p-4">
-                <div className="flex items-center gap-3">
-                    <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandImageUrl} />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-black text-app-text">{store?.name || "پروفایل فروشگاه"}</p>
-                    <p className="mt-1 truncate text-xs text-app-muted">{store?.brand_voice || "لحن برند هنوز تعریف نشده است."}</p>
-                  </div>
-                </div>
-                {logoUrl ? (
-                  <div className="mt-4 rounded-md border border-app-border bg-app-surfaceMuted p-3">
-                    <p className="mb-2 flex items-center gap-1.5 text-[11px] font-black text-app-muted">
-                      <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                      لوگوی workspace
-                    </p>
-                    <img src={logoUrl} alt="لوگوی برند" className="max-h-20 max-w-full rounded object-contain" />
-                  </div>
-                ) : null}
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <div className="rounded-md bg-app-surfaceMuted p-2">
-                    <p className="flex items-center gap-1.5 text-[10px] font-black text-app-muted"><Palette className="h-3.5 w-3.5" aria-hidden="true" />رنگ اصلی</p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="h-5 w-5 rounded shadow-hairline" style={{ backgroundColor: brandColor }} />
-                      <span className="text-xs font-black text-app-text" dir="ltr">{brandColor}</span>
-                    </div>
-                  </div>
-                  <div className="rounded-md bg-app-surfaceMuted p-2">
-                    <p className="text-[10px] font-black text-app-muted">CTA پیش‌فرض</p>
-                    <p className="mt-2 line-clamp-2 text-xs font-bold leading-5 text-app-text">{store?.default_cta || "ثبت نشده"}</p>
-                  </div>
-                </div>
-                <Button href="/store" variant="secondary" size="sm" className="mt-4 w-full">ویرایش کیت برند</Button>
-              </WorkspacePanel>
-
-              <WorkspacePanel title="میانبرهای عملیاتی" description="دسترسی کوتاه، بدون تکرار اقدام اصلی صفحه." bodyClassName="p-3">
-                <div className="grid gap-2">
-                  <Button href="/compose" variant="secondary">استودیوی تولید محتوا</Button>
-                  <Button href="/content" variant="secondary">مرور محتوا و پیش‌نویس‌ها ({draftCount})</Button>
-                  <Button href="/analytics" variant="secondary">تحلیل عملکرد</Button>
-                  <Button href="/logs" variant="secondary">سلامت انتشار</Button>
-                </div>
-              </WorkspacePanel>
-            </aside>
+              </div>
+            </DashboardCard>
           </section>
         </WorkspacePage>
       </AppShell>
     </AuthGate>
-  );
-}
-
-function PriorityAlert({ alert }: { alert: OperationalNotification }) {
-  return (
-    <article className="dashboard-alert-rail app-row grid gap-3 py-4 pr-5 pl-4 lg:grid-cols-[minmax(0,1fr)_170px] lg:items-center">
-      <div className="flex min-w-0 gap-3">
-        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${severityClasses(alert.severity)}`}>
-          <AlertIcon severity={alert.severity} />
-        </span>
-        <div className="min-w-0">
-          <h3 className="truncate font-black text-app-text">{alert.title}</h3>
-          <p className="mt-1 line-clamp-2 text-xs leading-6 text-app-muted">{alert.description}</p>
-          <p className="mt-1 text-[11px] text-slate-400">{formatDateTime(alert.created_at)}</p>
-        </div>
-      </div>
-      <Button href={alert.action_href} variant="secondary" size="sm">{alert.action_label}</Button>
-    </article>
-  );
-}
-
-function SetupNudge({
-  title,
-  description,
-  href,
-  action
-}: {
-  title: string;
-  description: string;
-  href: string;
-  action: string;
-}) {
-  return (
-    <article className="app-row grid gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_170px] lg:items-center">
-      <div className="flex min-w-0 gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-amber-100 bg-amber-50 text-amber-700">
-          <PlugZap className="h-4 w-4" aria-hidden="true" />
-        </span>
-        <div className="min-w-0">
-          <h3 className="truncate font-black text-app-text">{title}</h3>
-          <p className="mt-1 line-clamp-2 text-xs leading-6 text-app-muted">{description}</p>
-        </div>
-      </div>
-      <Button href={href} variant="secondary" size="sm">{action}</Button>
-    </article>
   );
 }
