@@ -4,6 +4,12 @@ Date: 2026-06-04
 Status: Source of truth before any further UI implementation  
 Product direction: Persian-first multi-channel SocialOps platform
 
+Roadmap authority:
+
+- Main visual-design phase order: `docs/NAHRINO_VISUAL_DESIGN_ROADMAP.md`
+- Detailed token/component/layout implementation: `docs/NAHRINO_DESIGN_SYSTEM_V2.md`
+- This RFP remains the product and UX rationale behind the rebuild.
+
 ## Executive Decision
 
 Stop changing individual screens until the product has a complete design target.

@@ -5,6 +5,12 @@ Status: Design source of truth before the next rebuild phase
 Product: Persian-first multi-channel SocialOps workspace  
 Target quality: modern, minimal, professional, responsive, motion-aware, benchmark-level
 
+Roadmap authority:
+
+- Main visual-design phase order: `docs/NAHRINO_VISUAL_DESIGN_ROADMAP.md`
+- Detailed token/component/layout implementation: this file
+- Product and UX rationale: `docs/NAHRINO_UI_UX_THEME_RFP_2026.md`
+
 ## 1. Design Decision
 
 Nahrino should stop looking like a decorated MVP dashboard.
@@ -39,6 +45,7 @@ This system is based on:
 
 - the user-provided benchmark report: `The 2026 Digital Interface Ecosystem`,
 - the user-provided visual systems report: `The Comprehensive Architecture of Modern Visual Design Systems`,
+- the user-provided roadmap report: `Professional Visual Design System Roadmap for a 10/10 App`,
 - existing Nahrino rebuild docs,
 - observed weaknesses in the current app,
 - benchmark patterns from Buffer, Hootsuite, Sprout Social, Later, Planable, Metricool, Agorapulse, and Canva-style creative workflows,
