@@ -1,12 +1,16 @@
 "use client";
 
 import {
+  Activity,
   AlertTriangle,
   ArrowUpLeft,
   CalendarClock,
   CheckCircle2,
   CircleAlert,
+  Layers3,
   Megaphone,
+  MessageSquare,
+  Network,
   Palette,
   PlugZap,
   RefreshCw,
@@ -14,10 +18,11 @@ import {
   Sparkles,
   Target,
   TimerReset,
+  TrendingUp,
   type LucideIcon
 } from "lucide-react";
 import Link from "next/link";
-import { type CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
 import { WorkspaceAvatar } from "../components/brand-mark";
@@ -47,6 +52,21 @@ function statusCount(posts: Post[], status: string) {
 function dateTime(value?: string | null) {
   const date = value ? new Date(value) : null;
   return date && !Number.isNaN(date.getTime()) ? date.getTime() : 0;
+}
+
+function dayKey(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function dateFromPost(post: Post) {
+  const value = post.published_at || post.scheduled_at || post.created_at;
+  const date = value ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime()) ? date : null;
+}
+
+function percent(value: number, total: number) {
+  if (!total) return 0;
+  return Math.round((value / total) * 100);
 }
 
 function severityClasses(severity: string) {
@@ -132,6 +152,108 @@ function CommandMetric({
         <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${commandMetricToneClasses[tone]}`}>
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
+      </div>
+    </article>
+  );
+}
+
+function DashboardCard({
+  title,
+  description,
+  action,
+  children
+}: {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-lg border border-app-border bg-white p-4 shadow-hairline">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-sm font-black text-app-text">{title}</h2>
+          {description ? <p className="mt-1 text-xs leading-5 text-app-muted">{description}</p> : null}
+        </div>
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+
+function MiniTrendChart({ values }: { values: number[] }) {
+  const max = Math.max(...values, 1);
+
+  return (
+    <div className="flex h-28 items-end gap-1.5 rounded-lg bg-slate-50/80 px-3 py-3">
+      {values.map((value, index) => (
+        <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+          <span
+            className="w-full rounded-t-md bg-app-primary/80 shadow-[0_6px_14px_rgba(37,99,235,0.12)] transition-all"
+            style={{ height: `${Math.max(10, (value / max) * 88)}px` }}
+            aria-label={`${value} مورد`}
+          />
+          <span className="text-[9px] font-bold text-slate-400">{index + 1}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PipelineDistribution({
+  items
+}: {
+  items: Array<{ label: string; value: number; color: string }>;
+}) {
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">
+        {items.map((item) => (
+          <span
+            key={item.label}
+            className="h-full"
+            style={{ width: `${total ? (item.value / total) * 100 : 0}%`, backgroundColor: item.color }}
+            title={`${item.label}: ${item.value}`}
+          />
+        ))}
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {items.map((item) => (
+          <div key={item.label} className="flex items-center justify-between gap-2 rounded-md bg-slate-50 px-3 py-2">
+            <span className="flex min-w-0 items-center gap-2 text-xs font-bold text-app-muted">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+              {item.label}
+            </span>
+            <span className="text-xs font-black text-app-text">{item.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function InsightRow({
+  icon: Icon,
+  title,
+  description,
+  tone = "primary"
+}: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  tone?: keyof typeof commandMetricToneClasses;
+}) {
+  return (
+    <article className="flex gap-3 rounded-lg border border-app-border bg-white px-3 py-3 shadow-hairline">
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${commandMetricToneClasses[tone]}`}>
+        <Icon className="h-4 w-4" aria-hidden="true" />
+      </span>
+      <div className="min-w-0">
+        <h3 className="text-xs font-black text-app-text">{title}</h3>
+        <p className="mt-1 text-xs leading-5 text-app-muted">{description}</p>
       </div>
     </article>
   );
@@ -308,6 +430,54 @@ export default function HomePage() {
     { label: "در انتشار", count: queueCounts.publishing, detail: "پردازش worker", icon: TimerReset, tone: "info", href: "/queue" },
     { label: "بازیابی", count: queueCounts.failed, detail: "نیازمند اقدام", icon: AlertTriangle, tone: "alert", href: "/queue" }
   ];
+  const totalPosts = posts.length;
+  const pendingApprovalCount = posts.filter((post) => ["pending", "changes_requested", "rejected"].includes(post.approval_status || "")).length;
+  const manualReadyCount = statusCount(posts, "manual_ready");
+  const completionRate = percent(publishedCount, Math.max(totalPosts - draftCount, 0));
+  const failureRate = percent(queueCounts.failed, Math.max(queueTotal, 0));
+  const averageAttempts = totalPosts ? (posts.reduce((sum, post) => sum + (post.attempt_count || 0), 0) / totalPosts).toFixed(1) : "0";
+  const latestPublishedPost = posts
+    .filter((post) => post.status === "published" && post.published_at)
+    .sort((first, second) => dateTime(second.published_at) - dateTime(first.published_at))[0];
+  const weekKeys = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (6 - index));
+    return dayKey(date);
+  });
+  const weeklyActivity = weekKeys.map((key) => posts.filter((post) => {
+    const date = dateFromPost(post);
+    return date ? dayKey(date) === key : false;
+  }).length);
+  const pipelineDistribution = [
+    { label: "پیش‌نویس", value: draftCount, color: "#94A3B8" },
+    { label: "آماده", value: queueCounts.ready, color: "#2563EB" },
+    { label: "زمان‌بندی", value: queueCounts.scheduled, color: "#D97706" },
+    { label: "منتشر", value: publishedCount, color: "#059669" },
+    { label: "ناموفق", value: queueCounts.failed, color: "#E11D48" }
+  ];
+  const channelCounts = posts.reduce<Record<string, number>>((acc, post) => {
+    const key = post.platform?.trim() || "عمومی";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const channelItems = [
+    { label: "روبیکا", value: channelCounts.rubika || channelCounts.Rubika || 0, healthy: rubikaReady, detail: rubikaReady ? "اتصال آماده" : "نیازمند تست اتصال" },
+    { label: "اینستاگرام", value: channelCounts.instagram || channelCounts.Instagram || 0, healthy: false, detail: "حالت دستی/قابلیت محدود" },
+    { label: "عمومی", value: channelCounts["عمومی"] || channelCounts.general || 0, healthy: true, detail: "بدون کانال مشخص" }
+  ];
+  const campaignPostTotal = activeCampaigns.reduce((sum, campaign) => sum + campaign.post_count, 0);
+  const dashboardInsights = [
+    queueCounts.failed
+      ? { icon: AlertTriangle, title: "بازیابی قبل از تولید جدید", description: `${queueCounts.failed} آیتم ناموفق در صف وجود دارد. تا زمان بازیابی، سلامت انتشار پایین می‌ماند.`, tone: "alert" as const }
+      : { icon: CheckCircle2, title: "انتشار پایدار", description: "خطای فعال در صف دیده نمی‌شود. تمرکز بعدی می‌تواند برنامه‌ریزی محتوا باشد.", tone: "success" as const },
+    pendingApprovalCount
+      ? { icon: MessageSquare, title: "بازبینی مسدودکننده", description: `${pendingApprovalCount} محتوا در وضعیت بازبینی یا اصلاح است و می‌تواند زمان‌بندی را عقب بیندازد.`, tone: "warning" as const }
+      : { icon: MessageSquare, title: "بازبینی آرام", description: "مورد بازبینی مسدودکننده در داده فعلی دیده نمی‌شود.", tone: "primary" as const },
+    !rubikaReady
+      ? { icon: Network, title: "ریسک کانال", description: "کانال اصلی هنوز آماده نیست. کارت سلامت کانال باید قبل از انتشار جدی تکمیل شود.", tone: "warning" as const }
+      : { icon: Network, title: "کانال اصلی آماده", description: "اتصال اصلی آماده است؛ قدم بعدی تکمیل مدل قابلیت برای همه کانال‌هاست.", tone: "success" as const }
+  ];
 
   return (
     <AuthGate>
@@ -373,6 +543,62 @@ export default function HomePage() {
           <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {commandMetrics.map((metric) => <CommandMetric key={metric.label} {...metric} />)}
           </section>
+
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            <DashboardCard
+              title="نمای عملکرد"
+              description="خلاصه مدیریتی از خروجی محتوا. شاخص‌های واقعی شبکه اجتماعی بعد از اتصال analytics جایگزین این داده‌های عملیاتی می‌شوند."
+              action={<StatusToken tone="info">داده عملیاتی</StatusToken>}
+            >
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <DashboardFocusItem label="نرخ تکمیل" value={`${completionRate}%`} detail="منتشرشده نسبت به محتوای غیرپیش‌نویس" icon={TrendingUp} tone={completionRate > 65 ? "info" : "warning"} compact />
+                <DashboardFocusItem label="نرخ خطا" value={`${failureRate}%`} detail="خطا نسبت به صف فعال" icon={AlertTriangle} tone={failureRate ? "alert" : "info"} compact />
+                <DashboardFocusItem label="میانگین تلاش" value={averageAttempts} detail="تعداد تلاش انتشار برای هر محتوا" icon={Activity} tone="info" compact />
+                <DashboardFocusItem label="آخرین خروجی" value={latestPublishedPost?.title || "هنوز خروجی موفقی ثبت نشده"} detail={latestPublishedPost?.published_at ? formatDateTime(latestPublishedPost.published_at) : "بعد از اولین انتشار تکمیل می‌شود"} icon={CheckCircle2} tone="primary" compact />
+              </div>
+            </DashboardCard>
+
+            <DashboardCard title="روند ۷ روزه" description="حجم تولید، زمان‌بندی یا انتشار ثبت‌شده در یک هفته اخیر.">
+              <MiniTrendChart values={weeklyActivity} />
+            </DashboardCard>
+          </section>
+
+          <section className="grid gap-4 xl:grid-cols-3">
+            <DashboardCard title="خط تولید محتوا" description="توزیع وضعیت‌ها برای تشخیص گلوگاه تولید و انتشار.">
+              <PipelineDistribution items={pipelineDistribution} />
+            </DashboardCard>
+
+            <DashboardCard title="سلامت کانال‌ها" description="وضعیت عملیاتی کانال‌ها و حجم محتوای وابسته.">
+              <div className="grid gap-2">
+                {channelItems.map((channel) => (
+                  <div key={channel.label} className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2.5">
+                    <span className="min-w-0">
+                      <span className="block text-xs font-black text-app-text">{channel.label}</span>
+                      <span className="mt-0.5 block truncate text-[11px] text-app-muted">{channel.detail}</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className={`h-2.5 w-2.5 rounded-full ${channel.healthy ? "bg-emerald-500" : "bg-amber-500"}`} />
+                      <span className="text-sm font-black text-app-text">{channel.value}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </DashboardCard>
+
+            <DashboardCard title="کمپین و تعامل" description="نمای سریع از برنامه کمپین، بازبینی و کارهای دستی.">
+              <div className="grid gap-2">
+                <DashboardFocusItem label="محتوای کمپین فعال" value={campaignPostTotal} detail={`${activeCampaigns.length} کمپین فعال`} icon={Megaphone} tone="primary" compact />
+                <DashboardFocusItem label="در انتظار بازبینی" value={pendingApprovalCount} detail="محتوایی که می‌تواند انتشار را مسدود کند" icon={MessageSquare} tone={pendingApprovalCount ? "warning" : "info"} compact />
+                <DashboardFocusItem label="آماده دستی" value={manualReadyCount} detail="وظایف دستی برای کانال‌های محدود" icon={Layers3} tone={manualReadyCount ? "warning" : "info"} compact />
+              </div>
+            </DashboardCard>
+          </section>
+
+          <DashboardCard title="بینش‌های قابل اقدام" description="سه پیشنهاد کوتاه بر اساس وضعیت فعلی workspace.">
+            <div className="grid gap-3 lg:grid-cols-3">
+              {dashboardInsights.map((insight) => <InsightRow key={insight.title} {...insight} />)}
+            </div>
+          </DashboardCard>
 
           <OperationsLane steps={operationSteps} />
 
