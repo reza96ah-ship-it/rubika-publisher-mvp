@@ -613,6 +613,8 @@ Acceptance:
 
 Goal: create the signature daily command surface.
 
+Current phase output: `docs/NAHRINO_V4_DASHBOARD.md`
+
 Deliverables:
 
 - compact KPI row,
