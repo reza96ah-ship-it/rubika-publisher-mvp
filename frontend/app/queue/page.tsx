@@ -7,7 +7,9 @@ import { AppShell } from "../../components/app-shell";
 import { ApprovalBadge } from "../../components/approval-badge";
 import { ChannelBadges } from "../../components/channel-badges";
 import { CountdownBadge } from "../../components/countdown-badge";
-import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
+import { DataSearchField, DataToolbar, FilterChip } from "../../components/data-view";
+import { LoadingRows } from "../../components/loading-skeleton";
+import { ContentOperationCard } from "../../components/pro-product-ui";
 import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
@@ -49,9 +51,6 @@ const queuePriority: Record<string, number> = {
   scheduled: 3,
   ready: 4
 };
-const queueHeaderGrid = "grid-cols-[minmax(0,1.4fr)_140px_170px_100px]";
-const queueRowGrid = "lg:grid-cols-[minmax(0,1.4fr)_140px_170px_100px]";
-
 function scheduleTime(post: Post) {
   const date = post.scheduled_at ? new Date(post.scheduled_at) : null;
   return date && !Number.isNaN(date.getTime()) ? date.getTime() : Number.MAX_SAFE_INTEGER;
@@ -501,66 +500,62 @@ export default function QueuePage() {
                 </div>
               </DataToolbar>
 
-              <DataTable
-                columns={["محتوا", "وضعیت", "زمان", "عملیات"]}
-                gridClassName={queueHeaderGrid}
-                loading={loading}
-                empty={filteredPosts.length === 0 ? (
-                  <div className="p-4">
-                    <EmptyState
-                      icon={<ListChecks className="h-5 w-5" aria-hidden="true" />}
-                      title="برای این فیلتر پستی در صف نیست."
-                      description="از استودیو تولید یک پست آماده یا زمان‌بندی‌شده بسازید."
-                      action={<Button href="/compose">ایجاد پست جدید</Button>}
-                    />
+              <div className="mt-3 max-h-[66vh] overflow-y-auto rounded-lg bg-app-surfaceMuted/50 p-2 shadow-inner sm:mt-4">
+                {loading ? <LoadingRows /> : null}
+                {!loading && filteredPosts.length === 0 ? (
+                  <EmptyState
+                    icon={<ListChecks className="h-5 w-5" aria-hidden="true" />}
+                    title="برای این فیلتر پستی در صف نیست."
+                    description="از استودیو تولید یک پست آماده یا زمان‌بندی‌شده بسازید."
+                    action={<Button href="/compose">ایجاد پست جدید</Button>}
+                  />
+                ) : null}
+                {!loading && filteredPosts.length > 0 ? (
+                  <div className="grid gap-2.5">
+                    {filteredPosts.map((post) => {
+                      const previewUrl = previewUrlForPost(post);
+                      const media = primaryMediaForPost(post);
+                      const campaignKey = campaignKeyForPost(post);
+                      const selected = selectedPost?.id === post.id;
+                      return (
+                        <ContentOperationCard
+                          key={post.id}
+                          action={(
+                            <Button type="button" variant={selected ? "primary" : "secondary"} size="sm" onClick={() => setSelectedPostId(post.id)}>
+                              بازبینی
+                            </Button>
+                          )}
+                          approval={<ApprovalBadge status={post.approval_status} compact />}
+                          campaignColor={campaignColorForPost(post, campaigns)}
+                          campaignLabel={campaignKey !== "none" ? campaignLabelForPost(post, campaigns) : "بدون کمپین"}
+                          caption={post.caption || "بدون کپشن"}
+                          error={post.last_error}
+                          lifecycle={(
+                            <>
+                              <StatusBadge status={post.status} />
+                              <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
+                            </>
+                          )}
+                          mediaLabel={media ? "رسانه آماده" : "بدون رسانه"}
+                          meta={(
+                            <>
+                              <p>زمان‌بندی: {formatDateTime(post.scheduled_at)}</p>
+                              <p>تلاش انتشار: {post.attempt_count}</p>
+                              <p>آخرین تغییر: {formatDateTime(post.updated_at)}</p>
+                            </>
+                          )}
+                          onSelect={() => setSelectedPostId(post.id)}
+                          platform={post.platform}
+                          previewAlt={media?.original_filename ?? post.title}
+                          previewUrl={previewUrl}
+                          selected={selected}
+                          title={post.title}
+                        />
+                      );
+                    })}
                   </div>
                 ) : null}
-              >
-                {filteredPosts.map((post) => {
-                  const previewUrl = previewUrlForPost(post);
-                  const media = primaryMediaForPost(post);
-                  return (
-                  <DataRow key={post.id} gridClassName={queueRowGrid} selected={selectedPost?.id === post.id}>
-                    <div className="flex min-w-0 gap-3">
-                      <div className="flex h-24 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
-                        {previewUrl ? (
-                          <img src={previewUrl} alt={media?.original_filename ?? post.title} className="h-full w-full object-cover" />
-                        ) : (
-                          <ImageIcon className="h-6 w-6 text-slate-400" aria-hidden="true" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-2 flex flex-wrap items-center gap-2">
-                          {campaignKeyForPost(post) !== "none" ? (
-                            <StatusToken tone="neutral">
-                              <span className="ml-1 inline-flex h-2 w-2 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
-                              {campaignLabelForPost(post, campaigns)}
-                            </StatusToken>
-                          ) : null}
-                          <ChannelBadges platform={post.platform} compact />
-                          {media ? <StatusToken tone="success">رسانه آماده</StatusToken> : <StatusToken tone="warning">بدون رسانه</StatusToken>}
-                          <ApprovalBadge status={post.approval_status} compact />
-                        </div>
-                        <h2 className="truncate font-black text-app-text">{post.title}</h2>
-                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-app-muted">{post.caption || "بدون کپشن"}</p>
-                        {post.last_error ? <p className="mt-2 rounded-md border border-rose-100 bg-rose-50 px-3 py-2 text-xs leading-6 text-rose-700">{post.last_error}</p> : null}
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
-                      <StatusBadge status={post.status} />
-                      <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
-                    </div>
-                    <div className="space-y-2 text-xs leading-6 text-app-muted">
-                      <p>زمان‌بندی: {formatDateTime(post.scheduled_at)}</p>
-                      <p>تلاش انتشار: {post.attempt_count}</p>
-                    </div>
-                    <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
-                      <Button type="button" variant={selectedPost?.id === post.id ? "primary" : "secondary"} size="sm" onClick={() => setSelectedPostId(post.id)}>بازبینی</Button>
-                    </div>
-                  </DataRow>
-                  );
-                })}
-              </DataTable>
+              </div>
             </WorkspacePanel>
 
             <aside className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
