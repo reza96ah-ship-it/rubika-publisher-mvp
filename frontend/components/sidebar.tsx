@@ -9,6 +9,7 @@ import {
   GalleryHorizontalEnd,
   LayoutDashboard,
   LucideIcon,
+  Megaphone,
   PenLine,
   Rocket,
   Settings2,
@@ -41,6 +42,7 @@ const todayNavItem: NavItem = { label: "داشبورد", href: "/", icon: Layout
 const composeNavItem: NavItem = { label: "ساخت پست", href: "/compose", icon: PenLine };
 const onboardingNavItem: NavItem = { label: "راه‌اندازی", href: "/onboarding", icon: Rocket };
 const plannerNavItem: NavItem = { label: "تقویم", href: "/calendar", icon: CalendarDays };
+const campaignsNavItem: NavItem = { label: "کمپین‌ها", href: "/campaigns", icon: Megaphone };
 const contentNavItem: NavItem = { label: "محتوا", href: "/content", icon: FileText };
 const settingsNavItem: NavItem = { label: "تنظیمات", href: "/store", icon: Store };
 
@@ -51,6 +53,7 @@ const primaryNavGroups: NavGroup[] = [
       todayNavItem,
       composeNavItem,
       plannerNavItem,
+      campaignsNavItem,
       contentNavItem,
       { label: "رسانه", href: "/media", icon: GalleryHorizontalEnd },
       { label: "پیام‌ها", href: "/inbox", icon: BellRing },
@@ -71,7 +74,8 @@ function isActiveRoute(pathname: string, href: string) {
 }
 
 function isNavItemActive(pathname: string, item: NavItem) {
-  if (item.href === "/calendar") return isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/campaigns");
+  if (item.href === "/calendar") return isActiveRoute(pathname, "/calendar");
+  if (item.href === "/campaigns") return isActiveRoute(pathname, "/campaigns");
   if (item.href === "/content") return isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue");
   if (item.href === "/store") {
     return (
@@ -94,8 +98,12 @@ export function getActiveNav(pathname: string) {
     return { group: { title: "ساخت پست", items: [composeNavItem] }, item: composeNavItem };
   }
 
-  if (isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/campaigns")) {
+  if (isActiveRoute(pathname, "/calendar")) {
     return { group: { title: "تقویم", items: [plannerNavItem] }, item: plannerNavItem };
+  }
+
+  if (isActiveRoute(pathname, "/campaigns")) {
+    return { group: { title: "کمپین‌ها", items: [campaignsNavItem] }, item: campaignsNavItem };
   }
 
   if (isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue")) {
@@ -125,9 +133,9 @@ function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
     <Link
       href={item.href}
       className={`app-interactive group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm ${
-        active
-          ? "nahrino-nav-active font-black"
-          : "nahrino-nav-idle hover:shadow-hairline"
+          active
+            ? "nahrino-nav-active font-black"
+            : "nahrino-nav-idle hover:shadow-hairline"
       }`}
     >
       {active ? <span className="absolute inset-y-2 right-0 w-0.5 rounded-l-full bg-teal-300" /> : null}
@@ -165,7 +173,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
 
       </div>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4" aria-label="ناوبری اصلی">
+      <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4" aria-label="ناوبری اصلی">
         {primaryNavGroups.map((group) => (
           <div key={group.title}>
             <p className="mb-1.5 px-2.5 text-[10px] font-black text-slate-500">{group.title}</p>

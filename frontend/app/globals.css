@@ -10,18 +10,18 @@
 
 :root {
   color-scheme: light;
-  --n-color-ink: 24 33 47;
-  --n-color-ink-strong: 17 24 39;
-  --n-color-muted: 100 116 139;
-  --n-color-canvas: 247 246 242;
-  --n-color-canvas-soft: 251 250 247;
+  --n-color-ink: 25 33 42;
+  --n-color-ink-strong: 13 27 35;
+  --n-color-muted: 92 108 121;
+  --n-color-canvas: 246 248 248;
+  --n-color-canvas-soft: 252 253 251;
   --n-color-surface: 255 255 255;
-  --n-color-surface-muted: 245 243 237;
-  --n-color-border: 231 226 216;
-  --n-color-border-strong: 216 210 197;
+  --n-color-surface-muted: 242 246 246;
+  --n-color-border: 224 231 232;
+  --n-color-border-strong: 207 218 220;
   --n-color-primary: 11 119 113;
-  --n-color-primary-strong: 15 61 58;
-  --n-color-primary-soft: 232 246 243;
+  --n-color-primary-strong: 7 55 53;
+  --n-color-primary-soft: 228 246 243;
   --n-color-info: 37 99 235;
   --n-color-success: 21 128 61;
   --n-color-warning: 183 121 31;
@@ -30,15 +30,22 @@
   --n-color-coral-soft: 255 241 242;
   --n-color-plum: 109 40 217;
   --n-color-plum-soft: 243 238 255;
+  --n-color-sky-soft: 232 243 255;
+  --n-color-graphite: 37 49 60;
+  --n-density-compact: 2.25rem;
+  --n-density-standard: 2.75rem;
+  --n-density-comfortable: 3.25rem;
   --n-radius-sm: 0.5rem;
   --n-radius-md: 0.625rem;
   --n-radius-lg: 0.875rem;
-  --n-shadow-hairline: 0 0 0 1px rgb(var(--n-color-border) / 0.92);
-  --n-shadow-soft: 0 10px 24px rgb(var(--n-color-ink) / 0.055);
-  --n-shadow-lift: 0 18px 42px rgb(var(--n-color-ink) / 0.11);
-  --n-shadow-studio: 0 20px 52px rgb(var(--n-color-ink) / 0.09);
+  --n-shadow-hairline: 0 0 0 1px rgb(var(--n-color-border) / 0.95);
+  --n-shadow-soft: 0 8px 18px rgb(var(--n-color-ink) / 0.045);
+  --n-shadow-lift: 0 16px 38px rgb(var(--n-color-ink) / 0.095);
+  --n-shadow-studio: 0 18px 46px rgb(var(--n-color-ink) / 0.075);
   --n-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --n-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --n-motion-press: 170ms;
+  --n-motion-reveal: 260ms;
 }
 
 * {
@@ -212,10 +219,9 @@ a {
   .app-workspace-bg {
     background-color: rgb(var(--n-color-canvas));
     background-image:
-      linear-gradient(rgba(32, 54, 63, 0.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(32, 54, 63, 0.026) 1px, transparent 1px),
-      linear-gradient(180deg, rgb(var(--n-color-canvas-soft)) 0%, rgb(var(--n-color-canvas)) 48%, #eef4f1 100%);
-    background-size: 28px 28px, 28px 28px, 100% 100%;
+      linear-gradient(135deg, rgb(var(--n-color-primary) / 0.045) 0 1px, transparent 1px 34px),
+      linear-gradient(180deg, rgb(var(--n-color-canvas-soft)) 0%, rgb(var(--n-color-canvas)) 54%, #eef4f4 100%);
+    background-size: 34px 34px, 100% 100%;
   }
 
   .app-studio-surface {
@@ -288,14 +294,12 @@ a {
 
   .nahrino-shell {
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(250, 249, 245, 0.74)),
-      linear-gradient(rgba(32, 54, 63, 0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(32, 54, 63, 0.02) 1px, transparent 1px);
-    background-size: 100% 100%, 24px 24px, 24px 24px;
+      linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(247, 250, 250, 0.74)),
+      linear-gradient(90deg, rgba(11, 119, 113, 0.04), transparent 34%, transparent 66%, rgba(37, 99, 235, 0.035));
   }
 
   .nahrino-sidebar {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 246, 241, 0.88));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 248, 248, 0.92));
     box-shadow: inset -1px 0 0 rgb(var(--n-color-ink) / 0.08);
   }
 
@@ -310,10 +314,40 @@ a {
     box-shadow: var(--n-shadow-soft);
   }
 
+  .nahrino-section-card {
+    border: 1px solid rgb(var(--n-color-border) / 0.95);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(250, 252, 252, 0.98));
+    box-shadow: var(--n-shadow-soft);
+  }
+
   .nahrino-card-muted {
     border: 1px solid rgb(var(--n-color-border) / 0.88);
-    background: rgb(var(--n-color-surface-muted) / 0.88);
-    box-shadow: 0 8px 18px rgb(var(--n-color-ink) / 0.035);
+    background: rgb(var(--n-color-surface-muted) / 0.86);
+    box-shadow: 0 6px 14px rgb(var(--n-color-ink) / 0.03);
+  }
+
+  .nahrino-metric-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgb(var(--n-color-border) / 0.95);
+    background: rgba(255, 255, 255, 0.985);
+    box-shadow: var(--n-shadow-soft);
+  }
+
+  .nahrino-metric-card::before {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: 0.18rem;
+    background: rgb(var(--metric-accent, var(--n-color-primary)) / 0.9);
+    content: "";
+  }
+
+  .nahrino-token-icon {
+    background: rgb(var(--token-accent, var(--n-color-primary)) / 0.1);
+    border-color: rgb(var(--token-accent, var(--n-color-primary)) / 0.18);
+    color: rgb(var(--token-accent, var(--n-color-primary)) / 1);
   }
 
   .nahrino-nav-active {
@@ -332,15 +366,36 @@ a {
     box-shadow: 0 6px 16px rgba(24, 33, 47, 0.045);
   }
 
-  .nahrino-home-hero {
+  .nahrino-home-hero,
+  .nahrino-product-hero {
     position: relative;
     isolation: isolate;
-    border: 1px solid rgba(189, 200, 202, 0.88);
+    border: 1px solid rgb(var(--n-color-border-strong) / 0.7);
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 252, 251, 0.96) 52%, rgba(229, 246, 243, 0.82)),
+      linear-gradient(90deg, rgba(11, 119, 113, 0.07), transparent 38%, rgba(37, 99, 235, 0.04));
+    box-shadow: 0 20px 48px rgba(24, 33, 47, 0.075);
+  }
+
+  .nahrino-product-hero::before {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(90deg, rgb(var(--n-color-ink) / 0.035) 1px, transparent 1px),
+      linear-gradient(180deg, rgb(var(--n-color-ink) / 0.027) 1px, transparent 1px);
+    background-size: 72px 72px;
+    content: "";
+    mask-image: linear-gradient(90deg, transparent, #000 14%, #000 82%, transparent);
+    opacity: 0.72;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .nahrino-home-hero {
     background:
       linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 246, 241, 0.92) 48%, rgba(231, 245, 241, 0.82)),
       radial-gradient(circle at 14% 85%, rgba(217, 71, 92, 0.08), transparent 19rem),
       radial-gradient(circle at 82% 12%, rgba(11, 119, 113, 0.12), transparent 20rem);
-    box-shadow: 0 20px 48px rgba(24, 33, 47, 0.075);
   }
 
   .nahrino-command-art {
@@ -367,6 +422,36 @@ a {
 
   .nahrino-live-signal {
     animation: nahrino-signal 2.1s ease-in-out infinite;
+  }
+
+  .nahrino-product-visual {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    background:
+      linear-gradient(145deg, rgba(7, 55, 53, 0.08), rgba(255, 255, 255, 0.92)),
+      linear-gradient(90deg, rgba(11, 119, 113, 0.08), transparent);
+    box-shadow: 0 18px 40px rgba(24, 33, 47, 0.1);
+  }
+
+  .nahrino-product-visual::before {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(90deg, rgba(7, 55, 53, 0.08) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(7, 55, 53, 0.065) 1px, transparent 1px);
+    background-size: 40px 40px;
+    content: "";
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .nahrino-visual-chip {
+    border: 1px solid rgba(255, 255, 255, 0.74);
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 12px 28px rgba(24, 33, 47, 0.12);
+    backdrop-filter: blur(10px);
   }
 
   .app-progress {

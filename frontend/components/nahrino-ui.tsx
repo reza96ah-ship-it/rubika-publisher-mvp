@@ -165,8 +165,24 @@ const buttonSizeClasses: Record<ButtonSize, string> = {
   lg: "px-4 py-2.5 text-sm"
 };
 
+const toneAccentRgb: Record<Tone, string> = {
+  neutral: "100 116 139",
+  primary: "11 119 113",
+  success: "21 128 61",
+  warning: "183 121 31",
+  alert: "194 65 80",
+  info: "37 99 235"
+};
+
+function toneVars(tone: Tone): CSSProperties {
+  return {
+    "--metric-accent": toneAccentRgb[tone],
+    "--token-accent": toneAccentRgb[tone]
+  } as CSSProperties;
+}
+
 export function NPage({ children, className = "" }: NPageProps) {
-  return <div className={`mx-auto w-full max-w-[1440px] space-y-3 sm:space-y-4 ${className}`}>{children}</div>;
+  return <div className={`mx-auto w-full max-w-[1360px] space-y-3 sm:space-y-4 ${className}`}>{children}</div>;
 }
 
 export function NPageHeader({ title, description, eyebrow, meta, action, className = "" }: NPageHeaderProps) {
@@ -336,7 +352,7 @@ export function NInspectorDrawer({ open, title, description, children, footer, o
 
 export function NSection({ title, description, action, children, className = "", bodyClassName = "mt-4" }: NSectionProps) {
   return (
-    <section className={`nahrino-card rounded-xl p-3 sm:p-4 ${className}`}>
+    <section className={`nahrino-section-card rounded-xl p-3 sm:p-4 ${className}`}>
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
         <div className="min-w-0">
           <h2 className="text-sm font-black text-app-text">{title}</h2>
@@ -351,14 +367,14 @@ export function NSection({ title, description, action, children, className = "",
 
 export function NActionTile({ label, value, detail, icon: Icon, tone = "primary", href, compact = true }: NActionTileProps) {
   const content = (
-    <article className={`${compact ? "min-h-[76px] p-2.5 sm:min-h-[92px] sm:p-3" : "min-h-[132px] p-4"} nahrino-card rounded-lg`}>
+    <article className={`${compact ? "min-h-[76px] p-2.5 sm:min-h-[88px] sm:p-3" : "min-h-[124px] p-4"} nahrino-metric-card rounded-lg`} style={toneVars(tone)}>
       <div className="flex h-full flex-col justify-between gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-bold text-app-muted">{label}</p>
             <p className={`mt-2 font-black leading-6 text-app-text ${compact ? "line-clamp-1 text-sm" : "line-clamp-2 text-base"}`}>{value}</p>
           </div>
-          <span className={`flex ${compact ? "h-8 w-8" : "h-9 w-9"} shrink-0 items-center justify-center rounded-md border ${toneSurfaceClasses[tone]}`}>
+          <span className={`nahrino-token-icon flex ${compact ? "h-8 w-8" : "h-9 w-9"} shrink-0 items-center justify-center rounded-md border`}>
             <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
         </div>
@@ -372,7 +388,7 @@ export function NActionTile({ label, value, detail, icon: Icon, tone = "primary"
 
 export function NMetricTile({ label, value, detail, icon: Icon, tone = "primary", href }: NMetricTileProps) {
   const content = (
-    <article className="app-row nahrino-card min-h-[76px] rounded-lg p-2.5 sm:min-h-[88px] sm:p-3">
+    <article className="app-row nahrino-metric-card min-h-[76px] rounded-lg p-2.5 sm:min-h-[88px] sm:p-3" style={toneVars(tone)}>
       <div className="flex h-full items-start justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
           <p className="line-clamp-1 text-[10px] font-bold text-app-muted sm:text-xs">{label}</p>
@@ -380,7 +396,7 @@ export function NMetricTile({ label, value, detail, icon: Icon, tone = "primary"
           {detail ? <p className="mt-1 hidden truncate text-[11px] font-bold text-app-muted sm:block">{detail}</p> : null}
         </div>
         {Icon ? (
-          <span className={`hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border sm:flex ${toneSurfaceClasses[tone]}`}>
+          <span className="nahrino-token-icon hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border sm:flex">
             <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
         ) : null}
@@ -393,8 +409,8 @@ export function NMetricTile({ label, value, detail, icon: Icon, tone = "primary"
 
 export function NListItem({ title, detail, icon: Icon, tone = "primary", href, meta }: NListItemProps) {
   const content = (
-    <article className="app-row nahrino-card-muted flex min-h-[58px] items-center gap-2 rounded-md px-2.5 py-2">
-      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${toneSurfaceClasses[tone]}`}>
+    <article className="app-row nahrino-card-muted flex min-h-[58px] items-center gap-2 rounded-md px-2.5 py-2" style={toneVars(tone)}>
+      <span className="nahrino-token-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md border">
         <Icon className="h-3.5 w-3.5" aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
@@ -410,7 +426,7 @@ export function NListItem({ title, detail, icon: Icon, tone = "primary", href, m
 
 export function NEmptyState({ title, detail, icon: Icon }: NEmptyStateProps) {
   return (
-    <div className="flex min-h-[58px] items-center gap-2 rounded-md border border-dashed border-app-border bg-[#faf9f5] px-2.5 py-2">
+    <div className="flex min-h-[58px] items-center gap-2 rounded-md border border-dashed border-app-border bg-app-surfaceMuted px-2.5 py-2">
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-emerald-800">
         <Icon className="h-3.5 w-3.5" aria-hidden="true" />
       </span>
@@ -446,7 +462,7 @@ export function NDonutChart({ items, total, label = "کل" }: NDonutChartProps) 
       </div>
       <div className="grid w-full grid-cols-3 gap-1.5 text-[10px] sm:grid-cols-2 sm:gap-2 sm:text-xs">
         {items.map((item) => (
-          <div key={item.label} className="flex items-center justify-between gap-1.5 rounded-md bg-[#faf9f5] px-2 py-1.5 sm:gap-2 sm:px-2.5 sm:py-2">
+          <div key={item.label} className="flex items-center justify-between gap-1.5 rounded-md bg-app-surfaceMuted px-2 py-1.5 sm:gap-2 sm:px-2.5 sm:py-2">
             <span className="flex min-w-0 items-center gap-2 font-bold text-app-muted">
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
               {item.label}
@@ -463,7 +479,7 @@ export function NTrendBars({ values, labels }: NTrendBarsProps) {
   const max = Math.max(...values, 1);
 
   return (
-    <div className="flex h-28 items-end gap-1.5 rounded-lg bg-[#faf9f5] px-3 py-3">
+    <div className="flex h-28 items-end gap-1.5 rounded-lg bg-app-surfaceMuted px-3 py-3">
       {values.map((value, index) => (
         <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-1">
           <span

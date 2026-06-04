@@ -150,12 +150,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Sidebar storeName={workspaceName} ready={shellReady} brandColor={brandColor} avatarUrl={brandImageUrl} />
         <section className="nahrino-shell flex min-w-0 flex-1 flex-col">
           <header className="nahrino-topbar sticky top-0 z-20 border-b border-slate-200/80 backdrop-blur-xl">
-            <div className="flex min-h-[64px] items-center justify-between gap-3 px-3 py-2 lg:px-5">
+            <div className="flex min-h-[58px] items-center justify-between gap-3 px-3 py-2 lg:px-5">
               <div className="flex min-w-0 items-center gap-3">
                 <Link href="/" className="lg:hidden" aria-label={productName}>
                   <ProductMark />
                 </Link>
-                <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-app-teal shadow-hairline lg:flex" style={brandColor ? { color: brandColor } : undefined}>
+                <span className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-app-teal shadow-hairline lg:flex" style={brandColor ? { color: brandColor } : undefined}>
                   <ActiveNavIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
@@ -272,7 +272,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </header>
-          <div className="app-enter relative p-4 pb-24 lg:px-6 lg:py-5">{children}</div>
+          <div className="app-enter relative px-3 py-3 pb-24 sm:px-4 lg:px-5 lg:py-4">{children}</div>
           <MobileNav />
           <CommandPalette open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
         </section>
