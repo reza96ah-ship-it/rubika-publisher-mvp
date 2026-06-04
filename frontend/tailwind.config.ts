@@ -15,14 +15,19 @@ const config: Config = {
           surfaceMuted: "rgb(var(--n-color-surface-muted) / <alpha-value>)",
           border: "rgb(var(--n-color-border) / <alpha-value>)",
           borderStrong: "rgb(var(--n-color-border-strong) / <alpha-value>)",
+          focus: "rgb(var(--n-color-focus) / <alpha-value>)",
           primary: "rgb(var(--n-color-primary) / <alpha-value>)",
           primaryHover: "rgb(var(--n-color-primary-strong) / <alpha-value>)",
+          secondary: "rgb(var(--n-color-secondary) / <alpha-value>)",
+          secondarySoft: "rgb(var(--n-color-secondary-soft) / <alpha-value>)",
           text: "rgb(var(--n-color-ink) / <alpha-value>)",
+          textStrong: "rgb(var(--n-color-ink-strong) / <alpha-value>)",
           muted: "rgb(var(--n-color-muted) / <alpha-value>)",
           soft: "rgb(var(--n-color-primary-soft) / <alpha-value>)",
           success: "rgb(var(--n-color-success) / <alpha-value>)",
           warning: "rgb(var(--n-color-warning) / <alpha-value>)",
           alert: "rgb(var(--n-color-alert) / <alpha-value>)",
+          danger: "rgb(var(--n-color-danger) / <alpha-value>)",
           teal: "rgb(var(--n-color-primary) / <alpha-value>)",
           tealSoft: "rgb(var(--n-color-primary-soft) / <alpha-value>)",
           coral: "rgb(var(--n-color-coral) / <alpha-value>)",
@@ -36,7 +41,24 @@ const config: Config = {
         soft: "var(--n-shadow-soft)",
         lift: "var(--n-shadow-lift)",
         accent: "0 10px 22px rgb(var(--n-color-primary) / 0.18)",
+        overlay: "var(--n-shadow-lift)",
         studio: "var(--n-shadow-studio)"
+      },
+      borderRadius: {
+        nxs: "var(--n-radius-xs)",
+        nsm: "var(--n-radius-sm)",
+        nmd: "var(--n-radius-md)",
+        nlg: "var(--n-radius-lg)",
+        nxl: "var(--n-radius-xl)",
+        n2xl: "var(--n-radius-2xl)"
+      },
+      minHeight: {
+        compact: "var(--n-density-compact)",
+        standard: "var(--n-density-standard)",
+        comfortable: "var(--n-density-comfortable)",
+        rowCompact: "var(--n-row-compact)",
+        rowStandard: "var(--n-row-standard)",
+        rowComfortable: "var(--n-row-comfortable)"
       }
     }
   },

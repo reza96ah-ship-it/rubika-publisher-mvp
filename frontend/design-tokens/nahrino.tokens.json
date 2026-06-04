@@ -1,0 +1,166 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "meta": {
+    "name": "Nahrino Visual Design Tokens",
+    "version": "2026.06.v1",
+    "phase": "V-1 Token Source of Truth",
+    "description": "Primitive, semantic, component, density, elevation, and motion tokens for the Persian-first SocialOps workspace."
+  },
+  "primitive": {
+    "color": {
+      "neutral": {
+        "0": { "$type": "color", "$value": "#FFFFFF" },
+        "50": { "$type": "color", "$value": "#F8FAF9" },
+        "75": { "$type": "color", "$value": "#F6F8F8" },
+        "100": { "$type": "color", "$value": "#EEF2F1" },
+        "150": { "$type": "color", "$value": "#E0E7E8" },
+        "200": { "$type": "color", "$value": "#CFDADC" },
+        "500": { "$type": "color", "$value": "#5C6C79" },
+        "700": { "$type": "color", "$value": "#25313C" },
+        "800": { "$type": "color", "$value": "#19212A" },
+        "900": { "$type": "color", "$value": "#0D1B23" }
+      },
+      "teal": {
+        "50": { "$type": "color", "$value": "#E4F6F3" },
+        "100": { "$type": "color", "$value": "#D8F2F0" },
+        "500": { "$type": "color", "$value": "#0B7A75" },
+        "600": { "$type": "color", "$value": "#0B7771" },
+        "700": { "$type": "color", "$value": "#095E5A" },
+        "900": { "$type": "color", "$value": "#073735" }
+      },
+      "blue": {
+        "50": { "$type": "color", "$value": "#E8F3FF" },
+        "100": { "$type": "color", "$value": "#E3E9FF" },
+        "600": { "$type": "color", "$value": "#3653CC" },
+        "700": { "$type": "color", "$value": "#155EEF" }
+      },
+      "green": {
+        "600": { "$type": "color", "$value": "#1F7A52" }
+      },
+      "amber": {
+        "50": { "$type": "color", "$value": "#FFE8CC" },
+        "700": { "$type": "color", "$value": "#A05A00" },
+        "800": { "$type": "color", "$value": "#A35A00" }
+      },
+      "red": {
+        "50": { "$type": "color", "$value": "#FFF1F2" },
+        "600": { "$type": "color", "$value": "#B42318" },
+        "700": { "$type": "color", "$value": "#C24150" },
+        "coral": { "$type": "color", "$value": "#D94F62" }
+      },
+      "purple": {
+        "50": { "$type": "color", "$value": "#F3EEFF" },
+        "600": { "$type": "color", "$value": "#6D28D9" },
+        "focus": { "$type": "color", "$value": "#7C5CFC" }
+      },
+      "black": {
+        "0": { "$type": "color", "$value": "#000000" },
+        "950": { "$type": "color", "$value": "#0B0F10" }
+      }
+    },
+    "space": {
+      "025": { "$type": "dimension", "$value": "2px" },
+      "050": { "$type": "dimension", "$value": "4px" },
+      "100": { "$type": "dimension", "$value": "8px" },
+      "150": { "$type": "dimension", "$value": "12px" },
+      "200": { "$type": "dimension", "$value": "16px" },
+      "250": { "$type": "dimension", "$value": "20px" },
+      "300": { "$type": "dimension", "$value": "24px" },
+      "400": { "$type": "dimension", "$value": "32px" },
+      "500": { "$type": "dimension", "$value": "40px" },
+      "600": { "$type": "dimension", "$value": "48px" },
+      "800": { "$type": "dimension", "$value": "64px" }
+    },
+    "radius": {
+      "xs": { "$type": "dimension", "$value": "2px" },
+      "sm": { "$type": "dimension", "$value": "4px" },
+      "md": { "$type": "dimension", "$value": "6px" },
+      "lg": { "$type": "dimension", "$value": "8px" },
+      "xl": { "$type": "dimension", "$value": "12px" },
+      "2xl": { "$type": "dimension", "$value": "16px" },
+      "full": { "$type": "dimension", "$value": "999px" }
+    },
+    "motion": {
+      "instant": { "$type": "duration", "$value": "0ms" },
+      "fast": { "$type": "duration", "$value": "50ms" },
+      "quick": { "$type": "duration", "$value": "80ms" },
+      "standard": { "$type": "duration", "$value": "120ms" },
+      "enter": { "$type": "duration", "$value": "180ms" },
+      "modal": { "$type": "duration", "$value": "250ms" },
+      "page": { "$type": "duration", "$value": "320ms" },
+      "emphasis": { "$type": "duration", "$value": "480ms" }
+    }
+  },
+  "semantic": {
+    "color": {
+      "background": {
+        "canvas": { "$type": "color", "$value": "{primitive.color.neutral.75}" },
+        "canvasSoft": { "$type": "color", "$value": "{primitive.color.neutral.50}" },
+        "surface": { "$type": "color", "$value": "{primitive.color.neutral.0}" },
+        "surfaceMuted": { "$type": "color", "$value": "{primitive.color.neutral.100}" },
+        "surfaceRaised": { "$type": "color", "$value": "{primitive.color.neutral.0}" }
+      },
+      "text": {
+        "default": { "$type": "color", "$value": "{primitive.color.neutral.800}" },
+        "strong": { "$type": "color", "$value": "{primitive.color.neutral.900}" },
+        "muted": { "$type": "color", "$value": "{primitive.color.neutral.500}" },
+        "onAction": { "$type": "color", "$value": "{primitive.color.neutral.0}" }
+      },
+      "border": {
+        "default": { "$type": "color", "$value": "{primitive.color.neutral.150}" },
+        "strong": { "$type": "color", "$value": "{primitive.color.neutral.200}" },
+        "focus": { "$type": "color", "$value": "{primitive.color.purple.focus}" }
+      },
+      "action": {
+        "primary": { "$type": "color", "$value": "{primitive.color.teal.600}" },
+        "primaryHover": { "$type": "color", "$value": "{primitive.color.teal.900}" },
+        "primarySoft": { "$type": "color", "$value": "{primitive.color.teal.50}" },
+        "secondary": { "$type": "color", "$value": "{primitive.color.blue.600}" },
+        "secondarySoft": { "$type": "color", "$value": "{primitive.color.blue.100}" }
+      },
+      "state": {
+        "success": { "$type": "color", "$value": "{primitive.color.green.600}" },
+        "warning": { "$type": "color", "$value": "{primitive.color.amber.700}" },
+        "danger": { "$type": "color", "$value": "{primitive.color.red.600}" },
+        "alert": { "$type": "color", "$value": "{primitive.color.red.700}" },
+        "info": { "$type": "color", "$value": "{primitive.color.blue.700}" }
+      }
+    },
+    "density": {
+      "compact": { "$type": "dimension", "$value": "36px" },
+      "standard": { "$type": "dimension", "$value": "44px" },
+      "comfortable": { "$type": "dimension", "$value": "52px" }
+    },
+    "elevation": {
+      "hairline": { "$type": "shadow", "$value": "0 0 0 1px rgb(var(--n-color-border) / 0.95)" },
+      "raised": { "$type": "shadow", "$value": "0 8px 18px rgb(var(--n-color-ink) / 0.045)" },
+      "overlay": { "$type": "shadow", "$value": "0 16px 38px rgb(var(--n-color-ink) / 0.095)" },
+      "modal": { "$type": "shadow", "$value": "0 18px 46px rgb(var(--n-color-ink) / 0.075)" }
+    }
+  },
+  "component": {
+    "button": {
+      "primary": {
+        "bg": { "$type": "color", "$value": "{semantic.color.action.primary}" },
+        "bgHover": { "$type": "color", "$value": "{semantic.color.action.primaryHover}" },
+        "fg": { "$type": "color", "$value": "{semantic.color.text.onAction}" }
+      },
+      "height": {
+        "compact": { "$type": "dimension", "$value": "{semantic.density.compact}" },
+        "standard": { "$type": "dimension", "$value": "{semantic.density.standard}" },
+        "comfortable": { "$type": "dimension", "$value": "{semantic.density.comfortable}" }
+      }
+    },
+    "row": {
+      "height": {
+        "compact": { "$type": "dimension", "$value": "48px" },
+        "standard": { "$type": "dimension", "$value": "56px" },
+        "comfortable": { "$type": "dimension", "$value": "64px" }
+      }
+    },
+    "surface": {
+      "radius": { "$type": "dimension", "$value": "{primitive.radius.xl}" },
+      "shadow": { "$type": "shadow", "$value": "{semantic.elevation.raised}" }
+    }
+  }
+}

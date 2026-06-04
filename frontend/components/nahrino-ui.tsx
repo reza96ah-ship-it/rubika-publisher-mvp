@@ -165,19 +165,19 @@ const buttonSizeClasses: Record<ButtonSize, string> = {
   lg: "px-4 py-2.5 text-sm"
 };
 
-const toneAccentRgb: Record<Tone, string> = {
-  neutral: "100 116 139",
-  primary: "11 119 113",
-  success: "21 128 61",
-  warning: "183 121 31",
-  alert: "194 65 80",
-  info: "37 99 235"
+const toneAccentTokens: Record<Tone, string> = {
+  neutral: "var(--n-color-muted)",
+  primary: "var(--n-color-primary)",
+  success: "var(--n-color-success)",
+  warning: "var(--n-color-warning)",
+  alert: "var(--n-color-alert)",
+  info: "var(--n-color-info)"
 };
 
 function toneVars(tone: Tone): CSSProperties {
   return {
-    "--metric-accent": toneAccentRgb[tone],
-    "--token-accent": toneAccentRgb[tone]
+    "--metric-accent": toneAccentTokens[tone],
+    "--token-accent": toneAccentTokens[tone]
   } as CSSProperties;
 }
 

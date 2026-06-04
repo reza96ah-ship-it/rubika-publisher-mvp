@@ -3,50 +3,11 @@
 @import "@fontsource/vazirmatn/700.css";
 @import "@fontsource/lalezar/400.css";
 @import "./p30-persian-fonts.css";
+@import "../design-tokens/nahrino.css";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-  color-scheme: light;
-  --n-color-ink: 25 33 42;
-  --n-color-ink-strong: 13 27 35;
-  --n-color-muted: 92 108 121;
-  --n-color-canvas: 246 248 248;
-  --n-color-canvas-soft: 252 253 251;
-  --n-color-surface: 255 255 255;
-  --n-color-surface-muted: 242 246 246;
-  --n-color-border: 224 231 232;
-  --n-color-border-strong: 207 218 220;
-  --n-color-primary: 11 119 113;
-  --n-color-primary-strong: 7 55 53;
-  --n-color-primary-soft: 228 246 243;
-  --n-color-info: 37 99 235;
-  --n-color-success: 21 128 61;
-  --n-color-warning: 183 121 31;
-  --n-color-alert: 194 65 80;
-  --n-color-coral: 217 79 98;
-  --n-color-coral-soft: 255 241 242;
-  --n-color-plum: 109 40 217;
-  --n-color-plum-soft: 243 238 255;
-  --n-color-sky-soft: 232 243 255;
-  --n-color-graphite: 37 49 60;
-  --n-density-compact: 2.25rem;
-  --n-density-standard: 2.75rem;
-  --n-density-comfortable: 3.25rem;
-  --n-radius-sm: 0.5rem;
-  --n-radius-md: 0.625rem;
-  --n-radius-lg: 0.875rem;
-  --n-shadow-hairline: 0 0 0 1px rgb(var(--n-color-border) / 0.95);
-  --n-shadow-soft: 0 8px 18px rgb(var(--n-color-ink) / 0.045);
-  --n-shadow-lift: 0 16px 38px rgb(var(--n-color-ink) / 0.095);
-  --n-shadow-studio: 0 18px 46px rgb(var(--n-color-ink) / 0.075);
-  --n-ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --n-ease-exit: cubic-bezier(0.4, 0, 1, 1);
-  --n-motion-press: 170ms;
-  --n-motion-reveal: 260ms;
-}
 
 * {
   box-sizing: border-box;

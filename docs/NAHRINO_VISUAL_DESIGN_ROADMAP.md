@@ -541,6 +541,8 @@ Acceptance:
 
 Goal: make theme changes systematic.
 
+Current phase output: `docs/NAHRINO_V1_TOKEN_SOURCE_OF_TRUTH.md`
+
 Deliverables:
 
 - primitive token table,

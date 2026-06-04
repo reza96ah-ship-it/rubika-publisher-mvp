@@ -8,9 +8,10 @@
     "build:check": "node scripts/check-build.mjs",
     "start": "next start -H 0.0.0.0",
     "lint": "eslint .",
+    "token:audit": "node scripts/token-audit.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run build:check"
+    "check": "npm run lint && npm run token:audit && npm run typecheck && npm run test && npm run build:check"
   },
   "dependencies": {
     "@fontsource/lalezar": "^5.2.7",
