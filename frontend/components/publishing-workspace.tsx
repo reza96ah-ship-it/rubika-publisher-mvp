@@ -18,9 +18,9 @@ type PublishingWorkspaceHeaderProps = {
 
 const tabs = [
   { key: "calendar" as const, label: "تقویم", href: "/calendar", icon: CalendarDays },
-  { key: "campaigns" as const, label: "کمپین", href: "/campaigns", icon: Target },
-  { key: "content" as const, label: "محتوا", href: "/content", icon: Rows3 },
-  { key: "queue" as const, label: "عملیات", href: "/queue", icon: ListChecks }
+  { key: "campaigns" as const, label: "کمپین‌ها", href: "/campaigns", icon: Target },
+  { key: "content" as const, label: "کتابخانه", href: "/content", icon: Rows3 },
+  { key: "queue" as const, label: "صف انتشار", href: "/queue", icon: ListChecks }
 ];
 
 export function PublishingWorkspaceHeader({
@@ -32,6 +32,10 @@ export function PublishingWorkspaceHeader({
   action,
   onTabChange
 }: PublishingWorkspaceHeaderProps) {
+  const visibleTabs = activeTab === "content" || activeTab === "queue"
+    ? tabs.filter((tab) => tab.key === "content" || tab.key === "queue")
+    : tabs.filter((tab) => tab.key === "calendar" || tab.key === "campaigns");
+
   return (
     <section className="app-studio-panel overflow-hidden rounded-lg">
       <div className="flex flex-col justify-between gap-2 px-3 py-2.5 sm:px-4 sm:py-3 lg:flex-row lg:items-center">
@@ -48,7 +52,7 @@ export function PublishingWorkspaceHeader({
 
       <nav className="overflow-x-auto border-t border-app-border bg-app-surfaceMuted px-1.5 sm:px-2" aria-label="نماهای فضای انتشار">
         <div className="flex min-w-max items-center gap-1">
-          {tabs.map((tab) => {
+          {visibleTabs.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.key;
             const count = counts[tab.key];

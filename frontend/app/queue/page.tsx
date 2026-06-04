@@ -7,7 +7,7 @@ import { AppShell } from "../../components/app-shell";
 import { ApprovalBadge } from "../../components/approval-badge";
 import { ChannelBadges } from "../../components/channel-badges";
 import { CountdownBadge } from "../../components/countdown-badge";
-import { DataSearchField, DataToolbar, FilterChip } from "../../components/data-view";
+import { DataSearchField, DataToolbar } from "../../components/data-view";
 import { LoadingRows } from "../../components/loading-skeleton";
 import { ContentOperationCard } from "../../components/pro-product-ui";
 import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
@@ -472,7 +472,7 @@ export default function QueuePage() {
                   </>
                 )}
               >
-                <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_180px_auto] xl:items-center">
+                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_150px_180px] xl:items-center">
                   <DataSearchField
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
@@ -480,23 +480,17 @@ export default function QueuePage() {
                   />
                   <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
                     <ListChecks className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as QueueFilter)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                      {queueFilters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label} · {filterCount(filter.value)}</option>)}
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
+                    <ListChecks className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
                       <option value="all">همه کمپین‌ها</option>
                       {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
                     </select>
                   </label>
-                  <div className="flex flex-wrap gap-2">
-                    {queueFilters.map((filter) => (
-                      <FilterChip
-                        key={filter.value}
-                        active={statusFilter === filter.value}
-                        count={filterCount(filter.value)}
-                        onClick={() => setStatusFilter(filter.value)}
-                      >
-                        {filter.label}
-                      </FilterChip>
-                    ))}
-                  </div>
                 </div>
               </DataToolbar>
 

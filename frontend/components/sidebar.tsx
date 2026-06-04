@@ -8,7 +8,6 @@ import {
   FileText,
   GalleryHorizontalEnd,
   LayoutDashboard,
-  ListChecks,
   LucideIcon,
   PenLine,
   Rocket,
@@ -42,7 +41,6 @@ const composeNavItem: NavItem = { label: "استودیو", href: "/compose", ico
 const onboardingNavItem: NavItem = { label: "راه‌اندازی", href: "/onboarding", icon: Rocket };
 const plannerNavItem: NavItem = { label: "تقویم", href: "/calendar", icon: CalendarDays };
 const contentNavItem: NavItem = { label: "کتابخانه", href: "/content", icon: FileText };
-const queueNavItem: NavItem = { label: "عملیات", href: "/queue", icon: ListChecks };
 const settingsNavItem: NavItem = { label: "فضای کاری", href: "/store", icon: Store };
 
 const primaryNavGroups: NavGroup[] = [
@@ -53,7 +51,6 @@ const primaryNavGroups: NavGroup[] = [
       composeNavItem,
       plannerNavItem,
       contentNavItem,
-      queueNavItem,
       { label: "رسانه", href: "/media", icon: GalleryHorizontalEnd },
       { label: "پیام‌ها", href: "/inbox", icon: BellRing },
       { label: "تحلیل", href: "/analytics", icon: BarChart3 }
@@ -74,8 +71,7 @@ function isActiveRoute(pathname: string, href: string) {
 
 function isNavItemActive(pathname: string, item: NavItem) {
   if (item.href === "/calendar") return isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/campaigns");
-  if (item.href === "/content") return isActiveRoute(pathname, "/content");
-  if (item.href === "/queue") return isActiveRoute(pathname, "/queue");
+  if (item.href === "/content") return isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue");
   if (item.href === "/store") {
     return (
       isActiveRoute(pathname, "/store") ||
@@ -101,12 +97,8 @@ export function getActiveNav(pathname: string) {
     return { group: { title: "برنامه‌ریزی", items: [plannerNavItem] }, item: plannerNavItem };
   }
 
-  if (isActiveRoute(pathname, "/content")) {
+  if (isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue")) {
     return { group: { title: "مدیریت محتوا", items: [contentNavItem] }, item: contentNavItem };
-  }
-
-  if (isActiveRoute(pathname, "/queue")) {
-    return { group: { title: "عملیات انتشار", items: [queueNavItem] }, item: queueNavItem };
   }
 
   if (

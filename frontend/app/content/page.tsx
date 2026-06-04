@@ -24,7 +24,7 @@ import { AuthGate } from "../../components/auth-gate";
 import { ApprovalBadge } from "../../components/approval-badge";
 import { ChannelBadges } from "../../components/channel-badges";
 import { CountdownBadge } from "../../components/countdown-badge";
-import { DataSearchField, DataToolbar, FilterChip } from "../../components/data-view";
+import { DataSearchField, DataToolbar } from "../../components/data-view";
 import { LoadingRows } from "../../components/loading-skeleton";
 import { ContentOperationCard } from "../../components/pro-product-ui";
 import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
@@ -510,12 +510,18 @@ export default function ContentWorkspacePage() {
                   </>
                 )}
               >
-                <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_160px_160px_170px]">
+                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_140px_160px_160px_150px]">
                   <DataSearchField
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="جست‌وجوی عنوان، کپشن، هشتگ، کمپین یا یادداشت"
                   />
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
+                    <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <select value={activeStatus} onChange={(event) => setActiveStatus(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                      {workflowTabs.map((tab) => <option key={tab.value} value={tab.value}>{tab.label} · {statusCount(posts, tab.value)}</option>)}
+                    </select>
+                  </label>
                   <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
                     <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
@@ -560,34 +566,6 @@ export default function ContentWorkspacePage() {
                   </div>
                 </div>
               ) : null}
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {workflowTabs.map((tab) => {
-                  const active = activeStatus === tab.value;
-                  return (
-                    <FilterChip
-                      key={tab.value}
-                      active={active}
-                      count={statusCount(posts, tab.value)}
-                      onClick={() => setActiveStatus(tab.value)}
-                    >
-                      {tab.label}
-                    </FilterChip>
-                  );
-                })}
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-2 border-t border-app-border pt-3">
-                {approvalTabs.map((tab) => {
-                  const active = approvalFilter === tab.value;
-                  const count = tab.value === "all" ? posts.length : posts.filter((post) => (post.approval_status || "not_required") === tab.value).length;
-                  return (
-                    <FilterChip key={tab.value} active={active} count={count} onClick={() => setApprovalFilter(tab.value)}>
-                      {tab.label}
-                    </FilterChip>
-                  );
-                })}
-              </div>
 
               <div className="mt-3 max-h-[66vh] overflow-y-auto rounded-lg bg-app-surfaceMuted/50 p-2 shadow-inner sm:mt-4">
                 {loading ? <LoadingRows /> : null}
