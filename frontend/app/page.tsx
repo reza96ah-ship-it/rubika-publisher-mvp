@@ -23,7 +23,6 @@ import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
 import { WorkspaceAvatar } from "../components/brand-mark";
 import { Skeleton } from "../components/loading-skeleton";
-import { StatusBadge } from "../components/status-badge";
 import { Button } from "../components/ui/button";
 import { NoticeBanner, StatusToken, WorkspacePage } from "../components/workspace-ui";
 import { Campaign, loadCampaigns } from "../lib/campaigns";
@@ -82,7 +81,8 @@ function DashboardFocusItem({
   detail,
   icon: Icon,
   tone,
-  compact = false
+  compact = false,
+  href
 }: {
   label: string;
   value: string | number;
@@ -90,8 +90,9 @@ function DashboardFocusItem({
   icon: LucideIcon;
   tone: keyof typeof dashboardFocusToneClasses;
   compact?: boolean;
+  href?: string;
 }) {
-  return (
+  const content = (
     <article className={`${compact ? "min-h-[76px] p-2.5 sm:min-h-[92px] sm:p-3" : "min-h-[136px] p-4"} rounded-lg border border-app-border bg-white shadow-hairline`}>
       <div className="flex h-full flex-col justify-between gap-3">
         <div className="flex items-start justify-between gap-3">
@@ -107,6 +108,8 @@ function DashboardFocusItem({
       </div>
     </article>
   );
+
+  return href ? <a href={href} className="app-interactive block rounded-lg focus:outline-none focus:ring-2 focus:ring-app-primary/25">{content}</a> : content;
 }
 
 function CommandMetric({
@@ -114,15 +117,17 @@ function CommandMetric({
   value,
   detail,
   icon: Icon,
-  tone
+  tone,
+  href
 }: {
   label: string;
   value: number;
   detail: string;
   icon: LucideIcon;
   tone: keyof typeof commandMetricToneClasses;
+  href?: string;
 }) {
-  return (
+  const content = (
     <article className="app-row min-h-[76px] rounded-lg border border-app-border bg-white p-2.5 shadow-hairline sm:min-h-[88px] sm:p-3">
       <div className="flex h-full items-start justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
@@ -136,6 +141,8 @@ function CommandMetric({
       </div>
     </article>
   );
+
+  return href ? <a href={href} className="app-interactive block rounded-lg focus:outline-none focus:ring-2 focus:ring-app-primary/25">{content}</a> : content;
 }
 
 function DashboardCard({
@@ -198,15 +205,15 @@ function CompactDigestItem({
   href?: string;
 }) {
   const content = (
-    <article className="app-row flex min-h-[72px] items-center gap-3 rounded-md border border-app-border bg-slate-50/70 px-3 py-2.5">
-      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${commandMetricToneClasses[tone]}`}>
-        <Icon className="h-4 w-4" aria-hidden="true" />
+    <article className="app-row flex min-h-[58px] items-center gap-2 rounded-md border border-app-border bg-slate-50/70 px-2.5 py-2">
+      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${commandMetricToneClasses[tone]}`}>
+        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-xs font-black text-app-text">{title}</span>
-        <span className="mt-1 block truncate text-[11px] font-bold text-app-muted">{detail}</span>
+        <span className="block truncate text-[11px] font-black text-app-text">{title}</span>
+        <span className="mt-0.5 block truncate text-[10px] font-bold text-app-muted">{detail}</span>
       </span>
-      {meta ? <span className="shrink-0">{meta}</span> : null}
+      {meta ? <span className="max-w-[86px] shrink-0 truncate text-[10px]">{meta}</span> : null}
     </article>
   );
 
@@ -223,13 +230,13 @@ function CompactEmpty({
   detail: string;
 }) {
   return (
-    <div className="flex min-h-[72px] items-center gap-3 rounded-md border border-dashed border-app-border bg-slate-50/60 px-3 py-3">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-emerald-100 bg-emerald-50 text-emerald-700">
-        <Icon className="h-4 w-4" aria-hidden="true" />
+    <div className="flex min-h-[58px] items-center gap-2 rounded-md border border-dashed border-app-border bg-slate-50/60 px-2.5 py-2">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-emerald-100 bg-emerald-50 text-emerald-700">
+        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
       </span>
       <span className="min-w-0">
-        <span className="block text-xs font-black text-app-text">{title}</span>
-        <span className="mt-1 block text-[11px] leading-5 text-app-muted">{detail}</span>
+        <span className="block truncate text-[11px] font-black text-app-text">{title}</span>
+        <span className="mt-0.5 block truncate text-[10px] leading-5 text-app-muted">{detail}</span>
       </span>
     </div>
   );
@@ -370,10 +377,10 @@ export default function HomePage() {
           : "فضای کاری آماده است. یک کمپین یا محتوای جدید برای شروع برنامه روزانه بسازید.";
   const healthTone = priorityAlerts.length || queueCounts.failed ? "alert" : workspaceReady ? "success" : "warning";
   const commandMetrics = [
-    { label: "ریسک‌های باز", value: blockedWorkCount, detail: unreadAlerts ? `${unreadAlerts} اعلان تازه` : "خطا، آماده‌سازی یا هشدار", icon: AlertTriangle, tone: blockedWorkCount ? "alert" as const : "success" as const },
-    { label: "انتشار آینده", value: queueCounts.scheduled, detail: "در تقویم و صف", icon: CalendarClock, tone: "warning" as const },
-    { label: "کمپین فعال", value: activeCampaigns.length, detail: "در جریان امروز", icon: Megaphone, tone: "primary" as const },
-    { label: "منتشر شده", value: publishedCount, detail: "خروجی موفق", icon: CheckCircle2, tone: "success" as const }
+    { label: "ریسک‌های باز", value: blockedWorkCount, detail: unreadAlerts ? `${unreadAlerts} اعلان تازه` : "خطا، آماده‌سازی یا هشدار", icon: AlertTriangle, tone: blockedWorkCount ? "alert" as const : "success" as const, href: "/inbox" },
+    { label: "انتشار آینده", value: queueCounts.scheduled, detail: "در تقویم و صف", icon: CalendarClock, tone: "warning" as const, href: "/calendar" },
+    { label: "کمپین فعال", value: activeCampaigns.length, detail: "در جریان امروز", icon: Megaphone, tone: "primary" as const, href: "/campaigns?status=active" },
+    { label: "منتشر شده", value: publishedCount, detail: "خروجی موفق", icon: CheckCircle2, tone: "success" as const, href: "/content?status=published" }
   ];
   const totalPosts = posts.length;
   const pendingApprovalCount = posts.filter((post) => ["pending", "changes_requested", "rejected"].includes(post.approval_status || "")).length;
@@ -465,7 +472,7 @@ export default function HomePage() {
               <div className="grid grid-cols-3 gap-2 p-3 sm:gap-3 sm:p-4">
                 <DashboardFocusItem label="اقدام بعدی" value={nextAction.label} detail={nextAction.detail} icon={Target} tone="primary" compact />
                 <DashboardFocusItem label="صف فعال" value={queueTotal} detail="آماده، زمان‌بندی، انتشار و بازیابی" icon={TimerReset} tone={queueCounts.failed ? "alert" : "info"} compact />
-                <DashboardFocusItem label="انتشار بعدی" value={nextPosts[0]?.scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"} detail="نزدیک‌ترین پنجره برنامه" icon={CalendarClock} tone="warning" compact />
+                <DashboardFocusItem label="انتشار بعدی" value={nextPosts[0]?.scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"} detail="باز کردن تقویم انتشار" icon={CalendarClock} tone="warning" compact href="/calendar" />
               </div>
 
               <div className="border-t border-app-border bg-slate-50/70 p-3 sm:p-4 lg:border-r lg:border-t-0">
@@ -547,35 +554,11 @@ export default function HomePage() {
                 ) : (
                   <CompactDigestItem icon={CheckCircle2} title="بدون مانع فوری" detail="وضعیت امروز پایدار است." href="/inbox" tone="success" />
                 )}
-                {nextPosts[0] ? (
-                  <CompactDigestItem
-                    icon={CalendarClock}
-                    title={nextPosts[0].title}
-                    detail={nextPosts[0].scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"}
-                    href={`/compose?postId=${nextPosts[0].id}`}
-                    tone="warning"
-                    meta={<StatusBadge status={nextPosts[0].status} />}
-                  />
-                ) : (
-                  <CompactDigestItem icon={CalendarClock} title="بدون انتشار آینده" detail="یک پست را زمان‌بندی کنید." href="/compose" tone="warning" />
-                )}
-                {activeCampaigns[0] ? (
-                  <CompactDigestItem
-                    icon={Megaphone}
-                    title={activeCampaigns[0].name}
-                    detail={activeCampaigns[0].goal || activeCampaigns[0].notes || "هدف کمپین هنوز ثبت نشده است."}
-                    href={`/campaigns?campaignId=${activeCampaigns[0].id}`}
-                    tone="primary"
-                    meta={<StatusToken tone={activeCampaigns[0].post_count ? "success" : "warning"}>{activeCampaigns[0].post_count}</StatusToken>}
-                  />
-                ) : (
-                  <CompactDigestItem icon={Megaphone} title="بدون کمپین فعال" detail="کمپین فعال فقط در صورت نیاز نمایش داده می‌شود." href="/campaigns" tone="primary" />
-                )}
               </div>
             </DashboardCard>
           </section>
 
-          <section className="hidden gap-4 md:grid md:grid-cols-2 lg:grid-cols-4">
+          <section className="hidden gap-4 md:grid md:grid-cols-2">
             <DashboardCard
               title="سلامت و اقدام"
               description="کانال‌ها و ریسک اصلی امروز."
@@ -632,54 +615,6 @@ export default function HomePage() {
                   </>
                 ) : (
                   <CompactEmpty icon={CheckCircle2} title="مورد فوری وجود ندارد" detail="صف، اتصال و آماده‌سازی در وضعیت قابل قبول هستند." />
-                )}
-              </div>
-            </DashboardCard>
-
-            <DashboardCard
-              title="برنامه پیش رو"
-              description="دو انتشار نزدیک؛ تقویم برای نمای کامل."
-              action={<Button href="/calendar" variant="secondary" size="sm">تقویم</Button>}
-            >
-              <div className="grid gap-2">
-                {nextPosts.length ? (
-                  nextPosts.slice(0, 2).map((post) => (
-                    <CompactDigestItem
-                      key={post.id}
-                      icon={CalendarClock}
-                      title={post.title}
-                      detail={post.scheduled_at ? formatDateTime(post.scheduled_at) : "بدون زمان‌بندی"}
-                      href={`/compose?postId=${post.id}`}
-                      tone="warning"
-                      meta={<StatusBadge status={post.status} />}
-                    />
-                  ))
-                ) : (
-                  <CompactEmpty icon={CalendarClock} title="انتشار آینده‌ای ثبت نشده" detail="برای شروع برنامه روزانه، یک محتوا را زمان‌بندی کنید." />
-                )}
-              </div>
-            </DashboardCard>
-
-            <DashboardCard
-              title="کمپین‌های فعال"
-              description="کمپین‌های مهم امروز بدون باز کردن مدیر کمپین."
-              action={<Button href="/campaigns" variant="secondary" size="sm">کمپین‌ها</Button>}
-            >
-              <div className="grid gap-2">
-                {activeCampaigns.length ? (
-                  activeCampaigns.slice(0, 2).map((campaign) => (
-                    <CompactDigestItem
-                      key={campaign.id}
-                      icon={Megaphone}
-                      title={campaign.name}
-                      detail={campaign.goal || campaign.notes || "هدف کمپین هنوز ثبت نشده است."}
-                      href={`/campaigns?campaignId=${campaign.id}`}
-                      tone="primary"
-                      meta={<StatusToken tone={campaign.post_count ? "success" : "warning"}>{campaign.post_count} محتوا</StatusToken>}
-                    />
-                  ))
-                ) : (
-                  <CompactEmpty icon={Megaphone} title="کمپین فعالی وجود ندارد" detail="کمپین‌ها فقط وقتی روی داشبورد می‌آیند که واقعا فعال باشند." />
                 )}
               </div>
             </DashboardCard>
