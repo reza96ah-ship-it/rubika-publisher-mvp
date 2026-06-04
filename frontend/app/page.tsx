@@ -21,7 +21,6 @@ import {
   TrendingUp,
   type LucideIcon
 } from "lucide-react";
-import Link from "next/link";
 import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
@@ -111,14 +110,14 @@ function DashboardFocusItem({
   compact?: boolean;
 }) {
   return (
-    <article className="min-h-[136px] rounded-lg border border-app-border bg-white p-4 shadow-hairline">
-      <div className="flex h-full flex-col justify-between gap-4">
+    <article className={`${compact ? "min-h-[92px] p-3" : "min-h-[136px] p-4"} rounded-lg border border-app-border bg-white shadow-hairline`}>
+      <div className="flex h-full flex-col justify-between gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-bold text-app-muted">{label}</p>
-            <p className={`mt-2 font-black leading-6 text-app-text ${compact ? "line-clamp-2 text-sm" : "line-clamp-2 text-base"}`}>{value}</p>
+            <p className={`mt-2 font-black leading-6 text-app-text ${compact ? "line-clamp-1 text-sm" : "line-clamp-2 text-base"}`}>{value}</p>
           </div>
-          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${dashboardFocusToneClasses[tone]}`}>
+          <span className={`flex ${compact ? "h-8 w-8" : "h-9 w-9"} shrink-0 items-center justify-center rounded-md border ${dashboardFocusToneClasses[tone]}`}>
             <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
         </div>
@@ -142,14 +141,14 @@ function CommandMetric({
   tone: keyof typeof commandMetricToneClasses;
 }) {
   return (
-    <article className="app-row min-h-[112px] rounded-lg border border-app-border bg-white p-4 shadow-hairline">
-      <div className="flex h-full items-start justify-between gap-3">
+    <article className="app-row min-h-[76px] rounded-lg border border-app-border bg-white p-2.5 shadow-hairline sm:min-h-[88px] sm:p-3">
+      <div className="flex h-full items-start justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-bold text-app-muted">{label}</p>
-          <p className="mt-2 text-2xl font-black text-app-text">{value}</p>
-          <p className="mt-1 truncate text-[11px] font-bold text-app-muted">{detail}</p>
+          <p className="line-clamp-1 text-[10px] font-bold text-app-muted sm:text-xs">{label}</p>
+          <p className="mt-1 text-lg font-black text-app-text sm:text-xl">{value}</p>
+          <p className="mt-1 hidden truncate text-[11px] font-bold text-app-muted sm:block">{detail}</p>
         </div>
-        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${commandMetricToneClasses[tone]}`}>
+        <span className={`hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border sm:flex ${commandMetricToneClasses[tone]}`}>
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
       </div>
@@ -182,7 +181,7 @@ function DashboardCard({
   );
 }
 
-function MiniTrendChart({ values }: { values: number[] }) {
+function MiniTrendChart({ values, labels }: { values: number[]; labels?: string[] }) {
   const max = Math.max(...values, 1);
 
   return (
@@ -194,43 +193,9 @@ function MiniTrendChart({ values }: { values: number[] }) {
             style={{ height: `${Math.max(10, (value / max) * 88)}px` }}
             aria-label={`${value} مورد`}
           />
-          <span className="text-[9px] font-bold text-slate-400">{index + 1}</span>
+          <span className="text-[9px] font-bold text-slate-400">{labels?.[index] || index + 1}</span>
         </div>
       ))}
-    </div>
-  );
-}
-
-function PipelineDistribution({
-  items
-}: {
-  items: Array<{ label: string; value: number; color: string }>;
-}) {
-  const total = items.reduce((sum, item) => sum + item.value, 0);
-
-  return (
-    <div className="space-y-3">
-      <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">
-        {items.map((item) => (
-          <span
-            key={item.label}
-            className="h-full"
-            style={{ width: `${total ? (item.value / total) * 100 : 0}%`, backgroundColor: item.color }}
-            title={`${item.label}: ${item.value}`}
-          />
-        ))}
-      </div>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {items.map((item) => (
-          <div key={item.label} className="flex items-center justify-between gap-2 rounded-md bg-slate-50 px-3 py-2">
-            <span className="flex min-w-0 items-center gap-2 text-xs font-bold text-app-muted">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-              {item.label}
-            </span>
-            <span className="text-xs font-black text-app-text">{item.value}</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -259,70 +224,46 @@ function InsightRow({
   );
 }
 
-const operationStepToneClasses = {
-  primary: "border-blue-100 bg-blue-50 text-app-primary",
-  warning: "border-amber-100 bg-amber-50 text-amber-700",
-  info: "border-sky-100 bg-sky-50 text-sky-700",
-  alert: "border-rose-100 bg-rose-50 text-rose-700"
-};
-
-const operationStepAccent = {
-  primary: "37 99 235",
-  warning: "217 119 6",
-  info: "2 132 199",
-  alert: "225 29 72"
-};
-
-type OperationStep = {
-  label: string;
-  count: number;
-  detail: string;
-  href: string;
-  icon: LucideIcon;
-  tone: keyof typeof operationStepToneClasses;
-};
-
-function OperationsLane({ steps }: { steps: OperationStep[] }) {
-  const total = steps.reduce((sum, step) => sum + step.count, 0);
+function DonutStatusChart({
+  items,
+  total
+}: {
+  items: Array<{ label: string; value: number; color: string }>;
+  total: number;
+}) {
+  let cursor = 0;
+  const background = total
+    ? items
+      .filter((item) => item.value > 0)
+      .map((item) => {
+        const start = cursor;
+        const size = (item.value / total) * 360;
+        cursor += size;
+        return `${item.color} ${start}deg ${cursor}deg`;
+      })
+      .join(", ")
+    : "#E2E8F0 0deg 360deg";
 
   return (
-    <section className="rounded-lg border border-app-border bg-white p-4 shadow-hairline">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="app-section-kicker text-[10px] font-black">جریان عملیات زنده</p>
-          <h2 className="mt-1 text-sm font-black text-app-text">مسیر زنده انتشار</h2>
-        </div>
-        <StatusToken tone={total ? "primary" : "success"}>{total ? `${total} آیتم در جریان` : "مسیر خالی و آماده"}</StatusToken>
-      </div>
-
-      <div className="mt-5">
-        <div className="grid gap-2 sm:grid-cols-4">
-          {steps.map((step) => {
-            const Icon = step.icon;
-            const active = step.count > 0;
-            return (
-              <Link
-                key={step.label}
-                href={step.href}
-                className={`operation-lane-card app-interactive group flex min-w-0 items-center gap-3 rounded-lg border border-app-border bg-white p-3 shadow-hairline hover:border-blue-200 hover:bg-blue-50/35 sm:flex-col sm:text-center ${active ? "operation-lane-card-active" : ""}`}
-                style={active ? { "--operation-accent": operationStepAccent[step.tone] } as CSSProperties : undefined}
-              >
-                <span className={`operation-stage-orb relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 bg-white text-sm font-black shadow-hairline ${operationStepToneClasses[step.tone]} ${active ? "operation-stage-orb-live" : ""}`}>
-                  {step.count}
-                </span>
-                <span className="min-w-0">
-                  <span className="flex items-center gap-1.5 text-xs font-black text-app-text sm:justify-center">
-                    <Icon className="h-3.5 w-3.5 text-app-muted transition group-hover:text-app-primary" aria-hidden="true" />
-                    {step.label}
-                  </span>
-                  <span className="mt-1 block truncate text-[11px] font-bold text-app-muted">{step.detail}</span>
-                </span>
-              </Link>
-            );
-          })}
+    <div className="flex flex-col items-center justify-center gap-3">
+      <div className="relative h-40 w-40 rounded-full shadow-hairline" style={{ background: `conic-gradient(${background})` } as CSSProperties}>
+        <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-white shadow-inner">
+          <span className="text-2xl font-black text-app-text">{total}</span>
+          <span className="mt-1 text-[10px] font-bold text-app-muted">کل محتوا</span>
         </div>
       </div>
-    </section>
+      <div className="grid w-full grid-cols-2 gap-2 text-xs">
+        {items.map((item) => (
+          <div key={item.label} className="flex items-center justify-between gap-2 rounded-md bg-slate-50 px-2.5 py-2">
+            <span className="flex min-w-0 items-center gap-2 font-bold text-app-muted">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+              {item.label}
+            </span>
+            <span className="font-black text-app-text">{item.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -424,12 +365,6 @@ export default function HomePage() {
     { label: "کمپین فعال", value: activeCampaigns.length, detail: "در جریان امروز", icon: Megaphone, tone: "primary" as const },
     { label: "منتشر شده", value: publishedCount, detail: "خروجی موفق", icon: CheckCircle2, tone: "success" as const }
   ];
-  const operationSteps: OperationStep[] = [
-    { label: "آماده", count: queueCounts.ready, detail: "قابل زمان‌بندی", icon: CheckCircle2, tone: "primary", href: "/content?status=ready" },
-    { label: "زمان‌بندی", count: queueCounts.scheduled, detail: "در تقویم", icon: CalendarClock, tone: "warning", href: "/calendar" },
-    { label: "در انتشار", count: queueCounts.publishing, detail: "پردازش worker", icon: TimerReset, tone: "info", href: "/queue" },
-    { label: "بازیابی", count: queueCounts.failed, detail: "نیازمند اقدام", icon: AlertTriangle, tone: "alert", href: "/queue" }
-  ];
   const totalPosts = posts.length;
   const pendingApprovalCount = posts.filter((post) => ["pending", "changes_requested", "rejected"].includes(post.approval_status || "")).length;
   const manualReadyCount = statusCount(posts, "manual_ready");
@@ -449,13 +384,16 @@ export default function HomePage() {
     const date = dateFromPost(post);
     return date ? dayKey(date) === key : false;
   }).length);
+  const weeklyLabels = weekKeys.map((key) => new Date(`${key}T00:00:00`).toLocaleDateString("fa-IR", { weekday: "short" }));
   const pipelineDistribution = [
     { label: "پیش‌نویس", value: draftCount, color: "#94A3B8" },
     { label: "آماده", value: queueCounts.ready, color: "#2563EB" },
     { label: "زمان‌بندی", value: queueCounts.scheduled, color: "#D97706" },
+    { label: "دستی", value: manualReadyCount, color: "#7C3AED" },
     { label: "منتشر", value: publishedCount, color: "#059669" },
     { label: "ناموفق", value: queueCounts.failed, color: "#E11D48" }
   ];
+  const pipelineTotal = pipelineDistribution.reduce((sum, item) => sum + item.value, 0);
   const channelCounts = posts.reduce<Record<string, number>>((acc, post) => {
     const key = post.platform?.trim() || "عمومی";
     acc[key] = (acc[key] || 0) + 1;
@@ -484,7 +422,7 @@ export default function HomePage() {
       <AppShell>
         <WorkspacePage className="space-y-5">
           <section className="overflow-hidden rounded-lg border border-app-border bg-white/95 shadow-soft backdrop-blur">
-            <div className="border-b border-app-border px-4 py-4 sm:px-5">
+            <div className="border-b border-app-border px-4 py-3 sm:px-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
                   <div className="flex min-w-0 items-center gap-3">
@@ -495,7 +433,7 @@ export default function HomePage() {
                       <p className="mt-1 truncate text-xs font-bold text-app-muted">{store?.name || "فضای کاری اجتماعی"} · {store?.category || store?.brand_voice || "هویت برند نیازمند تکمیل"}</p>
                     </div>
                   </div>
-                  <p className="mt-4 max-w-3xl text-sm leading-7 text-app-muted">{briefing}</p>
+                  <p className="mt-3 max-w-3xl text-sm leading-6 text-app-muted">{briefing}</p>
                 </div>
 
                 <div className="flex flex-wrap gap-2 lg:justify-end">
@@ -515,15 +453,15 @@ export default function HomePage() {
             </div>
 
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
-              <div className="grid gap-3 p-4 sm:grid-cols-3 sm:p-5">
-                <DashboardFocusItem label="اقدام بعدی" value={nextAction.label} detail={nextAction.detail} icon={Target} tone="primary" />
-                <DashboardFocusItem label="صف فعال" value={queueTotal} detail="آماده، زمان‌بندی، انتشار و بازیابی" icon={TimerReset} tone={queueCounts.failed ? "alert" : "info"} />
+              <div className="grid grid-cols-3 gap-2 p-3 sm:gap-3 sm:p-4">
+                <DashboardFocusItem label="اقدام بعدی" value={nextAction.label} detail={nextAction.detail} icon={Target} tone="primary" compact />
+                <DashboardFocusItem label="صف فعال" value={queueTotal} detail="آماده، زمان‌بندی، انتشار و بازیابی" icon={TimerReset} tone={queueCounts.failed ? "alert" : "info"} compact />
                 <DashboardFocusItem label="انتشار بعدی" value={nextPosts[0]?.scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"} detail="نزدیک‌ترین پنجره برنامه" icon={CalendarClock} tone="warning" compact />
               </div>
 
-              <div className="border-t border-app-border bg-slate-50/70 p-4 sm:p-5 lg:border-r lg:border-t-0">
-                <div className="grid gap-2">
-                  <Button href={nextAction.href} className="w-full">
+              <div className="border-t border-app-border bg-slate-50/70 p-3 sm:p-4 lg:border-r lg:border-t-0">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button href={nextAction.href} className="col-span-2 w-full">
                     {nextAction.label}
                     <ArrowUpLeft className="mr-2 h-4 w-4" aria-hidden="true" />
                   </Button>
@@ -540,38 +478,46 @@ export default function HomePage() {
           {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
           {loading ? <Skeleton className="h-4 w-44" /> : null}
 
-          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="grid grid-cols-4 gap-2 sm:gap-3">
             {commandMetrics.map((metric) => <CommandMetric key={metric.label} {...metric} />)}
           </section>
 
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
             <DashboardCard
-              title="نمای عملکرد"
-              description="خلاصه مدیریتی از خروجی محتوا. شاخص‌های واقعی شبکه اجتماعی بعد از اتصال analytics جایگزین این داده‌های عملیاتی می‌شوند."
-              action={<StatusToken tone="info">داده عملیاتی</StatusToken>}
+              title="نمای هوشمند امروز"
+              description="خلاصه‌ای فشرده از سلامت تولید، زمان‌بندی و خروجی که روی یک لپ‌تاپ بدون اسکرول سنگین قابل خواندن است."
+              action={<StatusToken tone="info">داشبورد عملیاتی</StatusToken>}
             >
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <DashboardFocusItem label="نرخ تکمیل" value={`${completionRate}%`} detail="منتشرشده نسبت به محتوای غیرپیش‌نویس" icon={TrendingUp} tone={completionRate > 65 ? "info" : "warning"} compact />
-                <DashboardFocusItem label="نرخ خطا" value={`${failureRate}%`} detail="خطا نسبت به صف فعال" icon={AlertTriangle} tone={failureRate ? "alert" : "info"} compact />
-                <DashboardFocusItem label="میانگین تلاش" value={averageAttempts} detail="تعداد تلاش انتشار برای هر محتوا" icon={Activity} tone="info" compact />
-                <DashboardFocusItem label="آخرین خروجی" value={latestPublishedPost?.title || "هنوز خروجی موفقی ثبت نشده"} detail={latestPublishedPost?.published_at ? formatDateTime(latestPublishedPost.published_at) : "بعد از اولین انتشار تکمیل می‌شود"} icon={CheckCircle2} tone="primary" compact />
+              <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)]">
+                <DonutStatusChart items={pipelineDistribution} total={pipelineTotal} />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <DashboardFocusItem label="نرخ تکمیل" value={`${completionRate}%`} detail="منتشرشده نسبت به محتوای غیرپیش‌نویس" icon={TrendingUp} tone={completionRate > 65 ? "info" : "warning"} compact />
+                  <DashboardFocusItem label="نرخ خطا" value={`${failureRate}%`} detail="خطا نسبت به صف فعال" icon={AlertTriangle} tone={failureRate ? "alert" : "info"} compact />
+                  <DashboardFocusItem label="میانگین تلاش" value={averageAttempts} detail="تعداد تلاش انتشار برای هر محتوا" icon={Activity} tone="info" compact />
+                  <DashboardFocusItem label="آخرین خروجی" value={latestPublishedPost?.title || "بدون خروجی موفق"} detail={latestPublishedPost?.published_at ? formatDateTime(latestPublishedPost.published_at) : "بعد از اولین انتشار تکمیل می‌شود"} icon={CheckCircle2} tone="primary" compact />
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-lg border border-app-border bg-white p-3 shadow-hairline">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black text-app-text">روند ۷ روزه</p>
+                    <p className="mt-1 text-[11px] leading-5 text-app-muted">حجم تولید، زمان‌بندی یا انتشار ثبت‌شده</p>
+                  </div>
+                  <StatusToken tone={weeklyActivity.some(Boolean) ? "success" : "neutral"}>{weeklyActivity.reduce((sum, value) => sum + value, 0)} رویداد</StatusToken>
+                </div>
+                <MiniTrendChart values={weeklyActivity} labels={weeklyLabels} />
               </div>
             </DashboardCard>
 
-            <DashboardCard title="روند ۷ روزه" description="حجم تولید، زمان‌بندی یا انتشار ثبت‌شده در یک هفته اخیر.">
-              <MiniTrendChart values={weeklyActivity} />
-            </DashboardCard>
-          </section>
-
-          <section className="grid gap-4 xl:grid-cols-3">
-            <DashboardCard title="خط تولید محتوا" description="توزیع وضعیت‌ها برای تشخیص گلوگاه تولید و انتشار.">
-              <PipelineDistribution items={pipelineDistribution} />
-            </DashboardCard>
-
-            <DashboardCard title="سلامت کانال‌ها" description="وضعیت عملیاتی کانال‌ها و حجم محتوای وابسته.">
-              <div className="grid gap-2">
+            <DashboardCard
+              title="سلامت و اقدام"
+              description="فقط مواردی که امروز تصمیم‌گیری را جلو می‌برند."
+              action={<Button href="/analytics" variant="secondary" size="sm">تحلیل کامل</Button>}
+            >
+              <div className="grid gap-3">
                 {channelItems.map((channel) => (
-                  <div key={channel.label} className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2.5">
+                  <div key={channel.label} className="flex items-center justify-between gap-3 rounded-md border border-app-border bg-slate-50/70 px-3 py-2.5">
                     <span className="min-w-0">
                       <span className="block text-xs font-black text-app-text">{channel.label}</span>
                       <span className="mt-0.5 block truncate text-[11px] text-app-muted">{channel.detail}</span>
@@ -582,25 +528,19 @@ export default function HomePage() {
                     </span>
                   </div>
                 ))}
-              </div>
-            </DashboardCard>
 
-            <DashboardCard title="کمپین و تعامل" description="نمای سریع از برنامه کمپین، بازبینی و کارهای دستی.">
-              <div className="grid gap-2">
-                <DashboardFocusItem label="محتوای کمپین فعال" value={campaignPostTotal} detail={`${activeCampaigns.length} کمپین فعال`} icon={Megaphone} tone="primary" compact />
-                <DashboardFocusItem label="در انتظار بازبینی" value={pendingApprovalCount} detail="محتوایی که می‌تواند انتشار را مسدود کند" icon={MessageSquare} tone={pendingApprovalCount ? "warning" : "info"} compact />
-                <DashboardFocusItem label="آماده دستی" value={manualReadyCount} detail="وظایف دستی برای کانال‌های محدود" icon={Layers3} tone={manualReadyCount ? "warning" : "info"} compact />
+                <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
+                  <DashboardFocusItem label="کمپین فعال" value={campaignPostTotal} detail={`${activeCampaigns.length} کمپین در جریان`} icon={Megaphone} tone="primary" compact />
+                  <DashboardFocusItem label="بازبینی" value={pendingApprovalCount} detail="مسدودکننده‌های احتمالی انتشار" icon={MessageSquare} tone={pendingApprovalCount ? "warning" : "info"} compact />
+                  <DashboardFocusItem label="انتشار دستی" value={manualReadyCount} detail="وظایف آماده برای کانال‌های محدود" icon={Layers3} tone={manualReadyCount ? "warning" : "info"} compact />
+                </div>
+
+                <div className="grid gap-2">
+                  {dashboardInsights.slice(0, 2).map((insight) => <InsightRow key={insight.title} {...insight} />)}
+                </div>
               </div>
             </DashboardCard>
           </section>
-
-          <DashboardCard title="بینش‌های قابل اقدام" description="سه پیشنهاد کوتاه بر اساس وضعیت فعلی workspace.">
-            <div className="grid gap-3 lg:grid-cols-3">
-              {dashboardInsights.map((insight) => <InsightRow key={insight.title} {...insight} />)}
-            </div>
-          </DashboardCard>
-
-          <OperationsLane steps={operationSteps} />
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
             <div className="space-y-4">
