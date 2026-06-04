@@ -20,8 +20,8 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background: #eef4f6;
-  color: #172332;
+  background: #f7f6f2;
+  color: #18212f;
   font-family: Vazirmatn, Tahoma, Arial, sans-serif;
 }
 
@@ -42,8 +42,8 @@ a {
 }
 
 ::selection {
-  background: #dbeafe;
-  color: #172033;
+  background: #ccece8;
+  color: #11201f;
 }
 
 @keyframes app-enter {
@@ -140,45 +140,46 @@ a {
 
 @layer utilities {
   .app-workspace-bg {
-    background-color: #eef5f4;
+    background-color: #f7f6f2;
     background-image:
-      radial-gradient(circle at 84% 8%, rgba(15, 118, 110, 0.1), transparent 24rem),
-      radial-gradient(circle at 12% 18%, rgba(37, 99, 235, 0.08), transparent 22rem),
-      linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(241, 247, 247, 0.9) 52%, rgba(234, 243, 242, 0.95) 100%);
+      linear-gradient(rgba(32, 54, 63, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(32, 54, 63, 0.026) 1px, transparent 1px),
+      linear-gradient(180deg, #fbfaf7 0%, #f5f4ef 48%, #eef4f1 100%);
+    background-size: 28px 28px, 28px 28px, 100% 100%;
   }
 
   .app-studio-surface {
-    background-color: rgba(255, 255, 255, 0.92);
-    box-shadow: 0 0 0 1px rgba(189, 207, 213, 0.78), 0 12px 28px rgba(33, 61, 75, 0.05);
-    backdrop-filter: blur(18px);
+    background-color: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 0 0 1px rgba(209, 213, 219, 0.9), 0 12px 26px rgba(24, 33, 47, 0.045);
+    backdrop-filter: blur(12px);
   }
 
   .app-studio-panel {
-    background-color: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 0 0 1px rgba(189, 207, 213, 0.82), 0 18px 42px rgba(33, 61, 75, 0.06);
-    backdrop-filter: blur(16px);
+    background-color: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 0 0 1px rgba(205, 211, 218, 0.88), 0 18px 36px rgba(24, 33, 47, 0.055);
+    backdrop-filter: blur(10px);
   }
 
   .app-studio-grid {
-    background-color: rgba(244, 249, 248, 0.74);
+    background-color: rgba(249, 248, 244, 0.86);
     background-image:
-      linear-gradient(rgba(15, 118, 110, 0.055) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(15, 118, 110, 0.045) 1px, transparent 1px);
-    background-size: 28px 28px;
+      linear-gradient(rgba(32, 54, 63, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(32, 54, 63, 0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
   }
 
   .app-section-kicker {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    color: #0f766e;
+    color: #0b7771;
   }
 
   .app-section-kicker::before {
     width: 1rem;
     height: 0.125rem;
     border-radius: 999px;
-    background: #0f766e;
+    background: #0b7771;
     content: "";
   }
 
@@ -198,7 +199,7 @@ a {
   }
 
   .app-interactive:hover {
-    transform: translateY(-1px);
+    transform: translateY(-0.5px);
   }
 
   .app-interactive:active {
@@ -212,7 +213,53 @@ a {
   }
 
   .app-row:hover {
-    transform: translateY(-1px);
+    transform: translateY(-0.5px);
+  }
+
+  .nahrino-shell {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(250, 249, 245, 0.74)),
+      linear-gradient(rgba(32, 54, 63, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(32, 54, 63, 0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 24px 24px, 24px 24px;
+  }
+
+  .nahrino-sidebar {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 246, 241, 0.88));
+    box-shadow: inset -1px 0 0 rgba(32, 54, 63, 0.08);
+  }
+
+  .nahrino-topbar {
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 1px 0 rgba(32, 54, 63, 0.075), 0 10px 30px rgba(24, 33, 47, 0.035);
+  }
+
+  .nahrino-card {
+    border: 1px solid rgba(203, 210, 216, 0.9);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 10px 24px rgba(24, 33, 47, 0.045);
+  }
+
+  .nahrino-card-muted {
+    border: 1px solid rgba(203, 210, 216, 0.82);
+    background: rgba(249, 248, 244, 0.88);
+    box-shadow: 0 8px 18px rgba(24, 33, 47, 0.035);
+  }
+
+  .nahrino-nav-active {
+    background: #102a2a;
+    color: #ffffff;
+    box-shadow: 0 10px 20px rgba(16, 42, 42, 0.16);
+  }
+
+  .nahrino-nav-idle {
+    color: #586370;
+  }
+
+  .nahrino-nav-idle:hover {
+    background: rgba(255, 255, 255, 0.86);
+    color: #18212f;
+    box-shadow: 0 6px 16px rgba(24, 33, 47, 0.045);
   }
 
   .app-progress {

@@ -93,7 +93,7 @@ function DashboardFocusItem({
   href?: string;
 }) {
   const content = (
-    <article className={`${compact ? "min-h-[76px] p-2.5 sm:min-h-[92px] sm:p-3" : "min-h-[136px] p-4"} rounded-lg border border-app-border bg-white shadow-hairline`}>
+    <article className={`${compact ? "min-h-[76px] p-2.5 sm:min-h-[92px] sm:p-3" : "min-h-[136px] p-4"} nahrino-card rounded-lg`}>
       <div className="flex h-full flex-col justify-between gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -128,7 +128,7 @@ function CommandMetric({
   href?: string;
 }) {
   const content = (
-    <article className="app-row min-h-[76px] rounded-lg border border-app-border bg-white p-2.5 shadow-hairline sm:min-h-[88px] sm:p-3">
+    <article className="app-row nahrino-card min-h-[76px] rounded-lg p-2.5 sm:min-h-[88px] sm:p-3">
       <div className="flex h-full items-start justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
           <p className="line-clamp-1 text-[10px] font-bold text-app-muted sm:text-xs">{label}</p>
@@ -157,7 +157,7 @@ function DashboardCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-app-border bg-white p-4 shadow-hairline">
+    <section className="nahrino-card rounded-xl p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-sm font-black text-app-text">{title}</h2>
@@ -205,7 +205,7 @@ function CompactDigestItem({
   href?: string;
 }) {
   const content = (
-    <article className="app-row flex min-h-[58px] items-center gap-2 rounded-md border border-app-border bg-slate-50/70 px-2.5 py-2">
+    <article className="app-row nahrino-card-muted flex min-h-[58px] items-center gap-2 rounded-md px-2.5 py-2">
       <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${commandMetricToneClasses[tone]}`}>
         <Icon className="h-3.5 w-3.5" aria-hidden="true" />
       </span>
@@ -437,7 +437,7 @@ export default function HomePage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-3 pb-6 sm:space-y-4">
-          <section className="overflow-hidden rounded-xl border border-app-border bg-white shadow-soft">
+          <section className="nahrino-card overflow-hidden rounded-xl">
             <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="min-w-0 p-3 sm:p-4 lg:p-5">
                 <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
@@ -476,7 +476,7 @@ export default function HomePage() {
               </div>
 
               <aside className="border-t border-app-border bg-app-surfaceMuted/55 p-3 sm:p-4 lg:border-r lg:border-t-0">
-                <div className="flex h-full flex-col justify-between gap-3 rounded-lg border border-app-border bg-white p-3 shadow-hairline">
+                <div className="nahrino-card flex h-full flex-col justify-between gap-3 rounded-lg p-3">
                   <div>
                     <p className="text-[10px] font-black text-app-primary">مسیر فوری</p>
                     <h2 className="mt-1 line-clamp-2 text-base font-black text-app-text">{nextAction.label}</h2>
@@ -521,7 +521,7 @@ export default function HomePage() {
                   <DashboardFocusItem label="میانگین تلاش" value={averageAttempts} detail="تعداد تلاش انتشار برای هر محتوا" icon={Activity} tone="info" compact />
                   <DashboardFocusItem label="آخرین خروجی" value={latestPublishedPost?.title || "بدون خروجی موفق"} detail={latestPublishedPost?.published_at ? formatDateTime(latestPublishedPost.published_at) : "بعد از اولین انتشار تکمیل می‌شود"} icon={CheckCircle2} tone="primary" compact />
                 </div>
-                <div className="hidden rounded-lg border border-app-border bg-white p-3 shadow-hairline md:block lg:col-span-2 2xl:col-span-1">
+                <div className="nahrino-card hidden rounded-lg p-3 md:block lg:col-span-2 2xl:col-span-1">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-black text-app-text">روند ۷ روزه</p>

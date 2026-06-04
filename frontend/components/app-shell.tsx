@@ -148,14 +148,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <main className="app-workspace-bg min-h-screen text-app-text">
       <div className="flex min-h-screen">
         <Sidebar storeName={workspaceName} ready={shellReady} brandColor={brandColor} avatarUrl={brandImageUrl} />
-        <section className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-app-border/80 bg-white/70 shadow-[0_8px_24px_rgba(38,75,88,0.045)] backdrop-blur-xl">
-            <div className="flex min-h-[68px] items-center justify-between gap-3 px-4 py-2 lg:px-6">
+        <section className="nahrino-shell flex min-w-0 flex-1 flex-col">
+          <header className="nahrino-topbar sticky top-0 z-20 border-b border-slate-200/80 backdrop-blur-xl">
+            <div className="flex min-h-[64px] items-center justify-between gap-3 px-3 py-2 lg:px-5">
               <div className="flex min-w-0 items-center gap-3">
                 <Link href="/" className="lg:hidden" aria-label={productName}>
                   <ProductMark />
                 </Link>
-                <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-app-teal shadow-hairline lg:flex" style={brandColor ? { color: brandColor } : undefined}>
+                <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-app-teal shadow-hairline lg:flex" style={brandColor ? { color: brandColor } : undefined}>
                   <ActiveNavIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
@@ -172,7 +172,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
-                  className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md bg-white px-3 text-xs text-app-muted shadow-hairline hover:bg-blue-50 hover:text-app-primary md:flex md:w-56 xl:w-72"
+                  className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md border border-slate-200 bg-white/90 px-3 text-xs text-app-muted shadow-hairline hover:bg-white hover:text-app-primary md:flex md:w-56 xl:w-72"
                   aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -183,7 +183,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
-                  className="app-interactive flex h-9 w-9 items-center justify-center rounded-md bg-white text-app-muted shadow-hairline hover:bg-blue-50 hover:text-app-primary md:hidden"
+                  className="app-interactive flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white/90 text-app-muted shadow-hairline hover:bg-white hover:text-app-primary md:hidden"
                   aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
@@ -192,7 +192,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {!overviewLoading && !rubikaReady ? (
                   <Link
                     href="/channels"
-                    className="app-interactive hidden h-9 items-center gap-2 rounded-md bg-amber-50 px-2.5 text-xs font-bold text-amber-700 shadow-hairline hover:bg-amber-100 sm:flex"
+                    className="app-interactive hidden h-9 items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 text-xs font-bold text-amber-700 shadow-hairline hover:bg-amber-100 sm:flex"
                   >
                     <Network className="h-3.5 w-3.5" aria-hidden="true" />
                     <span className="hidden xl:inline">کانال‌ها</span>
@@ -203,7 +203,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {showSetupAction ? (
                   <Link
                     href={setupHref}
-                    className="app-interactive hidden h-9 items-center gap-2 rounded-md bg-white px-2.5 text-xs font-bold text-amber-800 shadow-hairline hover:bg-amber-50 lg:flex"
+                    className="app-interactive hidden h-9 items-center gap-2 rounded-md border border-amber-200 bg-white px-2.5 text-xs font-bold text-amber-800 shadow-hairline hover:bg-amber-50 lg:flex"
                   >
                     <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
                     تکمیل آماده‌سازی
@@ -212,7 +212,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
                 <Link
                   href="/inbox"
-                  className="app-interactive relative flex h-9 w-9 items-center justify-center rounded-md bg-white text-slate-500 shadow-hairline hover:bg-app-coralSoft hover:text-app-coral"
+                  className="app-interactive relative flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white/90 text-slate-500 shadow-hairline hover:bg-white hover:text-app-coral"
                   aria-label={notificationCount ? `${notificationCount} اعلان عملیاتی خوانده‌نشده` : "صندوق عملیات انتشار"}
                 >
                   <BellRing className="h-4 w-4" aria-hidden="true" />
@@ -228,7 +228,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <button
                     type="button"
                     onClick={() => setAccountMenuOpen((current) => !current)}
-                    className="app-interactive flex h-9 items-center gap-2 rounded-md bg-white px-2 text-xs font-bold text-slate-600 shadow-hairline hover:bg-blue-50 hover:text-app-primary"
+                    className="app-interactive flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white/90 px-2 text-xs font-bold text-slate-600 shadow-hairline hover:bg-white hover:text-app-primary"
                     aria-label="منوی حساب کاربری"
                     aria-expanded={accountMenuOpen}
                   >

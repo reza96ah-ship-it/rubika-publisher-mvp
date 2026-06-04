@@ -137,7 +137,7 @@ export function WorkspacePage({ children, className = "" }: WorkspacePageProps) 
 
 export function WorkspaceHero({ eyebrow, title, description, actions, meta, aside }: WorkspaceHeroProps) {
   return (
-    <section className="app-studio-panel overflow-hidden rounded-lg">
+    <section className="nahrino-card overflow-hidden rounded-xl">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 px-3 py-3 sm:px-4 lg:px-5">
           {eyebrow ? <p className="app-section-kicker text-[11px] font-black uppercase">{eyebrow}</p> : null}
@@ -150,7 +150,7 @@ export function WorkspaceHero({ eyebrow, title, description, actions, meta, asid
           </div>
           {meta ? <div className="mt-3 flex flex-wrap gap-2">{meta}</div> : null}
         </div>
-        {aside ? <div className="app-studio-grid border-t border-app-border bg-teal-50/55 p-3 sm:p-4 lg:border-r lg:border-t-0">{aside}</div> : null}
+        {aside ? <div className="nahrino-card-muted border-t border-app-border p-3 sm:p-4 lg:border-r lg:border-t-0">{aside}</div> : null}
       </div>
     </section>
   );
@@ -171,7 +171,7 @@ export function WorkspaceHeader({ eyebrow, title, description, action }: Workspa
 
 export function WorkspaceToolbar({ children, meta, className = "" }: WorkspaceToolbarProps) {
   return (
-    <div className={`app-row app-studio-surface flex flex-col gap-2 rounded-lg px-2.5 py-2 lg:flex-row lg:items-center lg:justify-between ${className}`}>
+    <div className={`app-row nahrino-card-muted flex flex-col gap-2 rounded-lg px-2.5 py-2 lg:flex-row lg:items-center lg:justify-between ${className}`}>
       <div className="min-w-0">{children}</div>
       {meta ? <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-app-muted">{meta}</div> : null}
     </div>
@@ -194,13 +194,13 @@ export function MetricTile({ label, value, hint, tone = "neutral", icon }: Metri
 }
 
 export function MetricStrip({ children }: { children: ReactNode }) {
-  return <div className="app-studio-surface grid grid-cols-2 overflow-hidden rounded-lg divide-x divide-y divide-app-border divide-x-reverse md:grid-cols-4 md:divide-y-0">{children}</div>;
+  return <div className="nahrino-card grid grid-cols-2 overflow-hidden rounded-lg divide-x divide-y divide-app-border divide-x-reverse md:grid-cols-4 md:divide-y-0">{children}</div>;
 }
 
 export function WorkspacePanel({ title, description, action, children, className = "", bodyClassName = "p-4" }: WorkspacePanelProps) {
   return (
-    <section className={`app-studio-panel rounded-lg ${className}`}>
-      <div className="flex flex-col justify-between gap-2 border-b border-app-border bg-app-canvas/70 px-3 py-2.5 lg:flex-row lg:items-center">
+    <section className={`nahrino-card rounded-xl ${className}`}>
+      <div className="flex flex-col justify-between gap-2 border-b border-app-border bg-[#fbfaf7] px-3 py-2.5 lg:flex-row lg:items-center">
         <div className="min-w-0">
           <h2 className="text-sm font-black text-app-text">{title}</h2>
           {description ? <p className="mt-1 text-xs leading-5 text-app-muted">{description}</p> : null}
@@ -214,7 +214,7 @@ export function WorkspacePanel({ title, description, action, children, className
 
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="app-enter app-studio-grid flex flex-col items-center justify-center rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted/80 px-3 py-5 text-center sm:px-4 sm:py-6">
+    <div className="app-enter flex flex-col items-center justify-center rounded-md border border-dashed border-app-borderStrong bg-[#faf9f5] px-3 py-5 text-center sm:px-4 sm:py-6">
       {icon ? <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-md border border-teal-100 bg-white text-app-teal shadow-soft">{icon}</div> : null}
       <p className="text-sm font-black text-app-text">{title}</p>
       {description ? <p className="mt-1.5 max-w-md text-xs leading-5 text-app-muted sm:text-sm sm:leading-6">{description}</p> : null}
