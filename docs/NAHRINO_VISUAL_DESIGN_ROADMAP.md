@@ -21,6 +21,29 @@ The source is strong because it gives us:
 
 The roadmap below is therefore the controlling visual plan. The detailed implementation rules live in `NAHRINO_DESIGN_SYSTEM_V2.md`.
 
+## 1.1 Source Document Verification
+
+Primary source file:
+
+```text
+C:/Users/Reza/Desktop/Professional Visual Design System Roadmap for a 10_10 App.docx
+```
+
+The Word document was checked directly before adopting this roadmap. It contains:
+
+- 158 text paragraphs,
+- 35 styled headings,
+- 20 structured Word tables,
+- benchmark tables,
+- light, dark, and high-contrast token tables,
+- typography, spacing, radius, elevation, and responsive-grid tables,
+- motion-token and choreography tables,
+- component-library specifications,
+- visual-language rules,
+- operating-model, team, and QA-gate tables.
+
+Nahrino does not copy the Word file verbatim into the product roadmap. Instead, it converts the Word report into a Nahrino-specific execution plan and keeps the detailed token/component rules in `NAHRINO_DESIGN_SYSTEM_V2.md`.
+
 ## 2. North Star
 
 Nahrino should feel like:
