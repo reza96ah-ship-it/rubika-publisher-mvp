@@ -38,6 +38,7 @@ The app should not depend on:
 This system is based on:
 
 - the user-provided benchmark report: `The 2026 Digital Interface Ecosystem`,
+- the user-provided visual systems report: `The Comprehensive Architecture of Modern Visual Design Systems`,
 - existing Nahrino rebuild docs,
 - observed weaknesses in the current app,
 - benchmark patterns from Buffer, Hootsuite, Sprout Social, Later, Planable, Metricool, Agorapulse, and Canva-style creative workflows,
@@ -51,6 +52,33 @@ Useful reference anchors:
 - WCAG 2.2 target size minimum is 24 x 24 CSS px with exceptions: https://www.w3.org/TR/WCAG22/
 - Core Web Vitals focus on LCP, INP, and CLS: https://web.dev/articles/vitals
 - Figma variables support token modes for design systems: https://help.figma.com/hc/en-us/articles/15343816063383-Modes-for-variables
+
+### 2.1 Visual Systems Source Integration
+
+The visual systems report adds one important correction to this document:
+
+**Nahrino must be built as a tokenized product system, not as styled pages.**
+
+That means every future UI decision should map to:
+
+1. a primitive value,
+2. a semantic role,
+3. a component-level behavior.
+
+The source also adds five practical rules:
+
+- use color roles, not arbitrary hex decisions,
+- support density modes for compact operational work and comfortable touch work,
+- separate productive UI typography from expressive brand/template typography,
+- use elevation as a small tokenized Z-axis system, not random shadows,
+- use motion physics for state feedback, but avoid decorative or costly optical effects.
+
+Nahrino interpretation:
+
+- adopt the rigor of W3C-style design tokens,
+- borrow the responsiveness and emotional motion discipline of Material 3 Expressive,
+- borrow the layered clarity of Apple spatial design only where it improves hierarchy,
+- do not chase literal Liquid Glass refraction in the app shell because it is expensive, browser-fragile, and distracts from operational clarity.
 
 ## 3. Product Mental Model
 
@@ -166,6 +194,40 @@ Do not use generic abstract backgrounds to hide weak layout.
 
 ## 6. Theme Tokens
 
+### 6.0 Token Architecture
+
+Nahrino tokens must use a three-tier model.
+
+| Tier | Purpose | Nahrino example |
+| --- | --- | --- |
+| Primitive | Raw approved value with no usage meaning | `color.teal.700`, `space.4`, `radius.md` |
+| Semantic | Product intent mapped to primitive values | `color.action.primary`, `surface.panel`, `text.muted` |
+| Component | Scoped component behavior mapped to semantic roles | `button.primary.bg.default`, `content-row.rail.channel`, `drawer.surface.overlay` |
+
+Rules:
+
+- primitive tokens never appear directly in page components,
+- semantic tokens drive surfaces, text, borders, status, motion, and elevation,
+- component tokens are allowed only when a component has a real behavioral state,
+- token names must be descriptive and predictable, not visual nicknames like `blue1` or `nice-shadow`,
+- dark mode, high contrast, compact density, and future brand modes must change semantic mappings, not page CSS.
+
+Recommended naming syntax:
+
+```text
+nahrino.{category}.{role}.{property}.{state}.{scale}
+```
+
+Examples:
+
+```text
+nahrino.color.feedback.background.error
+nahrino.surface.panel.background.default
+nahrino.button.primary.background.hover
+nahrino.content.row.spacing.compact
+nahrino.motion.drawer.enter.standard
+```
+
 ### 6.1 Color Primitives
 
 | Token | Value | Use |
@@ -205,6 +267,18 @@ Do not use generic abstract backgrounds to hide weak layout.
 | `--primary` | `teal-700` |
 | `--primary-strong` | `teal-900` |
 | `--focus-ring` | `rgba(11, 119, 113, 0.24)` |
+
+Semantic color roles must be paired with foreground roles.
+
+| Background role | Required foreground role | Rule |
+| --- | --- | --- |
+| `surface.panel` | `text.primary` | Body contrast target 4.5:1 |
+| `surface.muted` | `text.secondary` | Secondary copy remains readable |
+| `action.primary.bg` | `action.primary.fg` | CTA text must be algorithmically paired |
+| `feedback.error.bg` | `feedback.error.fg` | Never rely only on red rail or icon |
+| `channel.rail.*` | `text.primary` | Channel colors are accent only |
+
+Future theme modes must alter the semantic role values together. A surface color should never be changed without its matching text, icon, and border roles.
 
 ### 6.3 Status Tokens
 
@@ -278,6 +352,30 @@ Rules:
 - Persian paragraphs need generous line height,
 - use Persian numerals consistently in UI copy where appropriate.
 
+### 7.3 Productive and Expressive Typography
+
+Nahrino has two typography suites.
+
+| Suite | Use | Baseline | Behavior |
+| --- | --- | ---: | --- |
+| Productive | App shell, dashboards, tables, filters, composer controls | 14px | Fixed sizes, compact, high readability |
+| Expressive | Brand moments, media templates, report covers, onboarding moments | 16px+ | More spacious, visual, used sparingly |
+
+Rules:
+
+- daily product UI uses the Productive suite,
+- report exports and creative templates may use Expressive typography,
+- core app pages must not use fluid viewport-scaled headings,
+- line measure should be capped for long text blocks,
+- dense tables and rows use fixed type sizes so alignment does not break.
+
+Recommended line measure:
+
+- body paragraphs: max `64ch`,
+- explanatory side notes: max `52ch`,
+- dense rows: truncate or wrap to two lines,
+- report narrative blocks: max `72ch`.
+
 ## 8. Spacing, Radius, Shadows
 
 ### 8.1 Spacing Scale
@@ -333,6 +431,42 @@ Rules:
 - no card pile effect,
 - popovers must feel layered but not dramatic.
 
+### 8.4 Elevation Tokens
+
+Elevation is a structural role, not decoration.
+
+| Level | Token | Use | Shadow |
+| --- | --- | --- | --- |
+| 0 | `elevation.base` | Page canvas, flat lists, nav areas | none or hairline |
+| 1 | `elevation.raised` | Panels, KPI strips, content rows on hover | `shadow-soft` |
+| 2 | `elevation.overlay` | Menus, command palette, sticky toolbar | `shadow-float` |
+| 3 | `elevation.modal` | Drawer, bottom sheet, dialog | `shadow-lift` |
+| 4 | `elevation.critical` | Blocking alert or destructive confirmation | strongest allowed shadow |
+
+Rules:
+
+- most surfaces stay at level 0 or 1,
+- hover/focus may lift one level only,
+- drawers, sheets, and command palette are overlays, not cards inside cards,
+- elevation must clarify interaction priority, not create visual drama.
+
+### 8.5 Density Modes
+
+Nahrino must support three density modes at the token level.
+
+| Mode | Purpose | UI behavior |
+| --- | --- | --- |
+| Compact | Power users, desktop operations, data-heavy views | tighter rows, smaller gaps, 36px controls where safe |
+| Standard | Default desktop/laptop | current baseline, balanced readability |
+| Comfortable | Mobile, touch, accessibility | 48px targets, larger row padding, more air |
+
+Initial implementation:
+
+- standard mode is default,
+- compact mode is allowed for tables, planner list, content library, reports,
+- comfortable mode is automatic on mobile and touch-heavy flows,
+- density changes must be implemented through spacing and component tokens, not one-off classes.
+
 ## 9. Layout System
 
 ### 9.1 Page Shell
@@ -382,12 +516,67 @@ Avoid:
 
 | Breakpoint | Width | Behavior |
 | --- | ---: | --- |
-| Mobile | `< 640px` | Bottom nav, sheets, single goal per screen |
+| XXS | `< 360px` | Single column, no dense tables, labels may stack |
+| Mobile | `360px - 639px` | Bottom nav, sheets, single goal per screen |
 | Tablet | `640px - 1023px` | Two-column only when content is short |
 | Laptop | `1024px - 1279px` | Compact dashboard and planner |
-| Desktop | `1280px+` | Full shell, inspector panels allowed |
+| Desktop | `1280px - 1767px` | Full shell, inspector drawers allowed |
+| Wide | `1768px+` | Centered max-width, never stretch text indefinitely |
+
+Grid rules:
+
+- use fluid grids until desktop,
+- cap main content width on wide displays,
+- gutters grow by breakpoint: 16px mobile, 24px tablet, 32px desktop, 40px wide,
+- content aligns to columns, not gutters,
+- intrinsic controls like chips and buttons keep natural width.
+
+### 9.4 Surface Topology
+
+Surface hierarchy:
+
+1. Canvas: page background.
+2. Base surface: lists, toolbars, flat rows.
+3. Raised surface: panels and important groups.
+4. Overlay surface: menus, command palette, drawers.
+5. Critical surface: destructive confirmations and blocking recovery.
+
+Do not simulate Liquid Glass as a general theme.
+
+Allowed spatial effects:
+
+- subtle translucent topbar,
+- soft overlay blur behind command palette or drawer,
+- edge shadow on drawers,
+- small focus glow for live status.
+
+Forbidden spatial effects:
+
+- heavy refraction,
+- chromatic edge dispersion,
+- noisy glass textures,
+- glass cards over dense app content,
+- background distortion behind text.
 
 ## 10. Core Components
+
+### 10.0 Atomic Component Model
+
+Nahrino components must be rebuilt bottom-up.
+
+| Layer | Meaning | Nahrino examples |
+| --- | --- | --- |
+| Atom | Basic token or element | color role, text label, icon, focus ring |
+| Molecule | Small functional control | search field, status chip, channel badge |
+| Organism | Product object surface | content row, planner lane, inbox thread, report panel |
+| Template | Screen structure | dashboard grid, composer studio, planner layout |
+| Page | Real data in a template | dashboard, composer, media, reports |
+
+Rules:
+
+- page components should compose organisms, not rebuild atoms,
+- content row, channel rail, saved-view toolbar, drawer, and KPI strip are required organisms,
+- design-system examples must use real Nahrino objects, not generic demo cards.
 
 ### 10.1 App Shell
 
@@ -442,6 +631,14 @@ Rules:
 - label, value, change/detail, status rail,
 - no big icons on every tile.
 
+Token anatomy:
+
+- container: `surface.panel`, `elevation.raised`,
+- label: `text.secondary`, Productive label,
+- value: `text.primary`, Productive data,
+- state rail: semantic status or channel accent,
+- hover: one elevation level only.
+
 ### 10.4 Action Row
 
 Use instead of oversized cards for compact tasks.
@@ -471,6 +668,44 @@ Rules:
 - no media means quiet placeholder,
 - text must clamp cleanly,
 - channel state visible without opening detail.
+
+Token anatomy:
+
+- container background: `surface.panel`,
+- thumbnail: fixed ratio with fallback,
+- channel rail: component token, 3px or compact chip,
+- status: semantic feedback token,
+- primary action: visible only on focus/hover or row selection when possible.
+
+### 10.5.1 Data Table and Row Anatomy
+
+Tables and dense rows must use density tokens.
+
+Compact mode:
+
+- smaller vertical padding,
+- fixed Productive type,
+- row height target 40px to 44px,
+- fewer secondary details.
+
+Standard mode:
+
+- row height target 48px to 56px,
+- thumbnail and status visible,
+- one-line details.
+
+Comfortable mode:
+
+- row height target 56px+,
+- touch-friendly actions,
+- details can wrap to two lines.
+
+Rules:
+
+- tables need clear header alignment,
+- row actions should not crowd the data,
+- mobile table fallback is a stacked row list,
+- selection state must be visible without relying only on background color.
 
 ### 10.6 Channel Rail
 
@@ -606,6 +841,10 @@ Motion rule:
 
 **Motion exists to show state, progress, causality, or focus.**
 
+Nahrino chooses restrained spring-like motion, not decorative animation.
+
+The visual systems source is clear that modern motion should preserve continuity and feel interruptible. For web implementation, we approximate this with consistent easing and state-driven transitions until a dedicated motion library is introduced.
+
 ### 11.1 Motion Durations
 
 | Motion | Duration |
@@ -623,6 +862,24 @@ Motion rule:
 | `ease-standard` | `cubic-bezier(0.2, 0, 0, 1)` |
 | `ease-emphasized` | `cubic-bezier(0.2, 0, 0, 1.2)` |
 | `ease-exit` | `cubic-bezier(0.4, 0, 1, 1)` |
+
+### 11.2.1 Motion Physics Roles
+
+| Role | Feel | Use |
+| --- | --- | --- |
+| `motion.press` | fast, firm, no bounce | buttons, rows, chips |
+| `motion.reveal` | soft and clear | drawer, command palette, bottom sheet |
+| `motion.reorder` | spring-like continuity | future drag/drop planner and media ordering |
+| `motion.progress` | linear or state-driven | upload, save, publish, retry |
+| `motion.attention` | one pulse only | warning, failed publish, live notification |
+
+Rules:
+
+- hover and press feedback should be under 180ms,
+- page transitions should not block interaction,
+- repeated looping motion is forbidden except live status indicators,
+- interrupted interactions should settle naturally instead of snapping,
+- future drag/drop interactions should use spring-like return/snap behavior.
 
 ### 11.3 Functional Motion Map
 
@@ -982,7 +1239,7 @@ Acceptance:
 
 Goal:
 
-- replace scattered colors, radius, shadows, and spacing with tokens.
+- replace scattered colors, radius, shadows, spacing, density, and elevation with tokens.
 
 Deliverables:
 
@@ -990,12 +1247,18 @@ Deliverables:
 - Tailwind token mapping if needed,
 - token examples in design-system page,
 - remove old one-off background patterns.
+- primitive, semantic, and component token map,
+- density token map for compact, standard, comfortable,
+- elevation token map for base, raised, overlay, modal.
 
 Acceptance:
 
 - all new components use semantic tokens,
 - no hardcoded random colors in new surfaces,
 - reduced motion behavior exists.
+- page components do not consume primitive tokens directly,
+- new tables/rows declare a density mode,
+- overlay components use elevation tokens.
 
 ### Phase DS-2: Shell Rebuild
 
@@ -1037,6 +1300,28 @@ Acceptance:
 - laptop first viewport does not feel like endless scroll,
 - no permanent setup/progress block after setup,
 - mobile dashboard has one clear next action.
+
+### Phase DS-3.5: Productive UI Component Anatomy
+
+Goal:
+
+- replace generic cards with product-object organisms.
+
+Deliverables:
+
+- KPI tile anatomy,
+- content row anatomy,
+- data table row anatomy,
+- channel rail anatomy,
+- planner lane anatomy,
+- report panel anatomy,
+- density behavior for each organism.
+
+Acceptance:
+
+- no new dashboard/content/planner surface is a generic card,
+- every reusable organism maps to semantic/component tokens,
+- compact and comfortable density are possible without rewriting markup.
 
 ### Phase DS-4: Planner Rebuild
 
@@ -1196,6 +1481,9 @@ Deliverables:
 - chart interaction states,
 - reduced-motion support,
 - performance budget.
+- motion role map for press, reveal, reorder, progress, attention,
+- no general Liquid Glass implementation,
+- optional overlay translucency only where readability remains strong.
 
 Acceptance:
 
@@ -1290,4 +1578,3 @@ Nahrino reaches the target when:
 - UI motion explains what is happening,
 - the product uses real content assets instead of decorative filler,
 - every page clearly belongs to the same Persian-first product.
-
