@@ -39,6 +39,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const knownNotificationIds = useRef<Set<string> | null>(null);
+  const scrollRootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     function refreshOverview() {
@@ -116,6 +117,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setAccountMenuOpen(false);
     setCommandPaletteOpen(false);
+    scrollRootRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [pathname]);
 
   useEffect(() => {
@@ -145,11 +147,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <main className="app-workspace-bg min-h-screen text-app-text">
-      <div className="flex min-h-screen">
+    <main className="app-workspace-bg h-screen overflow-hidden text-app-text">
+      <div ref={scrollRootRef} data-app-scroll-root className="flex h-full min-h-0 overflow-y-auto overscroll-contain scroll-smooth">
         <Sidebar storeName={workspaceName} ready={shellReady} brandColor={brandColor} avatarUrl={brandImageUrl} />
-        <section className="nahrino-shell flex min-w-0 flex-1 flex-col">
-          <header className="nahrino-topbar sticky top-0 z-20 border-b border-slate-200/80 backdrop-blur-xl">
+        <section className="nahrino-shell flex min-h-full min-w-0 flex-1 flex-col">
+          <header className="nahrino-topbar sticky top-0 z-20 shrink-0 border-b border-slate-200/80 backdrop-blur-xl">
             <div className="flex min-h-[58px] items-center justify-between gap-3 px-3 py-2 lg:px-5">
               <div className="flex min-w-0 items-center gap-3">
                 <Link href="/" className="lg:hidden" aria-label={productName}>
