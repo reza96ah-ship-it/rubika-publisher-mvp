@@ -48,15 +48,24 @@ const settingsNavItem: NavItem = { label: "تنظیمات", href: "/store", icon
 
 const primaryNavGroups: NavGroup[] = [
   {
-    title: "مسیر اصلی",
+    title: "برنامه",
     items: [
       todayNavItem,
-      composeNavItem,
       plannerNavItem,
-      campaignsNavItem,
+      campaignsNavItem
+    ]
+  },
+  {
+    title: "دارایی‌ها",
+    items: [
       contentNavItem,
       { label: "رسانه", href: "/media", icon: GalleryHorizontalEnd },
-      { label: "پیام‌ها", href: "/inbox", icon: BellRing },
+      { label: "پیام‌ها", href: "/inbox", icon: BellRing }
+    ]
+  },
+  {
+    title: "رشد",
+    items: [
       { label: "گزارش‌ها", href: "/analytics", icon: BarChart3 }
     ]
   }
@@ -132,14 +141,14 @@ function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
   return (
     <Link
       href={item.href}
-      className={`app-interactive group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm ${
+      className={`app-interactive group relative flex min-h-10 items-center gap-2.5 rounded-md px-2.5 text-sm ${
           active
             ? "nahrino-nav-active font-black"
             : "nahrino-nav-idle hover:shadow-hairline"
       }`}
     >
-      {active ? <span className="absolute inset-y-2 right-0 w-0.5 rounded-l-full bg-teal-300" /> : null}
-      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-teal-200" : "text-slate-400 group-hover:text-app-teal"}`} aria-hidden="true" />
+      {active ? <span className="absolute inset-y-2 right-0 w-0.5 rounded-l-full bg-app-soft" /> : null}
+      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-app-soft" : "text-app-muted group-hover:text-app-primary"}`} aria-hidden="true" />
       <span className="truncate">{item.label}</span>
     </Link>
   );
@@ -149,13 +158,13 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
   const pathname = usePathname();
 
   return (
-    <aside className="nahrino-sidebar hidden w-[248px] shrink-0 border-l border-slate-200/80 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:self-start lg:flex-col lg:overflow-hidden">
-      <div className="shrink-0 border-b border-slate-200/80 px-3 py-3">
+    <aside className="nahrino-sidebar hidden w-[238px] shrink-0 border-l border-app-border/80 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:self-start lg:flex-col lg:overflow-hidden">
+      <div className="shrink-0 border-b border-app-border/80 px-3 py-3">
         <Link href="/" className="flex items-center gap-2.5 rounded-md px-1 py-1">
           <ProductMark />
           <div className="min-w-0">
             <p className="truncate text-sm font-black text-app-text">{productName}</p>
-            <p className="mt-0.5 text-[10px] font-bold text-app-teal">{productShortTagline}</p>
+            <p className="mt-0.5 text-[10px] font-bold text-app-primary">{productShortTagline}</p>
           </div>
         </Link>
 
@@ -173,10 +182,10 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
 
       </div>
 
-      <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4" aria-label="ناوبری اصلی">
+      <nav className="flex-1 space-y-3 overflow-y-auto px-3 py-3" aria-label="ناوبری اصلی">
         {primaryNavGroups.map((group) => (
           <div key={group.title}>
-            <p className="mb-1.5 px-2.5 text-[10px] font-black text-slate-500">{group.title}</p>
+            <p className="mb-1 px-2.5 text-[10px] font-black text-app-muted">{group.title}</p>
             <div className="space-y-1">
               {group.items.map((item) => {
                 const active = isNavItemActive(pathname, item);
@@ -187,10 +196,10 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
         ))}
       </nav>
 
-      <div className="shrink-0 border-t border-slate-200/80 bg-white/35 p-3">
+      <div className="shrink-0 border-t border-app-border/80 bg-white/45 p-3">
         <div className="mb-2 flex items-center justify-between px-2.5">
-          <p className="text-[10px] font-black text-slate-500">تنظیمات</p>
-          <Settings2 className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+          <p className="text-[10px] font-black text-app-muted">فضای کاری</p>
+          <Settings2 className="h-3.5 w-3.5 text-app-muted" aria-hidden="true" />
         </div>
         <div className="space-y-0.5">
           {settingsNavItems.map((item) => <NavEntry key={item.href} item={item} active={isNavItemActive(pathname, item)} />)}
@@ -218,7 +227,7 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-2 bottom-2 z-30 grid grid-cols-5 rounded-xl border border-slate-200 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_12px_34px_rgba(24,33,47,0.16)] backdrop-blur-xl lg:hidden" aria-label="ناوبری اصلی">
+    <nav className="fixed inset-x-2 bottom-2 z-30 grid grid-cols-5 rounded-xl border border-app-border bg-app-surface/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-lift backdrop-blur-xl lg:hidden" aria-label="ناوبری اصلی">
       {mobileNavItems.map((item) => {
         const active = isNavItemActive(pathname, item);
         const Icon = item.icon;
@@ -229,15 +238,15 @@ export function MobileNav() {
             href={item.href}
             aria-label={item.label}
             className={`app-interactive flex min-w-0 flex-col items-center gap-1 text-[10px] font-bold ${
-              isCompose ? "-mt-5 text-[#102a2a]" : active ? "text-[#102a2a]" : "text-slate-500"
+              isCompose ? "-mt-5 text-app-graphite" : active ? "text-app-graphite" : "text-app-muted"
             }`}
           >
             <span className={`flex items-center justify-center rounded-md ${
               isCompose
-                ? "h-11 w-11 bg-[#102a2a] text-white shadow-lg shadow-slate-300"
+                ? "h-11 w-11 bg-app-graphite text-white shadow-accent"
                 : active
-                  ? "h-7 w-9 bg-teal-50 text-[#102a2a]"
-                  : "h-7 w-9 text-slate-400"
+                  ? "h-7 w-9 bg-app-soft text-app-graphite"
+                  : "h-7 w-9 text-app-muted"
             }`}>
               <Icon className={isCompose ? "h-5 w-5" : "h-4 w-4"} aria-hidden="true" />
             </span>

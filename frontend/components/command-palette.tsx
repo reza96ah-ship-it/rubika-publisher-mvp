@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, BellRing, CalendarDays, FileImage, FileText, Home, ListChecks, PenLine, Rocket, Search, Settings2, X } from "lucide-react";
+import { BarChart3, BellRing, CalendarDays, FileImage, FileText, Home, ListChecks, Megaphone, PenLine, Rocket, Search, Settings2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, authHeaders, type Post } from "../lib/posts";
@@ -14,7 +14,8 @@ type CommandPaletteProps = {
 const primaryCommands = [
   { label: "داشبورد", detail: "اولویت امروز، ریسک‌ها، انتشار بعدی و پیام‌های مهم", href: "/", icon: Home },
   { label: "ساخت پست", detail: "نوشتن، طراحی رسانه، نسخه‌های کانالی و زمان‌بندی", href: "/compose", icon: PenLine },
-  { label: "تقویم", detail: "تقویم، کمپین‌ها، زمان‌بندی و نمای برنامه انتشار", href: "/calendar", icon: CalendarDays },
+  { label: "تقویم", detail: "زمان‌بندی، نمای ماهانه و برنامه انتشار", href: "/calendar", icon: CalendarDays },
+  { label: "کمپین‌ها", detail: "برنامه‌های بازاریابی، بازه‌ها و محتوای کمپین", href: "/campaigns", icon: Megaphone },
   { label: "محتوا", detail: "پست‌ها، پیش‌نویس‌ها، وضعیت‌ها و صف انتشار", href: "/content", icon: FileText },
   { label: "رسانه", detail: "کتابخانه تصاویر و ویرایشگر", href: "/media", icon: FileImage },
   { label: "پیام‌ها", detail: "هشدارها و پیام‌های عملیاتی", href: "/inbox", icon: BellRing },
@@ -97,13 +98,13 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         <div className="max-h-[62vh] overflow-y-auto p-2">
           {filteredPrimaryCommands.length ? (
             <div>
-              <p className="px-2 py-1 text-[10px] font-black text-slate-400">مسیر اصلی</p>
+              <p className="px-2 py-1 text-[10px] font-black text-app-muted">مسیرهای محصول</p>
               <div className="grid gap-1 sm:grid-cols-2">
                 {filteredPrimaryCommands.map((command) => {
                   const Icon = command.icon;
                   return (
                     <button key={command.href} type="button" onClick={() => navigate(command.href)} className="app-interactive flex items-center gap-3 rounded-md px-2.5 py-2.5 text-right hover:bg-blue-50">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 text-app-primary">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-soft text-app-primary">
                         <Icon className="h-4 w-4" aria-hidden="true" />
                       </span>
                       <span className="min-w-0">
@@ -119,13 +120,13 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
           {filteredSecondaryCommands.length ? (
             <div className="mt-2 border-t border-app-border pt-2">
-              <p className="px-2 py-1 text-[10px] font-black text-slate-400">ابزارهای زمینه‌ای</p>
+              <p className="px-2 py-1 text-[10px] font-black text-app-muted">ابزارهای زمینه‌ای</p>
               <div className="grid gap-1 sm:grid-cols-2">
                 {filteredSecondaryCommands.map((command) => {
                   const Icon = command.icon;
                   return (
                     <button key={command.href} type="button" onClick={() => navigate(command.href)} className="app-interactive flex items-center gap-3 rounded-md px-2.5 py-2.5 text-right hover:bg-slate-50">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 text-slate-600">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted text-app-muted">
                         <Icon className="h-4 w-4" aria-hidden="true" />
                       </span>
                       <span className="min-w-0">
@@ -140,7 +141,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           ) : null}
 
           <div className="mt-2 border-t border-app-border pt-2">
-            <p className="px-2 py-1 text-[10px] font-black text-slate-400">پست‌ها</p>
+            <p className="px-2 py-1 text-[10px] font-black text-app-muted">پست‌ها</p>
             {loading ? (
               <div className="grid gap-2 px-2 py-2">
                 <Skeleton className="h-9 w-full" />

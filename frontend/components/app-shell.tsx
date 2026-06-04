@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, BellRing, ChevronDown, ChevronLeft, LogOut, Network, Search, Settings2, Sparkles } from "lucide-react";
+import { AlertCircle, BellRing, ChevronDown, ChevronLeft, LogOut, Network, Plus, Search, Settings2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -134,8 +134,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const storeReady = !overviewLoading && isStoreConfigured(overview.store);
   const rubikaReady = !overviewLoading && isRubikaConnected(overview.rubika);
   const shellReady = storeReady && rubikaReady;
-  const setupHref = !shellReady ? "/onboarding" : "/compose";
-  const showSetupAction = !overviewLoading && !shellReady;
+  const showAttentionAction = !overviewLoading && !shellReady;
+  const attentionHref = !storeReady ? "/onboarding" : "/channels";
+  const attentionLabel = !storeReady ? "تکمیل راه‌اندازی" : "اتصال کانال";
   const brandAssetId = overview.store?.avatar_asset_id ?? overview.store?.logo_asset_id ?? null;
   const brandImageUrl = useMediaPreviewUrl(brandAssetId);
   const brandColor = overview.store?.brand_primary_color;
@@ -157,7 +158,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link href="/" className="lg:hidden" aria-label={productName}>
                   <ProductMark />
                 </Link>
-                <span className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-app-teal shadow-hairline lg:flex" style={brandColor ? { color: brandColor } : undefined}>
+                <span className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border border-app-border bg-app-surface text-app-primary shadow-hairline lg:flex" style={brandColor ? { color: brandColor } : undefined}>
                   <ActiveNavIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
@@ -174,7 +175,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
-                  className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md border border-slate-200 bg-white/90 px-3 text-xs text-app-muted shadow-hairline hover:bg-white hover:text-app-primary md:flex md:w-56 xl:w-72"
+                  className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md border border-app-border bg-app-surface/90 px-3 text-xs text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary md:flex md:w-56 xl:w-72"
                   aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -185,36 +186,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
-                  className="app-interactive flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white/90 text-app-muted shadow-hairline hover:bg-white hover:text-app-primary md:hidden"
+                  className="app-interactive flex h-9 w-9 items-center justify-center rounded-md border border-app-border bg-app-surface/90 text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary md:hidden"
                   aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
                 </button>
 
-                {!overviewLoading && !rubikaReady ? (
-                  <Link
-                    href="/channels"
-                    className="app-interactive hidden h-9 items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 text-xs font-bold text-amber-700 shadow-hairline hover:bg-amber-100 sm:flex"
-                  >
-                    <Network className="h-3.5 w-3.5" aria-hidden="true" />
-                    <span className="hidden xl:inline">کانال‌ها</span>
-                    <span>نیازمند بررسی</span>
-                  </Link>
-                ) : null}
+                <Link
+                  href="/compose"
+                  className="app-interactive hidden h-9 items-center gap-2 rounded-md border border-app-graphite bg-app-graphite px-3 text-xs font-black text-white shadow-accent hover:bg-app-primary sm:flex"
+                >
+                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                  پست تازه
+                </Link>
 
-                {showSetupAction ? (
+                {showAttentionAction ? (
                   <Link
-                    href={setupHref}
-                    className="app-interactive hidden h-9 items-center gap-2 rounded-md border border-amber-200 bg-white px-2.5 text-xs font-bold text-amber-800 shadow-hairline hover:bg-amber-50 lg:flex"
+                    href={attentionHref}
+                    className="app-interactive hidden h-9 items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 text-xs font-bold text-amber-800 shadow-hairline hover:bg-amber-100 lg:flex"
                   >
-                    <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                    تکمیل آماده‌سازی
+                    {!rubikaReady && storeReady ? <Network className="h-3.5 w-3.5" aria-hidden="true" /> : <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />}
+                    {attentionLabel}
                   </Link>
                 ) : null}
 
                 <Link
                   href="/inbox"
-                  className="app-interactive relative flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white/90 text-slate-500 shadow-hairline hover:bg-white hover:text-app-coral"
+                  className="app-interactive relative flex h-9 w-9 items-center justify-center rounded-md border border-app-border bg-app-surface/90 text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-coral"
                   aria-label={notificationCount ? `${notificationCount} اعلان عملیاتی خوانده‌نشده` : "صندوق عملیات انتشار"}
                 >
                   <BellRing className="h-4 w-4" aria-hidden="true" />
@@ -230,7 +228,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <button
                     type="button"
                     onClick={() => setAccountMenuOpen((current) => !current)}
-                    className="app-interactive flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white/90 px-2 text-xs font-bold text-slate-600 shadow-hairline hover:bg-white hover:text-app-primary"
+                    className="app-interactive flex h-9 items-center gap-2 rounded-md border border-app-border bg-app-surface/90 px-2 text-xs font-bold text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary"
                     aria-label="منوی حساب کاربری"
                     aria-expanded={accountMenuOpen}
                   >

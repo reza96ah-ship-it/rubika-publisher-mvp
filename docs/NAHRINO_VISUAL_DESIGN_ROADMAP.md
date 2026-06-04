@@ -590,6 +590,8 @@ Acceptance:
 
 Goal: make the product spine obvious.
 
+Current phase output: `docs/NAHRINO_V3_APP_SHELL_NAVIGATION.md`
+
 Deliverables:
 
 - sidebar cleanup,
