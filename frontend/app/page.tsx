@@ -15,16 +15,26 @@ import {
   Rocket,
   Target,
   TimerReset,
-  TrendingUp,
-  type LucideIcon
+  TrendingUp
 } from "lucide-react";
-import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthGate } from "../components/auth-gate";
 import { AppShell } from "../components/app-shell";
 import { WorkspaceAvatar } from "../components/brand-mark";
 import { Skeleton } from "../components/loading-skeleton";
-import { Button } from "../components/ui/button";
-import { NoticeBanner, StatusToken, WorkspacePage } from "../components/workspace-ui";
+import {
+  NActionTile,
+  NButton,
+  NDonutChart,
+  NEmptyState,
+  NListItem,
+  NMetricTile,
+  NNotice,
+  NPage,
+  NSection,
+  NStatusPill,
+  NTrendBars
+} from "../components/nahrino-ui";
 import { Campaign, loadCampaigns } from "../lib/campaigns";
 import {
   emptyOperationalNotifications,
@@ -59,230 +69,6 @@ function dateFromPost(post: Post) {
 function percent(value: number, total: number) {
   if (!total) return 0;
   return Math.round((value / total) * 100);
-}
-
-const commandMetricToneClasses = {
-  primary: "border-blue-100 bg-blue-50/60 text-app-primary",
-  warning: "border-amber-100 bg-amber-50/70 text-amber-700",
-  success: "border-emerald-100 bg-emerald-50/70 text-emerald-700",
-  alert: "border-rose-100 bg-rose-50/70 text-rose-700"
-};
-
-const dashboardFocusToneClasses = {
-  primary: "border-blue-100 bg-blue-50/60 text-app-primary",
-  warning: "border-amber-100 bg-amber-50/65 text-amber-700",
-  info: "border-sky-100 bg-sky-50/65 text-sky-700",
-  alert: "border-rose-100 bg-rose-50/65 text-rose-700"
-};
-
-function DashboardFocusItem({
-  label,
-  value,
-  detail,
-  icon: Icon,
-  tone,
-  compact = false,
-  href
-}: {
-  label: string;
-  value: string | number;
-  detail: string;
-  icon: LucideIcon;
-  tone: keyof typeof dashboardFocusToneClasses;
-  compact?: boolean;
-  href?: string;
-}) {
-  const content = (
-    <article className={`${compact ? "min-h-[76px] p-2.5 sm:min-h-[92px] sm:p-3" : "min-h-[136px] p-4"} nahrino-card rounded-lg`}>
-      <div className="flex h-full flex-col justify-between gap-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-app-muted">{label}</p>
-            <p className={`mt-2 font-black leading-6 text-app-text ${compact ? "line-clamp-1 text-sm" : "line-clamp-2 text-base"}`}>{value}</p>
-          </div>
-          <span className={`flex ${compact ? "h-8 w-8" : "h-9 w-9"} shrink-0 items-center justify-center rounded-md border ${dashboardFocusToneClasses[tone]}`}>
-            <Icon className="h-4 w-4" aria-hidden="true" />
-          </span>
-        </div>
-        <p className={`${compact ? "hidden sm:line-clamp-2 sm:block" : "line-clamp-2"} text-xs leading-5 text-app-muted`}>{detail}</p>
-      </div>
-    </article>
-  );
-
-  return href ? <a href={href} className="app-interactive block rounded-lg focus:outline-none focus:ring-2 focus:ring-app-primary/25">{content}</a> : content;
-}
-
-function CommandMetric({
-  label,
-  value,
-  detail,
-  icon: Icon,
-  tone,
-  href
-}: {
-  label: string;
-  value: number;
-  detail: string;
-  icon: LucideIcon;
-  tone: keyof typeof commandMetricToneClasses;
-  href?: string;
-}) {
-  const content = (
-    <article className="app-row nahrino-card min-h-[76px] rounded-lg p-2.5 sm:min-h-[88px] sm:p-3">
-      <div className="flex h-full items-start justify-between gap-2 sm:gap-3">
-        <div className="min-w-0">
-          <p className="line-clamp-1 text-[10px] font-bold text-app-muted sm:text-xs">{label}</p>
-          <p className="mt-1 text-lg font-black text-app-text sm:text-xl">{value}</p>
-          <p className="mt-1 hidden truncate text-[11px] font-bold text-app-muted sm:block">{detail}</p>
-        </div>
-        <span className={`hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border sm:flex ${commandMetricToneClasses[tone]}`}>
-          <Icon className="h-4 w-4" aria-hidden="true" />
-        </span>
-      </div>
-    </article>
-  );
-
-  return href ? <a href={href} className="app-interactive block rounded-lg focus:outline-none focus:ring-2 focus:ring-app-primary/25">{content}</a> : content;
-}
-
-function DashboardCard({
-  title,
-  description,
-  action,
-  children
-}: {
-  title: string;
-  description?: string;
-  action?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <section className="nahrino-card rounded-xl p-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h2 className="text-sm font-black text-app-text">{title}</h2>
-          {description ? <p className="mt-1 text-xs leading-5 text-app-muted">{description}</p> : null}
-        </div>
-        {action ? <div className="shrink-0">{action}</div> : null}
-      </div>
-      <div className="mt-4">{children}</div>
-    </section>
-  );
-}
-
-function MiniTrendChart({ values, labels }: { values: number[]; labels?: string[] }) {
-  const max = Math.max(...values, 1);
-
-  return (
-    <div className="flex h-28 items-end gap-1.5 rounded-lg bg-slate-50/80 px-3 py-3">
-      {values.map((value, index) => (
-        <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-          <span
-            className="w-full rounded-t-md bg-app-primary/80 shadow-[0_6px_14px_rgba(37,99,235,0.12)] transition-all"
-            style={{ height: `${Math.max(10, (value / max) * 88)}px` }}
-            aria-label={`${value} مورد`}
-          />
-          <span className="text-[9px] font-bold text-slate-400">{labels?.[index] || index + 1}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function CompactDigestItem({
-  icon: Icon,
-  title,
-  detail,
-  meta,
-  tone = "primary",
-  href
-}: {
-  icon: LucideIcon;
-  title: string;
-  detail: string;
-  meta?: ReactNode;
-  tone?: keyof typeof commandMetricToneClasses;
-  href?: string;
-}) {
-  const content = (
-    <article className="app-row nahrino-card-muted flex min-h-[58px] items-center gap-2 rounded-md px-2.5 py-2">
-      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${commandMetricToneClasses[tone]}`}>
-        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[11px] font-black text-app-text">{title}</span>
-        <span className="mt-0.5 block truncate text-[10px] font-bold text-app-muted">{detail}</span>
-      </span>
-      {meta ? <span className="max-w-[86px] shrink-0 truncate text-[10px]">{meta}</span> : null}
-    </article>
-  );
-
-  return href ? <a href={href} className="block focus:outline-none focus:ring-2 focus:ring-app-primary/25">{content}</a> : content;
-}
-
-function CompactEmpty({
-  icon: Icon,
-  title,
-  detail
-}: {
-  icon: LucideIcon;
-  title: string;
-  detail: string;
-}) {
-  return (
-    <div className="flex min-h-[58px] items-center gap-2 rounded-md border border-dashed border-app-border bg-slate-50/60 px-2.5 py-2">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-emerald-100 bg-emerald-50 text-emerald-700">
-        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-      </span>
-      <span className="min-w-0">
-        <span className="block truncate text-[11px] font-black text-app-text">{title}</span>
-        <span className="mt-0.5 block truncate text-[10px] leading-5 text-app-muted">{detail}</span>
-      </span>
-    </div>
-  );
-}
-
-function DonutStatusChart({
-  items,
-  total
-}: {
-  items: Array<{ label: string; value: number; color: string }>;
-  total: number;
-}) {
-  let cursor = 0;
-  const background = total
-    ? items
-      .filter((item) => item.value > 0)
-      .map((item) => {
-        const start = cursor;
-        const size = (item.value / total) * 360;
-        cursor += size;
-        return `${item.color} ${start}deg ${cursor}deg`;
-      })
-      .join(", ")
-    : "#E2E8F0 0deg 360deg";
-
-  return (
-    <div className="flex flex-col items-center justify-center gap-3">
-      <div className="relative h-32 w-32 rounded-full shadow-hairline sm:h-40 sm:w-40" style={{ background: `conic-gradient(${background})` } as CSSProperties}>
-        <div className="absolute inset-4 flex flex-col items-center justify-center rounded-full bg-white shadow-inner sm:inset-5">
-          <span className="text-xl font-black text-app-text sm:text-2xl">{total}</span>
-          <span className="mt-1 text-[10px] font-bold text-app-muted">کل محتوا</span>
-        </div>
-      </div>
-      <div className="grid w-full grid-cols-3 gap-1.5 text-[10px] sm:grid-cols-2 sm:gap-2 sm:text-xs">
-        {items.map((item) => (
-          <div key={item.label} className="flex items-center justify-between gap-1.5 rounded-md bg-slate-50 px-2 py-1.5 sm:gap-2 sm:px-2.5 sm:py-2">
-            <span className="flex min-w-0 items-center gap-2 font-bold text-app-muted">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-              {item.label}
-            </span>
-            <span className="font-black text-app-text">{item.value}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 export default function HomePage() {
@@ -436,7 +222,7 @@ export default function HomePage() {
   return (
     <AuthGate>
       <AppShell>
-        <WorkspacePage className="space-y-3 pb-6 sm:space-y-4">
+        <NPage className="pb-6">
           <section className="nahrino-card overflow-hidden rounded-xl">
             <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="min-w-0 p-3 sm:p-4 lg:p-5">
@@ -454,24 +240,24 @@ export default function HomePage() {
                   </div>
 
                   <div className="flex flex-wrap gap-2 xl:justify-end">
-                    <StatusToken tone={healthTone} className="gap-1">
+                    <NStatusPill tone={healthTone} className="gap-1">
                       <Rocket className="h-3.5 w-3.5" aria-hidden="true" />
                       {priorityAlerts.length || queueCounts.failed ? "نیازمند رسیدگی" : workspaceReady ? "عملیات پایدار" : "تکمیل لازم"}
-                    </StatusToken>
+                    </NStatusPill>
                     {!rubikaReady ? (
-                      <StatusToken tone="warning" className="gap-1">
+                      <NStatusPill tone="warning" className="gap-1">
                         <PlugZap className="h-3.5 w-3.5" aria-hidden="true" />
                         کانال‌ها نیازمند بررسی
-                      </StatusToken>
+                      </NStatusPill>
                     ) : null}
-                    {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
+                    {lastUpdatedAt ? <NStatusPill tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</NStatusPill> : null}
                   </div>
                 </div>
 
                 <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                  <DashboardFocusItem label="اقدام بعدی" value={nextAction.label} detail={nextAction.detail} icon={Target} tone="primary" compact href={nextAction.href} />
-                  <DashboardFocusItem label="صف فعال" value={queueTotal} detail="آماده، زمان‌بندی، انتشار و بازیابی" icon={TimerReset} tone={queueCounts.failed ? "alert" : "info"} compact href="/content" />
-                  <DashboardFocusItem label="انتشار بعدی" value={nextPosts[0]?.scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"} detail="باز کردن برنامه انتشار" icon={CalendarClock} tone="warning" compact href="/calendar" />
+                  <NActionTile label="اقدام بعدی" value={nextAction.label} detail={nextAction.detail} icon={Target} tone="primary" compact href={nextAction.href} />
+                  <NActionTile label="صف فعال" value={queueTotal} detail="آماده، زمان‌بندی، انتشار و بازیابی" icon={TimerReset} tone={queueCounts.failed ? "alert" : "info"} compact href="/content" />
+                  <NActionTile label="انتشار بعدی" value={nextPosts[0]?.scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"} detail="باز کردن برنامه انتشار" icon={CalendarClock} tone="warning" compact href="/calendar" />
                 </div>
               </div>
 
@@ -483,43 +269,43 @@ export default function HomePage() {
                     <p className="mt-1.5 line-clamp-3 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <Button href={nextAction.href} className="col-span-2 w-full">
+                    <NButton href={nextAction.href} className="col-span-2 w-full">
                       ادامه اقدام
                       <ArrowUpLeft className="mr-2 h-4 w-4" aria-hidden="true" />
-                    </Button>
-                    <Button href="/compose" variant="secondary" className="w-full">ساخت</Button>
-                    <Button type="button" variant="ghost" className="w-full" disabled={refreshing} onClick={() => loadDashboard(true)}>
+                    </NButton>
+                    <NButton href="/compose" variant="secondary" className="w-full">ساخت</NButton>
+                    <NButton type="button" variant="quiet" className="w-full" disabled={refreshing} onClick={() => loadDashboard(true)}>
                       <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
                       تازه‌سازی
-                    </Button>
+                    </NButton>
                   </div>
                 </div>
               </aside>
             </div>
           </section>
 
-          {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
+          {error ? <NNotice tone="alert">{error}</NNotice> : null}
           {loading ? <Skeleton className="h-4 w-44" /> : null}
 
           <section className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
-            {commandMetrics.map((metric) => <CommandMetric key={metric.label} {...metric} />)}
+            {commandMetrics.map((metric) => <NMetricTile key={metric.label} {...metric} />)}
           </section>
 
           <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <DashboardCard
+            <NSection
               title="نبض عملیات"
               description="وضعیت انتشار، روند هفته و کیفیت صف در یک نمای تصمیم‌ساز."
-              action={<StatusToken tone="info">نمای عملیاتی امروز</StatusToken>}
+              action={<NStatusPill tone="info">نمای عملیاتی امروز</NStatusPill>}
             >
               <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)] 2xl:grid-cols-[200px_minmax(0,1fr)_280px] lg:items-stretch">
                 <div className="hidden sm:block">
-                  <DonutStatusChart items={pipelineDistribution} total={pipelineTotal} />
+                  <NDonutChart items={pipelineDistribution} total={pipelineTotal} label="کل محتوا" />
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <DashboardFocusItem label="نرخ تکمیل" value={`${completionRate}%`} detail="منتشرشده نسبت به محتوای غیرپیش‌نویس" icon={TrendingUp} tone={completionRate > 65 ? "info" : "warning"} compact />
-                  <DashboardFocusItem label="نرخ خطا" value={`${failureRate}%`} detail="خطا نسبت به صف فعال" icon={AlertTriangle} tone={failureRate ? "alert" : "info"} compact />
-                  <DashboardFocusItem label="میانگین تلاش" value={averageAttempts} detail="تعداد تلاش انتشار برای هر محتوا" icon={Activity} tone="info" compact />
-                  <DashboardFocusItem label="آخرین خروجی" value={latestPublishedPost?.title || "بدون خروجی موفق"} detail={latestPublishedPost?.published_at ? formatDateTime(latestPublishedPost.published_at) : "بعد از اولین انتشار تکمیل می‌شود"} icon={CheckCircle2} tone="primary" compact />
+                  <NActionTile label="نرخ تکمیل" value={`${completionRate}%`} detail="منتشرشده نسبت به محتوای غیرپیش‌نویس" icon={TrendingUp} tone={completionRate > 65 ? "info" : "warning"} compact />
+                  <NActionTile label="نرخ خطا" value={`${failureRate}%`} detail="خطا نسبت به صف فعال" icon={AlertTriangle} tone={failureRate ? "alert" : "info"} compact />
+                  <NActionTile label="میانگین تلاش" value={averageAttempts} detail="تعداد تلاش انتشار برای هر محتوا" icon={Activity} tone="info" compact />
+                  <NActionTile label="آخرین خروجی" value={latestPublishedPost?.title || "بدون خروجی موفق"} detail={latestPublishedPost?.published_at ? formatDateTime(latestPublishedPost.published_at) : "بعد از اولین انتشار تکمیل می‌شود"} icon={CheckCircle2} tone="primary" compact />
                 </div>
                 <div className="nahrino-card hidden rounded-lg p-3 md:block lg:col-span-2 2xl:col-span-1">
                   <div className="mb-3 flex items-center justify-between gap-3">
@@ -527,44 +313,44 @@ export default function HomePage() {
                       <p className="text-xs font-black text-app-text">روند ۷ روزه</p>
                       <p className="mt-1 text-[11px] leading-5 text-app-muted">تولید، زمان‌بندی یا انتشار</p>
                     </div>
-                    <StatusToken tone={weeklyActivity.some(Boolean) ? "success" : "neutral"}>{weeklyActivity.reduce((sum, value) => sum + value, 0)}</StatusToken>
+                    <NStatusPill tone={weeklyActivity.some(Boolean) ? "success" : "neutral"}>{weeklyActivity.reduce((sum, value) => sum + value, 0)}</NStatusPill>
                   </div>
-                  <MiniTrendChart values={weeklyActivity} labels={weeklyLabels} />
+                  <NTrendBars values={weeklyActivity} labels={weeklyLabels} />
                 </div>
               </div>
-            </DashboardCard>
+            </NSection>
 
-            <DashboardCard
+            <NSection
               title="صف اقدام"
               description="فقط مانع‌های مهم؛ جزئیات کامل داخل پیام‌ها و محتوا."
-              action={<Button href="/inbox" variant="secondary" size="sm">پیام‌ها</Button>}
+              action={<NButton href="/inbox" variant="secondary" size="sm">پیام‌ها</NButton>}
             >
               <div className="grid gap-2">
                 {priorityAlerts.length ? (
                   priorityAlerts.slice(0, 3).map((alert) => (
-                    <CompactDigestItem
+                    <NListItem
                       key={alert.id}
                       icon={alert.severity === "critical" ? CircleAlert : alert.severity === "warning" ? AlertTriangle : CheckCircle2}
                       title={alert.title}
                       detail={alert.description}
                       href={alert.action_href}
                       tone={alert.severity === "critical" ? "alert" : alert.severity === "warning" ? "warning" : "success"}
-                      meta={<StatusToken tone={alert.severity === "critical" ? "alert" : "warning"}>{alert.action_label}</StatusToken>}
+                      meta={<NStatusPill tone={alert.severity === "critical" ? "alert" : "warning"}>{alert.action_label}</NStatusPill>}
                     />
                   ))
                 ) : !workspaceReady ? (
                   <>
                     {!storeReady ? (
-                      <CompactDigestItem icon={Target} title="هویت فضای کاری کامل نیست" detail="نام، دسته‌بندی و لحن برند را کامل کنید." href="/store" tone="warning" />
+                      <NListItem icon={Target} title="هویت فضای کاری کامل نیست" detail="نام، دسته‌بندی و لحن برند را کامل کنید." href="/store" tone="warning" />
                     ) : null}
                     {!rubikaReady ? (
-                      <CompactDigestItem icon={PlugZap} title="کانال اصلی آماده نیست" detail="اتصال کانال‌ها قبل از انتشار جدی بررسی شود." href="/channels" tone="warning" />
+                      <NListItem icon={PlugZap} title="کانال اصلی آماده نیست" detail="اتصال کانال‌ها قبل از انتشار جدی بررسی شود." href="/channels" tone="warning" />
                     ) : null}
                   </>
                 ) : (
-                  <CompactEmpty icon={CheckCircle2} title="مورد فوری وجود ندارد" detail="صف، اتصال و آماده‌سازی در وضعیت قابل قبول هستند." />
+                  <NEmptyState icon={CheckCircle2} title="مورد فوری وجود ندارد" detail="صف، اتصال و آماده‌سازی در وضعیت قابل قبول هستند." />
                 )}
-                <CompactDigestItem
+                <NListItem
                   icon={dashboardInsights[0].icon}
                   title={dashboardInsights[0].title}
                   detail={dashboardInsights[0].description}
@@ -572,60 +358,60 @@ export default function HomePage() {
                   href={queueCounts.failed ? "/queue" : "/analytics"}
                 />
               </div>
-            </DashboardCard>
+            </NSection>
           </section>
 
           <section className="hidden gap-3 md:grid lg:grid-cols-2 xl:grid-cols-3">
-            <DashboardCard
+            <NSection
               title="کانال‌ها"
               description="سلامت کانال‌ها بدون رفتن به تنظیمات."
-              action={<Button href="/channels" variant="secondary" size="sm">مدیریت</Button>}
+              action={<NButton href="/channels" variant="secondary" size="sm">مدیریت</NButton>}
             >
               <div className="grid gap-2">
                 {channelItems.map((channel) => (
-                  <CompactDigestItem
+                  <NListItem
                     key={channel.label}
                     icon={Network}
                     title={channel.label}
                     detail={channel.detail}
                     tone={channel.healthy ? "success" : "warning"}
                     href="/channels"
-                    meta={<StatusToken tone={channel.healthy ? "success" : "warning"}>{channel.value}</StatusToken>}
+                    meta={<NStatusPill tone={channel.healthy ? "success" : "warning"}>{channel.value}</NStatusPill>}
                   />
                 ))}
               </div>
-            </DashboardCard>
+            </NSection>
 
-            <DashboardCard
+            <NSection
               title="کمپین‌ها"
               description="کمپین‌های فعال و جهت حرکت امروز."
-              action={<Button href="/campaigns" variant="secondary" size="sm">باز کردن</Button>}
+              action={<NButton href="/campaigns" variant="secondary" size="sm">باز کردن</NButton>}
             >
               <div className="grid gap-2">
                 {activeCampaigns.length ? activeCampaigns.slice(0, 3).map((campaign) => (
-                  <CompactDigestItem
+                  <NListItem
                     key={campaign.id}
                     icon={Megaphone}
                     title={campaign.name}
                     detail={campaign.goal || campaign.notes || "کمپین فعال بدون خلاصه"}
                     tone="primary"
                     href={`/campaigns?campaignId=${campaign.id}`}
-                    meta={<StatusToken tone="primary">فعال</StatusToken>}
+                    meta={<NStatusPill tone="primary">فعال</NStatusPill>}
                   />
                 )) : (
-                  <CompactEmpty icon={Megaphone} title="کمپین فعالی نیست" detail="برای برنامه‌ریزی منظم، یک کمپین تازه بسازید." />
+                  <NEmptyState icon={Megaphone} title="کمپین فعالی نیست" detail="برای برنامه‌ریزی منظم، یک کمپین تازه بسازید." />
                 )}
               </div>
-            </DashboardCard>
+            </NSection>
 
-            <DashboardCard
+            <NSection
               title="بینش سریع"
               description="یک تصمیم روشن برای ادامه روز."
-              action={<Button href="/analytics" variant="secondary" size="sm">گزارش‌ها</Button>}
+              action={<NButton href="/analytics" variant="secondary" size="sm">گزارش‌ها</NButton>}
             >
               <div className="grid gap-2">
                 {dashboardInsights.slice(1, 3).map((insight) => (
-                  <CompactDigestItem
+                  <NListItem
                     key={insight.title}
                     icon={insight.icon}
                     title={insight.title}
@@ -635,9 +421,9 @@ export default function HomePage() {
                   />
                 ))}
               </div>
-            </DashboardCard>
+            </NSection>
           </section>
-        </WorkspacePage>
+        </NPage>
       </AppShell>
     </AuthGate>
   );
