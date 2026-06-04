@@ -41,7 +41,7 @@ The current app is past the MVP baseline:
 
 ### Strategic Identity
 
-- Primary product identity must fully move from "Rubika Publisher" to a channel-neutral SocialOps workspace.
+- Primary product identity must fully move from "Rubika Publisher" to the channel-neutral نشرینو workspace.
 - Any remaining Rubika naming should be treated as a channel-specific label, not the product brand.
 - Navigation, onboarding, settings, empty states, and docs should all reinforce one shared channel/account model.
 

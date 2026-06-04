@@ -2,7 +2,7 @@
 
 Research date: 2026-06-03.
 
-This document summarizes current competitor patterns and translates them into SocialOps Studio product requirements.
+This document summarizes current competitor patterns and translates them into نشرینو product requirements.
 
 ## Sources Reviewed
 
@@ -122,7 +122,7 @@ Observed market pattern:
 
 Product lesson:
 
-- SocialOps does not need to become Canva, but it needs creative-to-publish continuity.
+- نشرینو does not need to become Canva, but it needs creative-to-publish continuity.
 - Media editor and brand kits should feed composer, planner, and campaign reports.
 
 ## Design Implications
@@ -159,7 +159,7 @@ Avoid:
 9. Inbox/Engagement.
 10. Analytics/Reports/Listening.
 
-## Current SocialOps Gap Summary
+## Current نشرینو Gap Summary
 
 | Area | Current state | Gap |
 | --- | --- | --- |

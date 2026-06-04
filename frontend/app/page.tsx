@@ -37,6 +37,7 @@ import {
 } from "../lib/notifications";
 import { apiUrl, authHeaders, formatDateTime, Post } from "../lib/posts";
 import { useMediaPreviewUrl } from "../lib/media-preview";
+import { productKicker } from "../lib/product";
 import { isRubikaConnected, isStoreConfigured, loadWorkspaceOverview, RubikaSettings, StoreProfile } from "../lib/workspace";
 
 function statusCount(posts: Post[], status: string) {
@@ -126,7 +127,7 @@ function OperationsLane({ steps }: { steps: OperationStep[] }) {
     <section className="rounded-lg border border-app-border bg-white p-4 shadow-hairline">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="app-section-kicker text-[10px] font-black">Live Operations Lane</p>
+          <p className="app-section-kicker text-[10px] font-black">جریان عملیات زنده</p>
           <h2 className="mt-1 text-sm font-black text-app-text">مسیر زنده انتشار</h2>
         </div>
         <StatusToken tone={total ? "primary" : "success"}>{total ? `${total} آیتم در جریان` : "مسیر خالی و آماده"}</StatusToken>
@@ -252,7 +253,7 @@ export default function HomePage() {
       : nextPosts.length
         ? "برنامه امروز روشن است. انتشار بعدی و ریسک‌های کانال را از همین صفحه کنترل کنید."
         : activeCampaigns.length
-          ? "کمپین‌ها فعال‌اند، اما برنامه انتشار نزدیک هنوز سبک است. محتوا را وارد پلنر کنید."
+          ? "کمپین‌ها فعال‌اند، اما برنامه انتشار نزدیک هنوز سبک است. محتوا را وارد تقویم کنید."
           : "فضای کاری آماده است. یک کمپین یا محتوای جدید برای شروع برنامه روزانه بسازید.";
   const healthTone = priorityAlerts.length || queueCounts.failed ? "alert" : workspaceReady ? "success" : "warning";
   const commandMetrics = [
@@ -263,7 +264,7 @@ export default function HomePage() {
   ];
   const operationSteps: OperationStep[] = [
     { label: "آماده", count: queueCounts.ready, detail: "قابل زمان‌بندی", icon: CheckCircle2, tone: "primary", href: "/content?status=ready" },
-    { label: "زمان‌بندی", count: queueCounts.scheduled, detail: "در پلنر", icon: CalendarClock, tone: "warning", href: "/calendar" },
+    { label: "زمان‌بندی", count: queueCounts.scheduled, detail: "در تقویم", icon: CalendarClock, tone: "warning", href: "/calendar" },
     { label: "در انتشار", count: queueCounts.publishing, detail: "پردازش worker", icon: TimerReset, tone: "info", href: "/queue" },
     { label: "بازیابی", count: queueCounts.failed, detail: "نیازمند اقدام", icon: AlertTriangle, tone: "alert", href: "/queue" }
   ];
@@ -299,7 +300,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-6 max-w-3xl">
-                  <p className="app-section-kicker text-[10px] font-black">Multi-channel Social Operations</p>
+                  <p className="app-section-kicker text-[10px] font-black">{productKicker}</p>
                   <h1 className="mt-2 text-2xl font-black leading-tight text-app-text sm:text-3xl">مرکز فرمان امروز</h1>
                   <p className="mt-3 text-sm leading-7 text-app-muted">{briefing}</p>
                 </div>
@@ -309,7 +310,7 @@ export default function HomePage() {
                     {nextAction.label}
                     <ArrowUpLeft className="mr-2 h-4 w-4" aria-hidden="true" />
                   </Button>
-                  <Button href="/calendar" variant="secondary">پلنر انتشار</Button>
+                  <Button href="/calendar" variant="secondary">تقویم انتشار</Button>
                   <Button type="button" variant="ghost" disabled={refreshing} onClick={() => loadDashboard(true)}>
                     <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
                     به‌روزرسانی
@@ -399,7 +400,7 @@ export default function HomePage() {
               <WorkspacePanel
                 title="برنامه انتشار پیش رو"
                 description="سه انتشار بعدی را پیش از رسیدن زمان بررسی کنید."
-                action={<Button href="/calendar" variant="secondary" size="sm">باز کردن پلنر</Button>}
+                action={<Button href="/calendar" variant="secondary" size="sm">باز کردن تقویم</Button>}
                 bodyClassName="p-0"
               >
                 {nextPosts.length ? (

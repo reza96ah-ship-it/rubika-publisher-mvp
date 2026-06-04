@@ -1,10 +1,10 @@
-# SocialOps Studio UI/UX System
+# نشرینو UI/UX System
 
 This document defines the professional visual and interaction direction for the product. It replaces the idea of "make it more colorful" with a domain-specific design system.
 
 ## Design Thesis
 
-SocialOps Studio should feel like a calm Persian social operations studio:
+نشرینو should feel like a calm Persian social operations studio:
 
 - Light, focused, and work-ready.
 - RTL-native and Jalali-native.

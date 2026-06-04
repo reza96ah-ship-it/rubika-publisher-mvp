@@ -2,7 +2,7 @@
 
 ## 1. Project Summary
 
-Build **SocialOps Studio**, a Persian-first, RTL-native social operations web app for commerce teams, creators, and agencies. The platform must support the complete workflow:
+Build **نشرینو**, a Persian-first, RTL-native social operations web app for commerce teams, creators, and agencies. The platform must support the complete workflow:
 
 **brand setup -> channel setup -> campaign planning -> creative production -> multi-channel variants -> approval -> scheduling -> publishing/recovery -> engagement -> analytics/reporting -> optimization**
 
@@ -21,7 +21,7 @@ Deliver a professional product that can compete in workflow quality with Buffer,
 
 ## 3. Benchmark Findings
 
-| Benchmark | Observed market pattern | Requirement for SocialOps |
+| Benchmark | Observed market pattern | Requirement for نشرینو |
 | --- | --- | --- |
 | Buffer | Friendly publishing, analytics, reports, comment engagement, small-team simplicity | Keep daily workflows simple and fast |
 | Hootsuite | Scheduling, publishing, analytics, engagement, AI listening, sentiment, competitive benchmarking, approvals, custom reports, unified inbox | Build breadth but keep it organized by workflow |

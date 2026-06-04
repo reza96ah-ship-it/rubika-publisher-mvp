@@ -1,4 +1,4 @@
-# SocialOps Studio Professional Product Roadmap
+# نشرینو Professional Product Roadmap
 
 This roadmap resets the product direction after benchmarking current social media management leaders. The goal is no longer to keep repainting screens. The goal is to build a Persian-first, RTL-native social operations product with the workflow maturity of Buffer, Hootsuite, Sprout Social, Later, Planable, Metricool/Agorapulse-style reporting, and Canva-like creative continuity.
 

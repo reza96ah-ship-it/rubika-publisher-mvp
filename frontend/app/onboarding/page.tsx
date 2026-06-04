@@ -9,6 +9,7 @@ import { Button } from "../../components/ui/button";
 import { NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { buildCampaignFilterOptions, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { apiUrl, authHeaders, type Post } from "../../lib/posts";
+import { productName } from "../../lib/product";
 import { isRubikaConnected, isStoreConfigured, loadWorkspaceOverview, type RubikaSettings, type StoreProfile } from "../../lib/workspace";
 
 type SetupStep = {
@@ -148,8 +149,8 @@ export default function OnboardingPage() {
           <section className="app-studio-panel overflow-hidden rounded-lg border-t-4 border-app-teal">
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
               <div className="px-4 py-5 lg:px-5">
-                <p className="app-section-kicker text-[10px] font-black">Guided Setup</p>
-                <h1 className="mt-2 text-2xl font-black text-app-text">مسیر راه‌اندازی SocialOps</h1>
+                <p className="app-section-kicker text-[10px] font-black">راه‌اندازی هدایت‌شده</p>
+                <h1 className="mt-2 text-2xl font-black text-app-text">راه‌اندازی {productName}</h1>
                 <p className="mt-2 max-w-3xl text-sm leading-7 text-app-muted">
                   این مسیر، ماژول‌های پراکنده را به یک سفر ساده تبدیل می‌کند: برند، کانال، کمپین، محتوا و زمان‌بندی.
                 </p>
@@ -159,7 +160,7 @@ export default function OnboardingPage() {
                     {nextStep.action}
                   </Button>
                   <Button href="/compose" variant="secondary">ساخت محتوا</Button>
-                  <Button href="/calendar" variant="secondary">پلنر</Button>
+                  <Button href="/calendar" variant="secondary">تقویم</Button>
                 </div>
               </div>
               <div className="dashboard-pulse border-t border-app-border p-4 lg:border-r lg:border-t-0">

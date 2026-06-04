@@ -17,7 +17,7 @@ type PublishingWorkspaceHeaderProps = {
 };
 
 const tabs = [
-  { key: "calendar" as const, label: "پلنر", href: "/calendar", icon: CalendarDays },
+  { key: "calendar" as const, label: "تقویم", href: "/calendar", icon: CalendarDays },
   { key: "campaigns" as const, label: "کمپین", href: "/campaigns", icon: Target },
   { key: "content" as const, label: "محتوا", href: "/content", icon: Rows3 },
   { key: "queue" as const, label: "عملیات", href: "/queue", icon: ListChecks }

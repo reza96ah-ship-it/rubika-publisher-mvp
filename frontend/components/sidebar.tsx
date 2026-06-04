@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ProductMark, WorkspaceAvatar } from "./brand-mark";
+import { productName, productShortTagline } from "../lib/product";
 
 export type NavItem = {
   label: string;
@@ -36,23 +37,23 @@ type SidebarProps = {
   avatarUrl?: string;
 };
 
-const composeNavItem: NavItem = { label: "پست جدید", href: "/compose", icon: PenLine };
+const composeNavItem: NavItem = { label: "استودیو", href: "/compose", icon: PenLine };
 const onboardingNavItem: NavItem = { label: "راه‌اندازی", href: "/onboarding", icon: Rocket };
-const plannerNavItem: NavItem = { label: "پلنر", href: "/calendar", icon: CalendarDays };
-const contentNavItem: NavItem = { label: "محتوا", href: "/content", icon: FileText };
-const settingsNavItem: NavItem = { label: "تنظیمات", href: "/store", icon: Store };
+const plannerNavItem: NavItem = { label: "تقویم", href: "/calendar", icon: CalendarDays };
+const contentNavItem: NavItem = { label: "کتابخانه", href: "/content", icon: FileText };
+const settingsNavItem: NavItem = { label: "فضای کاری", href: "/store", icon: Store };
 
 const primaryNavGroups: NavGroup[] = [
   {
     title: "مسیر اصلی",
     items: [
-      { label: "امروز", href: "/", icon: LayoutDashboard },
+      { label: "فرماندهی", href: "/", icon: LayoutDashboard },
       composeNavItem,
       plannerNavItem,
       contentNavItem,
       { label: "رسانه", href: "/media", icon: GalleryHorizontalEnd },
-      { label: "اینباکس", href: "/inbox", icon: BellRing },
-      { label: "گزارش‌ها", href: "/analytics", icon: BarChart3 }
+      { label: "پیام‌ها", href: "/inbox", icon: BellRing },
+      { label: "تحلیل", href: "/analytics", icon: BarChart3 }
     ]
   }
 ];
@@ -139,13 +140,13 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-[252px] shrink-0 border-l border-[#D5E5E5] bg-[#F2F8F8] lg:sticky lg:top-0 lg:flex lg:h-screen lg:self-start lg:flex-col lg:overflow-hidden">
-      <div className="shrink-0 border-b border-[#D5E5E5] px-3 py-3">
+    <aside className="hidden w-[252px] shrink-0 border-l border-[#CFE0DF] bg-white/58 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:self-start lg:flex-col lg:overflow-hidden">
+      <div className="shrink-0 border-b border-[#CFE0DF] px-3 py-3">
         <Link href="/" className="flex items-center gap-2.5 rounded-md px-1 py-1">
           <ProductMark />
           <div className="min-w-0">
-            <p className="truncate text-sm font-black text-app-text">SocialOps Studio</p>
-            <p className="mt-0.5 text-[10px] font-bold text-app-teal">Multi-channel operations</p>
+            <p className="truncate text-sm font-black text-app-text">{productName}</p>
+            <p className="mt-0.5 text-[10px] font-bold text-app-teal">{productShortTagline}</p>
           </div>
         </Link>
 
@@ -177,7 +178,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
         ))}
       </nav>
 
-      <div className="shrink-0 border-t border-[#D5E5E5] bg-white/35 p-3">
+      <div className="shrink-0 border-t border-[#CFE0DF] bg-white/45 p-3">
         <div className="mb-2 flex items-center justify-between px-2.5">
           <p className="text-[10px] font-black text-slate-400">تنظیمات</p>
           <Settings2 className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
@@ -197,11 +198,11 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
 }
 
 const mobileNavItems = [
-  { label: "امروز", href: "/", icon: LayoutDashboard },
-  { label: "پلنر", href: "/calendar", icon: CalendarDays },
+  { label: "فرماندهی", href: "/", icon: LayoutDashboard },
+  { label: "تقویم", href: "/calendar", icon: CalendarDays },
   composeNavItem,
-  { label: "محتوا", href: "/content", icon: FileText },
-  { label: "گزارش", href: "/analytics", icon: BarChart3 }
+  { label: "کتابخانه", href: "/content", icon: FileText },
+  { label: "تحلیل", href: "/analytics", icon: BarChart3 }
 ];
 
 export function MobileNav() {

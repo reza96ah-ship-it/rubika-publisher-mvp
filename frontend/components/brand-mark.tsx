@@ -1,3 +1,5 @@
+import { productName } from "../lib/product";
+
 function initials(label: string) {
   const words = label.trim().split(/\s+/).filter(Boolean);
   if (!words.length) return "SO";
@@ -13,10 +15,9 @@ const sizeClasses = {
 
 export function ProductMark({ size = "md", className = "" }: { size?: keyof typeof sizeClasses; className?: string }) {
   return (
-    <span className={`relative inline-flex shrink-0 overflow-hidden bg-app-primary shadow-accent ${sizeClasses[size]} ${className}`} aria-label="SocialOps Studio">
-      <span className="absolute inset-y-[22%] right-[24%] w-[12%] rounded-full bg-white/95" />
-      <span className="absolute inset-y-[22%] right-[47%] w-[12%] rounded-full bg-white/75" />
-      <span className="absolute right-[24%] top-[22%] h-[12%] w-[36%] rounded-full bg-white/95" />
+    <span className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden bg-app-primary text-white shadow-accent ${sizeClasses[size]} ${className}`} aria-label={productName}>
+      <span className="translate-y-0.5 text-lg font-black leading-none">ن</span>
+      <span className="absolute left-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-teal-200/90" />
     </span>
   );
 }

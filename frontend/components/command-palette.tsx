@@ -12,15 +12,15 @@ type CommandPaletteProps = {
 };
 
 const commands = [
-  { label: "امروز", detail: "خلاصه وضعیت، کارهای فوری و آمادگی انتشار", href: "/", icon: Home },
+  { label: "فرماندهی", detail: "ریسک‌ها، تمرکز امروز و جریان انتشار", href: "/", icon: Home },
   { label: "راه‌اندازی", detail: "مسیر مرحله‌ای برند، کانال، محتوا و زمان‌بندی", href: "/onboarding", icon: Rocket },
-  { label: "ساخت محتوا", detail: "نوشتن، طراحی رسانه و زمان‌بندی پست", href: "/compose", icon: PenLine },
-  { label: "پلنر", detail: "تقویم، کمپین‌ها و برنامه انتشار", href: "/calendar", icon: CalendarDays },
-  { label: "محتوا", detail: "پست‌ها، پیش‌نویس‌ها و صف انتشار", href: "/content", icon: FileText },
+  { label: "استودیو", detail: "نوشتن، طراحی رسانه و زمان‌بندی پست", href: "/compose", icon: PenLine },
+  { label: "تقویم", detail: "تقویم، کمپین‌ها و برنامه انتشار", href: "/calendar", icon: CalendarDays },
+  { label: "کتابخانه", detail: "پست‌ها، پیش‌نویس‌ها و صف انتشار", href: "/content", icon: FileText },
   { label: "رسانه", detail: "کتابخانه تصاویر و ویرایشگر", href: "/media", icon: FileImage },
-  { label: "اینباکس", detail: "هشدارها و پیام‌های عملیاتی", href: "/inbox", icon: BellRing },
-  { label: "گزارش‌ها", detail: "روند عملکرد و سلامت انتشار", href: "/analytics", icon: BarChart3 },
-  { label: "تنظیمات", detail: "برند، کانال‌ها، اتصال‌ها و سلامت سیستم", href: "/store", icon: Settings2 },
+  { label: "پیام‌ها", detail: "هشدارها و پیام‌های عملیاتی", href: "/inbox", icon: BellRing },
+  { label: "تحلیل", detail: "روند عملکرد و سلامت انتشار", href: "/analytics", icon: BarChart3 },
+  { label: "فضای کاری", detail: "برند، کانال‌ها، اتصال‌ها و سلامت سیستم", href: "/store", icon: Settings2 },
   { label: "مرکز کانال‌ها", detail: "زیرمجموعه تنظیمات برای مدیریت شبکه‌ها", href: "/channels", icon: Settings2 },
   { label: "بازیابی صف", detail: "مسیر پیشرفته برای خطاهای زمان‌بندی", href: "/queue", icon: ListChecks }
 ];

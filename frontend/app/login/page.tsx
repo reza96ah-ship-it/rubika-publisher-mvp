@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { productName, productTagline } from "../../lib/product";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -42,9 +43,9 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-app-background p-5 text-app-text" dir="rtl">
       <section className="w-full max-w-md rounded-md border border-app-border bg-white p-6 shadow-sm">
         <div className="mb-8 text-center">
-          <p className="text-sm font-semibold text-app-primary">SocialOps Studio</p>
-          <h1 className="mt-2 text-2xl font-bold">ورود به مرکز عملیات اجتماعی</h1>
-          <p className="mt-2 text-sm leading-7 text-app-muted">برای مدیریت کمپین، محتوا، کانال‌ها و انتشار چندکاناله وارد شوید.</p>
+          <p className="text-sm font-semibold text-app-primary">{productName}</p>
+          <h1 className="mt-2 text-2xl font-bold">ورود به مرکز فرمان محتوا</h1>
+          <p className="mt-2 text-sm leading-7 text-app-muted">{productTagline}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

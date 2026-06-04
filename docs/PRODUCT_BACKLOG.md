@@ -1,4 +1,4 @@
-# SocialOps Studio Product Backlog
+# نشرینو Product Backlog
 
 This backlog translates the roadmap and RFP into implementation epics. Items are ordered by product value, not by code file.
 

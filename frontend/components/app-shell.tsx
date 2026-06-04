@@ -24,6 +24,7 @@ import { CommandPalette } from "./command-palette";
 import { ProductMark, WorkspaceAvatar } from "./brand-mark";
 import { getActiveNav, MobileNav, Sidebar } from "./sidebar";
 import { useToast } from "./toast-provider";
+import { productName } from "../lib/product";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { showToast } = useToast();
@@ -148,10 +149,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen">
         <Sidebar storeName={workspaceName} ready={shellReady} brandColor={brandColor} avatarUrl={brandImageUrl} />
         <section className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-app-border/90 bg-[#F9FCFC]/92 shadow-[0_8px_24px_rgba(38,75,88,0.055)] backdrop-blur-xl">
+          <header className="sticky top-0 z-20 border-b border-app-border/80 bg-white/70 shadow-[0_8px_24px_rgba(38,75,88,0.045)] backdrop-blur-xl">
             <div className="flex min-h-[68px] items-center justify-between gap-3 px-4 py-2 lg:px-6">
               <div className="flex min-w-0 items-center gap-3">
-                <Link href="/" className="lg:hidden" aria-label="SocialOps Studio">
+                <Link href="/" className="lg:hidden" aria-label={productName}>
                   <ProductMark />
                 </Link>
                 <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-app-teal shadow-hairline lg:flex" style={brandColor ? { color: brandColor } : undefined}>
