@@ -223,20 +223,20 @@ export default function HomePage() {
     <AuthGate>
       <AppShell>
         <NPage className="pb-6">
-          <section className="nahrino-card overflow-hidden rounded-xl">
-            <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
-              <div className="min-w-0 p-3 sm:p-4 lg:p-5">
+          <section className="nahrino-home-hero overflow-hidden rounded-2xl">
+            <div className="grid gap-0 lg:grid-cols-[minmax(0,0.96fr)_minmax(360px,0.72fr)]">
+              <div className="relative z-10 min-w-0 p-4 sm:p-5 lg:p-7">
                 <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                   <div className="min-w-0">
                     <div className="flex min-w-0 items-center gap-3">
                       <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandImageUrl} />
                       <div className="min-w-0">
                         <p className="app-section-kicker text-[10px] font-black">{productKicker}</p>
-                        <h1 className="mt-1 text-2xl font-black leading-tight text-app-text sm:text-3xl">امروز نشرینو</h1>
+                        <h1 className="mt-1 text-3xl font-black leading-tight text-app-text sm:text-4xl">امروز نشرینو</h1>
                         <p className="mt-1 truncate text-xs font-bold text-app-muted">{store?.name || "فضای کاری اجتماعی"} · {store?.category || store?.brand_voice || "هویت برند نیازمند تکمیل"}</p>
                       </div>
                     </div>
-                    <p className="mt-3 max-w-3xl text-sm leading-6 text-app-muted">{briefing}</p>
+                    <p className="mt-4 max-w-3xl text-sm leading-7 text-app-muted">{briefing}</p>
                   </div>
 
                   <div className="flex flex-wrap gap-2 xl:justify-end">
@@ -254,30 +254,50 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                <div className="mt-5 flex items-center gap-2 rounded-full border border-teal-200/80 bg-white/70 px-3 py-2 text-xs font-bold text-app-muted shadow-hairline sm:w-fit">
+                  <span className="nahrino-live-signal h-2.5 w-2.5 rounded-full bg-[#0b7771]" />
+                  جریان زنده عملیات محتوا
+                  <span className="hidden text-slate-300 sm:inline">/</span>
+                  <span className="hidden text-app-text sm:inline">ریسک، انتشار، کمپین و پیام‌ها</span>
+                </div>
+
+                <div className="mt-5 grid gap-2 sm:grid-cols-3">
                   <NActionTile label="اقدام بعدی" value={nextAction.label} detail={nextAction.detail} icon={Target} tone="primary" compact href={nextAction.href} />
                   <NActionTile label="صف فعال" value={queueTotal} detail="آماده، زمان‌بندی، انتشار و بازیابی" icon={TimerReset} tone={queueCounts.failed ? "alert" : "info"} compact href="/content" />
                   <NActionTile label="انتشار بعدی" value={nextPosts[0]?.scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"} detail="باز کردن برنامه انتشار" icon={CalendarClock} tone="warning" compact href="/calendar" />
                 </div>
               </div>
 
-              <aside className="border-t border-app-border bg-app-surfaceMuted/55 p-3 sm:p-4 lg:border-r lg:border-t-0">
-                <div className="nahrino-card flex h-full flex-col justify-between gap-3 rounded-lg p-3">
-                  <div>
-                    <p className="text-[10px] font-black text-app-primary">مسیر فوری</p>
-                    <h2 className="mt-1 line-clamp-2 text-base font-black text-app-text">{nextAction.label}</h2>
-                    <p className="mt-1.5 line-clamp-3 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
+              <aside className="border-t border-app-border/70 p-3 sm:p-4 lg:border-r lg:border-t-0">
+                <div className="nahrino-art-stage min-h-[280px] sm:min-h-[340px] lg:h-full lg:min-h-[400px]">
+                  <img
+                    src="/brand/nahrino-command-visual.png"
+                    alt="نمای تصویری عملیات محتوا و برنامه‌ریزی نشرینو"
+                    className="nahrino-command-art absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="absolute right-4 top-4 rounded-full border border-white/70 bg-white/82 px-3 py-1.5 text-[10px] font-black text-[#102a2a] shadow-hairline backdrop-blur">
+                    SocialOps فارسی
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <NButton href={nextAction.href} className="col-span-2 w-full">
-                      ادامه اقدام
-                      <ArrowUpLeft className="mr-2 h-4 w-4" aria-hidden="true" />
-                    </NButton>
-                    <NButton href="/compose" variant="secondary" className="w-full">ساخت</NButton>
-                    <NButton type="button" variant="quiet" className="w-full" disabled={refreshing} onClick={() => loadDashboard(true)}>
-                      <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
-                      تازه‌سازی
-                    </NButton>
+                  <div className="absolute bottom-3 left-3 right-3 rounded-xl border border-white/70 bg-white/86 p-3 shadow-[0_18px_34px_rgba(24,33,47,0.14)] backdrop-blur-md">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black text-app-primary">مسیر فوری</p>
+                        <h2 className="mt-1 line-clamp-2 text-base font-black text-app-text">{nextAction.label}</h2>
+                        <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
+                      </div>
+                      <span className="nahrino-live-signal mt-1 h-3 w-3 shrink-0 rounded-full bg-[#0b7771]" />
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <NButton href={nextAction.href} className="col-span-2 w-full">
+                        ادامه اقدام
+                        <ArrowUpLeft className="mr-2 h-4 w-4" aria-hidden="true" />
+                      </NButton>
+                      <NButton href="/compose" variant="secondary" className="w-full">ساخت</NButton>
+                      <NButton type="button" variant="quiet" className="w-full" disabled={refreshing} onClick={() => loadDashboard(true)}>
+                        <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
+                        تازه‌سازی
+                      </NButton>
+                    </div>
                   </div>
                 </div>
               </aside>

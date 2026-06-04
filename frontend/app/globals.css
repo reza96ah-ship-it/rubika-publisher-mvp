@@ -138,6 +138,47 @@ a {
   }
 }
 
+@keyframes nahrino-art-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(0, -8px, 0) scale(1.012);
+  }
+}
+
+@keyframes nahrino-scan {
+  0% {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+
+  12%,
+  72% {
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: translateX(-110%);
+    opacity: 0;
+  }
+}
+
+@keyframes nahrino-signal {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px rgba(11, 119, 113, 0.1);
+    transform: scale(1);
+  }
+
+  50% {
+    box-shadow: 0 0 0 10px rgba(11, 119, 113, 0.03);
+    transform: scale(1.05);
+  }
+}
+
 @layer utilities {
   .app-workspace-bg {
     background-color: #f7f6f2;
@@ -260,6 +301,43 @@ a {
     background: rgba(255, 255, 255, 0.86);
     color: #18212f;
     box-shadow: 0 6px 16px rgba(24, 33, 47, 0.045);
+  }
+
+  .nahrino-home-hero {
+    position: relative;
+    isolation: isolate;
+    border: 1px solid rgba(189, 200, 202, 0.88);
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 246, 241, 0.92) 48%, rgba(231, 245, 241, 0.82)),
+      radial-gradient(circle at 14% 85%, rgba(217, 71, 92, 0.08), transparent 19rem),
+      radial-gradient(circle at 82% 12%, rgba(11, 119, 113, 0.12), transparent 20rem);
+    box-shadow: 0 20px 48px rgba(24, 33, 47, 0.075);
+  }
+
+  .nahrino-command-art {
+    transform-origin: center;
+    animation: nahrino-art-float 7s ease-in-out infinite;
+  }
+
+  .nahrino-art-stage {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    background: linear-gradient(145deg, rgba(16, 42, 42, 0.08), rgba(255, 255, 255, 0.92));
+  }
+
+  .nahrino-art-stage::after {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.54), transparent);
+    content: "";
+    pointer-events: none;
+    transform: translateX(110%);
+    animation: nahrino-scan 5.8s ease-in-out infinite;
+  }
+
+  .nahrino-live-signal {
+    animation: nahrino-signal 2.1s ease-in-out infinite;
   }
 
   .app-progress {
