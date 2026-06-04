@@ -18,6 +18,7 @@ const config: Config = {
           focus: "rgb(var(--n-color-focus) / <alpha-value>)",
           primary: "rgb(var(--n-color-primary) / <alpha-value>)",
           primaryHover: "rgb(var(--n-color-primary-strong) / <alpha-value>)",
+          graphite: "rgb(var(--n-color-graphite) / <alpha-value>)",
           secondary: "rgb(var(--n-color-secondary) / <alpha-value>)",
           secondarySoft: "rgb(var(--n-color-secondary-soft) / <alpha-value>)",
           text: "rgb(var(--n-color-ink) / <alpha-value>)",
@@ -33,7 +34,14 @@ const config: Config = {
           coral: "rgb(var(--n-color-coral) / <alpha-value>)",
           coralSoft: "rgb(var(--n-color-coral-soft) / <alpha-value>)",
           plum: "rgb(var(--n-color-plum) / <alpha-value>)",
-          plumSoft: "rgb(var(--n-color-plum-soft) / <alpha-value>)"
+          plumSoft: "rgb(var(--n-color-plum-soft) / <alpha-value>)",
+          frost: "rgb(var(--n-color-frost) / <alpha-value>)",
+          studio: "rgb(var(--n-color-studio-bg) / <alpha-value>)",
+          studioSurface: "rgb(var(--n-color-studio-surface) / <alpha-value>)",
+          studioRaised: "rgb(var(--n-color-studio-raised) / <alpha-value>)",
+          studioText: "rgb(var(--n-color-studio-text) / <alpha-value>)",
+          studioMuted: "rgb(var(--n-color-studio-muted) / <alpha-value>)",
+          studioPrimary: "rgb(var(--n-color-studio-primary) / <alpha-value>)"
         }
       },
       boxShadow: {

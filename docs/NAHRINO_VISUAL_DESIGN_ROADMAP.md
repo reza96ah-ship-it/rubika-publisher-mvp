@@ -652,6 +652,8 @@ Goal: make the implemented app inherit the correct world-class visual DNA before
 
 Current source review: `docs/NAHRINO_WORLD_CLASS_VISUAL_SYSTEM_REVIEW.md`
 
+Current phase output: `docs/NAHRINO_V4_5_VISUAL_TOKEN_CALIBRATION.md`
+
 Deliverables:
 
 - warm editorial light palette replaces the remaining cool/generic shell feel,
