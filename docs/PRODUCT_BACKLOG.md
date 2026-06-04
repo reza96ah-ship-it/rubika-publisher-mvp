@@ -2,6 +2,8 @@
 
 This backlog translates the roadmap and RFP into implementation epics. Items are ordered by product value, not by code file.
 
+The active reset document is `docs/REBUILD_FROM_ZERO_2026.md`. It overrides older incremental UI repair thinking. The product shell must follow this Persian workflow: **امروز، ساخت، برنامه‌ریزی، محتوا، رسانه، پیام‌ها، گزارش‌ها، تنظیمات**.
+
 Priority levels:
 
 - **P0:** required for professional product credibility.
@@ -175,12 +177,13 @@ Priority levels:
 
 ## Immediate Next Implementation Order
 
-1. E1A-1/E1A-4: product-specific design language and content/card system.
-2. E1-1/E1-2/E1-6: Command Center daily operations and mobile task stack.
-3. E2-1/E2-4: capability model surfaced consistently.
-4. E3-1/E3-3: composer source idea plus channel variants.
-5. E4-1/E4-2/E4-7: campaign lane, channel rails, and visual planner.
-6. E10-8/E10-9: client/manager-ready reporting.
-7. E8-1/E8-2: durable publish jobs/idempotency.
+1. E0-2/E0-4: finish shell cleanup, remove duplicate setup/action/filter furniture, and keep contextual routes out of primary navigation.
+2. E1-1/E1-2/E1-6: rebuild Today as a compact Command Center for daily operations and mobile task flow.
+3. E1A-1/E1A-4: implement the design-system v2 product primitives that make pages feel like one professional app.
+4. E2-1/E2-4: surface the shared channel capability model everywhere.
+5. E3-1/E3-3: rebuild Composer around source idea plus channel variants.
+6. E4-1/E4-2/E4-7: add campaign lanes, channel rails, saved planner views, and visual feed planning.
+7. E8-1/E8-2: add durable publish jobs, idempotency, recovery, and job-first logs.
+8. E10-8/E10-9: build client/manager-ready reports after the operational model is stable.
 
 This order fixes the user journey first, then deepens professional capability.

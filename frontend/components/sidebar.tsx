@@ -37,23 +37,24 @@ type SidebarProps = {
   avatarUrl?: string;
 };
 
-const composeNavItem: NavItem = { label: "استودیو", href: "/compose", icon: PenLine };
+const todayNavItem: NavItem = { label: "امروز", href: "/", icon: LayoutDashboard };
+const composeNavItem: NavItem = { label: "ساخت", href: "/compose", icon: PenLine };
 const onboardingNavItem: NavItem = { label: "راه‌اندازی", href: "/onboarding", icon: Rocket };
-const plannerNavItem: NavItem = { label: "تقویم", href: "/calendar", icon: CalendarDays };
-const contentNavItem: NavItem = { label: "کتابخانه", href: "/content", icon: FileText };
-const settingsNavItem: NavItem = { label: "فضای کاری", href: "/store", icon: Store };
+const plannerNavItem: NavItem = { label: "برنامه‌ریزی", href: "/calendar", icon: CalendarDays };
+const contentNavItem: NavItem = { label: "محتوا", href: "/content", icon: FileText };
+const settingsNavItem: NavItem = { label: "تنظیمات", href: "/store", icon: Store };
 
 const primaryNavGroups: NavGroup[] = [
   {
-    title: "مسیر اصلی",
+    title: "جریان کار",
     items: [
-      { label: "داشبورد", href: "/", icon: LayoutDashboard },
+      todayNavItem,
       composeNavItem,
       plannerNavItem,
       contentNavItem,
       { label: "رسانه", href: "/media", icon: GalleryHorizontalEnd },
       { label: "پیام‌ها", href: "/inbox", icon: BellRing },
-      { label: "تحلیل", href: "/analytics", icon: BarChart3 }
+      { label: "گزارش‌ها", href: "/analytics", icon: BarChart3 }
     ]
   }
 ];
@@ -86,11 +87,11 @@ function isNavItemActive(pathname: string, item: NavItem) {
 
 export function getActiveNav(pathname: string) {
   if (isActiveRoute(pathname, onboardingNavItem.href)) {
-    return { group: { title: "مسیر شروع", items: [onboardingNavItem] }, item: onboardingNavItem };
+    return { group: { title: "شروع", items: [onboardingNavItem] }, item: onboardingNavItem };
   }
 
   if (isActiveRoute(pathname, composeNavItem.href)) {
-    return { group: { title: "تولید محتوا", items: [composeNavItem] }, item: composeNavItem };
+    return { group: { title: "ساخت محتوا", items: [composeNavItem] }, item: composeNavItem };
   }
 
   if (isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/campaigns")) {
@@ -98,7 +99,7 @@ export function getActiveNav(pathname: string) {
   }
 
   if (isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue")) {
-    return { group: { title: "مدیریت محتوا", items: [contentNavItem] }, item: contentNavItem };
+    return { group: { title: "عملیات محتوا", items: [contentNavItem] }, item: contentNavItem };
   }
 
   if (
@@ -115,7 +116,7 @@ export function getActiveNav(pathname: string) {
     const item = group.items.find((entry) => isActiveRoute(pathname, entry.href));
     if (item) return { group, item };
   }
-  return { group: primaryNavGroups[0], item: primaryNavGroups[0].items[0] };
+  return { group: primaryNavGroups[0], item: todayNavItem };
 }
 
 function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
@@ -198,11 +199,11 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
 }
 
 const mobileNavItems = [
-  { label: "داشبورد", href: "/", icon: LayoutDashboard },
-  { label: "تقویم", href: "/calendar", icon: CalendarDays },
+  todayNavItem,
+  plannerNavItem,
   composeNavItem,
-  { label: "کتابخانه", href: "/content", icon: FileText },
-  { label: "تحلیل", href: "/analytics", icon: BarChart3 }
+  contentNavItem,
+  { label: "گزارش‌ها", href: "/analytics", icon: BarChart3 }
 ];
 
 export function MobileNav() {

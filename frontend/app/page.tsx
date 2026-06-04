@@ -307,7 +307,7 @@ export default function HomePage() {
         loadWorkspaceOverview(),
         loadOperationalNotifications()
       ]);
-      if (!response.ok) throw new Error("دریافت داشبورد ناموفق بود");
+      if (!response.ok) throw new Error("دریافت نمای امروز ناموفق بود");
       const postData: Post[] = await response.json();
       const campaignData = await loadCampaigns("all").catch(() => []);
       setPosts(postData);
@@ -325,7 +325,7 @@ export default function HomePage() {
 
   useEffect(() => {
     loadDashboard().catch((err) => {
-      setError(err instanceof Error ? err.message : "خطا در دریافت داشبورد");
+      setError(err instanceof Error ? err.message : "خطا در دریافت نمای امروز");
       setLoading(false);
     });
   }, [loadDashboard]);
@@ -445,7 +445,7 @@ export default function HomePage() {
                     <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandImageUrl} />
                     <div className="min-w-0">
                       <p className="app-section-kicker text-[10px] font-black">{productKicker}</p>
-                      <h1 className="mt-1 text-2xl font-black leading-tight text-app-text sm:text-3xl">داشبورد نشرینو</h1>
+                      <h1 className="mt-1 text-2xl font-black leading-tight text-app-text sm:text-3xl">امروز نشرینو</h1>
                       <p className="mt-1 truncate text-xs font-bold text-app-muted">{store?.name || "فضای کاری اجتماعی"} · {store?.category || store?.brand_voice || "هویت برند نیازمند تکمیل"}</p>
                     </div>
                   </div>
@@ -502,7 +502,7 @@ export default function HomePage() {
             <DashboardCard
               title="نمای هوشمند امروز"
               description="دونات وضعیت، شاخص‌های اصلی و روند هفته در یک باند فشرده."
-              action={<StatusToken tone="info">داشبورد عملیاتی</StatusToken>}
+              action={<StatusToken tone="info">نمای عملیاتی امروز</StatusToken>}
             >
               <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)_280px] lg:items-stretch">
                 <DonutStatusChart items={pipelineDistribution} total={pipelineTotal} />

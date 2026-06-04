@@ -490,8 +490,8 @@ export default function ContentWorkspacePage() {
 
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
             <WorkspacePanel
-              title="کتابخانه محتوا"
-              description="پست‌ها را اسکن کنید و برای بازبینی یا اقدام عملیاتی به پنل کناری بفرستید."
+              title="میز محتوا"
+              description="پست‌ها، پیش‌نویس‌ها و اقدام‌های صف را از یک مسیر عملیاتی بررسی کنید."
               action={
                 <div className="flex flex-wrap gap-2">
                   <Button type="button" variant="secondary" size="sm" onClick={toggleAllVisible}>

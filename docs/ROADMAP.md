@@ -4,6 +4,18 @@ This roadmap resets the product direction after benchmarking current social medi
 
 Every implementation slice must be committed and pushed as a restore checkpoint.
 
+## 2026 Rebuild Source Of Truth
+
+The attached product review PDF triggered a full restart from the first step. The active rebuild control document is now:
+
+`docs/REBUILD_FROM_ZERO_2026.md`
+
+The restart path is:
+
+**امروز -> ساخت -> برنامه‌ریزی -> محتوا -> رسانه -> پیام‌ها -> گزارش‌ها -> تنظیمات**
+
+Any future page, component, route, or action should fit that path. Campaigns, queues, logs, channels, Rubika, and Instagram are contextual sub-surfaces, not competing primary navigation concepts.
+
 ## Current Product Score
 
 Current score against top market products: **4.2 / 10 overall**.
@@ -143,7 +155,7 @@ Acceptance criteria:
 
 Current status:
 
-- Navigation simplified.
+- Navigation reset to the rebuild workflow: امروز، ساخت، برنامه‌ریزی، محتوا، رسانه، پیام‌ها، گزارش‌ها، تنظیمات.
 - Publishing workspace sub-navigation simplified.
 - Guided setup route exists and is contextual.
 - Remaining: command center insight architecture, campaign timeline preview, duplicate action audit.

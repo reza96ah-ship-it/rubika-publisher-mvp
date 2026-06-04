@@ -751,7 +751,7 @@ function ComposePageContent() {
           <section className="app-studio-panel rounded-lg px-3 py-2.5 sm:px-4 sm:py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
-                <p className="text-[10px] font-black text-app-primary">استودیوی انتشار</p>
+                <p className="text-[10px] font-black text-app-primary">ساخت محتوا</p>
                 <h1 className="mt-1 text-xl font-black text-app-text">{isEditing ? "ویرایش پست" : "پست جدید"}</h1>
                 <p className="mt-1 text-xs leading-5 text-app-muted">محتوا را کامل کنید، کانال انتشار را انتخاب کنید و زمان انتشار را از یک مسیر متمرکز تنظیم کنید.</p>
               </div>

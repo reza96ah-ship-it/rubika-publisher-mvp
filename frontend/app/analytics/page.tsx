@@ -517,8 +517,8 @@ export default function AnalyticsPage() {
                         <p className="mt-0.5 truncate text-xs text-app-muted">{store?.category || store?.brand_voice || "برند workspace هنوز کامل نشده است."}</p>
                       </div>
                     </div>
-                    <p className="text-[10px] font-black text-app-primary">مرکز بینش عملکرد</p>
-                    <h1 className="mt-1 text-xl font-black text-app-text sm:text-2xl">تحلیل انتشار و کیفیت محتوا</h1>
+                    <p className="text-[10px] font-black text-app-primary">مرکز گزارش‌ها</p>
+                    <h1 className="mt-1 text-xl font-black text-app-text sm:text-2xl">گزارش عملکرد محتوا</h1>
                     <p className="mt-1.5 max-w-3xl text-xs leading-5 text-app-muted sm:text-sm sm:leading-6">روند ارسال، سلامت کمپین‌ها، پوشش رسانه‌ای و پست‌های اثرگذار را در یک نمای تصمیم‌ساز بررسی کنید.</p>
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -1054,7 +1054,7 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="mt-4 grid gap-2">
                   <Button href="/queue" variant="secondary">باز کردن صف انتشار</Button>
-                  <Button href="/content" variant="secondary">کتابخانه محتوا</Button>
+                  <Button href="/content" variant="secondary">میز محتوا</Button>
                 </div>
               </WorkspacePanel>
             </aside>
