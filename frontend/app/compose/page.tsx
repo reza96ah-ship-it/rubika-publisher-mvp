@@ -738,7 +738,7 @@ function ComposePageContent() {
   return (
     <AuthGate>
       <AppShell>
-        <WorkspacePage className="space-y-4">
+        <WorkspacePage className="space-y-3 sm:space-y-4">
           {editingImageSource ? (
             <MediaImageEditor
               imageUrl={editingImageSource.imageUrl}
@@ -748,7 +748,7 @@ function ComposePageContent() {
               onSave={saveEditedComposerImage}
             />
           ) : null}
-          <section className="app-studio-panel rounded-lg px-4 py-3">
+          <section className="app-studio-panel rounded-lg px-3 py-2.5 sm:px-4 sm:py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
                 <p className="text-[10px] font-black text-app-primary">استودیوی انتشار</p>
@@ -785,8 +785,8 @@ function ComposePageContent() {
             />
           ) : null}
 
-          <form onSubmit={saveDraft} className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <section className="min-w-0 space-y-4">
+          <form onSubmit={saveDraft} className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_330px]">
+            <section className="min-w-0 space-y-3 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
               <div id="composer-content">
                 <WorkspacePanel
                 title="محتوای پست"
@@ -797,7 +797,7 @@ function ComposePageContent() {
                     {hasSchedule ? <Tag tone="success">زمان‌بندی شده</Tag> : null}
                   </div>
                 )}
-                bodyClassName="grid gap-5 p-5"
+                bodyClassName="grid gap-3 p-3 sm:gap-4 sm:p-4"
               >
                   <section className="rounded-md border border-app-border bg-app-surfaceMuted p-3">
                     <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
@@ -852,7 +852,7 @@ function ComposePageContent() {
                     <Textarea
                       value={form.caption}
                       onChange={(event) => updateField("caption", event.target.value)}
-                      className="min-h-[320px] resize-y border-0 bg-app-canvas px-4 py-3 text-[15px] leading-8 shadow-hairline"
+                      className="min-h-[240px] resize-y border-0 bg-app-canvas px-4 py-3 text-[15px] leading-8 shadow-hairline"
                       placeholder="متن پست شبکه‌های اجتماعی را وارد کنید..."
                     />
                   </Field>
@@ -887,7 +887,7 @@ function ComposePageContent() {
                     </button>
 
                     {showOptionalDetails ? (
-                      <div className="grid gap-4 border-t border-app-border bg-white p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                      <div className="grid gap-3 border-t border-app-border bg-white p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                         <div>
                           <div className="flex items-start justify-between gap-3">
                             <div>
@@ -952,7 +952,7 @@ function ComposePageContent() {
                       ) : null}
                     </div>
                   )}
-                  bodyClassName="grid gap-4 p-4 lg:grid-cols-[230px_minmax(0,1fr)]"
+                  bodyClassName="grid gap-3 p-3 sm:p-4 lg:grid-cols-[220px_minmax(0,1fr)]"
                 >
                   <div className="space-y-3">
                     <label className="app-interactive block cursor-pointer rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted p-3 hover:border-blue-300 hover:bg-blue-50">
@@ -998,15 +998,15 @@ function ComposePageContent() {
               {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
             </section>
 
-            <aside className="min-w-0 space-y-4">
-              <div className="sticky top-24 space-y-4">
+            <aside className="min-w-0 space-y-3">
+              <div className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
                 <ComposerStepRail steps={composerSteps} />
 
                 <WorkspacePanel
                   title="بازرس استودیو"
                   description="پیش‌نمایش، زمان‌بندی و کنترل نهایی را در یک فضای متمرکز بررسی کنید."
                   action={<StatusToken tone={publishTone}>{readinessScore}%</StatusToken>}
-                  bodyClassName="p-0"
+                  bodyClassName="max-h-[72vh] overflow-y-auto p-0 lg:max-h-none"
                 >
                   <div className="grid grid-cols-3 border-b border-app-border bg-app-surfaceMuted p-1">
                     {studioPanels.map((panel) => {
@@ -1080,7 +1080,7 @@ function ComposePageContent() {
               </div>
             </aside>
 
-            <div className="xl:col-span-2">
+            <div className="lg:col-span-2">
               <ComposerActionFooter
                 savingAction={savingAction}
                 canSaveDraft={canSaveDraft}

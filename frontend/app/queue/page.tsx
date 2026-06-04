@@ -458,7 +458,7 @@ export default function QueuePage() {
             })}
           </section>
 
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
             <WorkspacePanel
               title="عملیات صف"
               description="پست‌های صف را اسکن کنید و اقدام‌های اصلی را از بازبین کناری انجام دهید."
@@ -563,9 +563,9 @@ export default function QueuePage() {
               </DataTable>
             </WorkspacePanel>
 
-            <aside className="space-y-4">
-              <div className="sticky top-24 space-y-4">
-                <WorkspacePanel title="بازبین صف" description="جزئیات و اقدام‌های پست انتخاب‌شده." bodyClassName="p-4">
+            <aside className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+              <div className="space-y-4">
+                <WorkspacePanel title="بازبین صف" description="جزئیات و اقدام‌های پست انتخاب‌شده." bodyClassName="max-h-[68vh] overflow-y-auto p-3 sm:p-4 lg:max-h-none">
                   {selectedPost ? (
                     <div>
                       <div className="mb-4 overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
@@ -687,7 +687,7 @@ export default function QueuePage() {
                 </WorkspacePanel>
 
                 {nextScheduled ? (
-                  <WorkspacePanel title="انتشار بعدی" description="نزدیک‌ترین پست زمان‌بندی‌شده در صف." bodyClassName="p-4">
+                  <WorkspacePanel title="انتشار بعدی" description="نزدیک‌ترین پست زمان‌بندی‌شده در صف." bodyClassName="p-3" className="hidden xl:block">
                     <p className="font-black text-app-text">{nextScheduled.title}</p>
                     <p className="mt-2 text-sm leading-7 text-app-muted">{formatDateTime(nextScheduled.scheduled_at)}</p>
                     <CountdownBadge status={nextScheduled.status} scheduledAt={nextScheduled.scheduled_at} className="mt-3" />

@@ -489,7 +489,7 @@ export default function ContentWorkspacePage() {
           {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
             <WorkspacePanel
               title="کتابخانه محتوا"
               description="پست‌ها را اسکن کنید و برای بازبینی یا اقدام عملیاتی به پنل کناری بفرستید."
@@ -672,11 +672,12 @@ export default function ContentWorkspacePage() {
               </DataTable>
             </WorkspacePanel>
 
-            <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+            <aside className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
               <WorkspacePanel
                 title="بازبین پست"
                 description="پست انتخاب‌شده را بدون خروج از فضای محتوا بررسی کنید."
                 action={selectedPost ? <ApprovalBadge status={selectedPost.approval_status} compact /> : null}
+                bodyClassName="max-h-[68vh] overflow-y-auto p-3 sm:p-4 lg:max-h-none"
               >
                 {selectedPost ? (
                   <div className="space-y-4">

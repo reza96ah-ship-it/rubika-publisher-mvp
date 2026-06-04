@@ -34,11 +34,11 @@ export function PublishingWorkspaceHeader({
 }: PublishingWorkspaceHeaderProps) {
   return (
     <section className="app-studio-panel overflow-hidden rounded-lg">
-      <div className="flex flex-col justify-between gap-3 px-4 py-3 lg:flex-row lg:items-center">
+      <div className="flex flex-col justify-between gap-2 px-3 py-2.5 sm:px-4 sm:py-3 lg:flex-row lg:items-center">
         <div className="min-w-0">
           <p className="app-section-kicker text-[10px] font-black">فضای انتشار</p>
-          <h1 className="mt-1 text-xl font-black text-app-text">{title}</h1>
-          <p className="mt-1 max-w-3xl text-xs leading-5 text-app-muted">{description}</p>
+          <h1 className="mt-1 text-lg font-black text-app-text sm:text-xl">{title}</h1>
+          <p className="mt-1 line-clamp-2 max-w-3xl text-xs leading-5 text-app-muted">{description}</p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {meta}
@@ -46,7 +46,7 @@ export function PublishingWorkspaceHeader({
         </div>
       </div>
 
-      <nav className="overflow-x-auto border-t border-app-border bg-app-surfaceMuted px-2" aria-label="نماهای فضای انتشار">
+      <nav className="overflow-x-auto border-t border-app-border bg-app-surfaceMuted px-1.5 sm:px-2" aria-label="نماهای فضای انتشار">
         <div className="flex min-w-max items-center gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -57,7 +57,7 @@ export function PublishingWorkspaceHeader({
                 key={tab.key}
                 href={tab.href}
                 onClick={() => onTabChange?.(tab.key)}
-                className={`flex items-center gap-1.5 border-b-2 px-3 py-3 text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 border-b-2 px-2.5 py-2 text-[11px] font-bold transition sm:px-3 sm:py-2.5 sm:text-xs ${
                   active
                     ? "border-app-primary bg-white text-app-primary"
                     : "border-transparent text-slate-500 hover:bg-white/80 hover:text-app-text"

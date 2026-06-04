@@ -902,7 +902,7 @@ export default function CampaignsPage() {
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
           {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
 
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_410px]">
+          <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_360px]">
             <WorkspacePanel
               title="پورتفولیوی کمپین"
               description="کمپین‌ها را بر اساس وضعیت، سلامت و حجم محتوای متصل بررسی کنید."
@@ -932,7 +932,7 @@ export default function CampaignsPage() {
                 </div>
               ) : null}
 
-              <div className="mt-4 grid gap-3">
+              <div className="mt-3 grid max-h-[62vh] gap-2 overflow-y-auto pr-1">
                 {campaignRows.map((row) => {
                   const selected = selectedRow?.campaign.id === row.campaign.id;
                   return (
@@ -974,8 +974,8 @@ export default function CampaignsPage() {
               </div>
             </WorkspacePanel>
 
-            <aside className="space-y-4 xl:sticky xl:top-20 xl:self-start">
-              <WorkspacePanel title="جزئیات کمپین" description="سلامت، زمان‌بندی و ریسک‌های کمپین انتخاب‌شده." bodyClassName="p-4">
+            <aside className="space-y-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
+              <WorkspacePanel title="جزئیات کمپین" description="سلامت، زمان‌بندی و ریسک‌های کمپین انتخاب‌شده." bodyClassName="max-h-[58vh] overflow-y-auto p-3 sm:p-4 lg:max-h-none">
                 {selectedRow ? (
                   <div className="space-y-4">
                     <div className="rounded-lg border border-app-border bg-app-surfaceMuted p-3">
@@ -1073,7 +1073,7 @@ export default function CampaignsPage() {
               <WorkspacePanel
                 title={editorMode === "create" ? "ساخت کمپین" : "ویرایش کمپین"}
                 description={editorMode === "create" ? "کمپین جدید را با هدف، رنگ و مالک مشخص بسازید." : "مشخصات عملیاتی کمپین انتخاب‌شده را به‌روزرسانی کنید."}
-                bodyClassName="p-4"
+                bodyClassName="max-h-[62vh] overflow-y-auto p-3 sm:p-4 lg:max-h-none"
                 className="scroll-mt-24"
                 action={editorMode === "create" ? <StatusToken tone="primary">جدید</StatusToken> : selectedRow ? <StatusToken tone={campaignStatusTone(selectedRow.campaign.status)}>{statusLabels[selectedRow.campaign.status] ?? selectedRow.campaign.status}</StatusToken> : null}
               >
@@ -1147,7 +1147,7 @@ export default function CampaignsPage() {
           </section>
 
           {selectedRow ? (
-            <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
+            <section className="hidden gap-4 2xl:grid 2xl:grid-cols-[minmax(0,1fr)_390px]">
               <WorkspacePanel
                 title="تحلیل کمپین"
                 description="خلاصه عملکرد، پوشش رسانه، روند فعالیت و ریسک‌های عملیاتی کمپین انتخاب‌شده."
@@ -1165,7 +1165,7 @@ export default function CampaignsPage() {
                   </div>
                 )}
                 bodyClassName="p-4"
-                className="xl:col-span-2"
+                className="2xl:col-span-2"
               >
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                   <div className="app-row bg-white p-3.5">

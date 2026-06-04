@@ -479,8 +479,8 @@ export default function StorePage() {
   return (
     <AuthGate>
       <AppShell>
-        <WorkspacePage className="space-y-4">
-          <section className="app-studio-panel rounded-lg px-4 py-3">
+        <WorkspacePage>
+          <section className="app-studio-panel rounded-lg px-3 py-2.5 sm:px-4 sm:py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
                 <p className="text-[10px] font-black text-app-primary">تنظیمات برند</p>
@@ -525,15 +525,15 @@ export default function StorePage() {
             </WorkspacePanel>
           ) : (
             <form onSubmit={saveStore}>
-              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-                <div className="space-y-4">
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
+                <div className="space-y-3 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
                   <WorkspacePanel
                     title="هویت فروشگاه"
                     description="مشخصات اصلی برند و اطلاعات عملیاتی فروشگاه را یک‌جا مدیریت کنید."
                     action={<Tag tone={requiredReady ? "success" : "warning"}>{requiredReady ? "اطلاعات پایه آماده" : "نیازمند تکمیل"}</Tag>}
                     bodyClassName="p-0"
                   >
-                    <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(240px,0.65fr)]">
+                    <div className="grid gap-3 p-3 sm:p-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(240px,0.65fr)]">
                       <Field label="نام فروشگاه" required hint="نامی که در workspace و پیش‌نمایش کپشن نمایش داده می‌شود.">
                         <Input value={form.name} onChange={(event) => updateField("name", event.target.value)} placeholder="مثلاً فروشگاه سپهر" required />
                       </Field>
@@ -543,7 +543,7 @@ export default function StorePage() {
                       </Field>
                     </div>
 
-                    <div className="grid gap-4 border-t border-app-border bg-slate-50/70 p-4 md:grid-cols-2">
+                    <div className="grid gap-3 border-t border-app-border bg-slate-50/70 p-3 sm:p-4 md:grid-cols-2">
                       <Field label="شماره تماس" hint="در صورت نیاز برای CTA و اطلاعات تماس مشتری استفاده می‌شود.">
                         <Input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} placeholder="0912 000 0000" className="text-left" dir="ltr" inputMode="tel" />
                       </Field>
@@ -705,7 +705,7 @@ export default function StorePage() {
                   </div>
                 </div>
 
-                <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+                <aside className="hidden space-y-3 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
               <WorkspacePanel title="چک‌لیست آماده‌سازی" description="برای یک workspace قابل اتکا، این موارد را کامل نگه دارید.">
                 <div className="space-y-0">
                   {readinessItems.map((item) => <ReadinessRow key={item.label} item={item} />)}

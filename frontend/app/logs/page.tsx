@@ -380,9 +380,9 @@ export default function LogsPage() {
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
           {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
 
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
+          <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
             <div className="min-w-0">
-              <WorkspacePanel title="تلاش‌های انتشار" description="آخرین تلاش‌ها را اسکن کنید و جزئیات فنی را در بازرس کناری ببینید." bodyClassName="p-4">
+              <WorkspacePanel title="تلاش‌های انتشار" description="آخرین تلاش‌ها را اسکن کنید و جزئیات فنی را در بازرس کناری ببینید." bodyClassName="p-3 sm:p-4">
                 <DataToolbar
                   meta={(
                     <>
@@ -430,9 +430,9 @@ export default function LogsPage() {
                     return (
                       <DataRow key={attempt.id} gridClassName={logsRowGrid} selected={selected}>
                         <div className="min-w-0">
-                          <h2 className="truncate text-base font-black text-app-text">{attempt.post_title}</h2>
+                          <h2 className="truncate text-sm font-black text-app-text sm:text-base">{attempt.post_title}</h2>
                           <p className="mt-1 text-xs text-app-muted">Post #{attempt.post_id} · Attempt #{attempt.id}</p>
-                          {attempt.error ? <p className="mt-3 rounded bg-rose-50 p-3 text-xs leading-6 text-rose-700">{attempt.error}</p> : null}
+                          {attempt.error ? <p className="mt-2 line-clamp-2 rounded bg-rose-50 p-2 text-xs leading-5 text-rose-700">{attempt.error}</p> : null}
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
@@ -464,14 +464,15 @@ export default function LogsPage() {
               </WorkspacePanel>
             </div>
 
-            <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+            <aside className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
               <WorkspacePanel
                 title="بازرس تلاش"
                 description="Timeline، payload و مسیر بازیابی تلاش انتخاب‌شده."
                 action={selectedAttempt ? <StatusBadge status={attemptTone(selectedAttempt.attempt.status)} /> : null}
+                bodyClassName="max-h-[70vh] overflow-y-auto p-3 sm:p-4 lg:max-h-none"
               >
                 {selectedAttempt ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={attemptTone(selectedAttempt.attempt.status)} />

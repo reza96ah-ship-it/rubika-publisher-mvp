@@ -565,9 +565,9 @@ export default function CalendarPage() {
 
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_310px]">
             <section className="app-studio-panel min-w-0 overflow-hidden rounded-lg">
-              <div className="border-b border-app-border px-3 py-3">
+              <div className="border-b border-app-border px-3 py-2.5 sm:py-3">
                 <div className="flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-base font-black text-app-text">{viewMode === "week" ? dayRangeLabel(activeWeekDays) : formatJalaliMonth(monthAnchor)}</h2>
@@ -590,7 +590,7 @@ export default function CalendarPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 grid gap-2 2xl:grid-cols-[minmax(220px,1fr)_190px_auto_auto] 2xl:items-center">
+                <div className="mt-2 grid gap-2 2xl:grid-cols-[minmax(220px,1fr)_190px_auto_auto] 2xl:items-center">
                   <DataSearchField
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
@@ -642,7 +642,7 @@ export default function CalendarPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
+                <div className="mt-2 flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
                   <div className="flex flex-wrap gap-1.5">
                     {calendarFilters.map((filter) => {
                       const active = statusFilter === filter.value;
@@ -663,7 +663,7 @@ export default function CalendarPage() {
                       );
                     })}
                   </div>
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     <div className="hidden items-center gap-2 text-[11px] font-bold text-app-muted 2xl:flex">
                       {[
                         { label: "زمان‌بندی", tone: "bg-blue-500" },
@@ -703,7 +703,7 @@ export default function CalendarPage() {
               {loading ? <LoadingRows rows={5} /> : null}
 
               {!loading && viewMode !== "list" ? (
-                <div className="overflow-x-auto">
+                <div className="max-h-[68vh] overflow-auto">
                   <div className="min-w-[820px]">
                     <div className="grid grid-cols-7 border-b border-app-border bg-slate-50 text-center text-xs font-black text-slate-500">
                       {weekDays.map((day) => <div key={day} className="px-2 py-2.5">{day}</div>)}
@@ -825,7 +825,7 @@ export default function CalendarPage() {
               ) : null}
             </section>
 
-            <div className="xl:sticky xl:top-20 xl:self-start">
+            <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
               <InspectorPanel
                 title="برنامه روز"
                 description={`${selectedDayLabel} · ${selectedDayPosts.length} پست`}

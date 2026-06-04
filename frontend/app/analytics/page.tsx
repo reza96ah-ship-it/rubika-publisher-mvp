@@ -505,11 +505,11 @@ export default function AnalyticsPage() {
       <AppShell>
         <WorkspacePage>
           <section className="app-studio-panel overflow-hidden rounded-lg border-t-4" style={{ borderTopColor: brandColor }}>
-            <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
-              <div className="px-4 py-4 lg:px-5">
-                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+            <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="px-3 py-3 lg:px-5">
+                <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-start">
                   <div className="min-w-0">
-                    <div className="mb-4 flex min-w-0 items-center gap-3">
+                    <div className="mb-3 flex min-w-0 items-center gap-3">
                       <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandAvatarUrl} />
                       <div className="min-w-0">
                         <p className="text-[10px] font-black text-app-muted">گزارش فعال برای</p>
@@ -518,8 +518,8 @@ export default function AnalyticsPage() {
                       </div>
                     </div>
                     <p className="text-[10px] font-black text-app-primary">مرکز بینش عملکرد</p>
-                    <h1 className="mt-1 text-2xl font-black text-app-text">تحلیل انتشار و کیفیت محتوا</h1>
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-app-muted">روند ارسال، سلامت کمپین‌ها، پوشش رسانه‌ای و پست‌های اثرگذار را در یک نمای تصمیم‌ساز بررسی کنید.</p>
+                    <h1 className="mt-1 text-xl font-black text-app-text sm:text-2xl">تحلیل انتشار و کیفیت محتوا</h1>
+                    <p className="mt-1.5 max-w-3xl text-xs leading-5 text-app-muted sm:text-sm sm:leading-6">روند ارسال، سلامت کمپین‌ها، پوشش رسانه‌ای و پست‌های اثرگذار را در یک نمای تصمیم‌ساز بررسی کنید.</p>
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
                     <StatusToken tone={attemptSummary.failed ? "alert" : "success"}>{attemptSummary.failed ? `${attemptSummary.failed} تلاش ناموفق` : "ارسال پایدار"}</StatusToken>
@@ -528,7 +528,7 @@ export default function AnalyticsPage() {
                     <Button href="/logs" variant="secondary" size="sm">سلامت انتشار</Button>
                   </div>
                 </div>
-                <div className="mt-4 grid gap-2 md:grid-cols-3">
+                <div className="mt-3 grid gap-2 md:grid-cols-3">
                   {insightCards.map((insight) => {
                     const Icon = insight.icon;
                     return (
@@ -547,7 +547,7 @@ export default function AnalyticsPage() {
                   })}
                 </div>
               </div>
-              <div className="dashboard-pulse border-t border-app-border p-4 xl:border-r xl:border-t-0">
+              <div className="dashboard-pulse hidden border-t border-app-border p-3 lg:block xl:border-r xl:border-t-0">
                 <div className="rounded-lg bg-white/86 p-3 shadow-hairline">
                   <div className="flex items-center gap-2">
                     <span className="flex h-9 w-9 items-center justify-center rounded-md bg-teal-50 text-app-primary">
@@ -636,8 +636,8 @@ export default function AnalyticsPage() {
             })}
           </section>
 
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
-            <div className="min-w-0 space-y-4">
+          <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="min-w-0 space-y-3 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
               <WorkspacePanel
                 title="روند تلاش‌های انتشار"
                 description="مقایسه تلاش‌های موفق، ناموفق و در حال اجرا در بازه انتخاب‌شده."
@@ -665,14 +665,14 @@ export default function AnalyticsPage() {
                     description="پس از ثبت تلاش‌های انتشار، نمودار عملیاتی اینجا کامل می‌شود."
                   />
                 ) : null}
-                <div className="mb-4 flex flex-wrap gap-3 text-[11px] font-bold text-app-muted">
+                <div className="mb-3 flex flex-wrap gap-3 text-[11px] font-bold text-app-muted">
                   <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> موفق</span>
                   <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-rose-500" /> ناموفق</span>
                   <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-sky-500" /> در حال اجرا</span>
                 </div>
                 <div className="overflow-x-auto pb-2">
                   <div
-                    className="grid h-56 items-end gap-2 border-b border-app-border px-8 pt-3"
+                    className="grid h-48 items-end gap-2 border-b border-app-border px-8 pt-3"
                     style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(${trendColumnWidth}px, 1fr))`, minWidth: trendMinWidth }}
                   >
                     {trend.map((item, index) => (
@@ -822,7 +822,7 @@ export default function AnalyticsPage() {
               </WorkspacePanel>
             </div>
 
-            <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+            <aside className="hidden space-y-3 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
               <WorkspacePanel title="هویت گزارش" description="برندی که این تحلیل با آن آماده می‌شود." bodyClassName="p-4">
                 <div className="flex items-center gap-3">
                   <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandAvatarUrl} />

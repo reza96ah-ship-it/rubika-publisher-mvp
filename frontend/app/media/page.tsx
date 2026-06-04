@@ -639,8 +639,8 @@ export default function MediaPage() {
             </WorkspacePanel>
           ) : null}
 
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
-            <div className="min-w-0 space-y-4">
+          <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="min-w-0 space-y-3">
               <WorkspacePanel
                 title="دارایی‌های رسانه‌ای"
                 description="برای دیدن جزئیات و مدیریت اتصال، یک تصویر را انتخاب کنید."
@@ -669,7 +669,7 @@ export default function MediaPage() {
                     <Button href="/compose" variant="secondary" size="sm">ساخت پست</Button>
                   </div>
                 )}
-                bodyClassName="p-4"
+                bodyClassName="p-3 sm:p-4"
               >
                 <WorkspaceToolbar
                   meta={(
@@ -683,7 +683,7 @@ export default function MediaPage() {
                       <StatusToken tone="neutral">{filteredAssets.length} نتیجه</StatusToken>
                     </>
                   )}
-                  className="mb-4"
+                  className="mb-3"
                 >
                   <label className="flex min-w-0 items-center gap-2 rounded-md bg-white px-3 py-2 shadow-hairline">
                     <Search className="h-4 w-4 shrink-0 text-app-muted" aria-hidden="true" />
@@ -696,7 +696,7 @@ export default function MediaPage() {
                   </label>
                 </WorkspaceToolbar>
                 {folders.length ? (
-                  <div className="mb-4 flex flex-wrap gap-2">
+                  <div className="mb-3 flex flex-wrap gap-2">
                     <button type="button" onClick={() => setFolderFilter("all")} className={`app-interactive rounded px-2.5 py-1.5 text-xs font-bold ${folderFilter === "all" ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"}`}>
                       همه پوشه‌ها
                     </button>
@@ -709,7 +709,7 @@ export default function MediaPage() {
                   </div>
                 ) : null}
                 {campaignAssetOptions.length ? (
-                  <div className="mb-4 rounded-lg border border-app-border bg-app-surfaceMuted p-3">
+                  <div className="mb-3 rounded-lg border border-app-border bg-app-surfaceMuted p-2.5 sm:p-3">
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                       <p className="text-xs font-black text-app-text">فیلتر کمپین</p>
                       <StatusToken tone={campaignFilter === "all" ? "neutral" : "primary"}>{campaignFilter === "all" ? "همه کمپین‌ها" : "کمپین انتخاب‌شده"}</StatusToken>
@@ -751,7 +751,7 @@ export default function MediaPage() {
                   />
                 ) : null}
                 {!loading && filteredAssets.length > 0 ? (
-                  <div className={mediaView === "grid" ? "grid gap-3 md:grid-cols-2 2xl:grid-cols-3" : "grid gap-2"}>
+                  <div className={`${mediaView === "grid" ? "grid gap-2 md:grid-cols-2 2xl:grid-cols-3" : "grid gap-2"} max-h-[68vh] overflow-y-auto pr-1`}>
                     {filteredAssets.map((asset) => {
                       const previewUrl = mediaPreviewUrls[asset.id];
                       const linkedPost = asset.post_id ? postById.get(asset.post_id) : null;
@@ -841,7 +841,7 @@ export default function MediaPage() {
               </WorkspacePanel>
             </div>
 
-            <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+            <aside className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
               <WorkspacePanel
                 title="بازرس رسانه"
                 description="جزئیات فایل، وضعیت استفاده و اتصال به پست."
@@ -859,7 +859,7 @@ export default function MediaPage() {
                     </button>
                   </div>
                 ) : null}
-                bodyClassName="p-0"
+                bodyClassName="max-h-[70vh] overflow-y-auto p-0 lg:max-h-none"
               >
                 <div className="grid grid-cols-2 border-b border-app-border bg-app-surfaceMuted p-1">
                   <button
@@ -880,12 +880,12 @@ export default function MediaPage() {
                   </button>
                 </div>
                 {inspectorTab === "details" && selectedAsset ? (
-                  <div className="p-4">
+                  <div className="p-3 sm:p-4">
                     <div className="relative overflow-hidden rounded-md ring-1 ring-app-border">
                       {selectedPreviewUrl ? (
-                        <img src={selectedPreviewUrl} alt={selectedAsset.original_filename} className="aspect-video max-h-64 w-full object-cover xl:max-h-none" />
+                        <img src={selectedPreviewUrl} alt={selectedAsset.original_filename} className="aspect-video max-h-64 w-full object-cover lg:max-h-none" />
                       ) : (
-                        <div className="flex h-56 w-full items-center justify-center bg-slate-50 text-xs text-app-muted xl:h-auto xl:aspect-video">
+                        <div className="flex h-56 w-full items-center justify-center bg-slate-50 text-xs text-app-muted lg:h-auto lg:aspect-video">
                           پیش‌نمایش در دسترس نیست
                         </div>
                       )}

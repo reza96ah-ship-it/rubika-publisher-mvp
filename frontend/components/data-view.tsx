@@ -38,11 +38,11 @@ export function DataToolbar({ children, meta }: DataToolbarProps) {
 
 export function DataSearchField(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <label className="flex items-center gap-2 rounded-md bg-white px-3 py-2 shadow-hairline ring-app-primary focus-within:ring-2">
+    <label className="flex items-center gap-2 rounded-md bg-white px-2.5 py-1.5 shadow-hairline ring-app-primary focus-within:ring-2 sm:px-3 sm:py-2">
       <Search className="h-4 w-4 shrink-0 text-app-muted" aria-hidden="true" />
       <input
         {...props}
-        className={`w-full bg-transparent text-sm outline-none placeholder:text-slate-400 ${props.className ?? ""}`}
+        className={`w-full bg-transparent text-xs outline-none placeholder:text-slate-400 sm:text-sm ${props.className ?? ""}`}
       />
     </label>
   );
@@ -53,7 +53,7 @@ export function FilterChip({ active, children, count, onClick }: FilterChipProps
     <button
       type="button"
       onClick={onClick}
-      className={`app-interactive rounded px-3 py-1.5 text-xs font-bold ${
+      className={`app-interactive rounded px-2.5 py-1 text-[11px] font-bold sm:px-3 sm:py-1.5 sm:text-xs ${
         active ? "bg-app-primary text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"
       }`}
     >
@@ -69,8 +69,8 @@ export function FilterChip({ active, children, count, onClick }: FilterChipProps
 
 export function DataTable({ columns, gridClassName, children, loading, empty }: DataTableProps) {
   return (
-    <div className="app-studio-surface mt-5 overflow-hidden rounded-lg">
-      <div className={`hidden ${gridClassName} gap-4 border-b border-app-border bg-app-surfaceMuted px-4 py-3 text-[11px] font-black uppercase text-slate-500 lg:grid`}>
+    <div className="app-studio-surface mt-3 max-h-[62vh] overflow-y-auto rounded-lg sm:mt-4 lg:max-h-[66vh]">
+      <div className={`sticky top-0 z-10 hidden ${gridClassName} gap-3 border-b border-app-border bg-app-surfaceMuted px-3 py-2.5 text-[10px] font-black uppercase text-slate-500 lg:grid`}>
         {columns.map((column) => <span key={column}>{column}</span>)}
       </div>
       {loading ? <LoadingRows /> : null}
@@ -83,7 +83,7 @@ export function DataTable({ columns, gridClassName, children, loading, empty }: 
 export function DataRow({ children, gridClassName, selected, className = "" }: DataRowProps) {
   return (
     <article
-      className={`app-row grid gap-4 px-4 py-4 hover:bg-slate-50 ${gridClassName} lg:items-start ${
+      className={`app-row grid gap-3 px-3 py-3 hover:bg-slate-50 sm:px-4 ${gridClassName} lg:items-start ${
         selected ? "bg-blue-50/50 ring-1 ring-inset ring-blue-100" : ""
       } ${className}`}
     >
