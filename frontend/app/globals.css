@@ -112,15 +112,16 @@ a {
   }
 }
 
-@keyframes operation-card-sheen {
+@keyframes operation-card-center-glow {
   0%,
-  28% {
-    transform: translateX(120%);
+  100% {
+    opacity: 0.42;
+    transform: translate(-50%, -50%) scale(0.92);
   }
 
-  65%,
-  100% {
-    transform: translateX(-120%);
+  50% {
+    opacity: 0.86;
+    transform: translate(-50%, -50%) scale(1.08);
   }
 }
 
@@ -295,6 +296,11 @@ a {
     overflow: hidden;
   }
 
+  .operation-lane-card > * {
+    position: relative;
+    z-index: 1;
+  }
+
   .operation-lane-card-active {
     border-color: rgb(var(--operation-accent, 15 118 110) / 0.28);
     box-shadow: 0 0 0 1px rgb(var(--operation-accent, 15 118 110) / 0.08), 0 14px 32px rgb(var(--operation-accent, 15 118 110) / 0.08);
@@ -302,13 +308,17 @@ a {
 
   .operation-lane-card-active::after {
     position: absolute;
-    inset: 0;
-    width: 48%;
-    border-radius: inherit;
-    background: linear-gradient(90deg, transparent, rgb(var(--operation-accent, 15 118 110) / 0.08), transparent);
+    top: 50%;
+    left: 50%;
+    width: min(9rem, 72%);
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgb(var(--operation-accent, 15 118 110) / 0.16) 0%, rgb(var(--operation-accent, 15 118 110) / 0.08) 36%, transparent 68%);
     content: "";
     pointer-events: none;
-    animation: operation-card-sheen 3.1s ease-in-out infinite;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    animation: operation-card-center-glow 2.8s ease-in-out infinite;
   }
 
   .operation-stage-orb-live {
