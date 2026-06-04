@@ -47,7 +47,7 @@ const primaryNavGroups: NavGroup[] = [
   {
     title: "مسیر اصلی",
     items: [
-      { label: "فرماندهی", href: "/", icon: LayoutDashboard },
+      { label: "داشبورد", href: "/", icon: LayoutDashboard },
       composeNavItem,
       plannerNavItem,
       contentNavItem,
@@ -198,7 +198,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
 }
 
 const mobileNavItems = [
-  { label: "فرماندهی", href: "/", icon: LayoutDashboard },
+  { label: "داشبورد", href: "/", icon: LayoutDashboard },
   { label: "تقویم", href: "/calendar", icon: CalendarDays },
   composeNavItem,
   { label: "کتابخانه", href: "/content", icon: FileText },

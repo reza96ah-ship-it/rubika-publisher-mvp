@@ -68,6 +68,46 @@ const commandMetricToneClasses = {
   alert: "border-rose-100 bg-rose-50/70 text-rose-700"
 };
 
+const dashboardFocusToneClasses = {
+  primary: "border-blue-100 bg-blue-50/60 text-app-primary",
+  warning: "border-amber-100 bg-amber-50/65 text-amber-700",
+  info: "border-sky-100 bg-sky-50/65 text-sky-700",
+  alert: "border-rose-100 bg-rose-50/65 text-rose-700"
+};
+
+function DashboardFocusItem({
+  label,
+  value,
+  detail,
+  icon: Icon,
+  tone,
+  compact = false
+}: {
+  label: string;
+  value: string | number;
+  detail: string;
+  icon: LucideIcon;
+  tone: keyof typeof dashboardFocusToneClasses;
+  compact?: boolean;
+}) {
+  return (
+    <article className="min-h-[136px] rounded-lg border border-app-border bg-white p-4 shadow-hairline">
+      <div className="flex h-full flex-col justify-between gap-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-app-muted">{label}</p>
+            <p className={`mt-2 font-black leading-6 text-app-text ${compact ? "line-clamp-2 text-sm" : "line-clamp-2 text-base"}`}>{value}</p>
+          </div>
+          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${dashboardFocusToneClasses[tone]}`}>
+            <Icon className="h-4 w-4" aria-hidden="true" />
+          </span>
+        </div>
+        <p className="line-clamp-2 text-xs leading-5 text-app-muted">{detail}</p>
+      </div>
+    </article>
+  );
+}
+
 function CommandMetric({
   label,
   value,
@@ -82,8 +122,8 @@ function CommandMetric({
   tone: keyof typeof commandMetricToneClasses;
 }) {
   return (
-    <article className="app-row rounded-lg border border-app-border bg-white p-4 shadow-hairline">
-      <div className="flex items-start justify-between gap-3">
+    <article className="app-row min-h-[112px] rounded-lg border border-app-border bg-white p-4 shadow-hairline">
+      <div className="flex h-full items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-bold text-app-muted">{label}</p>
           <p className="mt-2 text-2xl font-black text-app-text">{value}</p>
@@ -273,76 +313,57 @@ export default function HomePage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-5">
-          <section className="overflow-hidden rounded-lg border border-app-border bg-white shadow-soft">
-            <div className="grid lg:grid-cols-[minmax(0,1fr)_340px]">
-              <div className="px-4 py-5 sm:px-6 lg:py-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <section className="overflow-hidden rounded-lg border border-app-border bg-white/95 shadow-soft backdrop-blur">
+            <div className="border-b border-app-border px-4 py-4 sm:px-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
                   <div className="flex min-w-0 items-center gap-3">
                     <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandImageUrl} />
                     <div className="min-w-0">
-                      <p className="text-[10px] font-black text-app-muted">فضای کاری فعال</p>
-                      <p className="mt-1 truncate text-base font-black text-app-text">{store?.name || "فضای کاری اجتماعی"}</p>
-                      <p className="mt-0.5 truncate text-xs text-app-muted">{store?.category || store?.brand_voice || "هویت برند را از تنظیمات فروشگاه کامل کنید."}</p>
+                      <p className="app-section-kicker text-[10px] font-black">{productKicker}</p>
+                      <h1 className="mt-1 text-2xl font-black leading-tight text-app-text sm:text-3xl">داشبورد نشرینو</h1>
+                      <p className="mt-1 truncate text-xs font-bold text-app-muted">{store?.name || "فضای کاری اجتماعی"} · {store?.category || store?.brand_voice || "هویت برند نیازمند تکمیل"}</p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2 sm:justify-end">
-                    <StatusToken tone={healthTone} className="gap-1">
-                      <Rocket className="h-3.5 w-3.5" aria-hidden="true" />
-                      {priorityAlerts.length || queueCounts.failed ? "نیازمند رسیدگی" : workspaceReady ? "عملیات پایدار" : "تکمیل لازم"}
+                  <p className="mt-4 max-w-3xl text-sm leading-7 text-app-muted">{briefing}</p>
+                </div>
+
+                <div className="flex flex-wrap gap-2 lg:justify-end">
+                  <StatusToken tone={healthTone} className="gap-1">
+                    <Rocket className="h-3.5 w-3.5" aria-hidden="true" />
+                    {priorityAlerts.length || queueCounts.failed ? "نیازمند رسیدگی" : workspaceReady ? "عملیات پایدار" : "تکمیل لازم"}
+                  </StatusToken>
+                  {!rubikaReady ? (
+                    <StatusToken tone="warning" className="gap-1">
+                      <PlugZap className="h-3.5 w-3.5" aria-hidden="true" />
+                      کانال‌ها نیازمند بررسی
                     </StatusToken>
-                    {!rubikaReady ? (
-                      <StatusToken tone="warning" className="gap-1">
-                        <PlugZap className="h-3.5 w-3.5" aria-hidden="true" />
-                        کانال‌ها نیازمند بررسی
-                      </StatusToken>
-                    ) : null}
-                  </div>
+                  ) : null}
+                  {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
                 </div>
+              </div>
+            </div>
 
-                <div className="mt-6 max-w-3xl">
-                  <p className="app-section-kicker text-[10px] font-black">{productKicker}</p>
-                  <h1 className="mt-2 text-2xl font-black leading-tight text-app-text sm:text-3xl">مرکز فرمان امروز</h1>
-                  <p className="mt-3 text-sm leading-7 text-app-muted">{briefing}</p>
-                </div>
+            <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
+              <div className="grid gap-3 p-4 sm:grid-cols-3 sm:p-5">
+                <DashboardFocusItem label="اقدام بعدی" value={nextAction.label} detail={nextAction.detail} icon={Target} tone="primary" />
+                <DashboardFocusItem label="صف فعال" value={queueTotal} detail="آماده، زمان‌بندی، انتشار و بازیابی" icon={TimerReset} tone={queueCounts.failed ? "alert" : "info"} />
+                <DashboardFocusItem label="انتشار بعدی" value={nextPosts[0]?.scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"} detail="نزدیک‌ترین پنجره برنامه" icon={CalendarClock} tone="warning" compact />
+              </div>
 
-                <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                  <Button href={nextAction.href} className="sm:min-w-44">
+              <div className="border-t border-app-border bg-slate-50/70 p-4 sm:p-5 lg:border-r lg:border-t-0">
+                <div className="grid gap-2">
+                  <Button href={nextAction.href} className="w-full">
                     {nextAction.label}
                     <ArrowUpLeft className="mr-2 h-4 w-4" aria-hidden="true" />
                   </Button>
-                  <Button href="/calendar" variant="secondary">تقویم انتشار</Button>
-                  <Button type="button" variant="ghost" disabled={refreshing} onClick={() => loadDashboard(true)}>
+                  <Button href="/calendar" variant="secondary" className="w-full">تقویم انتشار</Button>
+                  <Button type="button" variant="ghost" className="w-full" disabled={refreshing} onClick={() => loadDashboard(true)}>
                     <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
                     به‌روزرسانی
                   </Button>
                 </div>
               </div>
-
-              <aside className="border-t border-app-border bg-slate-50/75 p-4 lg:border-r lg:border-t-0">
-                <div className="rounded-lg border border-blue-100 bg-white p-4 shadow-hairline">
-                  <p className="app-section-kicker text-[10px] font-black">تمرکز امروز</p>
-                  <div className="mt-3 flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-app-primary">
-                      <Target className="h-5 w-5" aria-hidden="true" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-black text-app-text">{nextAction.label}</p>
-                      <p className="mt-1 line-clamp-3 text-xs leading-6 text-app-muted">{nextAction.detail}</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                    <div className="rounded-md bg-slate-50 p-2">
-                      <p className="font-bold text-app-muted">صف فعال</p>
-                      <p className="mt-1 text-lg font-black text-app-text">{queueTotal}</p>
-                    </div>
-                    <div className="rounded-md bg-slate-50 p-2">
-                      <p className="font-bold text-app-muted">انتشار بعدی</p>
-                      <p className="mt-1 truncate text-xs font-black text-app-text">{nextPosts[0]?.scheduled_at ? formatDateTime(nextPosts[0].scheduled_at) : "بدون زمان‌بندی"}</p>
-                    </div>
-                  </div>
-                  {lastUpdatedAt ? <p className="mt-3 text-[11px] font-bold text-slate-400">آخرین به‌روزرسانی: {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</p> : null}
-                </div>
-              </aside>
             </div>
           </section>
 

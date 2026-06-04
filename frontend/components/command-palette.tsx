@@ -12,7 +12,7 @@ type CommandPaletteProps = {
 };
 
 const commands = [
-  { label: "فرماندهی", detail: "ریسک‌ها، تمرکز امروز و جریان انتشار", href: "/", icon: Home },
+  { label: "داشبورد", detail: "ریسک‌ها، اقدام بعدی و جریان انتشار", href: "/", icon: Home },
   { label: "راه‌اندازی", detail: "مسیر مرحله‌ای برند، کانال، محتوا و زمان‌بندی", href: "/onboarding", icon: Rocket },
   { label: "استودیو", detail: "نوشتن، طراحی رسانه و زمان‌بندی پست", href: "/compose", icon: PenLine },
   { label: "تقویم", detail: "تقویم، کمپین‌ها و برنامه انتشار", href: "/calendar", icon: CalendarDays },

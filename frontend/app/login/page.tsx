@@ -44,7 +44,7 @@ export default function LoginPage() {
       <section className="w-full max-w-md rounded-md border border-app-border bg-white p-6 shadow-sm">
         <div className="mb-8 text-center">
           <p className="text-sm font-semibold text-app-primary">{productName}</p>
-          <h1 className="mt-2 text-2xl font-bold">ورود به مرکز فرمان محتوا</h1>
+          <h1 className="mt-2 text-2xl font-bold">ورود به داشبورد محتوا</h1>
           <p className="mt-2 text-sm leading-7 text-app-muted">{productTagline}</p>
         </div>
 
