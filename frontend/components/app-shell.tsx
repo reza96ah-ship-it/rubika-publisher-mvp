@@ -194,7 +194,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
                 <Link
                   href="/compose"
-                  className="app-interactive hidden h-9 items-center gap-2 rounded-md border border-app-graphite bg-app-graphite px-3 text-xs font-black text-white shadow-accent hover:bg-app-primary sm:flex"
+                  className="app-interactive nahrino-primary-cta hidden h-9 items-center gap-2 rounded-md border px-3 text-xs font-black sm:flex"
                 >
                   <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                   پست تازه

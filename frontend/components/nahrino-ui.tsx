@@ -238,7 +238,7 @@ const toneSurfaceClasses: Record<Tone, string> = {
 };
 
 const buttonVariantClasses: Record<ButtonVariant, string> = {
-  primary: "border-app-graphite bg-app-graphite text-white shadow-accent hover:bg-app-primaryHover",
+  primary: "nahrino-primary-cta",
   secondary: "border-app-border bg-app-surface text-app-text shadow-hairline hover:bg-app-surfaceMuted",
   quiet: "border-transparent bg-transparent text-app-muted hover:bg-app-surface hover:text-app-text",
   danger: "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"

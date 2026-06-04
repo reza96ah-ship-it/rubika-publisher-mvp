@@ -35,7 +35,6 @@ import {
   NRow,
   NSection,
   NStatusPill,
-  NSurface,
   NTrendBars
 } from "../components/nahrino-ui";
 import { Campaign, loadCampaigns } from "../lib/campaigns";
@@ -231,97 +230,171 @@ export default function HomePage() {
       ? { icon: Network, title: "ریسک کانال", description: "کانال اصلی هنوز آماده انتشار نیست.", tone: "warning" as const, href: "/channels" }
       : { icon: Network, title: "کانال اصلی آماده", description: "اتصال اصلی برای انتشار آماده است.", tone: "success" as const, href: "/channels" }
   ];
+  const topMetrics = [
+    {
+      label: "انتشار بعدی",
+      value: compactDateTime(nextPosts[0]?.scheduled_at),
+      detail: nextPosts[0]?.title || "تقویم هنوز سبک است",
+      icon: CalendarClock,
+      tone: "warning" as const,
+      href: "/calendar"
+    },
+    {
+      label: "نیازمند رسیدگی",
+      value: blockedWorkCount,
+      detail: unreadAlerts ? `${unreadAlerts} اعلان تازه` : "خطا، هشدار یا بازبینی",
+      icon: AlertTriangle,
+      tone: blockedWorkCount ? "alert" as const : "success" as const,
+      href: "/inbox"
+    },
+    {
+      label: "صف فعال",
+      value: queueTotal,
+      detail: "آماده، زمان بندی و انتشار",
+      icon: TimerReset,
+      tone: queueCounts.failed ? "alert" as const : "info" as const,
+      href: "/content"
+    },
+    {
+      label: "کمپین فعال",
+      value: activeCampaigns.length,
+      detail: "کمپین های در جریان",
+      icon: Megaphone,
+      tone: "primary" as const,
+      href: "/campaigns?status=active"
+    }
+  ];
+  const timelineItems = nextPosts.length
+    ? nextPosts.slice(0, 3).map((post) => ({
+      id: `post-${post.id}`,
+      title: post.title,
+      detail: compactDateTime(post.scheduled_at),
+      href: `/compose?postId=${post.id}`,
+      tone: "warning" as const,
+      icon: CalendarClock,
+      meta: "زمان بندی"
+    }))
+    : activeCampaigns.slice(0, 3).map((campaign) => ({
+      id: `campaign-${campaign.id}`,
+      title: campaign.name,
+      detail: campaign.goal || campaign.notes || "کمپین فعال بدون خلاصه",
+      href: `/campaigns?campaignId=${campaign.id}`,
+      tone: "primary" as const,
+      icon: Megaphone,
+      meta: "کمپین"
+    }));
+  const decisionItems = priorityAlerts.length
+    ? priorityAlerts.slice(0, 3).map((alert) => ({
+      id: alert.id,
+      icon: alert.severity === "critical" ? CircleAlert : alert.severity === "warning" ? AlertTriangle : CheckCircle2,
+      title: alert.title,
+      detail: alert.description,
+      href: alert.action_href,
+      tone: alert.severity === "critical" ? "alert" as const : alert.severity === "warning" ? "warning" as const : "success" as const,
+      meta: alert.action_label
+    }))
+    : dashboardInsights.map((insight) => ({
+      id: insight.title,
+      icon: insight.icon,
+      title: insight.title,
+      detail: insight.description,
+      href: insight.href,
+      tone: insight.tone,
+      meta: insight.tone === "success" ? "پایدار" : insight.tone === "warning" ? "بررسی" : "اقدام"
+    }));
 
   return (
     <AuthGate>
       <AppShell>
         <NPage className="pb-5">
-          <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_320px]">
-            <NSurface variant="raised" padding="lg" className="overflow-hidden">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <section className="dashboard-command-surface overflow-hidden rounded-xl border border-app-border bg-app-surface p-3 shadow-soft sm:p-4">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-stretch">
+              <div className="min-w-0">
                 <div className="flex min-w-0 items-start gap-3">
                   <WorkspaceAvatar name={store?.name || productName} size="lg" color={brandColor} imageUrl={brandImageUrl} />
                   <div className="min-w-0">
-                    <p className="app-section-kicker text-[10px] font-black">مرکز عملیات امروز</p>
-                    <h1 className="mt-1 text-2xl font-black leading-tight text-app-text sm:text-3xl">داشبورد</h1>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="app-section-kicker text-[10px] font-black">داشبورد امروز</p>
+                      <NStatusPill tone={healthTone}>
+                        {healthTone === "success" ? "پایدار" : healthTone === "warning" ? "آماده سازی" : "رسیدگی"}
+                      </NStatusPill>
+                      {lastUpdatedAt ? <NStatusPill tone="neutral">{lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</NStatusPill> : null}
+                    </div>
+                    <h1 className="mt-2 text-2xl font-black leading-tight text-app-text sm:text-3xl">داشبورد</h1>
                     <p className="mt-1 truncate text-xs font-bold text-app-muted">{store?.name || "فضای کاری اجتماعی"} · {store?.category || store?.brand_voice || "مدیریت چندکاناله محتوا"}</p>
                     <p className="mt-3 max-w-3xl text-sm leading-7 text-app-muted">{briefing}</p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 lg:justify-end">
-                  <NStatusPill tone={healthTone}>
-                    {healthTone === "success" ? "پایدار" : healthTone === "warning" ? "آماده‌سازی" : "رسیدگی"}
-                  </NStatusPill>
-                  <NStatusPill tone={rubikaReady ? "success" : "warning"}>{rubikaReady ? "کانال آماده" : "کانال ناقص"}</NStatusPill>
-                  {lastUpdatedAt ? <NStatusPill tone="neutral">{lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</NStatusPill> : null}
-                </div>
-              </div>
+                <div className="mt-4 rounded-lg border border-app-primary/15 bg-app-soft/80 p-3">
+                  <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <span className="nahrino-live-signal mt-1 h-3 w-3 shrink-0 rounded-full bg-app-primary" />
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black text-app-primary">اقدام بعدی</p>
+                        <h2 className="mt-1 line-clamp-1 text-base font-black text-app-text">{nextAction.label}</h2>
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
+                      </div>
+                    </div>
 
-              <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-                <div className="rounded-lg border border-app-primary/15 bg-app-soft p-3">
-                  <div className="flex items-start gap-3">
-                    <span className="nahrino-live-signal mt-1 h-3 w-3 shrink-0 rounded-full bg-app-primary" />
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-black text-app-primary">اقدام بعدی</p>
-                      <h2 className="mt-1 line-clamp-1 text-base font-black text-app-text">{nextAction.label}</h2>
-                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
+                    <div className="flex flex-wrap gap-2 lg:justify-end">
+                      <NButton href={nextAction.href} trailingIcon={ArrowUpLeft}>ادامه</NButton>
+                      <NButton type="button" variant="secondary" icon={RefreshCw} loading={refreshing} onClick={() => loadDashboard(true)}>
+                        تازه سازی
+                      </NButton>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="flex flex-wrap gap-2 lg:justify-end">
-                  <NButton href={nextAction.href} trailingIcon={ArrowUpLeft}>ادامه</NButton>
-                  <NButton type="button" variant="secondary" icon={RefreshCw} loading={refreshing} onClick={() => loadDashboard(true)}>
-                    تازه‌سازی
-                  </NButton>
+              <aside className="dashboard-frost-panel rounded-xl p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-black text-app-text">نمای زنده کار</p>
+                    <p className="mt-1 text-[11px] leading-5 text-app-muted">صف، ریسک و خروجی هفته</p>
+                  </div>
+                  <NStatusPill tone={rubikaReady ? "success" : "warning"}>{rubikaReady ? "کانال آماده" : "کانال ناقص"}</NStatusPill>
                 </div>
-              </div>
-            </NSurface>
 
-            <NSurface variant="plain" padding="md">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-black text-app-text">برنامه نزدیک</p>
-                  <p className="mt-1 text-[11px] leading-5 text-app-muted">انتشارهای قابل اقدام</p>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <div className="rounded-lg border border-app-border bg-app-surface/80 p-2 text-center shadow-hairline">
+                    <p className="text-lg font-black text-app-text">{publishedCount}</p>
+                    <p className="mt-1 truncate text-[10px] font-bold text-app-muted">منتشر</p>
+                  </div>
+                  <div className="rounded-lg border border-app-border bg-app-surface/80 p-2 text-center shadow-hairline">
+                    <p className="text-lg font-black text-app-text">{queueTotal}</p>
+                    <p className="mt-1 truncate text-[10px] font-bold text-app-muted">در صف</p>
+                  </div>
+                  <div className="rounded-lg border border-app-border bg-app-surface/80 p-2 text-center shadow-hairline">
+                    <p className="text-lg font-black text-app-text">{blockedWorkCount}</p>
+                    <p className="mt-1 truncate text-[10px] font-bold text-app-muted">ریسک</p>
+                  </div>
                 </div>
-                <NButton href="/calendar" variant="secondary" size="sm">تقویم</NButton>
-              </div>
-              <div className="mt-3 grid gap-2">
-                {nextPosts.length ? nextPosts.slice(0, 2).map((post) => (
-                  <NRow
-                    key={post.id}
-                    title={post.title}
-                    detail={compactDateTime(post.scheduled_at)}
-                    icon={CalendarClock}
-                    tone="warning"
-                    href={`/compose?postId=${post.id}`}
-                    meta={<NStatusPill tone="warning">زمان‌بندی</NStatusPill>}
-                  />
-                )) : (
-                  <NEmptyState icon={CalendarClock} title="انتشار نزدیک نیست" detail="از تقویم یا ساخت پست، برنامه را کامل کنید." />
-                )}
-              </div>
-            </NSurface>
+
+                <div className="mt-3">
+                  <NTrendBars values={weeklyActivity} labels={weeklyLabels} />
+                </div>
+              </aside>
+            </div>
           </section>
 
           {error ? <NNotice tone="alert">{error}</NNotice> : null}
           {loading ? <Skeleton className="h-4 w-44" /> : null}
 
-          <section className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
-            <NMetricTile label="انتشار بعدی" value={compactDateTime(nextPosts[0]?.scheduled_at)} detail={nextPosts[0]?.title || "برای برنامه، تقویم را کامل کنید"} icon={CalendarClock} tone="warning" href="/calendar" />
-            <NMetricTile label="ریسک امروز" value={blockedWorkCount} detail={unreadAlerts ? `${unreadAlerts} اعلان تازه` : "هشدار، خطا یا بازبینی"} icon={AlertTriangle} tone={blockedWorkCount ? "alert" : "success"} href="/inbox" />
-            <NMetricTile label="صف فعال" value={queueTotal} detail="آماده، زمان‌بندی و انتشار" icon={TimerReset} tone={queueCounts.failed ? "alert" : "info"} href="/content" />
-            <NMetricTile label="کمپین فعال" value={activeCampaigns.length} detail="کمپین‌های در جریان" icon={Megaphone} tone="primary" href="/campaigns?status=active" />
+          <section className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
+            {topMetrics.map((metric) => (
+              <NMetricTile key={metric.label} {...metric} />
+            ))}
           </section>
 
-          <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
             <NSection
-              title="تابلوی عملیات"
-              description="ترکیب صف، کیفیت اجرا و روند کوتاه‌مدت در یک نمای تصمیم‌ساز."
-              action={<NStatusPill tone="info">۷ روز اخیر</NStatusPill>}
+              title="تابلوی انتشار"
+              description="ترکیب محتوا، سلامت صف و روند کوتاه مدت در یک سطح تصمیم گیری."
+              action={<NButton href="/content" variant="secondary" size="sm">کتابخانه</NButton>}
+              className="dashboard-section-quiet"
             >
-              <div className="grid gap-4 lg:grid-cols-[170px_minmax(0,1fr)] 2xl:grid-cols-[180px_minmax(0,1fr)_260px] lg:items-stretch">
+              <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)] 2xl:grid-cols-[190px_minmax(0,1fr)_240px] lg:items-stretch">
                 <div className="hidden sm:block">
                   <NDonutChart items={pipelineDistribution} total={pipelineTotal} label="محتوا" />
                 </div>
@@ -345,41 +418,44 @@ export default function HomePage() {
             </NSection>
 
             <NSection
-              title="اولویت کار"
-              description="فقط مواردی که تصمیم امروز را تغییر می‌دهند."
-              action={<NButton href="/inbox" variant="secondary" size="sm">همه پیام‌ها</NButton>}
+              title="اولویت تصمیم"
+              description="مواردی که قبل از ادامه انتشار ارزش رسیدگی دارند."
+              action={<NButton href="/inbox" variant="secondary" size="sm">پیام ها</NButton>}
+              className="dashboard-section-quiet"
             >
               <div className="grid gap-2">
-                {priorityAlerts.length ? (
-                  priorityAlerts.slice(0, 3).map((alert) => (
-                    <NRow
-                      key={alert.id}
-                      icon={alert.severity === "critical" ? CircleAlert : alert.severity === "warning" ? AlertTriangle : CheckCircle2}
-                      title={alert.title}
-                      detail={alert.description}
-                      href={alert.action_href}
-                      tone={alert.severity === "critical" ? "alert" : alert.severity === "warning" ? "warning" : "success"}
-                      meta={<NStatusPill tone={alert.severity === "critical" ? "alert" : "warning"}>{alert.action_label}</NStatusPill>}
-                    />
-                  ))
-                ) : !workspaceReady ? (
+                {!priorityAlerts.length && !workspaceReady ? (
                   <>
                     {!storeReady ? <NRow icon={Target} title="هویت فضای کاری کامل نیست" detail="نام، دسته‌بندی و لحن برند را کامل کنید." href="/store" tone="warning" /> : null}
                     {!rubikaReady ? <NRow icon={PlugZap} title="کانال اصلی آماده نیست" detail="اتصال کانال‌ها قبل از انتشار جدی بررسی شود." href="/channels" tone="warning" /> : null}
                   </>
-                ) : (
-                  <NEmptyState icon={CheckCircle2} title="مورد فوری وجود ندارد" detail="صف، اتصال و آماده‌سازی در وضعیت قابل قبول هستند." />
-                )}
-
-                {dashboardInsights.map((insight) => (
-                  <NRow key={insight.title} icon={insight.icon} title={insight.title} detail={insight.description} tone={insight.tone} href={insight.href} />
+                ) : null}
+                {decisionItems.slice(0, 4).map((item) => (
+                  <NRow key={item.id} icon={item.icon} title={item.title} detail={item.detail} tone={item.tone} href={item.href} meta={<NStatusPill tone={item.tone}>{item.meta}</NStatusPill>} />
                 ))}
+                {!decisionItems.length && workspaceReady ? <NEmptyState icon={CheckCircle2} title="مورد فوری وجود ندارد" detail="صف، اتصال و آماده سازی در وضعیت قابل قبول هستند." /> : null}
               </div>
             </NSection>
           </section>
 
           <section className="grid gap-3 lg:grid-cols-3">
-            <NSection title="سلامت کانال" description="آمادگی انتشار چندکاناله." action={<NButton href="/channels" variant="secondary" size="sm">مدیریت</NButton>}>
+            <NSection title="برنامه نزدیک" description="پست ها یا کمپین هایی که همین حالا مهم اند." action={<NButton href="/calendar" variant="secondary" size="sm">تقویم</NButton>} className="dashboard-section-compact">
+              <div className="grid gap-2">
+                {timelineItems.length ? timelineItems.map((item) => (
+                  <NRow
+                    key={item.id}
+                    icon={item.icon}
+                    title={item.title}
+                    detail={item.detail}
+                    tone={item.tone}
+                    href={item.href}
+                    meta={<NStatusPill tone={item.tone}>{item.meta}</NStatusPill>}
+                  />
+                )) : <NEmptyState icon={CalendarClock} title="برنامه نزدیک نیست" detail="از تقویم یا ساخت پست، برنامه را کامل کنید." />}
+              </div>
+            </NSection>
+
+            <NSection title="سلامت کانال" description="آمادگی انتشار چندکاناله." action={<NButton href="/channels" variant="secondary" size="sm">مدیریت</NButton>} className="dashboard-section-compact">
               <div className="grid gap-2">
                 {channelItems.map((channel) => (
                   <NRow
@@ -395,25 +471,7 @@ export default function HomePage() {
               </div>
             </NSection>
 
-            <NSection title="کمپین‌ها" description="کمپین‌های فعال و جهت حرکت امروز." action={<NButton href="/campaigns" variant="secondary" size="sm">باز کردن</NButton>}>
-              <div className="grid gap-2">
-                {activeCampaigns.length ? activeCampaigns.slice(0, 3).map((campaign) => (
-                  <NRow
-                    key={campaign.id}
-                    icon={Megaphone}
-                    title={campaign.name}
-                    detail={campaign.goal || campaign.notes || "کمپین فعال بدون خلاصه"}
-                    tone="primary"
-                    href={`/campaigns?campaignId=${campaign.id}`}
-                    meta={<NStatusPill tone="primary">فعال</NStatusPill>}
-                  />
-                )) : (
-                  <NEmptyState icon={Megaphone} title="کمپین فعالی نیست" detail="برای برنامه‌ریزی منظم، یک کمپین تازه بسازید." />
-                )}
-              </div>
-            </NSection>
-
-            <NSection title="بینش سریع" description="سیگنال‌های کوتاه برای ادامه کار." action={<NButton href="/analytics" variant="secondary" size="sm">گزارش‌ها</NButton>}>
+            <NSection title="بینش سریع" description="سیگنال های کوتاه برای ادامه کار." action={<NButton href="/analytics" variant="secondary" size="sm">گزارش ها</NButton>} className="dashboard-section-compact">
               <div className="grid gap-2">
                 <NRow icon={BarChart3} title="کارایی انتشار" detail={`${completionRate}% تکمیل و ${failureRate}% خطا در داده فعلی`} tone={failureRate ? "warning" : "success"} href="/analytics" />
                 <NRow icon={Clock3} title="برنامه نزدیک" detail={nextPosts[0]?.scheduled_at ? compactDateTime(nextPosts[0].scheduled_at) : "زمان‌بندی بعدی هنوز مشخص نیست"} tone="warning" href="/calendar" />

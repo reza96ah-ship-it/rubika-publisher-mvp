@@ -245,6 +245,18 @@ a {
     transform: translateY(0) scale(0.985);
   }
 
+  .nahrino-primary-cta {
+    border-color: rgb(var(--n-color-primary-strong));
+    background: rgb(var(--n-color-primary-strong));
+    color: rgb(var(--n-color-on-action));
+    box-shadow: 0 10px 22px rgb(var(--n-color-primary) / 0.18);
+  }
+
+  .nahrino-primary-cta:hover {
+    border-color: rgb(var(--n-color-primary));
+    background: rgb(var(--n-color-primary));
+  }
+
   .app-row {
     transition-duration: var(--n-motion-base);
     transition-property: background-color, box-shadow, transform;
@@ -433,6 +445,44 @@ a {
   .dashboard-pulse {
     background-color: rgb(var(--n-color-primary-soft) / 0.48);
     box-shadow: inset -3px 0 0 rgb(var(--n-color-primary) / 0.08);
+  }
+
+  .dashboard-command-surface {
+    position: relative;
+    isolation: isolate;
+    background:
+      linear-gradient(135deg, rgb(var(--n-color-surface) / 0.98), rgb(var(--n-color-canvas-soft) / 0.96) 56%, rgb(var(--n-color-primary-soft) / 0.52)),
+      radial-gradient(circle at 8% 12%, rgb(var(--n-color-primary) / 0.075), transparent 17rem);
+  }
+
+  .dashboard-command-surface::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(90deg, rgb(var(--n-color-ink) / 0.03) 1px, transparent 1px),
+      linear-gradient(180deg, rgb(var(--n-color-ink) / 0.025) 1px, transparent 1px);
+    background-size: 56px 56px;
+    content: "";
+    mask-image: linear-gradient(90deg, transparent, rgb(0 0 0) 16%, rgb(0 0 0) 86%, transparent);
+    opacity: 0.62;
+    pointer-events: none;
+  }
+
+  .dashboard-frost-panel {
+    border: 1px solid rgb(var(--n-color-frost-border) / 0.66);
+    background: rgb(var(--n-color-frost) / 0.72);
+    box-shadow: var(--n-shadow-hairline), 0 16px 34px rgb(var(--n-color-ink) / 0.055);
+    backdrop-filter: blur(14px);
+  }
+
+  .dashboard-section-quiet {
+    background:
+      linear-gradient(180deg, rgb(var(--n-color-surface) / 0.985), rgb(var(--n-color-canvas-soft) / 0.74));
+  }
+
+  .dashboard-section-compact {
+    background: rgb(var(--n-color-surface) / 0.96);
   }
 
   .dashboard-flow-track {

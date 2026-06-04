@@ -2,7 +2,7 @@
 
 Date: 2026-06-05
 Roadmap phase: `V-4: Dashboard`
-Status: Implemented foundation checkpoint
+Status: Reworked after V-4.5 visual token calibration
 Branch: `phase4b-publishing-worker`
 
 ## 1. Purpose
@@ -10,6 +10,14 @@ Branch: `phase4b-publishing-worker`
 V-4 rebuilds the home page from a decorative landing-style dashboard into a compact daily command surface.
 
 The benchmark direction is closer to Buffer and Hootsuite: low cognitive load, useful first viewport, clear next action, operational risk, and charts only when they support a decision.
+
+After reviewing `World-Class Visual Design System for Your App.docx`, the dashboard was reworked again on top of V-4.5 tokens. The current dashboard follows the roadmap direction:
+
+- **Calm Editorial Ops Light** for the main shell,
+- selective frosted utility only for the live work panel,
+- token-backed teal primary CTAs,
+- compact laptop-first layout,
+- no full-page glass or decorative dark theme.
 
 ## 2. Dashboard Changes
 
@@ -24,13 +32,18 @@ Implemented in `frontend/app/page.tsx`.
 
 ### Added
 
-- Compact top command surface:
+- Warm editorial command surface:
   - workspace identity,
   - status pills,
   - short briefing,
   - one `اقدام بعدی`,
-  - refresh action.
-- A first-viewport schedule panel for the nearest publishable posts.
+  - refresh action,
+  - subtle roadmap pattern treatment.
+- Frosted live-work panel:
+  - published count,
+  - active queue count,
+  - risk count,
+  - seven-day trend.
 - Four compact KPI tiles:
   - `انتشار بعدی`,
   - `ریسک امروز`,
@@ -48,29 +61,36 @@ Implemented in `frontend/app/page.tsx`.
   - setup/channel risks,
   - queue and approval insights.
 - Compact summaries for:
+  - nearest schedule,
   - channel health,
-  - active campaigns,
   - quick performance insights.
 
 ## 3. Guardrail Result
 
 V-4 continues reducing visual debt:
 
-| Check | V-1 Baseline | V-3 Current | V-4 Current | Change From V-3 |
-| --- | ---: | ---: | ---: | ---: |
-| Hardcoded hex colors | 105 | 97 | 90 | -7 |
-| Arbitrary visual Tailwind classes | 281 | 276 | 273 | -3 |
-| Scroll/sticky/viewport layout markers | 47 | 47 | 47 | 0 |
+| Check | V-1 Baseline | Current | Result |
+| --- | ---: | ---: | --- |
+| Hardcoded hex colors | 105 | 79 | OK |
+| Arbitrary visual Tailwind classes | 281 | 276 | OK |
+| Scroll/sticky/viewport layout markers | 47 | 47 | OK |
 
 ## 4. Browser Verification
 
 Verified on `http://localhost:3000/`:
 
-- first viewport includes dashboard title, next action, schedule, KPI row, operation board, and priority work,
+- first viewport includes dashboard title, next action, live work panel, KPI row, operation board, and priority work,
 - old decorative hero image is absent,
 - no horizontal overflow,
 - app shell scroll root works,
 - no browser console errors.
+
+Latest live measurement at `1186 x 794` viewport:
+
+- command surface height reduced from `556px` to `304px`,
+- dashboard scroll height reduced from `2111px` to `1440px`,
+- primary CTA background resolves to `rgb(15, 61, 58)`,
+- document has no horizontal overflow.
 
 ## 5. Acceptance
 
