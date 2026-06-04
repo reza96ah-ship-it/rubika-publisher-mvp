@@ -37,16 +37,16 @@ type SidebarProps = {
   avatarUrl?: string;
 };
 
-const todayNavItem: NavItem = { label: "امروز", href: "/", icon: LayoutDashboard };
-const composeNavItem: NavItem = { label: "ساخت", href: "/compose", icon: PenLine };
+const todayNavItem: NavItem = { label: "داشبورد", href: "/", icon: LayoutDashboard };
+const composeNavItem: NavItem = { label: "ساخت پست", href: "/compose", icon: PenLine };
 const onboardingNavItem: NavItem = { label: "راه‌اندازی", href: "/onboarding", icon: Rocket };
-const plannerNavItem: NavItem = { label: "برنامه‌ریزی", href: "/calendar", icon: CalendarDays };
+const plannerNavItem: NavItem = { label: "تقویم", href: "/calendar", icon: CalendarDays };
 const contentNavItem: NavItem = { label: "محتوا", href: "/content", icon: FileText };
 const settingsNavItem: NavItem = { label: "تنظیمات", href: "/store", icon: Store };
 
 const primaryNavGroups: NavGroup[] = [
   {
-    title: "جریان کار",
+    title: "مسیر اصلی",
     items: [
       todayNavItem,
       composeNavItem,
@@ -91,15 +91,15 @@ export function getActiveNav(pathname: string) {
   }
 
   if (isActiveRoute(pathname, composeNavItem.href)) {
-    return { group: { title: "ساخت محتوا", items: [composeNavItem] }, item: composeNavItem };
+    return { group: { title: "ساخت پست", items: [composeNavItem] }, item: composeNavItem };
   }
 
   if (isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/campaigns")) {
-    return { group: { title: "برنامه‌ریزی", items: [plannerNavItem] }, item: plannerNavItem };
+    return { group: { title: "تقویم", items: [plannerNavItem] }, item: plannerNavItem };
   }
 
   if (isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue")) {
-    return { group: { title: "عملیات محتوا", items: [contentNavItem] }, item: contentNavItem };
+    return { group: { title: "محتوا", items: [contentNavItem] }, item: contentNavItem };
   }
 
   if (

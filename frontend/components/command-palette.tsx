@@ -11,19 +11,24 @@ type CommandPaletteProps = {
   onClose: () => void;
 };
 
-const commands = [
-  { label: "امروز", detail: "اقدام‌های فوری، ریسک‌ها، انتشار بعدی و پیام‌های مهم", href: "/", icon: Home },
-  { label: "راه‌اندازی", detail: "مسیر موقت تکمیل برند، کانال، محتوا و زمان‌بندی", href: "/onboarding", icon: Rocket },
-  { label: "ساخت", detail: "نوشتن، طراحی رسانه، نسخه‌های کانالی و زمان‌بندی", href: "/compose", icon: PenLine },
-  { label: "برنامه‌ریزی", detail: "تقویم، کمپین‌ها، زمان‌بندی و نمای برنامه انتشار", href: "/calendar", icon: CalendarDays },
+const primaryCommands = [
+  { label: "داشبورد", detail: "اولویت امروز، ریسک‌ها، انتشار بعدی و پیام‌های مهم", href: "/", icon: Home },
+  { label: "ساخت پست", detail: "نوشتن، طراحی رسانه، نسخه‌های کانالی و زمان‌بندی", href: "/compose", icon: PenLine },
+  { label: "تقویم", detail: "تقویم، کمپین‌ها، زمان‌بندی و نمای برنامه انتشار", href: "/calendar", icon: CalendarDays },
   { label: "محتوا", detail: "پست‌ها، پیش‌نویس‌ها، وضعیت‌ها و صف انتشار", href: "/content", icon: FileText },
   { label: "رسانه", detail: "کتابخانه تصاویر و ویرایشگر", href: "/media", icon: FileImage },
   { label: "پیام‌ها", detail: "هشدارها و پیام‌های عملیاتی", href: "/inbox", icon: BellRing },
   { label: "گزارش‌ها", detail: "روند عملکرد، سلامت انتشار و گزارش مدیریتی", href: "/analytics", icon: BarChart3 },
-  { label: "تنظیمات", detail: "برند، کانال‌ها، اتصال‌ها و سلامت سیستم", href: "/store", icon: Settings2 },
-  { label: "مرکز کانال‌ها", detail: "زیرمجموعه تنظیمات برای مدیریت شبکه‌ها", href: "/channels", icon: Settings2 },
-  { label: "بازیابی انتشار", detail: "زیرمجموعه محتوا برای خطاها و اقدام‌های صف", href: "/queue", icon: ListChecks }
+  { label: "تنظیمات", detail: "برند، کانال‌ها، اتصال‌ها و سلامت سیستم", href: "/store", icon: Settings2 }
 ];
+
+const secondaryCommands = [
+  { label: "راه‌اندازی", detail: "مسیر موقت تکمیل برند، کانال، محتوا و زمان‌بندی", href: "/onboarding", icon: Rocket },
+  { label: "مرکز کانال‌ها", detail: "زیرمجموعه تنظیمات برای مدیریت شبکه‌ها", href: "/channels", icon: Settings2 },
+  { label: "بازیابی انتشار", detail: "نمای زمینه‌ای برای خطاها و اقدام‌های صف", href: "/queue", icon: ListChecks }
+];
+
+const commands = [...primaryCommands, ...secondaryCommands];
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const router = useRouter();
@@ -56,6 +61,8 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     if (!normalizedQuery) return commands;
     return commands.filter((command) => `${command.label} ${command.detail}`.toLocaleLowerCase("fa").includes(normalizedQuery));
   }, [normalizedQuery]);
+  const filteredPrimaryCommands = filteredCommands.filter((command) => primaryCommands.some((item) => item.href === command.href));
+  const filteredSecondaryCommands = filteredCommands.filter((command) => secondaryCommands.some((item) => item.href === command.href));
   const filteredPosts = useMemo(() => {
     if (!normalizedQuery) return posts.slice(0, 5);
     return posts
@@ -88,15 +95,37 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         </div>
 
         <div className="max-h-[62vh] overflow-y-auto p-2">
-          {filteredCommands.length ? (
+          {filteredPrimaryCommands.length ? (
             <div>
-              <p className="px-2 py-1 text-[10px] font-black text-slate-400">مسیرهای سریع</p>
+              <p className="px-2 py-1 text-[10px] font-black text-slate-400">مسیر اصلی</p>
               <div className="grid gap-1 sm:grid-cols-2">
-                {filteredCommands.map((command) => {
+                {filteredPrimaryCommands.map((command) => {
                   const Icon = command.icon;
                   return (
                     <button key={command.href} type="button" onClick={() => navigate(command.href)} className="app-interactive flex items-center gap-3 rounded-md px-2.5 py-2.5 text-right hover:bg-blue-50">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 text-app-primary">
+                        <Icon className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-xs font-black text-app-text">{command.label}</span>
+                        <span className="mt-0.5 block truncate text-[11px] text-app-muted">{command.detail}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          {filteredSecondaryCommands.length ? (
+            <div className="mt-2 border-t border-app-border pt-2">
+              <p className="px-2 py-1 text-[10px] font-black text-slate-400">ابزارهای زمینه‌ای</p>
+              <div className="grid gap-1 sm:grid-cols-2">
+                {filteredSecondaryCommands.map((command) => {
+                  const Icon = command.icon;
+                  return (
+                    <button key={command.href} type="button" onClick={() => navigate(command.href)} className="app-interactive flex items-center gap-3 rounded-md px-2.5 py-2.5 text-right hover:bg-slate-50">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 text-slate-600">
                         <Icon className="h-4 w-4" aria-hidden="true" />
                       </span>
                       <span className="min-w-0">

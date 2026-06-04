@@ -176,7 +176,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  <span className="truncate">جست‌وجوی محتوا و کمپین</span>
+                  <span className="truncate">جست‌وجوی پست، مسیر یا کمپین</span>
                   <span className="mr-auto hidden rounded border border-app-border bg-white px-1.5 py-0.5 text-[10px] font-bold text-slate-400 xl:inline">Ctrl K</span>
                 </button>
 

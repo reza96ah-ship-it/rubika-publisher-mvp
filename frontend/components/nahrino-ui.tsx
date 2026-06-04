@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
+import { X, type LucideIcon } from "lucide-react";
 
 type Tone = "neutral" | "primary" | "success" | "warning" | "alert" | "info";
 type ButtonVariant = "primary" | "secondary" | "quiet" | "danger";
@@ -8,6 +8,15 @@ type ButtonSize = "sm" | "md" | "lg";
 
 type NPageProps = {
   children: ReactNode;
+  className?: string;
+};
+
+type NPageHeaderProps = {
+  title: string;
+  description?: string;
+  eyebrow?: string;
+  meta?: ReactNode;
+  action?: ReactNode;
   className?: string;
 };
 
@@ -33,6 +42,45 @@ type NStatusPillProps = {
   children: ReactNode;
   tone?: Tone;
   className?: string;
+};
+
+type NSavedViewOption = {
+  label: string;
+  value: string;
+  count?: number;
+};
+
+type NSavedViewToolbarProps = {
+  views: NSavedViewOption[];
+  activeView: string;
+  onViewChange?: (value: string) => void;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  searchPlaceholder?: string;
+  filters?: ReactNode;
+  meta?: ReactNode;
+  className?: string;
+};
+
+type NChannelRailProps = {
+  channels: Array<{
+    label: string;
+    color: string;
+    state?: string;
+    muted?: boolean;
+  }>;
+  compact?: boolean;
+  className?: string;
+};
+
+type NInspectorDrawerProps = {
+  open: boolean;
+  title: string;
+  description?: string;
+  children: ReactNode;
+  footer?: ReactNode;
+  onClose: () => void;
+  side?: "left" | "right";
 };
 
 type NSectionProps = {
@@ -121,6 +169,26 @@ export function NPage({ children, className = "" }: NPageProps) {
   return <div className={`mx-auto w-full max-w-[1440px] space-y-3 sm:space-y-4 ${className}`}>{children}</div>;
 }
 
+export function NPageHeader({ title, description, eyebrow, meta, action, className = "" }: NPageHeaderProps) {
+  return (
+    <section className={`nahrino-card rounded-lg px-3 py-3 sm:px-4 ${className}`}>
+      <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-start">
+        <div className="min-w-0">
+          {eyebrow ? <p className="app-section-kicker text-[10px] font-black">{eyebrow}</p> : null}
+          <h1 className="mt-1 text-xl font-black leading-8 text-app-text sm:text-2xl">{title}</h1>
+          {description ? <p className="mt-1 max-w-3xl text-xs leading-5 text-app-muted sm:text-sm sm:leading-6">{description}</p> : null}
+        </div>
+        {(meta || action) ? (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {meta}
+            {action}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 export function NButton(props: NButtonProps) {
   const { children, className = "", variant = "primary", size = "md" } = props;
   const classes = [
@@ -155,11 +223,113 @@ export function NStatusPill({ children, tone = "neutral", className = "" }: NSta
   );
 }
 
+export function NSavedViewToolbar({
+  views,
+  activeView,
+  onViewChange,
+  searchValue,
+  onSearchChange,
+  searchPlaceholder = "جست‌وجو...",
+  filters,
+  meta,
+  className = ""
+}: NSavedViewToolbarProps) {
+  return (
+    <section className={`nahrino-card-muted rounded-lg p-2.5 ${className}`}>
+      <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+          {views.map((view) => {
+            const active = activeView === view.value;
+            return (
+              <button
+                key={view.value}
+                type="button"
+                onClick={() => onViewChange?.(view.value)}
+                className={`app-interactive inline-flex min-h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-black ${
+                  active ? "bg-white text-app-primary shadow-hairline" : "text-app-muted hover:bg-white/80 hover:text-app-text"
+                }`}
+                aria-pressed={active}
+              >
+                {view.label}
+                {typeof view.count === "number" ? <span className="rounded bg-app-surfaceMuted px-1.5 py-0.5 text-[10px] text-app-muted">{view.count}</span> : null}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+          {typeof searchValue === "string" ? (
+            <label className="flex min-h-9 min-w-0 items-center rounded-md border border-app-border bg-white px-3 shadow-hairline sm:w-64">
+              <span className="sr-only">{searchPlaceholder}</span>
+              <input
+                value={searchValue}
+                onChange={(event) => onSearchChange?.(event.target.value)}
+                placeholder={searchPlaceholder}
+                className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+              />
+            </label>
+          ) : null}
+          {filters}
+          {meta ? <div className="flex flex-wrap items-center gap-1.5">{meta}</div> : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function NChannelRail({ channels, compact = false, className = "" }: NChannelRailProps) {
+  if (!channels.length) return null;
+
+  return (
+    <div className={`flex min-w-0 flex-wrap items-center gap-1.5 ${className}`} aria-label="کانال‌ها">
+      {channels.map((channel) => (
+        <span
+          key={`${channel.label}-${channel.state ?? "state"}`}
+          className={`inline-flex items-center gap-1.5 rounded-md border border-app-border bg-white font-black shadow-hairline ${
+            compact ? "min-h-6 px-1.5 text-[10px]" : "min-h-8 px-2 text-xs"
+          } ${channel.muted ? "text-app-muted" : "text-app-text"}`}
+        >
+          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: channel.color }} />
+          <span className="truncate">{channel.label}</span>
+          {channel.state ? <span className="text-app-muted">· {channel.state}</span> : null}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function NNotice({ children, title, tone = "info" }: NNoticeProps) {
   return (
     <div className={`rounded-md border px-3 py-2.5 text-xs leading-5 sm:text-sm sm:leading-6 ${toneSurfaceClasses[tone]}`}>
       {title ? <p className="font-black">{title}</p> : null}
       <div className={title ? "mt-1" : ""}>{children}</div>
+    </div>
+  );
+}
+
+export function NInspectorDrawer({ open, title, description, children, footer, onClose, side = "left" }: NInspectorDrawerProps) {
+  if (!open) return null;
+
+  const sideClass = side === "left" ? "left-0" : "right-0";
+
+  return (
+    <div className="fixed inset-0 z-50 flex bg-slate-900/20 backdrop-blur-[1px]" role="dialog" aria-modal="true" aria-label={title}>
+      <button type="button" className="min-w-0 flex-1 cursor-default" onClick={onClose} aria-label="بستن بازرس" />
+      <aside className={`app-popover absolute bottom-0 top-0 ${sideClass} flex w-full max-w-md flex-col overflow-hidden border-app-border bg-white shadow-lift sm:w-[420px] ${side === "left" ? "border-r" : "border-l"}`}>
+        <header className="border-b border-app-border px-4 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-base font-black text-app-text">{title}</h2>
+              {description ? <p className="mt-1 text-xs leading-5 text-app-muted">{description}</p> : null}
+            </div>
+            <button type="button" onClick={onClose} className="app-interactive flex h-8 w-8 items-center justify-center rounded-md text-app-muted hover:bg-app-surfaceMuted hover:text-app-text" aria-label="بستن">
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
+        {footer ? <footer className="border-t border-app-border bg-app-surfaceMuted p-3">{footer}</footer> : null}
+      </aside>
     </div>
   );
 }
