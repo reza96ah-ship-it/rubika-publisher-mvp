@@ -6,21 +6,65 @@ Every implementation slice must be committed and pushed as a restore checkpoint.
 
 ## Current Product Score
 
-Current score against top market products: **5.8 / 10**.
+Current score against top market products: **4.2 / 10 overall**.
 
-The app has real modules, but the product still feels less professional because the modules are not yet unified into a strong operating system. The biggest issue is not only colors or boxes. It is the absence of product-specific visual language, role-based workflows, professional reporting, and a simple daily journey.
+Design and user-journey maturity score: **3.2 / 10**.
+
+The app has real modules, working routes, Persian/RTL foundations, Jalali scheduling, publishing operations, media editing, and multi-channel direction. It still feels like a draft beside top products because the modules are not yet unified into a clear social operations system. The biggest gap is not color. It is missing product-specific interaction design, visual planning surfaces, engagement workflows, professional reporting, role-based governance, and a simple daily path.
+
+To reach **10 / 10**, the product must stop behaving like a set of pages and become an integrated operating layer for social teams:
+
+1. Clear daily command center.
+2. One channel capability model everywhere.
+3. One idea -> per-channel variants.
+4. Visual planner with campaign lanes.
+5. Real inbox/customer-care workflow.
+6. Report builder and decision insights.
+7. Creative studio with brand templates and reusable assets.
+8. Collaboration, approvals, audit, permissions.
+9. Reliable jobs, retries, manual publishing tasks.
+10. Mobile-first workflows for quick review, reply, approve, and schedule.
 
 ## Benchmark Diagnosis
 
 Professional products share these patterns:
 
-- **Buffer** wins on simplicity: clear publishing, analytics, reports, and comment engagement for small teams.
-- **Hootsuite** wins on breadth: scheduling, publishing, analytics, engagement, AI listening, sentiment, competitive benchmarking, approvals, custom reporting, and unified inbox.
-- **Sprout Social** wins on enterprise intelligence: listening, analytics, customer care, AI, and business-grade reporting.
-- **Later** wins on visual planning: visual calendar, media-first workflow, Link in Bio, AI captions, hashtags, analytics, and approvals.
-- **Planable** wins on collaboration: grouped multi-platform posts, sync on/off per-platform variants, version history, comments, client review, and approval flow.
-- **Metricool/Agorapulse pattern** wins on practical operations: competitor benchmarking, unified inbox, reports, smart links, and agency workflows.
-- **Canva pattern** wins on creative continuity: templates, brand kit, design assets, content planner, and export/publish flow.
+- **Buffer** wins on simplicity: small teams can publish, analyze, engage, use channel groups, AI replies, campaign/tag analytics, and export reports without feeling buried.
+- **Hootsuite** wins on breadth: scheduling, publishing, analytics, engagement, custom reporting, approval workflows, social listening, sentiment, competitive benchmarking, unified inbox, and social ads support sit in one platform.
+- **Sprout Social** wins on enterprise intelligence: publishing, engagement, listening, customer care, response benchmarking, link tracking, analytics, and mobile workflows are deeply connected.
+- **Later** wins on visual planning: visual scheduler, media-first workflow, Link in Bio, content planning, analytics, and creator-friendly presentation.
+- **Agorapulse** wins on practical operations: unified inbox, publishing, monitoring, reporting, ROI, shared calendars/approvals, labels, saved replies, and agency workflows.
+- **Canva pattern** wins on creative continuity: brand assets, templates, design-to-publish continuity, visual polish, and asset reuse.
+
+## What Top Apps Have That We Still Do Not
+
+| Area | Top app expectation | Current gap | Target |
+| --- | --- | --- | --- |
+| Navigation | Workflow-first: Publish, Engage, Analyze, Settings | Several module pages still compete for attention | Collapse into daily workflows and contextual tools |
+| Dashboard | Daily actions, risks, inbox, next posts, campaign health | Better than before, but still not the product brain | Command Center with actionable queue and insight source |
+| Composer | Multi-channel variants, sync toggle, approvals, preview fidelity | One post form still dominates | Source idea + channel variants + review state |
+| Calendar | Visual planner, campaign lanes, saved views, bulk actions | Calendar exists but needs strategic lane layer | Planner Pro with month/week/list/lane/feed |
+| Campaigns | Brief, audience, KPI, budget, content pillars, report | Campaigns are operational but not strategic enough | Campaign OS with brief, timeline, KPI, export |
+| Media | Brand templates, source/variant asset model, creative QA | Editor exists but asset system is not pro-grade | Creative Studio with templates, variants, usage map |
+| Inbox | Unified comments/messages, assignments, SLA, saved replies | Inbox is early and not customer-care ready | Engagement workspace with thread model |
+| Analytics | Report builder, exports, insights, attribution, comparisons | Analytics is heavy and chart-first | Decision reports with source-backed recommendations |
+| Listening | Keywords, competitors, sentiment/topics | Mostly absent | Listening-lite first, API integrations later |
+| Governance | Roles, comments, approvals, audit, client review | Partial approvals only | Team/client workflow and permission model |
+| Reliability | Durable jobs, idempotency, dead-letter, failure classes | Partial worker/log surfaces | Publishing Reliability Engine |
+| Mobile | Quick review, approve, reply, schedule | Responsive pass started, not mobile workflow complete | Mobile-first task surfaces |
+
+## 10 / 10 Product Definition
+
+A 10 / 10 version does not mean “more decoration.” It means:
+
+- The user can understand the next action in five seconds.
+- Every page has one primary job.
+- Data, media, campaign, and channel state are connected.
+- The design language is product-specific: channel rails, campaign timelines, content cards, inbox threads, creative previews, report panels.
+- Mobile screens are task-first, not mini desktop pages.
+- Reports look client-ready.
+- Recovery and limitations are honest.
+- AI assists only when grounded in brand rules, channel capabilities, and visible metrics.
 
 ## Product Principle
 
@@ -39,19 +83,20 @@ This means:
 
 | Phase | Name | Priority | Goal | Status |
 | --- | --- | --- | --- | --- |
-| 0 | Benchmark + Product System Reset | P0 | Document strategy, UX direction, RFP, backlog | In progress |
+| 0 | Benchmark + Product System Reset | P0 | Document strategy, UX direction, RFP, backlog | Updated |
 | 1 | App Shell + Daily Command Center | P0 | Make the app goal-first, not module-first | Partial |
-| 2 | Channels Hub + Capability Model | P0 | Make every channel honest, inspectable, and reusable | Partial |
-| 3 | Composer Studio Pro | P0 | One idea becomes channel-ready variants | Not started |
-| 4 | Planner + Campaign Timeline Pro | P1 | Visual planning, campaign lanes, saved views | Partial |
-| 5 | Campaign OS Pro | P1 | Strategy, KPI, content plan, report-ready campaigns | Partial |
-| 6 | Media + Creative Studio Pro | P1 | Brand templates, variants, creative QA, asset system | Partial |
-| 7 | Collaboration + Approvals | P1 | Comments, roles, approvals, review queue, audit | Partial |
-| 8 | Publishing Reliability Engine | P0 | Durable jobs, idempotency, retries, dead-letter queue | Partial |
-| 9 | Inbox + Engagement Workspace | P2 | Threads, assignment, saved replies, SLA, metrics | Early |
-| 10 | Analytics + Reports + Listening | P1 | Decision support, exports, competitor/listening-lite | Early |
-| 11 | AI Assistance + Recommendations | P2 | AI grounded in brand rules and real metrics | Not started |
-| 12 | Agency/Team Administration | P2 | Multi-workspace, permissions, client review, billing-ready | Not started |
+| 2 | Design System + Brand Language Pro | P0 | Replace template feeling with product-specific UI language | Partial |
+| 3 | Channels Hub + Capability Model | P0 | Make every channel honest, inspectable, and reusable | Partial |
+| 4 | Composer Studio Pro | P0 | One idea becomes channel-ready variants | Not started |
+| 5 | Planner + Campaign Timeline Pro | P1 | Visual planning, campaign lanes, saved views | Partial |
+| 6 | Campaign OS Pro | P1 | Strategy, KPI, content plan, report-ready campaigns | Partial |
+| 7 | Media + Creative Studio Pro | P1 | Brand templates, variants, creative QA, asset system | Partial |
+| 8 | Collaboration + Approvals | P1 | Comments, roles, approvals, review queue, audit | Partial |
+| 9 | Publishing Reliability Engine | P0 | Durable jobs, idempotency, retries, dead-letter queue | Partial |
+| 10 | Inbox + Engagement Workspace | P1 | Threads, assignment, saved replies, SLA, metrics | Early |
+| 11 | Analytics + Reports + Listening | P1 | Decision support, exports, competitor/listening-lite | Early |
+| 12 | AI Assistance + Recommendations | P2 | AI grounded in brand rules and real metrics | Not started |
+| 13 | Agency/Team Administration | P2 | Multi-workspace, permissions, client review, billing-ready | Not started |
 
 ## Phase 0: Benchmark + Product System Reset
 
@@ -103,7 +148,35 @@ Current status:
 - Guided setup route exists and is contextual.
 - Remaining: command center insight architecture, campaign timeline preview, duplicate action audit.
 
-## Phase 2: Channels Hub + Capability Model
+## Phase 2: Design System + Brand Language Pro
+
+Goal: remove the template/skeleton feeling and create a recognizable, premium product language.
+
+Scope:
+
+- Define visual grammar for a social operations product:
+  - channel rails
+  - campaign timelines
+  - content cards
+  - media thumbnails
+  - inbox threads
+  - report panels
+  - health/risk maps
+- Replace generic card stacks with dense but calm operational surfaces.
+- Add responsive page templates: command, table/list, studio, planner, report, settings.
+- Create mobile-specific task layouts instead of shrinking desktop pages.
+- Standardize empty/loading/error/success states.
+- Add motion rules: subtle state transitions, progress, live updates, but no decorative noise.
+- Create a Persian typography scale for dense dashboards and creative/editor surfaces.
+
+Acceptance criteria:
+
+- Every page clearly belongs to the same app family.
+- Components communicate product meaning, not just color.
+- Mobile pages prioritize one task at a time.
+- No page feels like a generic dashboard template.
+
+## Phase 3: Channels Hub + Capability Model
 
 Goal: every network is a channel account with explicit capabilities, limitations, status, and recovery.
 
@@ -122,7 +195,7 @@ Acceptance criteria:
 - Personal Instagram is clearly manual/reminder publishing.
 - Channel failures link to exact settings/recovery action.
 
-## Phase 3: Composer Studio Pro
+## Phase 4: Composer Studio Pro
 
 Goal: create one campaign idea and tailor it for each channel professionally.
 
@@ -146,7 +219,7 @@ Acceptance criteria:
 - Draft survives refresh.
 - Current creation stage is clear but not visually noisy.
 
-## Phase 4: Planner + Campaign Timeline Pro
+## Phase 5: Planner + Campaign Timeline Pro
 
 Goal: planner feels visual, strategic, and operational.
 
@@ -168,7 +241,7 @@ Acceptance criteria:
 - Drag/drop changes schedule safely and visibly.
 - Channel capabilities affect what can be scheduled.
 
-## Phase 5: Campaign OS Pro
+## Phase 6: Campaign OS Pro
 
 Goal: campaigns become the strategic center, not a filtered list.
 
@@ -187,7 +260,7 @@ Acceptance criteria:
 - Report can be shown to a manager/client.
 - Campaign health is visible without opening analytics.
 
-## Phase 6: Media + Creative Studio Pro
+## Phase 7: Media + Creative Studio Pro
 
 Goal: media becomes a creative system, not just uploaded files.
 
@@ -212,7 +285,7 @@ Acceptance criteria:
 - Each variant knows source, campaign, channel, and usage.
 - Editor feels like a focused studio, not a demo widget.
 
-## Phase 7: Collaboration + Approvals
+## Phase 8: Collaboration + Approvals
 
 Goal: support teams, clients, and safer publishing.
 
@@ -231,7 +304,7 @@ Acceptance criteria:
 - Client-safe and internal-only feedback are separate.
 - Only permitted users can publish or configure channels.
 
-## Phase 8: Publishing Reliability Engine
+## Phase 9: Publishing Reliability Engine
 
 Goal: publishing is recoverable, observable, and channel-safe.
 
@@ -252,7 +325,7 @@ Acceptance criteria:
 - Failure tells user what happened and what to do.
 - Manual Instagram tasks can be completed, skipped, reminded, or audited.
 
-## Phase 9: Inbox + Engagement Workspace
+## Phase 10: Inbox + Engagement Workspace
 
 Goal: inbox becomes daily engagement operations.
 
@@ -270,7 +343,7 @@ Acceptance criteria:
 - Empty states explain channel limitations.
 - Dashboard and analytics include inbox health.
 
-## Phase 10: Analytics + Reports + Listening
+## Phase 11: Analytics + Reports + Listening
 
 Goal: analytics becomes decision support.
 
@@ -291,7 +364,7 @@ Acceptance criteria:
 - Reports are client/manager-ready.
 - Recommendations cite data source.
 
-## Phase 11: AI Assistance + Recommendations
+## Phase 12: AI Assistance + Recommendations
 
 Goal: AI helps within controlled brand/workflow boundaries.
 
@@ -310,7 +383,7 @@ Acceptance criteria:
 - User can accept/edit/reject.
 - AI never hides limitations or invents metrics.
 
-## Phase 12: Agency/Team Administration
+## Phase 13: Agency/Team Administration
 
 Goal: make the product scalable for agencies and teams.
 

@@ -26,6 +26,21 @@ Priority levels:
 | E1-3 | P1 | Add campaign timeline preview | Active campaigns show stage and next action |
 | E1-4 | P1 | Add analytics insight card | Shows one actionable recommendation with source metric |
 | E1-5 | P1 | Add empty state for clean workspace | Suggests create/schedule/report actions without setup noise |
+| E1-6 | P0 | Add mobile command center task stack | Mobile home shows urgent tasks, next publish, inbox count, and one insight only |
+| E1-7 | P1 | Add command palette/search | User can jump to post, campaign, channel, report, or setting |
+
+## Epic 1A: Design System + Brand Language Pro
+
+| ID | Priority | Story | Acceptance |
+| --- | --- | --- | --- |
+| E1A-1 | P0 | Define product-specific page templates | Command, studio, planner, report, inbox, settings, and table/list templates exist |
+| E1A-2 | P0 | Add channel rail component | Channel status/capabilities appear consistently in composer, planner, queue, reports |
+| E1A-3 | P0 | Add campaign timeline component | Campaign stages are visual and reusable on dashboard, campaign, planner |
+| E1A-4 | P0 | Add content card system | Post preview, media, status, channel, campaign, and action are consistent everywhere |
+| E1A-5 | P1 | Add inbox thread card system | Customer, channel, SLA, assignment, labels, and reply status are consistent |
+| E1A-6 | P1 | Add report panel system | KPI, insight, source metric, chart, and recommendation share a professional pattern |
+| E1A-7 | P1 | Add motion/interaction tokens | Live updates, selection, progress, upload, save, publish, and notification states feel premium |
+| E1A-8 | P1 | Add mobile-specific layouts | Mobile pages are task-first, not mini desktop pages |
 
 ## Epic 2: Channels Hub + Capability Model
 
@@ -49,6 +64,8 @@ Priority levels:
 | E3-5 | P1 | Add version history | User can restore older draft/version |
 | E3-6 | P1 | Add objective template picker | Sale, launch, education, reminder, testimonial |
 | E3-7 | P1 | Add inline media editor workspace | Edited variant attaches without leaving composer |
+| E3-8 | P1 | Add per-channel alt text and accessibility fields | Each media variant can store platform-ready alt text |
+| E3-9 | P1 | Add approval-aware composer states | Draft, review, changes requested, approved, scheduled are visible in one path |
 
 ## Epic 4: Planner + Campaign Timeline Pro
 
@@ -60,6 +77,8 @@ Priority levels:
 | E4-4 | P1 | Add bulk move/schedule | Selected posts move safely |
 | E4-5 | P1 | Add best-time suggestions v1 | Suggestions cite historical schedule/performance source |
 | E4-6 | P1 | Improve compact Jalali date/time popovers everywhere | Popovers are small, anchored, close on outside click |
+| E4-7 | P1 | Add feed/grid preview planner | User can view Instagram-style/feed-style visual continuity |
+| E4-8 | P1 | Add bulk CSV scheduling import | User can schedule many posts safely with validation |
 
 ## Epic 5: Campaign OS Pro
 
@@ -71,6 +90,8 @@ Priority levels:
 | E5-4 | P1 | Add campaign risk panel | Missing media, failed jobs, approval blocks visible |
 | E5-5 | P1 | Add exportable campaign report | Print-ready HTML with KPIs and posts |
 | E5-6 | P2 | Add campaign templates | Prebuilt launch/sale/education campaign structures |
+| E5-7 | P1 | Add campaign KPI targets | Campaign stores target reach/engagement/sales/clicks and compares actuals |
+| E5-8 | P2 | Add competitor notes and reference board | Campaign can track competitor examples and positioning notes |
 
 ## Epic 6: Media + Creative Studio Pro
 
@@ -115,6 +136,9 @@ Priority levels:
 | E9-3 | P2 | Add saved replies | User can respond consistently |
 | E9-4 | P2 | Add internal notes | Team context stays hidden from customer |
 | E9-5 | P2 | Add SLA and inbox metrics | Response time/unresolved visible |
+| E9-6 | P1 | Add labels and topic filters | Threads can be grouped by campaign, topic, customer, channel |
+| E9-7 | P1 | Add dashboard inbox alerts | Urgent unresolved threads surface in Command Center |
+| E9-8 | P2 | Add AI reply suggestions gated by saved replies and brand voice | Suggestions are editable and never auto-send |
 
 ## Epic 10: Analytics + Reports + Listening
 
@@ -127,6 +151,9 @@ Priority levels:
 | E10-5 | P1 | Add report builder HTML export | Client-ready report layout |
 | E10-6 | P2 | Add competitor/listening-lite tracker | Manual tracked competitors/keywords at first |
 | E10-7 | P2 | Add recommendations | Best-time and content suggestions cite source metrics |
+| E10-8 | P1 | Add executive report page template | Report has summary, KPI table, charts, source notes, and recommended actions |
+| E10-9 | P1 | Add scheduled report export/email-ready package | User can generate recurring manager/client-ready reports |
+| E10-10 | P2 | Add UTM/link tracking foundation | Links can be tagged and later attributed |
 
 ## Epic 11: AI Assistance
 
@@ -148,10 +175,12 @@ Priority levels:
 
 ## Immediate Next Implementation Order
 
-1. E1-1/E1-2: Command Center daily operations refactor.
-2. E2-1/E2-4: capability model surfaced consistently.
-3. E3-1/E3-2: composer variants.
-4. E4-1/E4-2: campaign lane/channel rails in planner.
-5. E8-1/E8-2: durable publish jobs/idempotency.
+1. E1A-1/E1A-4: product-specific design language and content/card system.
+2. E1-1/E1-2/E1-6: Command Center daily operations and mobile task stack.
+3. E2-1/E2-4: capability model surfaced consistently.
+4. E3-1/E3-3: composer source idea plus channel variants.
+5. E4-1/E4-2/E4-7: campaign lane, channel rails, and visual planner.
+6. E10-8/E10-9: client/manager-ready reporting.
+7. E8-1/E8-2: durable publish jobs/idempotency.
 
 This order fixes the user journey first, then deepens professional capability.

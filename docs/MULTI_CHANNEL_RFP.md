@@ -23,17 +23,18 @@ Deliver a professional product that can compete in workflow quality with Buffer,
 
 | Benchmark | Observed market pattern | Requirement for نشرینو |
 | --- | --- | --- |
-| Buffer | Friendly publishing, analytics, reports, comment engagement, small-team simplicity | Keep daily workflows simple and fast |
-| Hootsuite | Scheduling, publishing, analytics, engagement, AI listening, sentiment, competitive benchmarking, approvals, custom reports, unified inbox | Build breadth but keep it organized by workflow |
-| Sprout Social | Listening, business intelligence, customer care, AI, enterprise analytics and reporting | Analytics must become decision support, not chart decoration |
-| Later | Visual-first planning, media library, visual calendar, Link in Bio, AI captions, hashtags, analytics, approval workflows | Product must be media-rich and visual where content matters |
-| Planable | Multi-platform grouped posts, per-platform sync on/off, version history, comments, internal/client review, approvals | Collaboration and variants must be native |
-| Metricool/Agorapulse pattern | Competitor benchmarking, unified inbox, reports, smart links, agency workflows | Add practical reporting, inbox, and comparison workflows |
+| Buffer | Small-team simplicity: publishing, analytics, engagement, AI replies, channel groups, campaign/tag analytics, and report export | Keep daily workflows fast, clear, and low-friction |
+| Hootsuite | Platform breadth: publishing, analytics, engagement, listening, sentiment, competitive benchmarking, approvals, custom reports, unified inbox, and ads reporting | Build breadth through workflow and capability models, not scattered pages |
+| Sprout Social | Enterprise intelligence: publishing, engagement, response benchmarking, listening, link tracking, analytics, customer care, and mobile workflows | Analytics must become decision support and engagement must become operational |
+| Later | Visual-first planning: scheduler, media workflow, Link in Bio, visual calendar, and creator-friendly analytics | Product must be media-rich and visual where content matters |
+| Agorapulse | Practical operations: unified inbox, publishing, monitoring, reporting, ROI, shared calendars, approvals, labels, and saved replies | Add practical reporting, inbox, approval, and agency workflows |
 | Canva pattern | Brand assets, templates, design-to-publish continuity | Media editor and brand kit must connect directly to composer/planner |
 
 ## 4. Current Product Assessment
 
-Score: **5.8 / 10**.
+Overall score: **4.2 / 10**.
+
+Design/user-journey score: **3.2 / 10**.
 
 ### Strengths
 
@@ -46,7 +47,8 @@ Score: **5.8 / 10**.
 ### Gaps
 
 - UI still feels like a collection of modules instead of a unified social operations product.
-- Theme lacks product-specific visual assets: campaign rails, channel rails, report surfaces, content previews, health maps.
+- Theme lacks product-specific visual assets: campaign rails, channel rails, report surfaces, content previews, inbox threads, creative previews, and health maps.
+- Many pages are functionally useful but still feel like admin templates rather than a premium product.
 - Composer is not a true per-channel variant studio.
 - Analytics is not yet a report/decision-support system.
 - Inbox is not a real engagement workspace.
@@ -153,6 +155,16 @@ Acceptance:
 - Contextual setup only while incomplete.
 - Daily dashboard with risks, publishing pulse, next posts, campaign blocks, inbox alerts, and insight card.
 - Command palette reaches all major workflows.
+- Mobile command center shows only urgent tasks, next post, inbox count, and one insight.
+
+### FR1A: Design System And Brand Language
+
+- Product-specific visual system for social operations.
+- Page templates: command center, studio, planner, report, settings, inbox, table/list.
+- Reusable channel rail, campaign timeline, content card, inbox thread, media preview, report panel, and health map patterns.
+- Persian typography scale and density rules.
+- Motion rules for live status, updates, progress, selection, upload, edit, and notification states.
+- No decorative graphics that do not communicate product state.
 
 ### FR2: Channels Hub
 
@@ -223,6 +235,8 @@ Acceptance:
 - Internal notes.
 - Notifications.
 - Engagement metrics.
+- Labels and filtering by topic, campaign, channel, customer, assignee, and status.
+- Inbox actions available from dashboard alerts.
 
 ### FR10: Analytics, Reports, Listening
 
@@ -233,6 +247,8 @@ Acceptance:
 - Competitor/listening-lite.
 - Best-time recommendations.
 - AI summaries grounded in metrics.
+- Plain-language executive summary only when tied to visible source metrics.
+- Report surfaces must be client/manager-ready, not just charts.
 
 ## 8. UI/UX Requirements
 
