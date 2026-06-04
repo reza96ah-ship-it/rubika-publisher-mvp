@@ -21,6 +21,8 @@ The source is strong because it gives us:
 
 The roadmap below is therefore the controlling visual plan. The detailed implementation rules live in `NAHRINO_DESIGN_SYSTEM_V2.md`.
 
+The newer source `World-Class Visual Design System for Your App.docx` has also been reviewed. Its repo summary is `docs/NAHRINO_WORLD_CLASS_VISUAL_SYSTEM_REVIEW.md`, and it adds one important correction: before the next large page rebuild, the implemented token system must be calibrated to the warm editorial light theme, selective frosted utility policy, and contextual Dark Studio scope.
+
 ## 1.1 Source Document Verification
 
 Primary source file:
@@ -43,6 +45,20 @@ The Word document was checked directly before adopting this roadmap. It contains
 - operating-model, team, and QA-gate tables.
 
 Nahrino does not copy the Word file verbatim into the product roadmap. Instead, it converts the Word report into a Nahrino-specific execution plan and keeps the detailed token/component rules in `NAHRINO_DESIGN_SYSTEM_V2.md`.
+
+Secondary source file:
+
+```text
+C:/Users/Reza/Desktop/World-Class Visual Design System for Your App.docx
+```
+
+This Word document was checked after V-4. It contains 192 text paragraphs and 19 structured Word tables. It confirms the main direction, but sharpens it into three theme layers:
+
+- **Calm Editorial Ops Light** as the default operational shell,
+- **Selective Frosted Utility** for overlays, drawers, sheets, command bars, filter bars, and confirmations,
+- **Dark Studio** only for media, creative preview, approval, and before/after comparison contexts.
+
+The complete review is tracked in `docs/NAHRINO_WORLD_CLASS_VISUAL_SYSTEM_REVIEW.md`.
 
 ## 2. North Star
 
@@ -629,6 +645,28 @@ Acceptance:
 - first viewport is useful on laptop,
 - mobile page has one clear next action before scroll,
 - no decorative hero pushes work down.
+
+### Phase V-4.5: Visual Token Calibration
+
+Goal: make the implemented app inherit the correct world-class visual DNA before rebuilding more pages.
+
+Current source review: `docs/NAHRINO_WORLD_CLASS_VISUAL_SYSTEM_REVIEW.md`
+
+Deliverables:
+
+- warm editorial light palette replaces the remaining cool/generic shell feel,
+- typography scale, tabular numerals, and Persian-first type rules are encoded as tokens,
+- motion tokens match functional interaction timing,
+- focus, target size, density, radius, and elevation rules are explicit,
+- frosted/glass treatment is limited to utility layers,
+- Dark Studio is scoped to media/editor/preview contexts only.
+
+Acceptance:
+
+- token audit remains clean or improves,
+- no whole-app dark/glass theme is introduced,
+- new UI uses state motion instead of decorative animation,
+- primary shell stays light, compact, and readable on laptop and mobile.
 
 ### Phase V-5: Planner and Campaigns
 

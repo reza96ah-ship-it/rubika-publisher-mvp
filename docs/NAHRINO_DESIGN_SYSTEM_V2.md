@@ -46,6 +46,7 @@ This system is based on:
 - the user-provided benchmark report: `The 2026 Digital Interface Ecosystem`,
 - the user-provided visual systems report: `The Comprehensive Architecture of Modern Visual Design Systems`,
 - the user-provided roadmap report: `Professional Visual Design System Roadmap for a 10/10 App`,
+- the user-provided visual direction report: `World-Class Visual Design System for Your App`,
 - existing Nahrino rebuild docs,
 - observed weaknesses in the current app,
 - benchmark patterns from Buffer, Hootsuite, Sprout Social, Later, Planable, Metricool, Agorapulse, and Canva-style creative workflows,
@@ -86,6 +87,24 @@ Nahrino interpretation:
 - borrow the responsiveness and emotional motion discipline of Material 3 Expressive,
 - borrow the layered clarity of Apple spatial design only where it improves hierarchy,
 - do not chase literal Liquid Glass refraction in the app shell because it is expensive, browser-fragile, and distracts from operational clarity.
+
+### 2.2 World-Class Visual System Source Integration
+
+The newer `World-Class Visual Design System for Your App` source confirms the strategic direction and makes it more specific:
+
+- default shell: **Calm Editorial Ops Light**,
+- overlay material: **Selective Frosted Utility**,
+- focused editor theme: **Dark Studio** only for media, preview, approval, and before/after comparison.
+
+Nahrino interpretation:
+
+- the primary app shell should be light-first, warm-neutral, compact, and editorial,
+- beauty should come from real product objects: thumbnails, previews, reports, channel state, media assets, and campaign lanes,
+- frosted effects are allowed for utility layers, not as the base page style,
+- dark surfaces are reserved for creative/editor focus, not the whole operational app,
+- motion must explain state changes such as autosave, publish progress, chart selection, drawer open/close, filter changes, and planner drag/drop.
+
+The implementation implications are tracked in `docs/NAHRINO_WORLD_CLASS_VISUAL_SYSTEM_REVIEW.md`.
 
 ## 3. Product Mental Model
 
