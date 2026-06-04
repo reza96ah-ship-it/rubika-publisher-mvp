@@ -24,7 +24,9 @@ import { AuthGate } from "../../components/auth-gate";
 import { ApprovalBadge } from "../../components/approval-badge";
 import { ChannelBadges } from "../../components/channel-badges";
 import { CountdownBadge } from "../../components/countdown-badge";
-import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
+import { DataSearchField, DataToolbar, FilterChip } from "../../components/data-view";
+import { LoadingRows } from "../../components/loading-skeleton";
+import { ContentOperationCard } from "../../components/pro-product-ui";
 import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
@@ -63,9 +65,6 @@ const searchableFields: Array<keyof Pick<Post, "title" | "caption" | "hashtags" 
   "campaign",
   "internal_note"
 ];
-const contentHeaderGrid = "grid-cols-[minmax(0,1.4fr)_140px_170px_100px]";
-const contentRowGrid = "lg:grid-cols-[minmax(0,1.4fr)_140px_170px_100px]";
-
 function statusCount(posts: Post[], status: string) {
   if (status === "all") return posts.length;
   return posts.filter((post) => post.status === status).length;
@@ -590,86 +589,69 @@ export default function ContentWorkspacePage() {
                 })}
               </div>
 
-              <DataTable
-                columns={["محتوا", "مرحله", "زمان", "عملیات"]}
-                gridClassName={contentHeaderGrid}
-                loading={loading}
-                empty={filteredPosts.length === 0 ? (
-                  <div className="p-4">
-                    <EmptyState
-                      icon={<FileText className="h-5 w-5" aria-hidden="true" />}
-                      title="هیچ پستی با این فیلتر پیدا نشد"
-                      description="جست‌وجو یا وضعیت انتخاب‌شده را تغییر دهید."
-                      action={<Button href="/compose">ایجاد پست جدید</Button>}
-                    />
+              <div className="mt-3 max-h-[66vh] overflow-y-auto rounded-lg bg-app-surfaceMuted/50 p-2 shadow-inner sm:mt-4">
+                {loading ? <LoadingRows /> : null}
+                {!loading && filteredPosts.length === 0 ? (
+                  <EmptyState
+                    icon={<FileText className="h-5 w-5" aria-hidden="true" />}
+                    title="هیچ پستی با این فیلتر پیدا نشد"
+                    description="جست‌وجو یا وضعیت انتخاب‌شده را تغییر دهید."
+                    action={<Button href="/compose">ایجاد پست جدید</Button>}
+                  />
+                ) : null}
+                {!loading && filteredPosts.length > 0 ? (
+                  <div className="grid gap-2.5">
+                    {filteredPosts.map((post) => {
+                      const selected = selectedPost?.id === post.id;
+                      const previewUrl = previewUrlForPost(post);
+                      const media = primaryMediaForPost(post);
+                      const campaignKey = campaignKeyForPost(post);
+                      return (
+                        <ContentOperationCard
+                          key={post.id}
+                          action={(
+                            <Button type="button" variant={selected ? "primary" : "secondary"} size="sm" onClick={() => selectPost(post)}>
+                              بازبینی
+                            </Button>
+                          )}
+                          approval={<ApprovalBadge status={post.approval_status} compact />}
+                          campaignColor={campaignColorForPost(post, campaigns)}
+                          campaignLabel={campaignKey !== "none" ? campaignLabelForPost(post, campaigns) : "بدون کمپین"}
+                          caption={post.caption || "بدون کپشن"}
+                          checked={selectedIds.has(post.id)}
+                          error={post.last_error}
+                          lifecycle={(
+                            <>
+                              <StatusBadge status={post.status} />
+                              <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
+                            </>
+                          )}
+                          mediaLabel={media ? "رسانه آماده" : "بدون رسانه"}
+                          meta={(
+                            <>
+                              <p className="flex items-center gap-2">
+                                <Clock3 className="h-4 w-4" aria-hidden="true" />
+                                {formatDateTime(post.scheduled_at)}
+                              </p>
+                              <p>تلاش انتشار: {post.attempt_count}</p>
+                              <p>به‌روزرسانی: {formatDateTime(post.updated_at)}</p>
+                            </>
+                          )}
+                          onCheckedChange={() => toggleSelected(post.id)}
+                          onSelect={() => selectPost(post)}
+                          platform={post.platform}
+                          previewAlt={media?.original_filename ?? post.title}
+                          previewUrl={previewUrl}
+                          selected={selected}
+                          title={post.title}
+                        >
+                          {post.hashtags ? <StatusToken tone="primary" className="max-w-full truncate">{post.hashtags}</StatusToken> : null}
+                        </ContentOperationCard>
+                      );
+                    })}
                   </div>
                 ) : null}
-              >
-                {filteredPosts.map((post) => {
-                  const selected = selectedPost?.id === post.id;
-                  const previewUrl = previewUrlForPost(post);
-                  const media = primaryMediaForPost(post);
-                  return (
-                    <DataRow key={post.id} gridClassName={contentRowGrid} selected={selected}>
-                      <div className="flex min-w-0 gap-3">
-                        <div className="flex h-24 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
-                          {previewUrl ? (
-                            <img src={previewUrl} alt={media?.original_filename ?? post.title} className="h-full w-full object-cover" />
-                          ) : (
-                            <ImageIcon className="h-6 w-6 text-slate-400" aria-hidden="true" />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <label className="mb-2 inline-flex items-center gap-2 text-xs font-bold text-app-muted">
-                            <input
-                              type="checkbox"
-                              checked={selectedIds.has(post.id)}
-                              onChange={() => toggleSelected(post.id)}
-                              className="h-4 w-4 rounded border-app-border accent-blue-600"
-                            />
-                            انتخاب برای عملیات گروهی
-                          </label>
-                          <div className="flex flex-wrap items-center gap-2">
-                            {campaignKeyForPost(post) !== "none" ? (
-                              <StatusToken tone="neutral">
-                                <span className="ml-1 inline-flex h-2 w-2 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
-                                {campaignLabelForPost(post, campaigns)}
-                              </StatusToken>
-                            ) : null}
-                            <ChannelBadges platform={post.platform} compact />
-                            {media ? <StatusToken tone="success">دارای رسانه</StatusToken> : <StatusToken tone="warning">بدون رسانه</StatusToken>}
-                            {post.hashtags ? <StatusToken tone="primary" className="max-w-full truncate">{post.hashtags}</StatusToken> : null}
-                          </div>
-                          <h2 className="mt-3 truncate text-base font-black text-app-text">{post.title}</h2>
-                          <p className="mt-2 line-clamp-2 text-sm leading-7 text-app-muted">{post.caption || "بدون کپشن"}</p>
-                          {post.last_error ? <p className="mt-3 rounded bg-rose-50 px-3 py-2 text-xs leading-6 text-rose-700">{post.last_error}</p> : null}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
-                        <StatusBadge status={post.status} />
-                        <ApprovalBadge status={post.approval_status} compact />
-                        <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
-                      </div>
-
-                      <div className="space-y-2 text-xs leading-6 text-app-muted">
-                        <p className="flex items-center gap-2">
-                          <Clock3 className="h-4 w-4" aria-hidden="true" />
-                          {formatDateTime(post.scheduled_at)}
-                        </p>
-                        <p>تلاش انتشار: {post.attempt_count}</p>
-                        <p>به‌روزرسانی: {formatDateTime(post.updated_at)}</p>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 lg:justify-end">
-                        <Button type="button" variant={selected ? "primary" : "secondary"} size="sm" onClick={() => selectPost(post)}>
-                          بازبینی
-                        </Button>
-                      </div>
-                    </DataRow>
-                  );
-                })}
-              </DataTable>
+              </div>
             </WorkspacePanel>
 
             <aside className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
