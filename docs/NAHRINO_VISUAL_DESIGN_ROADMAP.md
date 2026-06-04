@@ -522,6 +522,8 @@ Avoid:
 
 Goal: stop guessing.
 
+Current baseline output: `docs/NAHRINO_V0_VISUAL_INVENTORY_LOCK.md`
+
 Deliverables:
 
 - current UI screenshot inventory,
