@@ -1,10 +1,21 @@
 import Link from "next/link";
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
+import type {
+  AnchorHTMLAttributes,
+  ButtonHTMLAttributes,
+  CSSProperties,
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes
+} from "react";
 import { X, type LucideIcon } from "lucide-react";
 
 type Tone = "neutral" | "primary" | "success" | "warning" | "alert" | "info";
 type ButtonVariant = "primary" | "secondary" | "quiet" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
+type FieldState = "default" | "success" | "error";
+type SurfaceVariant = "plain" | "muted" | "raised" | "tonal";
+type SurfacePadding = "none" | "sm" | "md" | "lg";
 
 type NPageProps = {
   children: ReactNode;
@@ -25,6 +36,9 @@ type NButtonSharedProps = {
   className?: string;
   variant?: ButtonVariant;
   size?: ButtonSize;
+  icon?: LucideIcon;
+  trailingIcon?: LucideIcon;
+  loading?: boolean;
 };
 
 type NButtonAsButtonProps = NButtonSharedProps & ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -38,9 +52,80 @@ type NButtonAsLinkProps = NButtonSharedProps & Omit<AnchorHTMLAttributes<HTMLAnc
 
 type NButtonProps = NButtonAsButtonProps | NButtonAsLinkProps;
 
+type NIconButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  label: string;
+  icon: LucideIcon;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  badge?: ReactNode;
+};
+
 type NStatusPillProps = {
   children: ReactNode;
   tone?: Tone;
+  className?: string;
+};
+
+type NTagProps = {
+  children: ReactNode;
+  tone?: Tone;
+  className?: string;
+  onRemove?: () => void;
+};
+
+type NFieldProps = {
+  label: string;
+  children: ReactNode;
+  hint?: string;
+  error?: string;
+  required?: boolean;
+  className?: string;
+};
+
+type NInputProps = InputHTMLAttributes<HTMLInputElement> & {
+  icon?: LucideIcon;
+  state?: FieldState;
+  trailing?: ReactNode;
+};
+
+type NTextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
+  state?: FieldState;
+};
+
+type NSelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
+  state?: FieldState;
+};
+
+type NSurfaceProps = {
+  children: ReactNode;
+  variant?: SurfaceVariant;
+  padding?: SurfacePadding;
+  className?: string;
+};
+
+type NRowProps = {
+  title: string;
+  detail?: string;
+  icon?: LucideIcon;
+  tone?: Tone;
+  href?: string;
+  meta?: ReactNode;
+  action?: ReactNode;
+  selected?: boolean;
+  className?: string;
+};
+
+type NTabOption = {
+  label: string;
+  value: string;
+  count?: number;
+  href?: string;
+};
+
+type NTabsProps = {
+  tabs: NTabOption[];
+  activeTab: string;
+  onTabChange?: (value: string) => void;
   className?: string;
 };
 
@@ -144,25 +229,51 @@ type NNoticeProps = {
 };
 
 const toneSurfaceClasses: Record<Tone, string> = {
-  neutral: "border-slate-200 bg-slate-50 text-slate-700",
-  primary: "border-teal-200 bg-teal-50 text-teal-800",
+  neutral: "border-app-border bg-app-surfaceMuted text-app-muted",
+  primary: "border-app-primary/20 bg-app-soft text-app-primary",
   success: "border-emerald-200 bg-emerald-50 text-emerald-800",
   warning: "border-amber-200 bg-amber-50 text-amber-800",
   alert: "border-rose-200 bg-rose-50 text-rose-800",
-  info: "border-sky-200 bg-sky-50 text-sky-800"
+  info: "border-app-secondary/20 bg-app-secondarySoft text-app-secondary"
 };
 
 const buttonVariantClasses: Record<ButtonVariant, string> = {
-  primary: "border-[#102a2a] bg-[#102a2a] text-white shadow-[0_10px_22px_rgba(16,42,42,0.18)] hover:bg-[#173836]",
-  secondary: "border-slate-200 bg-white text-slate-700 shadow-hairline hover:bg-[#fbfaf7] hover:text-[#102a2a]",
-  quiet: "border-transparent bg-transparent text-slate-600 hover:bg-white/80 hover:text-[#102a2a]",
+  primary: "border-app-graphite bg-app-graphite text-white shadow-accent hover:bg-app-primaryHover",
+  secondary: "border-app-border bg-app-surface text-app-text shadow-hairline hover:bg-app-surfaceMuted",
+  quiet: "border-transparent bg-transparent text-app-muted hover:bg-app-surface hover:text-app-text",
   danger: "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
 };
 
 const buttonSizeClasses: Record<ButtonSize, string> = {
-  sm: "px-2.5 py-1.5 text-xs",
-  md: "px-3.5 py-2 text-sm",
-  lg: "px-4 py-2.5 text-sm"
+  sm: "min-h-compact px-2.5 text-xs",
+  md: "min-h-standard px-3.5 text-sm",
+  lg: "min-h-comfortable px-4 text-sm"
+};
+
+const iconButtonSizeClasses: Record<ButtonSize, string> = {
+  sm: "h-8 w-8",
+  md: "h-10 w-10",
+  lg: "h-12 w-12"
+};
+
+const surfaceVariantClasses: Record<SurfaceVariant, string> = {
+  plain: "border-app-border bg-app-surface shadow-hairline",
+  muted: "border-app-border bg-app-surfaceMuted shadow-hairline",
+  raised: "border-app-border bg-app-surface shadow-soft",
+  tonal: "border-app-primary/20 bg-app-soft shadow-hairline"
+};
+
+const surfacePaddingClasses: Record<SurfacePadding, string> = {
+  none: "",
+  sm: "p-2.5",
+  md: "p-3 sm:p-4",
+  lg: "p-4 sm:p-5"
+};
+
+const fieldStateClasses: Record<FieldState, string> = {
+  default: "border-app-border focus-within:border-app-focus focus-within:ring-app-focus/20",
+  success: "border-emerald-200 focus-within:border-emerald-500 focus-within:ring-emerald-100",
+  error: "border-rose-200 focus-within:border-rose-500 focus-within:ring-rose-100"
 };
 
 const toneAccentTokens: Record<Tone, string> = {
@@ -206,27 +317,71 @@ export function NPageHeader({ title, description, eyebrow, meta, action, classNa
 }
 
 export function NButton(props: NButtonProps) {
-  const { children, className = "", variant = "primary", size = "md" } = props;
+  const { children, className = "", variant = "primary", size = "md", icon: Icon, trailingIcon: TrailingIcon, loading = false } = props;
   const classes = [
-    "app-interactive inline-flex items-center justify-center rounded-md border font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-100 disabled:pointer-events-none disabled:opacity-60",
+    "app-interactive inline-flex items-center justify-center gap-2 rounded-md border font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60",
     buttonVariantClasses[variant],
     buttonSizeClasses[size],
     className
   ].join(" ");
+  const content = (
+    <>
+      {loading ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" /> : Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
+      <span>{children}</span>
+      {TrailingIcon ? <TrailingIcon className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
+    </>
+  );
 
   if ("href" in props && props.href) {
-    const { href, disabled, children: _children, className: _className, variant: _variant, size: _size, ...linkProps } = props;
+    const {
+      href,
+      disabled,
+      children: _children,
+      className: _className,
+      variant: _variant,
+      size: _size,
+      icon: _icon,
+      trailingIcon: _trailingIcon,
+      loading: _loading,
+      ...linkProps
+    } = props;
     return (
       <Link href={href} className={classes} aria-disabled={disabled || linkProps["aria-disabled"]} tabIndex={disabled ? -1 : linkProps.tabIndex} {...linkProps}>
-        {children}
+        {content}
       </Link>
     );
   }
 
-  const { children: _children, className: _className, variant: _variant, size: _size, type, ...buttonProps } = props as NButtonAsButtonProps;
+  const {
+    children: _children,
+    className: _className,
+    variant: _variant,
+    size: _size,
+    icon: _icon,
+    trailingIcon: _trailingIcon,
+    loading: _loading,
+    type,
+    disabled,
+    ...buttonProps
+  } = props as NButtonAsButtonProps;
   return (
-    <button type={type ?? "button"} className={classes} {...buttonProps}>
-      {children}
+    <button type={type ?? "button"} className={classes} disabled={disabled || loading} aria-busy={loading || undefined} {...buttonProps}>
+      {content}
+    </button>
+  );
+}
+
+export function NIconButton({ label, icon: Icon, variant = "secondary", size = "md", badge, className = "", type, ...props }: NIconButtonProps) {
+  return (
+    <button
+      type={type ?? "button"}
+      className={`app-interactive relative inline-flex items-center justify-center rounded-md border font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60 ${buttonVariantClasses[variant]} ${iconButtonSizeClasses[size]} ${className}`}
+      aria-label={label}
+      title={label}
+      {...props}
+    >
+      <Icon className="h-4 w-4" aria-hidden="true" />
+      {badge ? <span className="absolute -left-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-black text-white">{badge}</span> : null}
     </button>
   );
 }
@@ -235,6 +390,64 @@ export function NStatusPill({ children, tone = "neutral", className = "" }: NSta
   return (
     <span className={`inline-flex min-h-6 items-center justify-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-black ${toneSurfaceClasses[tone]} ${className}`}>
       {children}
+    </span>
+  );
+}
+
+export function NTag({ children, tone = "neutral", className = "", onRemove }: NTagProps) {
+  return (
+    <span className={`inline-flex min-h-7 items-center gap-1.5 rounded-md border px-2 text-xs font-black ${toneSurfaceClasses[tone]} ${className}`}>
+      {children}
+      {onRemove ? (
+        <button type="button" onClick={onRemove} className="app-interactive -ml-1 inline-flex h-5 w-5 items-center justify-center rounded text-current hover:bg-white/70" aria-label="حذف برچسب">
+          <X className="h-3 w-3" aria-hidden="true" />
+        </button>
+      ) : null}
+    </span>
+  );
+}
+
+export function NSurface({ children, variant = "plain", padding = "md", className = "" }: NSurfaceProps) {
+  return <section className={`rounded-lg border ${surfaceVariantClasses[variant]} ${surfacePaddingClasses[padding]} ${className}`}>{children}</section>;
+}
+
+export function NField({ label, children, hint, error, required = false, className = "" }: NFieldProps) {
+  return (
+    <label className={`block min-w-0 ${className}`}>
+      <span className="mb-1.5 flex items-center gap-1 text-xs font-black text-app-text">
+        {label}
+        {required ? <span className="text-rose-600" aria-hidden="true">*</span> : null}
+      </span>
+      {children}
+      {error ? <span className="mt-1.5 block text-[11px] font-bold text-rose-700">{error}</span> : hint ? <span className="mt-1.5 block text-[11px] leading-5 text-app-muted">{hint}</span> : null}
+    </label>
+  );
+}
+
+export function NInput({ icon: Icon, state = "default", trailing, className = "", ...props }: NInputProps) {
+  return (
+    <span className={`flex min-h-standard items-center gap-2 rounded-md border bg-app-surface px-3 shadow-hairline ring-2 ring-transparent transition ${fieldStateClasses[state]} ${className}`}>
+      {Icon ? <Icon className="h-4 w-4 shrink-0 text-app-muted" aria-hidden="true" /> : null}
+      <input className="min-w-0 flex-1 bg-transparent text-sm font-medium text-app-text outline-none placeholder:text-app-muted/70 disabled:cursor-not-allowed disabled:opacity-60" {...props} />
+      {trailing ? <span className="shrink-0 text-xs font-bold text-app-muted">{trailing}</span> : null}
+    </span>
+  );
+}
+
+export function NTextarea({ state = "default", className = "", ...props }: NTextareaProps) {
+  return (
+    <span className={`block rounded-md border bg-app-surface px-3 py-2 shadow-hairline ring-2 ring-transparent transition ${fieldStateClasses[state]} ${className}`}>
+      <textarea className="min-h-28 w-full resize-y bg-transparent text-sm font-medium leading-7 text-app-text outline-none placeholder:text-app-muted/70 disabled:cursor-not-allowed disabled:opacity-60" {...props} />
+    </span>
+  );
+}
+
+export function NSelect({ state = "default", className = "", children, ...props }: NSelectProps) {
+  return (
+    <span className={`block rounded-md border bg-app-surface px-3 shadow-hairline ring-2 ring-transparent transition ${fieldStateClasses[state]} ${className}`}>
+      <select className="min-h-standard w-full bg-transparent text-sm font-bold text-app-text outline-none disabled:cursor-not-allowed disabled:opacity-60" {...props}>
+        {children}
+      </select>
     </span>
   );
 }
@@ -291,6 +504,70 @@ export function NSavedViewToolbar({
       </div>
     </section>
   );
+}
+
+export function NTabs({ tabs, activeTab, onTabChange, className = "" }: NTabsProps) {
+  return (
+    <div className={`inline-flex min-h-10 max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-app-border bg-app-surfaceMuted p-1 shadow-hairline ${className}`} role="tablist">
+      {tabs.map((tab) => {
+        const active = tab.value === activeTab;
+        const tabClassName = `app-interactive inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-xs font-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 ${
+          active ? "bg-app-surface text-app-primary shadow-hairline" : "text-app-muted hover:bg-app-surface hover:text-app-text"
+        }`;
+        const content = (
+          <>
+            <span>{tab.label}</span>
+            {typeof tab.count === "number" ? <span className="rounded bg-app-surfaceMuted px-1.5 py-0.5 text-[10px] text-app-muted">{tab.count}</span> : null}
+          </>
+        );
+
+        if (tab.href) {
+          return (
+            <Link key={tab.value} href={tab.href} className={tabClassName} role="tab" aria-selected={active}>
+              {content}
+            </Link>
+          );
+        }
+
+        return (
+          <button key={tab.value} type="button" onClick={() => onTabChange?.(tab.value)} className={tabClassName} role="tab" aria-selected={active}>
+            {content}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function NRow({ title, detail, icon: Icon, tone = "primary", href, meta, action, selected = false, className = "" }: NRowProps) {
+  const content = (
+    <article
+      className={`app-row grid min-h-rowCompact gap-3 rounded-lg border px-3 py-2.5 shadow-hairline sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center ${
+        selected ? "border-app-primary bg-app-soft" : "border-app-border bg-app-surface hover:bg-app-surfaceMuted"
+      } ${className}`}
+      style={toneVars(tone)}
+    >
+      <div className="flex min-w-0 items-center gap-2.5">
+        {Icon ? (
+          <span className="nahrino-token-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-md border">
+            <Icon className="h-4 w-4" aria-hidden="true" />
+          </span>
+        ) : null}
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-black text-app-text">{title}</span>
+          {detail ? <span className="mt-0.5 block truncate text-xs leading-5 text-app-muted">{detail}</span> : null}
+        </span>
+      </div>
+      {(meta || action) ? (
+        <div className="flex min-w-0 items-center gap-2 sm:justify-end">
+          {meta ? <span className="min-w-0 truncate text-xs font-bold text-app-muted">{meta}</span> : null}
+          {action}
+        </div>
+      ) : null}
+    </article>
+  );
+
+  return href ? <Link href={href} className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-app-focus/30">{content}</Link> : content;
 }
 
 export function NChannelRail({ channels, compact = false, className = "" }: NChannelRailProps) {
@@ -450,7 +727,7 @@ export function NDonutChart({ items, total, label = "کل" }: NDonutChartProps) 
         return `${item.color} ${start}deg ${cursor}deg`;
       })
       .join(", ")
-    : "#E2E8F0 0deg 360deg";
+    : "rgb(var(--n-color-border)) 0deg 360deg";
 
   return (
     <div className="flex flex-col items-center justify-center gap-3">
@@ -483,7 +760,7 @@ export function NTrendBars({ values, labels }: NTrendBarsProps) {
       {values.map((value, index) => (
         <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-1">
           <span
-            className="w-full rounded-t-md bg-[#0b7771] shadow-[0_6px_14px_rgba(11,119,113,0.12)] transition-all"
+            className="w-full rounded-t-md bg-app-primary shadow-accent transition-all"
             style={{ height: `${Math.max(10, (value / max) * 88)}px` }}
             aria-label={`${value} items`}
           />

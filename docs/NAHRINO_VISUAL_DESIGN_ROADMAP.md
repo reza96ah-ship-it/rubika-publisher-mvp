@@ -564,6 +564,8 @@ Acceptance:
 
 Goal: make every page use the same professional building blocks.
 
+Current phase output: `docs/NAHRINO_V2_CORE_COMPONENT_SYSTEM.md`
+
 Deliverables:
 
 - buttons,
