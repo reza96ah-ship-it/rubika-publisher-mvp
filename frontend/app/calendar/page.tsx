@@ -30,7 +30,7 @@ import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { NMetricTile } from "../../components/nahrino-ui";
-import { DetailGrid, EmptyState, InspectorPanel, NoticeBanner, StatusToken, Timeline, WorkspacePage } from "../../components/workspace-ui";
+import { DetailGrid, EmptyState, NoticeBanner, StatusToken, Timeline, WorkspacePage } from "../../components/workspace-ui";
 import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { apiUrl, authHeaders, type Post } from "../../lib/posts";
 import { isRubikaConnected, rubikaStatusLabel, type RubikaSettings } from "../../lib/workspace";
@@ -360,8 +360,6 @@ export default function CalendarPage() {
   const visibleRangeCount = filteredPosts.filter((post) => post.scheduled_at && activeRangeDayKeys.has(jalaliDateKey(post.scheduled_at))).length;
   const visiblePostLimit = viewMode === "week" ? (densityMode === "compact" ? 4 : 6) : densityMode === "compact" ? 2 : 3;
   const calendarCellHeight = densityMode === "compact" ? "min-h-24" : "min-h-36";
-  const selectedPostAsset = selectedPost ? assetByPostId.get(selectedPost.id) : null;
-  const selectedPostPreviewUrl = selectedPostAsset ? mediaPreviewUrls[selectedPostAsset.id] : "";
   const quickPreviewAsset = quickPreviewPost ? assetByPostId.get(quickPreviewPost.id) : null;
   const quickPreviewUrl = quickPreviewAsset ? mediaPreviewUrls[quickPreviewAsset.id] : "";
 
@@ -613,6 +611,24 @@ export default function CalendarPage() {
           <Button href={`/compose?postId=${post.id}`} variant="ghost" size="sm">ویرایش</Button>
         </div>
       </article>
+    );
+  }
+
+  function renderMonthDayDensity(dayPosts: Post[], hiddenCount: number) {
+    if (dayPosts.length === 0) {
+      return <span className="calendar-day-empty-hint">برای ساخت پست کلیک کنید</span>;
+    }
+
+    return (
+      <div className="calendar-day-density-list" aria-label={`${dayPosts.length} پست در این روز`}>
+        {dayPosts.slice(0, 3).map((post) => (
+          <span key={post.id} className="calendar-day-density-item" style={{ "--campaign-accent": campaignColorForPost(post, campaigns) } as CSSProperties}>
+            <span className="calendar-day-density-dot" aria-hidden="true" />
+            <span>{formatJalaliTime(post.scheduled_at)}</span>
+          </span>
+        ))}
+        {hiddenCount > 0 ? <span className="calendar-day-density-more">+{hiddenCount} بیشتر</span> : null}
+      </div>
     );
   }
 
@@ -891,13 +907,26 @@ export default function CalendarPage() {
                                     </button>
                                   </div>
                                 </div>
-                                <div className="calendar-day-posts" onClick={(event) => event.stopPropagation()}>
-                                  {dayPosts.slice(0, visiblePostLimit).map((post) => renderPostChip(post, viewMode === "month"))}
-                                  {dayPosts.length > visiblePostLimit ? (
-                                    <span className="calendar-day-more">
-                                      +{dayPosts.length - visiblePostLimit} مورد دیگر
-                                    </span>
-                                  ) : null}
+                                <div className="calendar-day-posts" onClick={viewMode === "week" ? (event) => event.stopPropagation() : undefined}>
+                                  {viewMode === "month" ? (
+                                    renderMonthDayDensity(dayPosts, Math.max(0, dayPosts.length - 3))
+                                  ) : (
+                                    <>
+                                      {dayPosts.slice(0, visiblePostLimit).map((post) => renderPostChip(post, false))}
+                                      {dayPosts.length > visiblePostLimit ? (
+                                        <button
+                                          type="button"
+                                          className="calendar-day-more"
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            selectDay(day, dayPosts);
+                                          }}
+                                        >
+                                          +{dayPosts.length - visiblePostLimit} مورد دیگر
+                                        </button>
+                                      ) : null}
+                                    </>
+                                  )}
                                 </div>
                               </>
                             ) : null}
@@ -969,207 +998,44 @@ export default function CalendarPage() {
 
             </section>
 
-            <div className="calendar-inspector-wrap">
-              <InspectorPanel
-                title="برنامه روز"
-                description={`${selectedDayLabel} · ${selectedDayPosts.length} پست`}
-                footer={(
-                  <Button type="button" onClick={() => openQuickCreate(selectedDayValue)} className="w-full" size="sm">
-                    <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                    افزودن پست در این روز
-                  </Button>
-                )}
-              >
-                <div className="mb-4 rounded-lg border border-app-border bg-app-surfaceMuted p-3 shadow-hairline">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-black text-app-text">هوشمندی برنامه‌ریزی</p>
-                    <StatusToken tone={selectedDayInsights.conflicts.length || selectedDayInsights.failed.length || selectedDayInsights.rubikaBlocked ? "alert" : selectedDayInsights.missingMedia.length ? "warning" : "success"}>
-                      {selectedDayInsights.conflicts.length || selectedDayInsights.failed.length || selectedDayInsights.rubikaBlocked ? "نیازمند توجه" : selectedDayInsights.missingMedia.length ? "قابل بهبود" : "پایدار"}
-                    </StatusToken>
-                  </div>
-
-                  <div className="mt-3 space-y-2">
-                    {selectedDayInsights.rubikaBlocked ? (
-                      <div className="rounded-md border border-rose-200 bg-rose-50 p-2 text-[11px] font-bold leading-5 text-rose-800">
-                        <p>
-                          کانال انتشار برای {selectedDayInsights.publishablePosts.length} پست آماده نیست: {rubikaStatusLabel(rubikaSettings)}.
-                        </p>
-                        <Button href="/channels" variant="secondary" size="sm" className="mt-2">
-                          بررسی مرکز کانال‌ها
-                        </Button>
-                      </div>
-                    ) : null}
-                    {selectedDayInsights.conflicts.slice(0, 2).map((conflict) => (
-                      <div key={`${conflict.first.id}-${conflict.second.id}`} className="rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] font-bold leading-5 text-amber-800">
-                        فاصله کم: {conflict.first.title} و {conflict.second.title} فقط {conflict.gap} دقیقه فاصله دارند.
-                      </div>
-                    ))}
-                    {selectedDayInsights.failed.length ? (
-                      <div className="rounded-md border border-rose-200 bg-rose-50 p-2 text-[11px] font-bold leading-5 text-rose-800">
-                        {selectedDayInsights.failed.length} پست این روز خطا یا وضعیت ناموفق دارد.
-                      </div>
-                    ) : null}
-                    {selectedDayInsights.missingMedia.length ? (
-                      <div className="rounded-md border border-sky-200 bg-sky-50 p-2 text-[11px] font-bold leading-5 text-sky-800">
-                        {selectedDayInsights.missingMedia.length} پست بدون رسانه است؛ برای پست فروشگاهی بهتر است رسانه اضافه شود.
-                      </div>
-                    ) : null}
-                    {!selectedDayInsights.conflicts.length && !selectedDayInsights.failed.length && !selectedDayInsights.missingMedia.length && !selectedDayInsights.rubikaBlocked ? (
-                      <div className="rounded-md border border-emerald-200 bg-emerald-50 p-2 text-[11px] font-bold leading-5 text-emerald-800">
-                        فاصله‌بندی، وضعیت و رسانه‌های این روز خوب به نظر می‌رسند.
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-3 border-t border-app-border pt-3">
-                    <p className="mb-2 text-[11px] font-black text-app-muted">پیشنهاد زمان برای پست جدید</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedDayInsights.suggestedSlots.length ? selectedDayInsights.suggestedSlots.map((slot) => (
-                        <Button key={slot.hour} type="button" variant="secondary" size="sm" onClick={() => openQuickCreateAt(selectedDayValue, slot.hour, 0)}>
-                          {slot.label}
-                        </Button>
-                      )) : (
-                        <StatusToken tone="warning">روز شلوغ است</StatusToken>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  {selectedDayPosts.length === 0 ? (
-                    <p className="rounded-md border border-dashed border-app-border bg-slate-50 px-3 py-4 text-center text-xs leading-6 text-app-muted">
-                      برای این روز هنوز پستی ثبت نشده است.
-                    </p>
-                  ) : null}
-                  {selectedDayPosts.map((post) => {
-                    const asset = assetByPostId.get(post.id);
-                    const previewUrl = asset ? mediaPreviewUrls[asset.id] : "";
-                    return (
-                      <button
-                        key={post.id}
-                        type="button"
-                        onClick={() => selectPost(post)}
-                        className={`relative w-full overflow-hidden rounded-md p-3 text-right shadow-hairline transition hover:bg-blue-50 ${
-                          selectedPost?.id === post.id ? "bg-blue-50 ring-2 ring-blue-100" : "bg-white"
-                        }`}
-                      >
-                        <span className="absolute inset-y-0 right-0 w-1" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
-                        <div className="flex min-w-0 items-center gap-3 pr-1">
-                          {previewUrl ? (
-                            <img src={previewUrl} alt="" className="h-12 w-12 shrink-0 rounded-md object-cover ring-1 ring-app-border" />
-                          ) : (
-                            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted text-slate-400">
-                              <ImageIcon className="h-4 w-4" aria-hidden="true" />
-                            </span>
-                          )}
-                          <span className="min-w-0 flex-1">
-                            <span className="flex flex-wrap items-center gap-2">
-                              <StatusBadge status={post.status} />
-                              <ChannelBadges platform={post.platform} compact />
-                              <span className="text-xs font-bold text-app-muted">{formatJalaliTime(post.scheduled_at)}</span>
-                            </span>
-                            <span className="mt-2 block truncate text-sm font-black text-app-text">{post.title}</span>
-                            <span className="mt-1 flex items-center gap-1 truncate text-[11px] font-bold text-app-primary">
-                              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
-                              <span className="truncate">{campaignLabelForPost(post, campaigns)}</span>
-                            </span>
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-4 border-t border-app-border pt-4">
-                  {selectedPost ? (
-                    <div className="space-y-4">
-                      <div>
-                        {selectedPostPreviewUrl ? (
-                          <img
-                            src={selectedPostPreviewUrl}
-                            alt={selectedPostAsset?.original_filename ?? ""}
-                            className="mb-3 aspect-video w-full rounded-md object-cover shadow-hairline"
-                          />
-                        ) : null}
-                        <div className="flex flex-wrap items-center gap-2">
-                          <StatusBadge status={selectedPost.status} />
-                          <ChannelBadges platform={selectedPost.platform} compact />
-                          <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
-                          <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1 text-[11px] font-black text-slate-600">
-                            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: campaignColorForPost(selectedPost, campaigns) }} />
-                            {campaignLabelForPost(selectedPost, campaigns)}
-                          </span>
-                        </div>
-                        <h3 className="mt-3 text-base font-black text-app-text">{selectedPost.title}</h3>
-                        <p className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap rounded-md bg-slate-50 p-3 text-xs leading-6 text-app-muted ring-1 ring-app-border">
-                          {selectedPost.caption || "بدون کپشن"}
-                        </p>
-                      </div>
-
-                      <DetailGrid
-                        items={[
-                          { label: "زمان", value: formatJalaliDateTime(selectedPost.scheduled_at) },
-                          { label: "کمپین", value: campaignLabelForPost(selectedPost, campaigns) },
-                          { label: "تلاش", value: `${selectedPost.attempt_count}` },
-                          { label: "شناسه", value: `#${selectedPost.id}` }
-                        ]}
-                      />
-
-                      <div>
-                        <p className="mb-3 text-xs font-black text-app-text">مسیر برنامه‌ریزی</p>
-                        <Timeline
-                          items={[
-                            {
-                              title: "ساخت پست",
-                              description: "رکورد محتوا در فضای کاری ایجاد شده است.",
-                              meta: formatJalaliDateTime(selectedPost.created_at),
-                              tone: "primary"
-                            },
-                            {
-                              title: "زمان برنامه‌ریزی",
-                              description: "زمان ثبت‌شده برای ورود به چرخه انتشار.",
-                              meta: formatJalaliDateTime(selectedPost.scheduled_at),
-                              tone: "warning"
-                            },
-                            {
-                              title: "وضعیت فعلی",
-                              description: selectedPost.last_error || postStatusLabel(selectedPost.status),
-                              meta: `آخرین تغییر: ${formatJalaliDateTime(selectedPost.updated_at)}`,
-                              tone: postTimelineTone(selectedPost.status)
-                            }
-                          ]}
-                        />
-                      </div>
-
-                      {selectedPost.last_error ? <NoticeBanner tone="alert">{selectedPost.last_error}</NoticeBanner> : null}
-
-                      <div className="grid gap-2">
-                        <Button href={`/compose?postId=${selectedPost.id}`}>ویرایش پست</Button>
-                        <Button href="/campaigns" variant="secondary">باز کردن مدیر کمپین</Button>
-                        <Button href="/queue" variant="secondary">باز کردن صف انتشار</Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <Clock3 className="mx-auto h-5 w-5 text-slate-400" aria-hidden="true" />
-                      <p className="mt-2 text-xs leading-6 text-app-muted">یک پست را برای مشاهده جزئیات انتخاب کنید.</p>
-                    </div>
-                  )}
-                </div>
-
+            <aside className="calendar-action-rail" aria-label="عملیات برنامه‌ریز">
+              <div className="calendar-action-rail-head">
+                <p className="app-section-kicker text-[10px] font-black">عملیات</p>
+                <h2>کنترل انتشار</h2>
+                <p>جزئیات روز در نمای روز است؛ این بخش فقط مسیرهای سریع را نگه می‌دارد.</p>
+              </div>
+              <div className="calendar-action-rail-stack">
+                <Button type="button" onClick={() => openQuickCreate(selectedDayValue)} className="w-full" size="sm">
+                  <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                  پست جدید برای این روز
+                </Button>
+                {selectedPost ? (
+                  <>
+                    <Button type="button" variant="secondary" className="w-full" size="sm" onClick={() => setQuickPreviewPostId(selectedPost.id)}>
+                      پیش‌نمایش پست انتخابی
+                    </Button>
+                    <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary" className="w-full" size="sm">
+                      ویرایش پست انتخابی
+                    </Button>
+                  </>
+                ) : null}
+                <Button href="/queue" variant="ghost" className="w-full" size="sm">صف انتشار</Button>
+                <Button href="/campaigns" variant="ghost" className="w-full" size="sm">مدیر کمپین</Button>
+              </div>
+              <div className="calendar-action-rail-status">
                 {attentionPosts.length ? (
-                  <Link href="/content?status=failed" className="mt-4 flex items-center gap-2 rounded-md border border-rose-100 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700">
+                  <Link href="/content?status=failed" className="calendar-action-rail-alert">
                     <AlertCircle className="h-4 w-4" aria-hidden="true" />
                     {attentionPosts.length} مورد نیازمند رسیدگی
                   </Link>
                 ) : (
-                  <p className="mt-4 flex items-center gap-2 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
+                  <p className="calendar-action-rail-ok">
                     <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                     برنامه انتشار پایدار است
                   </p>
                 )}
-              </InspectorPanel>
-            </div>
+              </div>
+            </aside>
           </section>
           {quickPreviewPost && typeof document !== "undefined" ? createPortal(
             <div className="calendar-post-preview-backdrop" role="presentation" onClick={() => setQuickPreviewPostId(null)}>
