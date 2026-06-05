@@ -69,6 +69,30 @@ function percent(value: number, total: number) {
   return Math.round((value / total) * 100);
 }
 
+function deliveryScore(post: Post) {
+  if (post.status === "published") return 100;
+  if (post.status === "scheduled") return 82;
+  if (post.status === "ready" || post.status === "manual_ready") return 72;
+  if (post.status === "publishing") return 64;
+  if (post.status === "draft") return 38;
+  if (post.status === "failed") return 18;
+  return 42;
+}
+
+function statusTone(status: string) {
+  if (status === "failed") return "alert" as const;
+  if (status === "published") return "success" as const;
+  if (status === "scheduled" || status === "publishing") return "warning" as const;
+  return "primary" as const;
+}
+
+function approvalTone(status?: string | null) {
+  if (status === "approved") return "success" as const;
+  if (status === "pending" || status === "changes_requested") return "warning" as const;
+  if (status === "rejected") return "alert" as const;
+  return "neutral" as const;
+}
+
 function compactDateTime(value?: string | null) {
   if (!value) return "بدون زمان";
   const date = new Date(value);
@@ -239,6 +263,13 @@ export default function HomePage() {
     manual_ready: "دستی",
     failed: "ناموفق"
   };
+  const approvalLabels: Record<string, string> = {
+    not_required: "بدون الزام",
+    pending: "در انتظار",
+    approved: "تایید شده",
+    rejected: "رد شده",
+    changes_requested: "نیازمند اصلاح"
+  };
   const contentPreviewItems = [...posts]
     .sort((first, second) => dateTime(second.updated_at || second.created_at) - dateTime(first.updated_at || first.created_at))
     .slice(0, 3)
@@ -294,6 +325,22 @@ export default function HomePage() {
     ? { title: "ریسک انتشار بالاست", detail: `${failureRate}% از صف فعال خطا دارد؛ بازیابی صف قبل از تولید تازه ارزشمندتر است.`, href: "/analytics?view=failures", tone: insightTone }
     : { title: "ریتم انتشار قابل اتکاست", detail: `${completionRate}% تکمیل در داده فعلی؛ برنامه نزدیک را با یک پست زمان‌بندی‌شده تقویت کنید.`, href: "/analytics", tone: insightTone };
   const campaignMomentumItems = activeCampaigns.length ? activeCampaigns : campaigns.slice(0, 3);
+  const dashboardTableRows = [...posts]
+    .sort((first, second) => dateTime(second.updated_at || second.created_at) - dateTime(first.updated_at || first.created_at))
+    .slice(0, 6)
+    .map((post) => ({
+      id: post.id,
+      title: post.title || "محتوای بدون عنوان",
+      channel: post.platform?.trim() || "چندکاناله",
+      status: statusLabels[post.status] || post.status || "نامشخص",
+      statusTone: statusTone(post.status),
+      publishTime: compactDateTime(post.scheduled_at || post.published_at),
+      approval: approvalLabels[post.approval_status || "not_required"] || post.approval_status || "بدون الزام",
+      approvalTone: approvalTone(post.approval_status),
+      attempt: post.attempt_count,
+      score: deliveryScore(post),
+      href: `/compose?postId=${post.id}`
+    }));
 
   return (
     <AuthGate>
@@ -441,6 +488,56 @@ export default function HomePage() {
               </div>
             </NSection>
           </section>
+
+          <NSection
+            title="جدول عملکرد محتوا"
+            description="لایه کاری تمام‌عرض برای اسکن آخرین محتوا، وضعیت انتشار، تایید و شاخص آمادگی. وقتی داده واقعی reach/CTR اضافه شود، همین جدول جای آن را می‌گیرد."
+            action={<NButton href="/analytics" variant="secondary" size="sm">تحلیل کامل</NButton>}
+            className="dashboard-spec-card dashboard-performance-table"
+          >
+            {dashboardTableRows.length ? (
+              <div className="grid gap-2" role="table" aria-label="جدول عملکرد محتوای داشبورد">
+                <div className="hidden grid-cols-[minmax(0,1.5fr)_0.7fr_0.8fr_0.8fr_0.7fr_0.6fr_auto] gap-3 rounded-xl bg-app-surfaceMuted px-3 py-2 text-[11px] font-black text-app-muted lg:grid" role="row">
+                  <span role="columnheader">محتوا</span>
+                  <span role="columnheader">کانال</span>
+                  <span role="columnheader">وضعیت</span>
+                  <span role="columnheader">زمان</span>
+                  <span role="columnheader">بازبینی</span>
+                  <span role="columnheader">آمادگی</span>
+                  <span role="columnheader">اقدام</span>
+                </div>
+                {dashboardTableRows.map((row) => (
+                  <Link
+                    key={row.id}
+                    href={row.href}
+                    className="dashboard-table-row app-interactive grid gap-3 rounded-xl border border-app-border bg-app-surface px-3 py-3 shadow-hairline lg:grid-cols-[minmax(0,1.5fr)_0.7fr_0.8fr_0.8fr_0.7fr_0.6fr_auto] lg:items-center"
+                    role="row"
+                  >
+                    <span className="min-w-0" role="cell">
+                      <span className="block truncate text-sm font-black text-app-text">{row.title}</span>
+                      <span className="mt-1 block truncate text-[11px] font-bold text-app-muted">#{row.id}</span>
+                    </span>
+                    <span className="text-xs font-black text-app-muted" role="cell">{row.channel}</span>
+                    <span role="cell"><NStatusPill tone={row.statusTone}>{row.status}</NStatusPill></span>
+                    <span className="text-xs font-bold text-app-muted" role="cell">{row.publishTime}</span>
+                    <span role="cell"><NStatusPill tone={row.approvalTone}>{row.approval}</NStatusPill></span>
+                    <span className="dashboard-score-cell" role="cell">
+                      <span className="dashboard-kpi-number text-sm font-black text-app-text">{row.score}%</span>
+                      <span className="mt-1 block h-1.5 rounded-full bg-app-surfaceMuted">
+                        <span className="block h-full rounded-full bg-app-primary" style={{ width: `${row.score}%` }} />
+                      </span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs font-black text-app-primary" role="cell">
+                      باز کردن
+                      <ArrowUpLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <NEmptyState icon={FileText} title="هنوز محتوایی برای جدول نیست" detail="بعد از ساخت اولین پست، جدول عملکرد فعال می‌شود." />
+            )}
+          </NSection>
         </NPage>
       </AppShell>
     </AuthGate>
