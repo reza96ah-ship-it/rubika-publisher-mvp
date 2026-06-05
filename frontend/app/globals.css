@@ -1352,18 +1352,6 @@ a {
     color: rgb(var(--n-chart-failed));
   }
 
-  .dashboard-preview-card {
-    border: 1px solid rgb(var(--n-color-border));
-    background: rgb(var(--n-color-surface-muted));
-    box-shadow: none;
-    backdrop-filter: none;
-  }
-
-  .dashboard-preview-card::before {
-    inset-inline: 0.75rem;
-    background: rgb(var(--n-color-primary) / 0.42);
-  }
-
   .dashboard-day-cell,
   .dashboard-campaign-rail {
     position: relative;

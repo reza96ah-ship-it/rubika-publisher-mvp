@@ -412,18 +412,6 @@ export default function HomePage() {
             </Link>
           ))}
         </div>
-        <div className="dashboard-content-preview grid gap-2 sm:grid-cols-3" aria-label="نمای زنده محتوا">
-          {contentPreviewItems.length ? contentPreviewItems.map((item, index) => (
-            <Link key={item.id} href={item.href} className="dashboard-preview-card app-interactive group rounded-xl p-3" style={{ animationDelay: `${index * 80}ms` }}>
-              <span className="flex items-center justify-between gap-2">
-                <span className="min-w-0 truncate text-[10px] font-black text-app-primary">{item.channel}</span>
-                <NStatusPill tone={item.tone}>{item.status}</NStatusPill>
-              </span>
-              <strong className="mt-2 block truncate text-sm font-black text-app-text">{item.title}</strong>
-              <span className="mt-1 block line-clamp-2 text-[11px] leading-5 text-app-muted">{item.caption}</span>
-            </Link>
-          )) : <NEmptyState icon={FileText} title="محتوای نزدیک وجود ندارد" detail="اولین پیش‌نویس یا زمان‌بندی این قسمت را فعال می‌کند." />}
-        </div>
       </div>
     </NSection>
   );
