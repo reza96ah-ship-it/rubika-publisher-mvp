@@ -919,13 +919,13 @@ a {
     pointer-events: none;
   }
 
-  .nahrino-quick-create-toggle:checked ~ .nahrino-quick-create-panel {
+  .nahrino-quick-create-panel-open {
     opacity: 1;
     pointer-events: auto;
     transform: translateY(0) scale(1);
   }
 
-  .nahrino-quick-create-toggle:checked ~ .nahrino-quick-create-fab {
+  .nahrino-quick-create-fab-open {
     background: rgb(var(--n-color-ink-strong));
     border-color: rgb(var(--n-color-ink-strong));
     transform: rotate(45deg);

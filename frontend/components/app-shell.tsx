@@ -312,30 +312,55 @@ const quickCreateItems = [
 ];
 
 function QuickCreateDock() {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    function handleKeydown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    window.addEventListener("keydown", handleKeydown);
+    return () => window.removeEventListener("keydown", handleKeydown);
+  }, []);
+
   return (
     <div className="nahrino-quick-create fixed bottom-[5.8rem] left-3 z-40 flex flex-col items-end gap-2 lg:bottom-5 lg:left-5">
-      <input id="nahrino-quick-create-toggle" type="checkbox" className="nahrino-quick-create-toggle sr-only" aria-label="نمایش ساخت سریع" />
-      <div className="app-popover nahrino-quick-create-panel grid gap-1.5 rounded-2xl p-2" role="menu" aria-label="ساخت سریع">
-        {quickCreateItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              role="menuitem"
-              className="app-interactive flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-black text-app-text hover:bg-white/70"
-            >
-              <span className="nahrino-token-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
-                <Icon className="h-4 w-4" aria-hidden="true" />
-              </span>
-              <span className="min-w-24">{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-      <label htmlFor="nahrino-quick-create-toggle" className="app-interactive nahrino-quick-create-fab flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl text-white" aria-label="ساخت سریع">
+      {open ? (
+        <div id="nahrino-quick-create-menu" className="app-popover nahrino-quick-create-panel nahrino-quick-create-panel-open grid gap-1.5 rounded-2xl p-2" role="menu" aria-label="ساخت سریع">
+          {quickCreateItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="app-interactive flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-black text-app-text hover:bg-white/70"
+              >
+                <span className="nahrino-token-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <span className="min-w-24">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
+      <button
+        type="button"
+        className={`app-interactive nahrino-quick-create-fab flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl text-white ${open ? "nahrino-quick-create-fab-open" : ""}`}
+        aria-label={open ? "بستن ساخت سریع" : "باز کردن ساخت سریع"}
+        aria-expanded={open}
+        aria-controls="nahrino-quick-create-menu"
+        onClick={() => setOpen((current) => !current)}
+      >
         <Plus className="h-5 w-5" aria-hidden="true" />
-      </label>
+      </button>
     </div>
   );
 }
