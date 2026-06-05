@@ -13,7 +13,8 @@ import {
   Maximize2,
   Minimize2,
   Plus,
-  Rows3
+  Rows3,
+  X
 } from "lucide-react";
 import Link from "next/link";
 import { CSSProperties, DragEvent, useCallback, useEffect, useMemo, useState } from "react";
@@ -216,6 +217,7 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [quickCreateAt, setQuickCreateAt] = useState<string | null>(null);
+  const [quickPreviewPostId, setQuickPreviewPostId] = useState<number | null>(null);
   const [draggingPostId, setDraggingPostId] = useState<number | null>(null);
   const [dragTargetDayKey, setDragTargetDayKey] = useState<string | null>(null);
   const [reschedulingPostId, setReschedulingPostId] = useState<number | null>(null);
@@ -319,6 +321,10 @@ export default function CalendarPage() {
     if (!selectedPostId) return null;
     return calendarPosts.find((post) => post.id === selectedPostId) ?? null;
   }, [calendarPosts, selectedPostId]);
+  const quickPreviewPost = useMemo(() => {
+    if (!quickPreviewPostId) return null;
+    return calendarPosts.find((post) => post.id === quickPreviewPostId) ?? null;
+  }, [calendarPosts, quickPreviewPostId]);
   const assetByPostId = useMemo(() => {
     const map = new Map<number, MediaAsset>();
     for (const asset of assets) {
@@ -355,6 +361,8 @@ export default function CalendarPage() {
   const calendarCellHeight = densityMode === "compact" ? "min-h-24" : "min-h-36";
   const selectedPostAsset = selectedPost ? assetByPostId.get(selectedPost.id) : null;
   const selectedPostPreviewUrl = selectedPostAsset ? mediaPreviewUrls[selectedPostAsset.id] : "";
+  const quickPreviewAsset = quickPreviewPost ? assetByPostId.get(quickPreviewPost.id) : null;
+  const quickPreviewUrl = quickPreviewAsset ? mediaPreviewUrls[quickPreviewAsset.id] : "";
   const selectedCampaignWorkload = useMemo(() => {
     if (!selectedCampaignOption) return null;
     const rangePosts = calendarPosts
@@ -502,7 +510,10 @@ export default function CalendarPage() {
         key={post.id}
         type="button"
         data-status={post.status}
-        onClick={() => selectPost(post)}
+        onClick={() => {
+          selectPost(post);
+          setQuickPreviewPostId(post.id);
+        }}
         draggable={draggable}
         onDragStart={(event) => startDraggingPost(event, post)}
         onDragEnd={stopDraggingPost}
@@ -1030,6 +1041,46 @@ export default function CalendarPage() {
               </InspectorPanel>
             </div>
           </section>
+          {quickPreviewPost ? (
+            <div className="calendar-post-preview-backdrop" role="presentation" onClick={() => setQuickPreviewPostId(null)}>
+              <section className="calendar-post-preview-modal" role="dialog" aria-modal="true" aria-label={`پیش‌نمایش ${quickPreviewPost.title}`} onClick={(event) => event.stopPropagation()}>
+                <div className="calendar-post-preview-head">
+                  <div className="min-w-0">
+                    <p className="app-section-kicker text-[10px] font-black">پیش‌نمایش پست</p>
+                    <h2>{quickPreviewPost.title}</h2>
+                    <p>{formatJalaliDateTime(quickPreviewPost.scheduled_at)} · {campaignLabelForPost(quickPreviewPost, campaigns)}</p>
+                  </div>
+                  <button type="button" className="calendar-post-preview-close" onClick={() => setQuickPreviewPostId(null)} aria-label="بستن پیش‌نمایش">
+                    <X className="calendar-post-preview-close-icon" aria-hidden="true" />
+                  </button>
+                </div>
+
+                {quickPreviewUrl ? (
+                  <img src={quickPreviewUrl} alt={quickPreviewAsset?.original_filename ?? ""} className="calendar-post-preview-image" />
+                ) : null}
+
+                <div className="calendar-post-preview-status">
+                  <StatusBadge status={quickPreviewPost.status} />
+                  <ChannelBadges platform={quickPreviewPost.platform} compact />
+                  <CountdownBadge status={quickPreviewPost.status} scheduledAt={quickPreviewPost.scheduled_at} />
+                  <span className="calendar-post-preview-campaign" style={{ "--campaign-accent": campaignColorForPost(quickPreviewPost, campaigns) } as CSSProperties}>
+                    <span aria-hidden="true" />
+                    {campaignLabelForPost(quickPreviewPost, campaigns)}
+                  </span>
+                </div>
+
+                <p className="calendar-post-preview-caption">{quickPreviewPost.caption || "کپشن برای این پست ثبت نشده است."}</p>
+
+                {quickPreviewPost.last_error ? <NoticeBanner tone="alert">{quickPreviewPost.last_error}</NoticeBanner> : null}
+
+                <div className="calendar-post-preview-actions">
+                  <Button href={`/compose?postId=${quickPreviewPost.id}`}>ویرایش پست</Button>
+                  <Button href="/queue" variant="secondary">صف انتشار</Button>
+                  <Button type="button" variant="ghost" onClick={() => setQuickPreviewPostId(null)}>بستن</Button>
+                </div>
+              </section>
+            </div>
+          ) : null}
           <PlannerComposerDrawer scheduledAt={quickCreateAt} defaultCampaign={selectedCampaignOption?.label ?? ""} onClose={() => setQuickCreateAt(null)} onCreated={() => loadPosts(true)} />
         </WorkspacePage>
       </AppShell>
