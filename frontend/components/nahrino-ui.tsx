@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import type {
   AnchorHTMLAttributes,
@@ -8,6 +10,7 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes
 } from "react";
+import { useMemo, useState } from "react";
 import { X, type LucideIcon } from "lucide-react";
 
 type Tone = "neutral" | "primary" | "success" | "warning" | "alert" | "info";
@@ -542,7 +545,7 @@ export function NTabs({ tabs, activeTab, onTabChange, className = "" }: NTabsPro
 export function NRow({ title, detail, icon: Icon, tone = "primary", href, meta, action, selected = false, className = "" }: NRowProps) {
   const content = (
     <article
-      className={`app-row grid min-h-rowCompact gap-3 rounded-lg border px-3 py-2.5 shadow-hairline sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center ${
+      className={`app-row nahrino-data-row grid min-h-rowCompact gap-3 rounded-lg border px-3 py-2.5 shadow-hairline sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center ${
         selected ? "border-app-primary bg-app-soft" : "border-app-border bg-app-surface hover:bg-app-surfaceMuted"
       } ${className}`}
       style={toneVars(tone)}
@@ -716,36 +719,48 @@ export function NEmptyState({ title, detail, icon: Icon }: NEmptyStateProps) {
 }
 
 export function NDonutChart({ items, total, label = "کل" }: NDonutChartProps) {
-  let cursor = 0;
-  const background = total
-    ? items
-      .filter((item) => item.value > 0)
-      .map((item) => {
-        const start = cursor;
-        const size = (item.value / total) * 360;
-        cursor += size;
-        return `${item.color} ${start}deg ${cursor}deg`;
-      })
-      .join(", ")
-    : "rgb(var(--n-chart-empty, var(--n-color-border))) 0deg 360deg";
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const activeItem = activeIndex === null ? null : items[activeIndex];
+  const visibleItems = useMemo(() => items.filter((item) => item.value > 0), [items]);
+  const background = useMemo(() => {
+    let cursor = 0;
+    return total
+      ? visibleItems
+        .map((item) => {
+          const start = cursor;
+          const size = (item.value / total) * 360;
+          cursor += size;
+          return `${item.color} ${start}deg ${cursor}deg`;
+        })
+        .join(", ")
+      : "rgb(var(--n-chart-empty, var(--n-color-border))) 0deg 360deg";
+  }, [total, visibleItems]);
 
   return (
     <div className="flex flex-col items-center justify-center gap-3">
       <div className="nahrino-donut-chart relative h-32 w-32 rounded-full shadow-hairline sm:h-40 sm:w-40" style={{ background: `conic-gradient(${background})` } as CSSProperties}>
         <div className="absolute inset-4 flex flex-col items-center justify-center rounded-full bg-app-surface shadow-inner sm:inset-5">
-          <span className="text-xl font-black text-app-text sm:text-2xl">{total}</span>
-          <span className="mt-1 text-[10px] font-bold text-app-muted">{label}</span>
+          <span className="text-xl font-black text-app-text sm:text-2xl">{activeItem?.value ?? total}</span>
+          <span className="mt-1 max-w-20 truncate text-[10px] font-bold text-app-muted">{activeItem?.label ?? label}</span>
         </div>
       </div>
       <div className="grid w-full grid-cols-1 gap-1.5 text-[10px] sm:gap-2 sm:text-xs">
-        {items.map((item) => (
-          <div key={item.label} className="nahrino-chart-legend-row grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md bg-app-surfaceMuted px-2 py-1.5 sm:px-2.5 sm:py-2">
+        {items.map((item, index) => (
+          <button
+            key={item.label}
+            type="button"
+            className={`nahrino-chart-legend-row grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md bg-app-surfaceMuted px-2 py-1.5 text-right sm:px-2.5 sm:py-2 ${activeIndex === index ? "nahrino-chart-legend-active" : ""}`}
+            onBlur={() => setActiveIndex(null)}
+            onFocus={() => setActiveIndex(index)}
+            onMouseEnter={() => setActiveIndex(index)}
+            onMouseLeave={() => setActiveIndex(null)}
+          >
             <span className="flex min-w-0 items-center gap-1.5 font-bold text-app-muted">
               <span className="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-white" style={{ backgroundColor: item.color, opacity: item.value ? 1 : 0.48 }} />
               <span className="min-w-0 truncate">{item.label}</span>
             </span>
             <span className="min-w-5 shrink-0 text-left font-black tabular-nums text-app-text">{item.value}</span>
-          </div>
+          </button>
         ))}
       </div>
     </div>

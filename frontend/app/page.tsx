@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Activity,
   AlertTriangle,
@@ -302,6 +303,28 @@ export default function HomePage() {
       tone: insight.tone,
       meta: insight.tone === "success" ? "پایدار" : insight.tone === "warning" ? "بررسی" : "اقدام"
     }));
+  const statusLabels: Record<string, string> = {
+    draft: "پیش‌نویس",
+    ready: "آماده",
+    scheduled: "زمان‌بندی",
+    publishing: "در انتشار",
+    published: "منتشر",
+    manual_ready: "دستی",
+    failed: "ناموفق"
+  };
+  const contentPreviewItems = [...posts]
+    .sort((first, second) => dateTime(second.updated_at || second.created_at) - dateTime(first.updated_at || first.created_at))
+    .slice(0, 3)
+    .map((post) => ({
+      id: post.id,
+      title: post.title || "محتوای بدون عنوان",
+      caption: post.caption || post.internal_note || "متن کوتاه این محتوا هنوز تکمیل نشده است.",
+      href: `/compose?postId=${post.id}`,
+      channel: post.platform?.trim() || "چندکاناله",
+      status: statusLabels[post.status] || post.status || "نامشخص",
+      time: compactDateTime(post.scheduled_at || post.published_at || post.updated_at || post.created_at),
+      tone: post.status === "failed" ? "alert" as const : post.status === "published" ? "success" as const : post.status === "scheduled" ? "warning" as const : "primary" as const
+    }));
 
   return (
     <AuthGate>
@@ -345,6 +368,28 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
+
+                <div className="dashboard-content-preview mt-3 grid gap-2 sm:grid-cols-3" aria-label="نمای زنده محتوا">
+                  {contentPreviewItems.length ? contentPreviewItems.map((item, index) => (
+                    <Link key={item.id} href={item.href} className="dashboard-preview-card app-interactive group rounded-lg p-2.5" style={{ animationDelay: `${index * 80}ms` }}>
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="min-w-0 truncate text-[10px] font-black text-app-primary">{item.channel}</span>
+                        <NStatusPill tone={item.tone}>{item.status}</NStatusPill>
+                      </span>
+                      <strong className="mt-2 block truncate text-sm font-black text-app-text">{item.title}</strong>
+                      <span className="mt-1 block line-clamp-2 text-[11px] leading-5 text-app-muted">{item.caption}</span>
+                      <span className="mt-2 flex items-center justify-between gap-2 text-[10px] font-black text-app-muted">
+                        <span>{item.time}</span>
+                        <ArrowUpLeft className="h-3.5 w-3.5 shrink-0 opacity-0 transition group-hover:opacity-100" aria-hidden="true" />
+                      </span>
+                    </Link>
+                  )) : (
+                    <div className="dashboard-preview-card rounded-lg p-2.5 sm:col-span-3">
+                      <p className="text-xs font-black text-app-text">هنوز محتوایی برای نمایش زنده وجود ندارد</p>
+                      <p className="mt-1 text-[11px] leading-5 text-app-muted">اولین پیش‌نویس، این بخش را به مسیر کاری واقعی تبدیل می‌کند.</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <aside className="dashboard-frost-panel rounded-xl p-3">
@@ -357,15 +402,15 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-3 grid grid-cols-3 gap-2">
-                  <div className="rounded-lg border border-app-border bg-app-surface/80 p-2 text-center shadow-hairline">
+                  <div className="dashboard-live-stat rounded-lg border border-app-border bg-app-surface/80 p-2 text-center shadow-hairline">
                     <p className="text-lg font-black text-app-text">{publishedCount}</p>
                     <p className="mt-1 truncate text-[10px] font-bold text-app-muted">منتشر</p>
                   </div>
-                  <div className="rounded-lg border border-app-border bg-app-surface/80 p-2 text-center shadow-hairline">
+                  <div className="dashboard-live-stat rounded-lg border border-app-border bg-app-surface/80 p-2 text-center shadow-hairline">
                     <p className="text-lg font-black text-app-text">{queueTotal}</p>
                     <p className="mt-1 truncate text-[10px] font-bold text-app-muted">در صف</p>
                   </div>
-                  <div className="rounded-lg border border-app-border bg-app-surface/80 p-2 text-center shadow-hairline">
+                  <div className="dashboard-live-stat rounded-lg border border-app-border bg-app-surface/80 p-2 text-center shadow-hairline">
                     <p className="text-lg font-black text-app-text">{blockedWorkCount}</p>
                     <p className="mt-1 truncate text-[10px] font-bold text-app-muted">ریسک</p>
                   </div>
