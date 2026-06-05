@@ -248,9 +248,9 @@ const buttonVariantClasses: Record<ButtonVariant, string> = {
 };
 
 const buttonSizeClasses: Record<ButtonSize, string> = {
-  sm: "min-h-compact px-2.5 text-xs",
-  md: "min-h-standard px-3.5 text-sm",
-  lg: "min-h-comfortable px-4 text-sm"
+  sm: "min-h-9 px-3 text-xs",
+  md: "min-h-10 px-3.5 text-sm",
+  lg: "min-h-11 px-4 text-sm"
 };
 
 const iconButtonSizeClasses: Record<ButtonSize, string> = {
@@ -322,7 +322,7 @@ export function NPageHeader({ title, description, eyebrow, meta, action, classNa
 export function NButton(props: NButtonProps) {
   const { children, className = "", variant = "primary", size = "md", icon: Icon, trailingIcon: TrailingIcon, loading = false } = props;
   const classes = [
-    "app-interactive nahrino-control-radius inline-flex items-center justify-center gap-2 rounded-nsm border font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60",
+    "app-interactive nahrino-control-radius inline-flex items-center justify-center gap-2 whitespace-nowrap border font-bold leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60",
     buttonVariantClasses[variant],
     buttonSizeClasses[size],
     className
@@ -378,7 +378,7 @@ export function NIconButton({ label, icon: Icon, variant = "secondary", size = "
   return (
     <button
       type={type ?? "button"}
-      className={`app-interactive nahrino-control-radius relative inline-flex items-center justify-center rounded-nsm border font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60 ${buttonVariantClasses[variant]} ${iconButtonSizeClasses[size]} ${className}`}
+      className={`app-interactive nahrino-control-radius relative inline-flex items-center justify-center border font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60 ${buttonVariantClasses[variant]} ${iconButtonSizeClasses[size]} ${className}`}
       aria-label={label}
       title={label}
       {...props}

@@ -200,7 +200,7 @@ function CampaignJalaliDateField({
           <span className="block text-xs font-black text-app-text">{label}</span>
           <span className="mt-1 block truncate text-[11px] font-bold text-app-muted">{formatJalaliSelection(value)}</span>
         </span>
-        <span className={`rounded-md px-2.5 py-1.5 text-[11px] font-black ${value ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-app-primary"}`}>
+        <span className={`nahrino-control-radius inline-flex min-h-8 items-center px-3 text-[11px] font-black ${value ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-app-primary"}`}>
           {value ? "تغییر" : "انتخاب"}
         </span>
       </button>
@@ -208,9 +208,9 @@ function CampaignJalaliDateField({
       {open ? (
         <div className="app-popover absolute bottom-full right-0 z-[70] mb-2 w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift">
           <div className="flex items-center justify-between gap-1.5">
-            <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)} className="h-7 px-2">قبل</Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)}>قبل</Button>
             <p className="min-w-20 text-center text-xs font-black text-app-primary">{jalaliMonthNames[draft.month - 1]} {draft.year}</p>
-            <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(1)} className="h-7 px-2">بعد</Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(1)}>بعد</Button>
           </div>
 
           <div className="mt-2 grid grid-cols-7 gap-0.5 text-center text-[9px] font-black text-app-muted">
@@ -250,8 +250,8 @@ function CampaignJalaliDateField({
           </div>
 
           <div className="mt-2 flex justify-between gap-1.5 border-t border-app-border pt-2">
-            <Button type="button" variant="ghost" size="sm" onClick={() => { onChange(null); onOpenChange(false); }} className="h-7 px-2">حذف</Button>
-            <Button type="button" size="sm" onClick={() => onOpenChange(false)} className="h-7 px-2">تایید</Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => { onChange(null); onOpenChange(false); }}>حذف</Button>
+            <Button type="button" size="sm" onClick={() => onOpenChange(false)}>تایید</Button>
           </div>
         </div>
       ) : null}
@@ -944,7 +944,32 @@ export default function CampaignsPage() {
             </section>
           ) : null}
 
-          <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_360px]">
+          {selectedRow ? (
+            <section className="campaign-benchmark-strip" style={{ "--campaign-accent": selectedRow.campaign.color } as CSSProperties} aria-label="مسیرهای سریع کمپین">
+              <Link href={`/calendar?campaignId=${selectedRow.campaign.id}`} className="campaign-benchmark-tile app-interactive">
+                <CalendarDays className="h-4 w-4" aria-hidden="true" />
+                <span><strong>{selectedRow.stats.scheduled}</strong> زمان‌بندی</span>
+                <small>نمای تقویم و فاصله‌های خالی</small>
+              </Link>
+              <Link href={`/content?campaignId=${selectedRow.campaign.id}`} className="campaign-benchmark-tile app-interactive">
+                <CheckSquare2 className="h-4 w-4" aria-hidden="true" />
+                <span><strong>{selectedRow.stats.ready + selectedRow.stats.draft}</strong> آماده‌سازی</span>
+                <small>پست‌های پیش‌نویس و آماده</small>
+              </Link>
+              <Link href={`/media?campaignId=${selectedRow.campaign.id}`} className="campaign-benchmark-tile app-interactive">
+                <FileImage className="h-4 w-4" aria-hidden="true" />
+                <span><strong>{selectedAssets.length}</strong> دارایی</span>
+                <small>رسانه‌های متصل به کمپین</small>
+              </Link>
+              <Link href="/analytics" className="campaign-benchmark-tile app-interactive">
+                <BarChart3 className="h-4 w-4" aria-hidden="true" />
+                <span><strong>{campaignInsights.deliveryRate}%</strong> تحویل</span>
+                <small>عملکرد و گزارش کمپین</small>
+              </Link>
+            </section>
+          ) : null}
+
+          <section className="campaign-manager-shell">
             <WorkspacePanel
               title="پورتفولیوی کمپین"
               description="کمپین‌ها را بر اساس وضعیت، سلامت و حجم محتوای متصل بررسی کنید."
@@ -1016,8 +1041,8 @@ export default function CampaignsPage() {
               </div>
             </WorkspacePanel>
 
-            <aside className="space-y-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
-              <WorkspacePanel title="جزئیات کمپین" description="سلامت، زمان‌بندی و ریسک‌های کمپین انتخاب‌شده." bodyClassName="max-h-[58vh] overflow-y-auto p-3 sm:p-4 lg:max-h-none">
+            <aside className="campaign-management-stack">
+              <WorkspacePanel title="جزئیات کمپین" description="سلامت، زمان‌بندی و ریسک‌های کمپین انتخاب‌شده." bodyClassName="p-3 sm:p-4">
                 {selectedRow ? (
                   <div className="space-y-4">
                     <div className="campaign-detail-hero-card" style={{ "--campaign-accent": selectedRow.campaign.color } as CSSProperties}>
@@ -1115,7 +1140,7 @@ export default function CampaignsPage() {
               <WorkspacePanel
                 title={editorMode === "create" ? "ساخت کمپین" : "ویرایش کمپین"}
                 description={editorMode === "create" ? "کمپین جدید را با هدف، رنگ و مالک مشخص بسازید." : "مشخصات عملیاتی کمپین انتخاب‌شده را به‌روزرسانی کنید."}
-                bodyClassName="max-h-[62vh] overflow-y-auto p-3 sm:p-4 lg:max-h-none"
+                bodyClassName="p-3 sm:p-4"
                 className="scroll-mt-24"
                 action={editorMode === "create" ? <StatusToken tone="primary">جدید</StatusToken> : selectedRow ? <StatusToken tone={campaignStatusTone(selectedRow.campaign.status)}>{statusLabels[selectedRow.campaign.status] ?? selectedRow.campaign.status}</StatusToken> : null}
               >
@@ -1189,7 +1214,7 @@ export default function CampaignsPage() {
           </section>
 
           {selectedRow ? (
-            <section className="hidden gap-4 2xl:grid 2xl:grid-cols-[minmax(0,1fr)_390px]">
+            <section className="campaign-insight-section">
               <WorkspacePanel
                 title="تحلیل کمپین"
                 description="خلاصه عملکرد، پوشش رسانه، روند فعالیت و ریسک‌های عملیاتی کمپین انتخاب‌شده."

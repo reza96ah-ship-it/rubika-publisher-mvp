@@ -90,7 +90,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
             placeholder="جست‌وجوی پست یا رفتن به یک بخش..."
           />
-          <button type="button" onClick={onClose} className="app-interactive flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-slate-50 hover:text-slate-700" aria-label="بستن جست‌وجو">
+          <button type="button" onClick={onClose} className="app-interactive nahrino-control-radius flex h-8 w-8 items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-700" aria-label="بستن جست‌وجو">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>

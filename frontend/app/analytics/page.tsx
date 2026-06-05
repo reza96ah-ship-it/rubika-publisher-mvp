@@ -764,7 +764,7 @@ export default function AnalyticsPage() {
                       key={option.value}
                       type="button"
                       onClick={() => setPostFilter(option.value)}
-                      className={`rounded px-2.5 py-1.5 text-xs font-bold transition ${postFilter === option.value ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"}`}
+                        className={`app-interactive nahrino-control-radius inline-flex min-h-8 items-center px-3 text-xs font-bold transition ${postFilter === option.value ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"}`}
                     >
                       {option.label}
                     </button>
@@ -851,7 +851,7 @@ export default function AnalyticsPage() {
                     <button
                       type="button"
                       onClick={() => setSelectedTrendKey("")}
-                      className="app-interactive flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-app-text"
+                      className="app-interactive nahrino-control-radius flex h-8 w-8 items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-app-text"
                       aria-label="بستن جزئیات روز"
                       title="بستن جزئیات روز"
                     >

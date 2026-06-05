@@ -85,12 +85,12 @@ export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: Compo
         {open ? (
           <div className="app-popover absolute bottom-full right-0 z-50 mb-2 w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift">
             <div className="flex items-center justify-between gap-1.5">
-              <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)} className="h-7 px-2">قبل</Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)}>قبل</Button>
               <div className="text-center">
                 <p className="text-xs font-black text-app-text">{jalaliMonthNames[draft.month - 1]} {draft.year}</p>
                 <p className="mt-0.5 text-[10px] text-app-muted">شمسی</p>
               </div>
-              <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(1)} className="h-7 px-2">بعد</Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(1)}>بعد</Button>
             </div>
 
             <div className="mt-2 grid grid-cols-7 gap-0.5 text-center text-[9px] font-black text-app-muted">
@@ -126,10 +126,10 @@ export function ComposerSchedulePanel({ scheduledAt, timezone, onChange }: Compo
             </div>
 
             <div className="mt-2 flex justify-between gap-1.5 border-t border-app-border pt-2">
-              <Button type="button" variant="secondary" size="sm" onClick={() => emit(todayParts)} className="h-7 px-2">امروز</Button>
+            <Button type="button" variant="secondary" size="sm" onClick={() => emit(todayParts)}>امروز</Button>
               <div className="flex gap-2">
-                <Button type="button" variant="ghost" size="sm" onClick={clearSchedule} className="h-7 px-2">حذف</Button>
-                <Button type="button" size="sm" onClick={() => setOpen(false)} className="h-7 px-2">تایید</Button>
+            <Button type="button" variant="ghost" size="sm" onClick={clearSchedule}>حذف</Button>
+            <Button type="button" size="sm" onClick={() => setOpen(false)}>تایید</Button>
               </div>
             </div>
           </div>
