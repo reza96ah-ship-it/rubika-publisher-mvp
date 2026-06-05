@@ -70,6 +70,20 @@ function percent(value: number, total: number) {
   return Math.round((value / total) * 100);
 }
 
+function conicGradient(items: Array<{ color: string; value: number }>, total: number) {
+  if (!total) return "conic-gradient(rgb(var(--n-chart-empty)) 0deg 360deg)";
+  let cursor = 0;
+  const segments = items
+    .filter((item) => item.value > 0)
+    .map((item) => {
+      const start = cursor;
+      const size = (item.value / total) * 360;
+      cursor += size;
+      return `${item.color} ${start}deg ${cursor}deg`;
+    });
+  return `conic-gradient(${segments.length ? segments.join(", ") : "rgb(var(--n-chart-empty)) 0deg 360deg"})`;
+}
+
 function deliveryScore(post: Post) {
   if (post.status === "published") return 100;
   if (post.status === "scheduled") return 82;
@@ -180,6 +194,8 @@ export default function HomePage() {
   const blockedWorkCount = priorityAlerts.length + queueCounts.failed + pendingApprovalCount + Number(!storeReady) + Number(!rubikaReady);
   const completionRate = percent(publishedCount, Math.max(posts.length - draftCount, 0));
   const failureRate = percent(queueCounts.failed, Math.max(queueTotal, 0));
+  const activeQueueCount = queueCounts.ready + queueCounts.scheduled + queueCounts.publishing;
+  const operationsHealth = Math.max(0, Math.min(100, 100 - failureRate - Math.min(42, blockedWorkCount * 7)));
   const todayKey = dayKey(new Date());
   const scheduledTodayCount = scheduledPosts.filter((post) => {
     const date = post.scheduled_at ? new Date(post.scheduled_at) : null;
@@ -222,6 +238,15 @@ export default function HomePage() {
     return date ? dayKey(date) === key : false;
   }).length);
   const weeklyLabels = weekKeys.map((key) => new Date(`${key}T00:00:00`).toLocaleDateString("fa-IR", { weekday: "short" }));
+  const maxWeeklyActivity = Math.max(1, ...weeklyActivity);
+  const statusMixItems = [
+    { label: "منتشر", value: publishedCount, color: "rgb(var(--n-chart-published))" },
+    { label: "در صف", value: activeQueueCount, color: "rgb(var(--n-chart-scheduled))" },
+    { label: "پیش‌نویس", value: draftCount, color: "rgb(var(--n-chart-draft))" },
+    { label: "خطا", value: queueCounts.failed, color: "rgb(var(--n-chart-failed))" }
+  ];
+  const statusMixTotal = statusMixItems.reduce((sum, item) => sum + item.value, 0);
+  const statusMixBackground = conicGradient(statusMixItems, statusMixTotal);
   const topMetrics = [
     {
       label: "زمان‌بندی امروز",
@@ -499,6 +524,60 @@ export default function HomePage() {
             {topMetrics.map((metric) => (
               <NMetricTile key={metric.label} {...metric} />
             ))}
+          </section>
+
+          <section className="dashboard-visual-strip grid gap-3 lg:grid-cols-[0.9fr_0.9fr_1.2fr]" aria-label="نمای تصویری داشبورد">
+            <article className="dashboard-visual-card">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="dashboard-donut" style={{ background: statusMixBackground }}>
+                  <span>{statusMixTotal}</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-black text-app-primary">ترکیب محتوا</p>
+                  <h2 className="mt-1 text-sm font-black text-app-text">وضعیت کل محتوا</h2>
+                  <div className="mt-2 grid grid-cols-2 gap-1.5">
+                    {statusMixItems.map((item) => (
+                      <span key={item.label} className="flex min-w-0 items-center gap-1.5 text-[10px] font-black text-app-muted">
+                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
+                        <span className="truncate">{item.label}</span>
+                        <span className="mr-auto text-app-text">{item.value}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article className="dashboard-visual-card">
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black text-app-primary">سلامت عملیات</p>
+                  <h2 className="mt-1 text-sm font-black text-app-text">{operationsHealth}% آماده</h2>
+                  <p className="mt-1 line-clamp-1 text-xs text-app-muted">{blockedWorkCount ? `${blockedWorkCount} مورد نیازمند توجه` : "مسیر انتشار آرام است"}</p>
+                </div>
+                <div className="dashboard-gauge" style={{ "--gauge-value": `${operationsHealth}%` } as CSSProperties}>
+                  <span>{operationsHealth}</span>
+                </div>
+              </div>
+            </article>
+
+            <article className="dashboard-visual-card">
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black text-app-primary">ریتم هفته</p>
+                  <h2 className="mt-1 text-sm font-black text-app-text">تراکم فعالیت</h2>
+                </div>
+                <NStatusPill tone={weeklyActivity.some(Boolean) ? "primary" : "neutral"}>{weeklyActivity.reduce((sum, value) => sum + value, 0)} رویداد</NStatusPill>
+              </div>
+              <div className="mt-3 flex h-16 items-end gap-1.5">
+                {weeklyActivity.map((value, index) => (
+                  <div key={weekKeys[index]} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+                    <span className="dashboard-rhythm-bar" style={{ height: `${Math.max(8, (value / maxWeeklyActivity) * 48)}px` }} />
+                    <span className="text-[9px] font-bold text-app-muted">{weeklyLabels[index]}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
           </section>
 
           <section className="dashboard-focus-shell rounded-2xl p-2.5 sm:p-3">

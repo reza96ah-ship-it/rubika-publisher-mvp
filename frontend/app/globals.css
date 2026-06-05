@@ -1117,8 +1117,91 @@ a {
 
   .dashboard-kpi-strip .nahrino-metric-card:hover {
     border-color: rgb(var(--metric-accent, var(--n-color-primary)) / 0.24);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.72), var(--n-shadow-hairline), 0 20px 44px rgb(var(--n-color-ink) / 0.08);
+    background:
+      radial-gradient(circle at 82% 0%, rgb(var(--metric-accent, var(--n-color-primary)) / 0.18), transparent 7.5rem),
+      linear-gradient(145deg, rgb(var(--n-color-frost) / 0.78), rgb(var(--n-color-frost) / 0.52)),
+      linear-gradient(180deg, rgb(255 255 255 / 0.42), transparent);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.72), 0 0 0 1px rgb(var(--metric-accent, var(--n-color-primary)) / 0.1), 0 20px 44px rgb(var(--metric-accent, var(--n-color-primary)) / 0.12), var(--n-shadow-hairline);
     transform: translateY(-3px);
+  }
+
+  .dashboard-visual-card {
+    min-height: 112px;
+    overflow: hidden;
+    border: 1px solid var(--n-glass-border);
+    border-radius: var(--n-radius-md);
+    background:
+      linear-gradient(145deg, rgb(var(--n-color-frost) / 0.72), rgb(var(--n-color-frost) / 0.48)),
+      linear-gradient(180deg, rgb(255 255 255 / 0.34), transparent);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.62), var(--n-shadow-hairline), 0 14px 32px rgb(var(--n-color-ink) / 0.052);
+    padding: 0.8rem;
+    backdrop-filter: blur(22px) saturate(148%);
+    transition: border-color var(--n-motion-base) var(--n-ease-standard), box-shadow var(--n-motion-base) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard);
+  }
+
+  .dashboard-visual-card:hover {
+    border-color: rgb(var(--n-color-primary) / 0.18);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7), var(--n-shadow-hairline), 0 20px 44px rgb(var(--n-color-primary) / 0.09);
+    transform: translateY(-2px);
+  }
+
+  .dashboard-donut {
+    position: relative;
+    display: grid;
+    height: 4.7rem;
+    width: 4.7rem;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.72), 0 10px 24px rgb(var(--n-color-ink) / 0.08);
+  }
+
+  .dashboard-donut::after {
+    position: absolute;
+    inset: 0.7rem;
+    border-radius: inherit;
+    background: var(--n-glass-surface-strong);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.74);
+    content: "";
+    backdrop-filter: blur(10px);
+  }
+
+  .dashboard-donut span {
+    position: relative;
+    z-index: 1;
+    font-size: 1rem;
+    font-weight: 900;
+    color: rgb(var(--n-color-ink));
+  }
+
+  .dashboard-gauge {
+    --gauge-value: 0%;
+    position: relative;
+    display: grid;
+    height: 4.9rem;
+    width: 4.9rem;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 999px;
+    background:
+      radial-gradient(circle at center, var(--n-glass-surface-strong) 0 56%, transparent 57%),
+      conic-gradient(rgb(var(--n-color-primary)) 0 var(--gauge-value), rgb(var(--n-color-border) / 0.48) var(--gauge-value) 100%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.72), 0 10px 24px rgb(var(--n-color-primary) / 0.1);
+  }
+
+  .dashboard-gauge span {
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: rgb(var(--n-color-ink));
+  }
+
+  .dashboard-rhythm-bar {
+    width: 100%;
+    min-height: 0.5rem;
+    border-radius: 999px 999px 0.35rem 0.35rem;
+    background: linear-gradient(180deg, rgb(var(--n-color-primary)), rgb(var(--n-color-secondary)));
+    box-shadow: 0 8px 18px rgb(var(--n-color-primary) / 0.16);
+    transition: height var(--n-motion-emphasized) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard);
   }
 
   .nahrino-metric-card::after {
