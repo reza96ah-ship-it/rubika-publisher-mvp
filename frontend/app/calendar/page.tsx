@@ -17,7 +17,7 @@ import {
   X
 } from "lucide-react";
 import Link from "next/link";
-import { CSSProperties, DragEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { CSSProperties, DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
@@ -202,6 +202,7 @@ function visibleCalendarText(post: Post) {
 
 export default function CalendarPage() {
   const { showToast } = useToast();
+  const agendaRef = useRef<HTMLElement | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
@@ -222,6 +223,7 @@ export default function CalendarPage() {
   const [draggingPostId, setDraggingPostId] = useState<number | null>(null);
   const [dragTargetDayKey, setDragTargetDayKey] = useState<string | null>(null);
   const [reschedulingPostId, setReschedulingPostId] = useState<number | null>(null);
+  const [agendaPulseKey, setAgendaPulseKey] = useState("");
 
   const loadPosts = useCallback(async (preservePlannerState = false) => {
     const headers = authHeaders();
@@ -417,10 +419,21 @@ export default function CalendarPage() {
     if (post.scheduled_at) setSelectedDayKey(jalaliDateKey(post.scheduled_at));
   }
 
-  function selectDay(day: CalendarDay, dayPosts: Post[]) {
+  function focusSelectedDayAgenda(dayKey: string) {
+    setAgendaPulseKey(`${dayKey}-${Date.now()}`);
+    window.setTimeout(() => {
+      agendaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+    window.setTimeout(() => {
+      setAgendaPulseKey((current) => (current.startsWith(`${dayKey}-`) ? "" : current));
+    }, 1000);
+  }
+
+  function selectDay(day: CalendarDay, dayPosts: Post[], focusAgenda = false) {
     setSelectedDayKey(day.key);
     setMonthAnchor(day.date);
     setSelectedPostId(dayPosts[0]?.id ?? null);
+    if (focusAgenda) focusSelectedDayAgenda(day.key);
   }
 
   function movePlannerMonth(direction: -1 | 1) {
@@ -435,6 +448,7 @@ export default function CalendarPage() {
     setMonthAnchor(today);
     setSelectedDayKey(jalaliDateKey(today));
     setSelectedPostId(null);
+    focusSelectedDayAgenda(jalaliDateKey(today));
   }
 
   function openQuickCreateAt(value: string, hour = 9, minute = 0) {
@@ -569,8 +583,21 @@ export default function CalendarPage() {
     return (
       <article
         key={post.id}
+        role="button"
+        tabIndex={0}
         className={`calendar-day-agenda-post ${selected ? "calendar-day-agenda-post-active" : ""}`}
         style={{ "--campaign-accent": campaignColorForPost(post, campaigns) } as CSSProperties}
+        onClick={(event) => {
+          if (event.target instanceof Element && event.target.closest("a,button")) return;
+          selectPost(post);
+          setQuickPreviewPostId(post.id);
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          selectPost(post);
+          setQuickPreviewPostId(post.id);
+        }}
       >
         <span className="calendar-day-agenda-post-rail" aria-hidden="true" />
         {previewUrl ? (
@@ -798,18 +825,24 @@ export default function CalendarPage() {
               </div>
 
               {!loading ? (
-                <section className="calendar-day-agenda" aria-label="برنامه روز انتخاب‌شده">
+                <section ref={agendaRef} className={`calendar-day-agenda ${agendaPulseKey ? "calendar-day-agenda-pulse" : ""}`} aria-label="برنامه روز انتخاب‌شده">
                   <div className="calendar-day-agenda-head">
                     <div className="min-w-0">
                       <p className="app-section-kicker text-[10px] font-black">نمای روز</p>
                       <h2>{selectedDayLabel}</h2>
                       <p>{selectedDayPosts.length ? `${selectedDayPosts.length} پست زمان‌دار برای این روز` : "روز آزاد برای ساخت برنامه جدید"}</p>
                     </div>
-                    <div className="calendar-day-agenda-summary" aria-label="خلاصه وضعیت روز">
-                      <StatusToken tone="warning">{selectedDayStatusSummary.scheduled} زمان‌بندی</StatusToken>
-                      <StatusToken tone="primary">{selectedDayStatusSummary.publishing} در انتشار</StatusToken>
-                      <StatusToken tone="success">{selectedDayStatusSummary.published} منتشر</StatusToken>
-                      <StatusToken tone={selectedDayStatusSummary.failed ? "alert" : "success"}>{selectedDayStatusSummary.failed} ریسک</StatusToken>
+                    <div className="calendar-day-agenda-head-actions">
+                      <div className="calendar-day-agenda-summary" aria-label="خلاصه وضعیت روز">
+                        <StatusToken tone="warning">{selectedDayStatusSummary.scheduled} زمان‌بندی</StatusToken>
+                        <StatusToken tone="primary">{selectedDayStatusSummary.publishing} در انتشار</StatusToken>
+                        <StatusToken tone="success">{selectedDayStatusSummary.published} منتشر</StatusToken>
+                        <StatusToken tone={selectedDayStatusSummary.failed ? "alert" : "success"}>{selectedDayStatusSummary.failed} ریسک</StatusToken>
+                      </div>
+                      <Button type="button" size="sm" onClick={() => openQuickCreate(selectedDayValue)}>
+                        <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                        ساخت پست
+                      </Button>
                     </div>
                   </div>
 
@@ -881,7 +914,7 @@ export default function CalendarPage() {
                         return (
                           <div
                             key={day?.key ?? `empty-${index}`}
-                            onClick={() => day ? selectDay(day, dayPosts) : undefined}
+                            onClick={() => day ? selectDay(day, dayPosts, true) : undefined}
                             onDragOver={(event) => day ? allowDropOnDay(event, day) : undefined}
                             onDrop={(event) => day ? dropPostOnDay(event, day) : undefined}
                             className={`calendar-day-cell ${day ? "" : "calendar-day-empty"} ${calendarCellHeight} ${dayPosts.length ? "calendar-day-has-posts" : ""} ${dayRisk ? "calendar-day-risk" : ""} ${isToday ? "calendar-day-today" : ""} ${isSelectedDay ? "calendar-day-selected" : ""} ${day && draggingPostId && dragTargetDayKey === day.key ? "calendar-day-drop-target" : ""} ${day && draggingPostId ? "calendar-day-can-drop" : ""}`}
@@ -921,7 +954,7 @@ export default function CalendarPage() {
                                           className="calendar-day-more"
                                           onClick={(event) => {
                                             event.stopPropagation();
-                                            selectDay(day, dayPosts);
+                                            selectDay(day, dayPosts, true);
                                           }}
                                         >
                                           +{dayPosts.length - visiblePostLimit} مورد دیگر
