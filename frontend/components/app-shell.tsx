@@ -1,6 +1,22 @@
 "use client";
 
-import { AlertCircle, BellRing, ChevronDown, ChevronLeft, LogOut, Network, Plus, Search, Settings2, Sparkles } from "lucide-react";
+import {
+  AlertCircle,
+  BarChart3,
+  BellRing,
+  ChevronDown,
+  ChevronLeft,
+  FileText,
+  GalleryHorizontalEnd,
+  LogOut,
+  Megaphone,
+  MessageSquare,
+  Network,
+  Plus,
+  Search,
+  Settings2,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -165,7 +181,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div ref={scrollRootRef} data-app-scroll-root className="flex h-full min-h-0 overflow-y-auto overscroll-contain scroll-smooth">
         <Sidebar storeName={workspaceName} ready={shellReady} brandColor={brandColor} avatarUrl={brandImageUrl} />
         <section className="nahrino-shell flex min-h-full min-w-0 flex-1 flex-col">
-          <header className="nahrino-topbar sticky top-0 z-20 shrink-0 border-b border-slate-200/80 backdrop-blur-xl">
+          <header className="nahrino-topbar sticky top-0 z-20 shrink-0">
             <div className="flex min-h-[58px] items-center justify-between gap-3 px-3 py-2 lg:px-5">
               <div className="flex min-w-0 items-center gap-3">
                 <Link href="/" className="lg:hidden" aria-label={productName}>
@@ -204,14 +220,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
                 </button>
-
-                <Link
-                  href="/compose"
-                  className="app-interactive nahrino-primary-cta hidden h-9 items-center gap-2 rounded-md border px-3 text-xs font-black sm:flex"
-                >
-                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                  پست تازه
-                </Link>
 
                 {showAttentionAction ? (
                   <Link
@@ -286,10 +294,48 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
           <div className="app-enter relative px-3 py-3 pb-24 sm:px-4 lg:px-5 lg:py-4">{children}</div>
+          <QuickCreateDock />
           <MobileNav />
           <CommandPalette open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
         </section>
       </div>
     </main>
+  );
+}
+
+const quickCreateItems = [
+  { label: "پست", href: "/compose", icon: FileText },
+  { label: "کمپین", href: "/campaigns?new=1", icon: Megaphone },
+  { label: "آپلود", href: "/media", icon: GalleryHorizontalEnd },
+  { label: "پاسخ آماده", href: "/inbox", icon: MessageSquare },
+  { label: "خروجی گزارش", href: "/analytics", icon: BarChart3 }
+];
+
+function QuickCreateDock() {
+  return (
+    <div className="nahrino-quick-create fixed bottom-[5.8rem] left-3 z-40 flex flex-col items-end gap-2 lg:bottom-5 lg:left-5">
+      <input id="nahrino-quick-create-toggle" type="checkbox" className="nahrino-quick-create-toggle sr-only" aria-label="نمایش ساخت سریع" />
+      <div className="app-popover nahrino-quick-create-panel grid gap-1.5 rounded-2xl p-2" role="menu" aria-label="ساخت سریع">
+        {quickCreateItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              role="menuitem"
+              className="app-interactive flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-black text-app-text hover:bg-white/70"
+            >
+              <span className="nahrino-token-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
+                <Icon className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <span className="min-w-24">{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+      <label htmlFor="nahrino-quick-create-toggle" className="app-interactive nahrino-quick-create-fab flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl text-white" aria-label="ساخت سریع">
+        <Plus className="h-5 w-5" aria-hidden="true" />
+      </label>
+    </div>
   );
 }

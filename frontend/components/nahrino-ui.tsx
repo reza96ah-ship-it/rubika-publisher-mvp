@@ -672,7 +672,7 @@ export function NMetricTile({ label, value, detail, icon: Icon, tone = "primary"
       <div className="flex h-full items-start justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
           <p className="line-clamp-1 text-[10px] font-bold text-app-muted sm:text-xs">{label}</p>
-          <p className="mt-1 text-lg font-black text-app-text sm:text-xl">{value}</p>
+          <p className="dashboard-kpi-number mt-1 text-lg font-black text-app-text sm:text-xl">{value}</p>
           {detail ? <p className="mt-1 hidden truncate text-[11px] font-bold text-app-muted sm:block">{detail}</p> : null}
         </div>
         {Icon ? (

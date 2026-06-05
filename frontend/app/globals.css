@@ -870,6 +870,44 @@ a {
     backdrop-filter: blur(18px) saturate(140%);
   }
 
+  .nahrino-quick-create-panel {
+    border: 1px solid rgb(var(--n-color-frost-border) / 0.72);
+    background: rgb(var(--n-color-frost) / 0.72);
+    box-shadow: 0 12px 30px rgb(var(--n-color-ink) / 0.1);
+    backdrop-filter: blur(24px) saturate(145%);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px) scale(0.98);
+    transition: opacity var(--n-motion-base) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard);
+  }
+
+  .nahrino-quick-create-fab {
+    border: 1px solid rgb(var(--n-color-primary-strong) / 0.88);
+    background: rgb(var(--n-color-primary-strong));
+    box-shadow: 0 12px 30px rgb(var(--n-color-primary) / 0.22);
+  }
+
+  .nahrino-quick-create-fab:hover {
+    background: rgb(var(--n-color-primary));
+    box-shadow: 0 16px 34px rgb(var(--n-color-primary) / 0.28);
+  }
+
+  .nahrino-quick-create {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+
+  .nahrino-quick-create-toggle:checked ~ .nahrino-quick-create-panel {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+  }
+
+  .nahrino-quick-create-toggle:checked ~ .nahrino-quick-create-fab {
+    background: rgb(var(--n-color-ink-strong));
+    border-color: rgb(var(--n-color-ink-strong));
+    transform: rotate(45deg);
+  }
+
   .dashboard-spec-page {
     max-width: 1440px;
     gap: 1rem;
@@ -887,7 +925,7 @@ a {
 
   .dashboard-command-brief {
     border-radius: 20px;
-    padding: 18px;
+    padding: 16px;
   }
 
   .dashboard-command-brief::before {
@@ -910,6 +948,10 @@ a {
   }
 
   .dashboard-spec-card.nahrino-section-card {
+    padding: 16px;
+  }
+
+  .dashboard-spec-card.nahrino-section-card {
     background: rgb(var(--n-color-surface));
     box-shadow: var(--n-shadow-soft);
   }
@@ -927,6 +969,7 @@ a {
   .dashboard-kpi-number {
     font-family: Estedad, Vazirmatn, Tahoma, Arial, sans-serif;
     font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
   }
 
   .dashboard-publish-track {
@@ -992,6 +1035,54 @@ a {
   .dashboard-insight-card .nahrino-trend-bar {
     background: linear-gradient(180deg, rgb(var(--n-color-primary)), rgb(var(--n-color-primary-strong)));
   }
+
+  nav[aria-label="ناوبری اصلی"].fixed {
+    background: rgb(var(--n-color-frost) / 0.72);
+    border-color: rgb(var(--n-color-frost-border) / 0.72);
+    backdrop-filter: blur(18px) saturate(140%);
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-spec-page {
+    gap: 0.75rem;
+  }
+
+  .dashboard-command-brief,
+  .dashboard-spec-card.nahrino-section-card {
+    border-radius: 16px;
+    padding: 12px;
+  }
+
+  .dashboard-command-brief h1 {
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+
+  .dashboard-kpi-strip {
+    gap: 0.5rem;
+  }
+
+  .dashboard-kpi-strip .nahrino-metric-card {
+    min-height: 76px;
+  }
+
+  .dashboard-day-cell {
+    padding: 0.45rem 0.2rem;
+  }
+
+  .dashboard-day-cell .dashboard-kpi-number {
+    font-size: 0.95rem;
+  }
+}
+
+[data-theme="high-contrast"] .nahrino-topbar,
+[data-theme="high-contrast"] .nahrino-sidebar,
+[data-theme="high-contrast"] .nahrino-quick-create-panel,
+[data-theme="high-contrast"] nav[aria-label="ناوبری اصلی"].fixed {
+  background: rgb(var(--n-color-surface));
+  backdrop-filter: none;
+  box-shadow: var(--n-shadow-soft);
 }
 
 @media (prefers-reduced-motion: reduce) {
