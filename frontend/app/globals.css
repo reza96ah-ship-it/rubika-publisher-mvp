@@ -1802,7 +1802,7 @@ a {
   .calendar-post-chip-rail {
     position: absolute;
     inset-block: 0.45rem;
-    inset-inline-start: 0.42rem;
+    inset-inline-start: 0.46rem;
     width: 0.18rem;
     border-radius: 999px;
     background: var(--campaign-accent, rgb(var(--post-accent)));
@@ -1813,7 +1813,9 @@ a {
     min-width: 0;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 0.62rem 0.5rem 0.88rem;
+    padding-block: 0.5rem;
+    padding-inline-start: 1.12rem;
+    padding-inline-end: 0.62rem;
   }
 
   .calendar-post-chip-media {
@@ -1901,6 +1903,8 @@ a {
 
   .calendar-post-chip-compact .calendar-post-chip-inner {
     padding-block: 0.38rem;
+    padding-inline-start: 1rem;
+    padding-inline-end: 0.5rem;
   }
 
   .calendar-post-chip-compact .calendar-post-chip-media {

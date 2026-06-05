@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { CSSProperties, DragEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { ChannelBadges } from "../../components/channel-badges";
@@ -363,6 +364,15 @@ export default function CalendarPage() {
   const selectedPostPreviewUrl = selectedPostAsset ? mediaPreviewUrls[selectedPostAsset.id] : "";
   const quickPreviewAsset = quickPreviewPost ? assetByPostId.get(quickPreviewPost.id) : null;
   const quickPreviewUrl = quickPreviewAsset ? mediaPreviewUrls[quickPreviewAsset.id] : "";
+
+  useEffect(() => {
+    if (!quickPreviewPost) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setQuickPreviewPostId(null);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [quickPreviewPost]);
   const selectedCampaignWorkload = useMemo(() => {
     if (!selectedCampaignOption) return null;
     const rangePosts = calendarPosts
@@ -1041,7 +1051,7 @@ export default function CalendarPage() {
               </InspectorPanel>
             </div>
           </section>
-          {quickPreviewPost ? (
+          {quickPreviewPost && typeof document !== "undefined" ? createPortal(
             <div className="calendar-post-preview-backdrop" role="presentation" onClick={() => setQuickPreviewPostId(null)}>
               <section className="calendar-post-preview-modal" role="dialog" aria-modal="true" aria-label={`پیش‌نمایش ${quickPreviewPost.title}`} onClick={(event) => event.stopPropagation()}>
                 <div className="calendar-post-preview-head">
@@ -1079,7 +1089,8 @@ export default function CalendarPage() {
                   <Button type="button" variant="ghost" onClick={() => setQuickPreviewPostId(null)}>بستن</Button>
                 </div>
               </section>
-            </div>
+            </div>,
+            document.body
           ) : null}
           <PlannerComposerDrawer scheduledAt={quickCreateAt} defaultCampaign={selectedCampaignOption?.label ?? ""} onClose={() => setQuickCreateAt(null)} onCreated={() => loadPosts(true)} />
         </WorkspacePage>
