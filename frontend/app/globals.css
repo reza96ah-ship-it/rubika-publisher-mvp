@@ -2442,6 +2442,22 @@ a {
     animation: calendar-modal-enter var(--n-motion-emphasized) var(--n-ease-standard) both;
   }
 
+  .calendar-reschedule-modal {
+    width: min(94vw, 38rem);
+    max-height: min(86vh, 38rem);
+    overflow: auto;
+    border: 1px solid var(--n-glass-border);
+    border-radius: var(--n-radius-md);
+    background:
+      linear-gradient(145deg, rgb(var(--n-color-frost) / 0.92), rgb(var(--n-color-surface) / 0.9)),
+      radial-gradient(circle at 88% 0%, rgb(var(--n-color-primary) / 0.12), transparent 16rem),
+      radial-gradient(circle at 4% 100%, rgb(var(--n-color-success) / 0.08), transparent 14rem);
+    padding: 1rem;
+    box-shadow: 0 28px 70px rgb(var(--n-color-ink) / 0.18), inset 0 1px 0 rgb(255 255 255 / 0.72);
+    backdrop-filter: blur(24px) saturate(152%);
+    animation: calendar-modal-enter var(--n-motion-emphasized) var(--n-ease-standard) both;
+  }
+
   .calendar-post-preview-head {
     display: flex;
     align-items: flex-start;
@@ -2574,6 +2590,86 @@ a {
   .calendar-post-preview-actions {
     margin-top: 0.85rem;
     justify-content: flex-start;
+  }
+
+  .calendar-reschedule-body {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    gap: 0.75rem;
+    margin-top: 0.9rem;
+  }
+
+  .calendar-reschedule-day-card,
+  .calendar-reschedule-time-card {
+    min-width: 0;
+    border: 1px solid rgb(var(--n-color-border));
+    border-radius: var(--n-radius-xs);
+    background: rgb(var(--n-color-surface) / 0.72);
+    padding: 0.8rem;
+    box-shadow: var(--n-shadow-hairline), inset 0 1px 0 rgb(255 255 255 / 0.58);
+  }
+
+  .calendar-reschedule-day-value {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.65rem;
+    border-radius: var(--n-radius-xs);
+    background: rgb(var(--n-color-surface-muted));
+    padding: 0.65rem;
+    color: rgb(var(--n-color-ink));
+    font-size: 0.86rem;
+    font-weight: 950;
+  }
+
+  .calendar-reschedule-day-value svg {
+    color: rgb(var(--n-color-primary));
+  }
+
+  .calendar-reschedule-day-actions,
+  .calendar-reschedule-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.7rem;
+  }
+
+  .calendar-reschedule-selectors {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-top: 0.65rem;
+  }
+
+  .calendar-reschedule-selectors label {
+    display: grid;
+    gap: 0.35rem;
+    color: rgb(var(--n-color-muted));
+    font-size: 0.7rem;
+    font-weight: 900;
+  }
+
+  .calendar-reschedule-selectors select {
+    min-height: 2.35rem;
+    border: 1px solid rgb(var(--n-color-border));
+    border-radius: var(--n-radius-xs);
+    background: rgb(var(--n-color-surface));
+    padding-inline: 0.65rem;
+    color: rgb(var(--n-color-ink));
+    font-size: 0.9rem;
+    font-weight: 950;
+    outline: none;
+    box-shadow: var(--n-shadow-hairline);
+    transition: border-color var(--n-motion-base) var(--n-ease-standard), box-shadow var(--n-motion-base) var(--n-ease-standard);
+  }
+
+  .calendar-reschedule-selectors select:focus {
+    border-color: rgb(var(--n-color-primary) / 0.38);
+    box-shadow: 0 0 0 3px rgb(var(--n-color-primary) / 0.12);
+  }
+
+  .calendar-reschedule-modal .notice-banner {
+    margin-top: 0.8rem;
   }
 
   @keyframes calendar-modal-fade {
@@ -2872,6 +2968,18 @@ a {
     }
 
     .calendar-post-preview-shell {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .calendar-reschedule-modal {
+      width: min(100%, 25rem);
+      max-height: 88vh;
+      border-radius: var(--n-radius-sm);
+      padding: 0.75rem;
+    }
+
+    .calendar-reschedule-body,
+    .calendar-reschedule-selectors {
       grid-template-columns: minmax(0, 1fr);
     }
   }

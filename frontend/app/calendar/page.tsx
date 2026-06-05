@@ -223,6 +223,10 @@ export default function CalendarPage() {
   const [draggingPostId, setDraggingPostId] = useState<number | null>(null);
   const [dragTargetDayKey, setDragTargetDayKey] = useState<string | null>(null);
   const [reschedulingPostId, setReschedulingPostId] = useState<number | null>(null);
+  const [rescheduleDraftPostId, setRescheduleDraftPostId] = useState<number | null>(null);
+  const [rescheduleDraftDay, setRescheduleDraftDay] = useState("");
+  const [rescheduleDraftHour, setRescheduleDraftHour] = useState(9);
+  const [rescheduleDraftMinute, setRescheduleDraftMinute] = useState(0);
   const [agendaPulseKey, setAgendaPulseKey] = useState("");
 
   const loadPosts = useCallback(async (preservePlannerState = false) => {
@@ -328,6 +332,10 @@ export default function CalendarPage() {
     if (!quickPreviewPostId) return null;
     return calendarPosts.find((post) => post.id === quickPreviewPostId) ?? null;
   }, [calendarPosts, quickPreviewPostId]);
+  const rescheduleDraftPost = useMemo(() => {
+    if (!rescheduleDraftPostId) return null;
+    return calendarPosts.find((post) => post.id === rescheduleDraftPostId) ?? null;
+  }, [calendarPosts, rescheduleDraftPostId]);
   const assetByPostId = useMemo(() => {
     const map = new Map<number, MediaAsset>();
     for (const asset of assets) {
@@ -364,15 +372,34 @@ export default function CalendarPage() {
   const calendarCellHeight = densityMode === "compact" ? "min-h-24" : "min-h-36";
   const quickPreviewAsset = quickPreviewPost ? assetByPostId.get(quickPreviewPost.id) : null;
   const quickPreviewUrl = quickPreviewAsset ? mediaPreviewUrls[quickPreviewAsset.id] : "";
+  const rescheduleDraftIso = useMemo(() => {
+    if (!rescheduleDraftPost || !rescheduleDraftDay) return null;
+    return jalaliDateToIsoAtTime(rescheduleDraftDay, rescheduleDraftHour, rescheduleDraftMinute, scheduleTimezone);
+  }, [rescheduleDraftDay, rescheduleDraftHour, rescheduleDraftMinute, rescheduleDraftPost]);
+  const rescheduleDraftConflicts = useMemo(() => {
+    if (!rescheduleDraftPost || !rescheduleDraftIso) return [];
+    const targetTime = dateTime(rescheduleDraftIso);
+    if (targetTime === null) return [];
+    const targetDayKey = jalaliDateKey(rescheduleDraftIso);
+    return calendarPosts.filter((post) => {
+      if (post.id === rescheduleDraftPost.id || !post.scheduled_at) return false;
+      if (jalaliDateKey(post.scheduled_at) !== targetDayKey) return false;
+      const gap = minutesBetween(rescheduleDraftIso, post.scheduled_at);
+      return gap !== null && gap < 90;
+    });
+  }, [calendarPosts, rescheduleDraftIso, rescheduleDraftPost]);
 
   useEffect(() => {
-    if (!quickPreviewPost) return;
+    if (!quickPreviewPost && !rescheduleDraftPost) return;
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setQuickPreviewPostId(null);
+      if (event.key === "Escape") {
+        setQuickPreviewPostId(null);
+        setRescheduleDraftPostId(null);
+      }
     }
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [quickPreviewPost]);
+  }, [quickPreviewPost, rescheduleDraftPost]);
   const selectedCampaignWorkload = useMemo(() => {
     if (!selectedCampaignOption) return null;
     const rangePosts = calendarPosts
@@ -457,6 +484,74 @@ export default function CalendarPage() {
 
   function openQuickCreate(value: string) {
     openQuickCreateAt(value, 9, 0);
+  }
+
+  function canReschedule(post: Post) {
+    return post.status === "scheduled" && Boolean(post.scheduled_at);
+  }
+
+  function suggestedSlotsForDay(value: string, excludedPostId?: number) {
+    const dayKey = jalaliDateKey(value);
+    const busyHours = new Set(
+      calendarPosts
+        .filter((post) => post.id !== excludedPostId && post.scheduled_at && jalaliDateKey(post.scheduled_at) === dayKey)
+        .map((post) => getJalaliPickerParts(post.scheduled_at, scheduleTimezone).hour)
+    );
+    return [9, 12, 15, 18, 21]
+      .filter((hour) => !busyHours.has(hour))
+      .map((hour) => ({ hour, minute: 0, label: `${String(hour).padStart(2, "0")}:00` }));
+  }
+
+  function openRescheduleDraft(post: Post, nextDay = post.scheduled_at ?? selectedDayValue) {
+    if (!canReschedule(post)) {
+      showToast({ title: "تغییر زمان فعال نیست", description: "فقط پست‌های زمان‌بندی‌شده قابل جابجایی هستند.", tone: "warning" });
+      return;
+    }
+    const parts = getJalaliPickerParts(post.scheduled_at, scheduleTimezone);
+    setQuickPreviewPostId(null);
+    setRescheduleDraftPostId(post.id);
+    setRescheduleDraftDay(nextDay);
+    setRescheduleDraftHour(parts.hour);
+    setRescheduleDraftMinute(parts.minute);
+  }
+
+  async function saveRescheduleDraft() {
+    if (!rescheduleDraftPost || !rescheduleDraftIso || rescheduleDraftConflicts.length > 0) return;
+    const originalScheduledAt = rescheduleDraftPost.scheduled_at;
+    if (!originalScheduledAt) return;
+    const nextScheduledAt = rescheduleDraftIso;
+    const nextDayKey = jalaliDateKey(nextScheduledAt);
+    const originalDayKey = jalaliDateKey(originalScheduledAt);
+
+    setError("");
+    setReschedulingPostId(rescheduleDraftPost.id);
+    setPosts((current) => current.map((item) => item.id === rescheduleDraftPost.id ? { ...item, scheduled_at: nextScheduledAt } : item));
+    setSelectedDayKey(nextDayKey);
+    setSelectedPostId(rescheduleDraftPost.id);
+    setMonthAnchor(nextScheduledAt);
+
+    try {
+      const response = await fetch(`${apiUrl}/posts/${rescheduleDraftPost.id}/schedule`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ scheduled_at: nextScheduledAt, timezone: scheduleTimezone })
+      });
+      if (!response.ok) throw new Error("زمان‌بندی جدید پست ذخیره نشد");
+      const savedPost = await response.json() as Post;
+      setPosts((current) => current.map((item) => item.id === rescheduleDraftPost.id ? savedPost : item));
+      setRescheduleDraftPostId(null);
+      showToast({ title: "زمان انتشار بروزرسانی شد", description: `${savedPost.title} · ${formatJalaliDateTime(savedPost.scheduled_at)}`, tone: "success" });
+      focusSelectedDayAgenda(nextDayKey);
+    } catch (err) {
+      const nextError = err instanceof Error ? err.message : "تغییر زمان پست ناموفق بود";
+      setPosts((current) => current.map((item) => item.id === rescheduleDraftPost.id ? { ...item, scheduled_at: originalScheduledAt } : item));
+      setSelectedDayKey(originalDayKey);
+      setMonthAnchor(originalScheduledAt);
+      setError(nextError);
+      showToast({ title: "تغییر زمان پست ناموفق بود", description: nextError, tone: "alert" });
+    } finally {
+      setReschedulingPostId(null);
+    }
   }
 
   function startDraggingPost(event: DragEvent<HTMLButtonElement>, post: Post) {
@@ -624,6 +719,16 @@ export default function CalendarPage() {
           </div>
         </div>
         <div className="calendar-day-agenda-actions">
+          {canReschedule(post) ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => openRescheduleDraft(post)}
+            >
+              تغییر زمان
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant={selected ? "primary" : "secondary"}
@@ -1057,6 +1162,11 @@ export default function CalendarPage() {
                     <Button type="button" variant="secondary" size="sm" onClick={() => setQuickPreviewPostId(selectedPost.id)}>
                       پیش‌نمایش پست انتخابی
                     </Button>
+                    {canReschedule(selectedPost) ? (
+                      <Button type="button" variant="secondary" size="sm" onClick={() => openRescheduleDraft(selectedPost, selectedDayValue)}>
+                        تغییر زمان پست
+                      </Button>
+                    ) : null}
                     <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary" size="sm">
                       ویرایش پست انتخابی
                     </Button>
@@ -1154,8 +1264,97 @@ export default function CalendarPage() {
 
                 <div className="calendar-post-preview-actions">
                   <Button href={`/compose?postId=${quickPreviewPost.id}`}>ویرایش پست</Button>
+                  {canReschedule(quickPreviewPost) ? (
+                    <Button type="button" variant="secondary" onClick={() => openRescheduleDraft(quickPreviewPost, quickPreviewPost.scheduled_at ?? selectedDayValue)}>تغییر زمان</Button>
+                  ) : null}
                   <Button href="/queue" variant="secondary">صف انتشار</Button>
                   <Button type="button" variant="ghost" onClick={() => setQuickPreviewPostId(null)}>بستن</Button>
+                </div>
+              </section>
+            </div>,
+            document.body
+          ) : null}
+          {rescheduleDraftPost && typeof document !== "undefined" ? createPortal(
+            <div className="calendar-post-preview-backdrop" role="presentation" onClick={() => setRescheduleDraftPostId(null)}>
+              <section className="calendar-reschedule-modal" role="dialog" aria-modal="true" aria-label={`تغییر زمان ${rescheduleDraftPost.title}`} onClick={(event) => event.stopPropagation()}>
+                <div className="calendar-post-preview-head">
+                  <div className="min-w-0">
+                    <p className="app-section-kicker text-[10px] font-black">زمان‌بندی سریع</p>
+                    <h2>{rescheduleDraftPost.title}</h2>
+                    <p>روز مقصد: {rescheduleDraftDay ? formatJalaliDate(rescheduleDraftDay) : "انتخاب نشده"} · زمان فعلی: {formatJalaliDateTime(rescheduleDraftPost.scheduled_at)}</p>
+                  </div>
+                  <button type="button" className="calendar-post-preview-close" onClick={() => setRescheduleDraftPostId(null)} aria-label="بستن تغییر زمان">
+                    <X className="calendar-post-preview-close-icon" aria-hidden="true" />
+                  </button>
+                </div>
+
+                <div className="calendar-reschedule-body">
+                  <div className="calendar-reschedule-day-card">
+                    <p className="text-xs font-black text-app-text">روز انتشار</p>
+                    <div className="calendar-reschedule-day-value">
+                      <CalendarDays className="h-4 w-4" aria-hidden="true" />
+                      <span>{rescheduleDraftDay ? formatJalaliDate(rescheduleDraftDay) : "روز انتخاب نشده"}</span>
+                    </div>
+                    <div className="calendar-reschedule-day-actions">
+                      <Button type="button" variant="secondary" size="sm" onClick={() => setRescheduleDraftDay(selectedDayValue)}>
+                        روز فعال تقویم
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setRescheduleDraftDay(addDays(rescheduleDraftPost.scheduled_at ?? selectedDayValue, 1).toISOString())}>
+                        فردا
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="calendar-reschedule-time-card">
+                    <p className="text-xs font-black text-app-text">ساعت انتشار</p>
+                    <div className="calendar-reschedule-selectors">
+                      <label>
+                        <span>ساعت</span>
+                        <select value={rescheduleDraftHour} onChange={(event) => setRescheduleDraftHour(Number(event.target.value))}>
+                          {Array.from({ length: 24 }, (_, hour) => <option key={hour} value={hour}>{String(hour).padStart(2, "0")}</option>)}
+                        </select>
+                      </label>
+                      <label>
+                        <span>دقیقه</span>
+                        <select value={rescheduleDraftMinute} onChange={(event) => setRescheduleDraftMinute(Number(event.target.value))}>
+                          {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => <option key={minute} value={minute}>{String(minute).padStart(2, "0")}</option>)}
+                        </select>
+                      </label>
+                    </div>
+                    <div className="calendar-reschedule-slots">
+                      {suggestedSlotsForDay(rescheduleDraftDay || selectedDayValue, rescheduleDraftPost.id).slice(0, 5).map((slot) => (
+                        <Button
+                          key={slot.hour}
+                          type="button"
+                          variant={rescheduleDraftHour === slot.hour && rescheduleDraftMinute === slot.minute ? "primary" : "secondary"}
+                          size="sm"
+                          onClick={() => {
+                            setRescheduleDraftHour(slot.hour);
+                            setRescheduleDraftMinute(slot.minute);
+                          }}
+                        >
+                          {slot.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {rescheduleDraftConflicts.length ? (
+                  <NoticeBanner tone="alert" title="تداخل زمانی">
+                    این زمان با {rescheduleDraftConflicts.length} پست دیگر کمتر از ۹۰ دقیقه فاصله دارد. یک ساعت پیشنهادی دیگر انتخاب کنید.
+                  </NoticeBanner>
+                ) : (
+                  <NoticeBanner tone="success" title="زمان امن">
+                    این زمان برای انتشار پشت‌سرهم مناسب است و تداخل نزدیک ندارد.
+                  </NoticeBanner>
+                )}
+
+                <div className="calendar-post-preview-actions">
+                  <Button type="button" onClick={() => void saveRescheduleDraft()} disabled={!rescheduleDraftIso || rescheduleDraftConflicts.length > 0 || reschedulingPostId === rescheduleDraftPost.id}>
+                    {reschedulingPostId === rescheduleDraftPost.id ? "در حال ذخیره" : "ذخیره زمان جدید"}
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={() => setRescheduleDraftPostId(null)}>انصراف</Button>
                 </div>
               </section>
             </div>,
