@@ -16,7 +16,7 @@ import {
   Rows3
 } from "lucide-react";
 import Link from "next/link";
-import { DragEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { CSSProperties, DragEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { ChannelBadges } from "../../components/channel-badges";
@@ -166,20 +166,6 @@ function shiftPersianMonth(anchorIso: string, direction: -1 | 1) {
 function statusCount(posts: Post[], status: CalendarFilter) {
   if (status === "all") return posts.length;
   return posts.filter((post) => post.status === status).length;
-}
-
-function postTone(status: string) {
-  if (status === "failed") return "bg-rose-50/90 text-rose-800";
-  if (status === "published") return "bg-emerald-50/90 text-emerald-800";
-  if (status === "publishing") return "bg-sky-50/90 text-sky-800";
-  return "bg-blue-50/90 text-blue-800";
-}
-
-function postRailTone(status: string) {
-  if (status === "failed") return "bg-rose-500";
-  if (status === "published") return "bg-emerald-500";
-  if (status === "publishing") return "bg-sky-500";
-  return "bg-blue-500";
 }
 
 function postStatusLabel(status: string) {
@@ -515,30 +501,34 @@ export default function CalendarPage() {
       <button
         key={post.id}
         type="button"
+        data-status={post.status}
         onClick={() => selectPost(post)}
         draggable={draggable}
         onDragStart={(event) => startDraggingPost(event, post)}
         onDragEnd={stopDraggingPost}
-        className={`app-interactive relative w-full overflow-hidden rounded-md text-right shadow-hairline hover:shadow-sm ${compact ? "px-1.5 py-1 text-[10px] leading-4" : "px-2 py-1.5 text-[11px] leading-5"} ${postTone(post.status)} ${
-          selected ? "ring-2 ring-blue-200" : ""
-        } ${draggable ? "cursor-grab active:cursor-grabbing" : "cursor-default"} ${rescheduling ? "animate-pulse opacity-70" : ""}`}
+        className={`calendar-post-chip app-interactive ${compact ? "calendar-post-chip-compact" : ""} ${selected ? "calendar-post-chip-selected" : ""} ${draggable ? "calendar-post-chip-draggable" : ""} ${rescheduling ? "calendar-post-chip-saving" : ""}`}
+        style={{ "--campaign-accent": campaignColorForPost(post, campaigns) } as CSSProperties}
         title={draggable ? "برای تغییر روز انتشار، پست را روی روز جدید بکشید." : undefined}
       >
-        <span className="absolute inset-y-0 right-0 w-1" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
-        <span className="flex min-w-0 items-center gap-2 pr-1">
+        <span className="calendar-post-chip-rail" aria-hidden="true" />
+        <span className="calendar-post-chip-inner">
           {previewUrl ? (
-            <img src={previewUrl} alt="" className={`${compact ? "h-6 w-6" : "h-9 w-9"} shrink-0 rounded object-cover ring-1 ring-white/80`} />
+            <img src={previewUrl} alt="" className="calendar-post-chip-media" />
           ) : (
             !compact ? (
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-white/60 text-current">
-                <ImageIcon className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+              <span className="calendar-post-chip-media calendar-post-chip-media-empty">
+                <ImageIcon className="calendar-post-chip-media-icon" aria-hidden="true" />
               </span>
             ) : null
           )}
-          <span className="min-w-0 flex-1">
-            <span className="block truncate font-bold">{formatJalaliTime(post.scheduled_at)} · {post.title}</span>
-            <span className="mt-0.5 flex items-center gap-1 truncate opacity-75">
-              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${postRailTone(post.status)}`} />
+          <span className="calendar-post-chip-body">
+            <span className="calendar-post-chip-top">
+              <span className="calendar-post-chip-time">{formatJalaliTime(post.scheduled_at)}</span>
+              <span className="calendar-post-chip-status">{postStatusLabel(post.status)}</span>
+            </span>
+            <span className="calendar-post-chip-title">{post.title}</span>
+            <span className="calendar-post-chip-campaign">
+              <span className="calendar-post-chip-dot" aria-hidden="true" />
               <span className="truncate">{campaignKeyForPost(post) !== "none" ? campaignLabelForPost(post, campaigns) : (!compact ? post.caption : "") || "بدون کمپین"}</span>
             </span>
           </span>
@@ -723,6 +713,12 @@ export default function CalendarPage() {
                         const dayPosts = day ? postsByDay.get(day.key) ?? [] : [];
                         const isToday = day?.key === todayKey;
                         const isSelectedDay = Boolean(day && activeDayKey === day.key);
+                        const dayRisk = dayPosts.some((post) => {
+                          const time = dateTime(post.scheduled_at);
+                          return post.status === "failed" || (post.status === "scheduled" && time !== null && time < now);
+                        });
+                        const weekdayLabel = day ? weekDays[weekOffset(new Date(day.date))] : "";
+                        const dayStateLabel = dayRisk ? "ریسک" : dayPosts.length ? `${dayPosts.length} پست` : "خالی";
 
                         return (
                           <div
@@ -730,38 +726,35 @@ export default function CalendarPage() {
                             onClick={() => day ? selectDay(day, dayPosts) : undefined}
                             onDragOver={(event) => day ? allowDropOnDay(event, day) : undefined}
                             onDrop={(event) => day ? dropPostOnDay(event, day) : undefined}
-                            className={`calendar-day-cell ${day ? "" : "calendar-day-empty"} ${calendarCellHeight} border-b border-l border-app-border p-2 text-right transition last:border-l-0 ${
-                              day ? "bg-white hover:bg-blue-50/40" : "bg-slate-50/70"
-                            } ${isSelectedDay ? "bg-blue-50/70 ring-1 ring-inset ring-blue-200" : ""} ${
-                              day && draggingPostId && dragTargetDayKey === day.key ? "bg-blue-100/80 ring-2 ring-inset ring-app-primary" : ""
-                            } ${day && draggingPostId ? "cursor-copy" : ""}`}
+                            className={`calendar-day-cell ${day ? "" : "calendar-day-empty"} ${calendarCellHeight} ${dayPosts.length ? "calendar-day-has-posts" : ""} ${dayRisk ? "calendar-day-risk" : ""} ${isToday ? "calendar-day-today" : ""} ${isSelectedDay ? "calendar-day-selected" : ""} ${day && draggingPostId && dragTargetDayKey === day.key ? "calendar-day-drop-target" : ""} ${day && draggingPostId ? "calendar-day-can-drop" : ""}`}
                           >
                             {day ? (
                               <>
-                                <div className="mb-2 flex items-center justify-between gap-1">
-                                  <span className={`flex h-7 w-7 items-center justify-center rounded-md text-sm font-black ${isToday ? "bg-app-primary text-white" : "text-app-text"}`}>
-                                    {day.day}
+                                <div className="calendar-day-head">
+                                  <span className="calendar-day-date">
+                                    <span className="calendar-day-weekday">{weekdayLabel}</span>
+                                    <span className="calendar-day-number">{day.day}</span>
                                   </span>
-                                  <div className="flex items-center gap-1">
-                                    {dayPosts.length > 0 ? <span className="text-[10px] font-bold text-app-muted">{dayPosts.length} پست</span> : null}
+                                  <div className="calendar-day-actions">
+                                    <span className="calendar-day-state">{dayStateLabel}</span>
                                     <button
                                       type="button"
                                       onClick={(event) => {
                                         event.stopPropagation();
                                         openQuickCreate(day.date);
                                       }}
-                                      className="flex h-6 w-6 items-center justify-center rounded text-slate-400 transition hover:bg-blue-100 hover:text-app-primary"
+                                      className="calendar-day-add"
                                       aria-label={`افزودن پست در ${formatJalaliDate(day.date)}`}
                                       title="افزودن پست در این روز"
                                     >
-                                      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                                      <Plus className="calendar-day-add-icon" aria-hidden="true" />
                                     </button>
                                   </div>
                                 </div>
-                                <div className="space-y-1.5" onClick={(event) => event.stopPropagation()}>
+                                <div className="calendar-day-posts" onClick={(event) => event.stopPropagation()}>
                                   {dayPosts.slice(0, visiblePostLimit).map((post) => renderPostChip(post, viewMode === "month"))}
                                   {dayPosts.length > visiblePostLimit ? (
-                                    <span className="block w-full rounded bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">
+                                    <span className="calendar-day-more">
                                       +{dayPosts.length - visiblePostLimit} مورد دیگر
                                     </span>
                                   ) : null}
