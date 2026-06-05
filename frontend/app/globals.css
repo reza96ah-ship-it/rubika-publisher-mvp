@@ -321,28 +321,45 @@ a {
   button.app-interactive,
   a.app-interactive.inline-flex {
     border-radius: var(--n-radius-control) !important;
+    backdrop-filter: blur(12px) saturate(132%);
   }
 
   button.app-interactive[class*="bg-white"],
-  a.app-interactive.inline-flex[class*="bg-white"] {
-    border-color: rgb(var(--n-color-frost-border) / 0.78);
-    background: rgb(var(--n-color-frost) / 0.76) !important;
+  button.app-interactive[class*="bg-app-surface"],
+  a.app-interactive.inline-flex[class*="bg-white"],
+  a.app-interactive.inline-flex[class*="bg-app-surface"],
+  .nahrino-control-radius[class*="bg-app-surface"],
+  .nahrino-control-radius[class*="bg-white"] {
+    border-color: var(--n-glass-border);
+    background: var(--n-glass-surface-strong) !important;
     box-shadow: var(--n-shadow-hairline), 0 8px 20px rgb(var(--n-color-ink) / 0.04);
     backdrop-filter: blur(14px) saturate(135%);
   }
 
+  .app-workspace-bg :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]) {
+    border-color: var(--n-glass-border);
+    background-color: var(--n-glass-surface-strong);
+    border-radius: var(--n-radius-control);
+    box-shadow: var(--n-shadow-hairline);
+    backdrop-filter: blur(12px) saturate(132%);
+  }
+
   .app-studio-surface {
-    border: 1px solid rgb(var(--n-color-frost-border) / 0.76);
-    background-color: rgb(var(--n-color-frost) / 0.86);
+    border: 1px solid var(--n-glass-border);
+    background:
+      linear-gradient(135deg, var(--n-glass-surface-strong), var(--n-glass-surface)),
+      radial-gradient(circle at 12% 0%, rgb(var(--n-color-primary) / 0.035), transparent 16rem);
     box-shadow: var(--n-shadow-hairline), 0 12px 26px rgb(var(--n-color-ink) / 0.045);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(18px) saturate(var(--n-glass-saturation));
   }
 
   .app-studio-panel {
-    border: 1px solid rgb(var(--n-color-frost-border) / 0.82);
-    background-color: rgb(var(--n-color-frost) / 0.9);
+    border: 1px solid var(--n-glass-border);
+    background:
+      linear-gradient(135deg, var(--n-glass-surface-strong), var(--n-glass-surface)),
+      radial-gradient(circle at 86% 10%, rgb(var(--n-color-secondary) / 0.035), transparent 18rem);
     box-shadow: var(--n-shadow-hairline), 0 18px 36px rgb(var(--n-color-ink) / 0.055);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(var(--n-glass-blur-desktop)) saturate(var(--n-glass-saturation));
   }
 
   .app-studio-grid {
@@ -420,23 +437,23 @@ a {
   }
 
   .nahrino-sidebar {
-    border-inline-start: 1px solid rgb(var(--n-color-frost-border) / 0.62);
-    background: rgb(var(--n-color-frost) / 0.68);
+    border-inline-start: 1px solid var(--n-glass-border);
+    background: var(--n-glass-surface);
     box-shadow: inset -1px 0 0 rgb(var(--n-color-ink) / 0.06), 0 12px 30px rgb(var(--n-color-ink) / 0.04);
     backdrop-filter: blur(var(--n-glass-blur-desktop)) saturate(var(--n-glass-saturation));
   }
 
   .nahrino-topbar {
-    background: rgb(var(--n-color-frost) / 0.72);
+    background: var(--n-glass-surface);
     border-bottom: 1px solid rgb(var(--n-color-ink) / 0.06);
     box-shadow: 0 12px 30px rgb(var(--n-color-ink) / 0.04);
     backdrop-filter: blur(var(--n-glass-blur-desktop)) saturate(var(--n-glass-saturation));
   }
 
   .nahrino-card {
-    border: 1px solid rgb(var(--n-color-frost-border) / 0.72);
+    border: 1px solid var(--n-glass-border);
     background:
-      linear-gradient(135deg, rgb(var(--n-color-frost) / 0.74), rgb(var(--n-color-surface) / 0.82)),
+      linear-gradient(135deg, var(--n-glass-surface-strong), rgb(var(--n-color-surface) / 0.78)),
       radial-gradient(circle at 8% 0%, rgb(var(--n-color-primary) / 0.035), transparent 16rem);
     border-radius: var(--n-radius-lg) !important;
     box-shadow: var(--n-shadow-soft);
@@ -444,16 +461,16 @@ a {
   }
 
   .nahrino-section-card {
-    border: 1px solid rgb(var(--n-color-frost-border) / 0.72);
-    background: rgb(var(--n-color-frost) / 0.68);
+    border: 1px solid var(--n-glass-border);
+    background: var(--n-glass-surface);
     border-radius: var(--n-radius-lg) !important;
     box-shadow: var(--n-shadow-soft);
     backdrop-filter: blur(16px) saturate(138%);
   }
 
   .nahrino-card-muted {
-    border: 1px solid rgb(var(--n-color-frost-border) / 0.68);
-    background: rgb(var(--n-color-frost) / 0.56);
+    border: 1px solid var(--n-glass-border);
+    background: var(--n-glass-surface-soft);
     border-radius: var(--n-radius-md) !important;
     box-shadow: 0 6px 14px rgb(var(--n-color-ink) / 0.03);
     backdrop-filter: blur(14px) saturate(134%);
@@ -462,13 +479,13 @@ a {
   .nahrino-metric-card {
     position: relative;
     overflow: hidden;
-    border: 1px solid rgb(var(--n-color-border) / 0.95);
+    border: 1px solid var(--n-glass-border);
     border-radius: var(--n-radius-lg) !important;
     background:
       radial-gradient(circle at 50% 0%, rgb(var(--metric-accent, var(--n-color-primary)) / 0.08), transparent 4.5rem),
-      rgb(var(--n-color-frost) / 0.84);
+      var(--n-glass-surface-strong);
     box-shadow: var(--n-shadow-soft);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(18px) saturate(140%);
     animation: nahrino-card-awake var(--n-motion-section) var(--n-ease-standard) both;
     transition: border-color var(--n-motion-base) var(--n-ease-standard), box-shadow var(--n-motion-base) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard);
   }
