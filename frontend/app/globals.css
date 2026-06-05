@@ -1214,20 +1214,63 @@ a {
     letter-spacing: 0;
   }
 
-  .dashboard-publish-track {
-    height: 0.5rem;
-    overflow: hidden;
-    border-radius: 999px;
-    background: rgb(var(--n-color-canvas-soft));
-    box-shadow: inset 0 0 0 1px rgb(var(--n-color-border));
+  .dashboard-publish-checkpoints {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
   }
 
-  .dashboard-publish-track > span {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: linear-gradient(90deg, rgb(var(--n-color-primary)), rgb(var(--n-chart-ready)));
-    transition: width var(--n-motion-emphasized) var(--n-ease-standard);
+  .dashboard-publish-step {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.55rem;
+    border: 1px solid rgb(var(--n-color-border));
+    border-radius: var(--n-radius-xs);
+    background: rgb(var(--n-color-surface-muted));
+    padding: 0.55rem;
+    box-shadow: var(--n-shadow-hairline);
+    transition: border-color var(--n-motion-base) var(--n-ease-standard), box-shadow var(--n-motion-base) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard);
+  }
+
+  .dashboard-publish-step:hover {
+    border-color: rgb(var(--n-color-primary) / 0.22);
+    box-shadow: 0 10px 24px rgb(var(--n-color-ink) / 0.06);
+    transform: translateY(-1px);
+  }
+
+  .dashboard-publish-step-index {
+    display: inline-flex;
+    height: 1.6rem;
+    width: 1.6rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgb(var(--n-color-border));
+    border-radius: 999px;
+    background: rgb(var(--n-color-surface));
+    color: rgb(var(--n-color-muted));
+    font-size: 0.7rem;
+    font-weight: 900;
+  }
+
+  .dashboard-publish-step-label {
+    font-size: 0.7rem;
+  }
+
+  .dashboard-publish-step-detail {
+    font-size: 0.625rem;
+  }
+
+  .dashboard-publish-step-ready {
+    border-color: rgb(var(--n-color-primary) / 0.2);
+    background: rgb(var(--n-color-primary-soft) / 0.48);
+  }
+
+  .dashboard-publish-step-ready .dashboard-publish-step-index {
+    border-color: rgb(var(--n-color-primary) / 0.28);
+    background: rgb(var(--n-color-primary));
+    color: rgb(var(--n-color-surface));
   }
 
   .dashboard-preview-card {

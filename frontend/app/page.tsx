@@ -31,8 +31,7 @@ import {
   NRow,
   NSection,
   NStatusPill,
-  NTabs,
-  NTrendBars
+  NTabs
 } from "../components/nahrino-ui";
 import { Campaign, loadCampaigns } from "../lib/campaigns";
 import { useMediaPreviewUrl } from "../lib/media-preview";
@@ -347,6 +346,12 @@ export default function HomePage() {
   });
   const publishMode = rubikaReady ? "API آماده" : "دستی/نیازمند اتصال";
   const publishState = queueCounts.publishing ? "در حال انتشار" : nextPosts[0] ? "زمان‌بندی شده" : queueCounts.ready ? "آماده صف" : "بدون برنامه نزدیک";
+  const publishPulseSteps = [
+    { label: "محتوا", detail: contentPreviewItems.length ? `${contentPreviewItems.length} آیتم نزدیک` : "بدون آیتم نزدیک", ready: Boolean(contentPreviewItems.length) },
+    { label: "صف", detail: queueTotal ? `${queueTotal} job فعال` : "صف خالی", ready: queueTotal > 0 && !queueCounts.failed },
+    { label: "کانال", detail: publishMode, ready: rubikaReady },
+    { label: "زمان", detail: nextPosts[0] ? compactDateTime(nextPosts[0].scheduled_at) : "انتخاب نشده", ready: Boolean(nextPosts[0]) }
+  ];
   const insightTone = failureRate ? "warning" as const : completionRate >= 60 ? "success" as const : "info" as const;
   const reportInsight = failureRate
     ? { title: "ریسک انتشار بالاست", detail: `${failureRate}% از صف فعال خطا دارد؛ بازیابی صف قبل از تولید تازه ارزشمندتر است.`, href: "/analytics?view=failures", tone: insightTone }
@@ -388,8 +393,16 @@ export default function HomePage() {
             <NStatusPill tone={rubikaReady ? "success" : "warning"}>{publishMode}</NStatusPill>
           </div>
         </div>
-        <div className="dashboard-publish-track">
-          <span style={{ width: `${Math.min(100, Math.max(18, queueTotal * 18 + scheduledTodayCount * 12))}%` }} />
+        <div className="dashboard-publish-checkpoints" aria-label="وضعیت مرحله‌های انتشار">
+          {publishPulseSteps.map((step, index) => (
+            <div key={step.label} className={`dashboard-publish-step ${step.ready ? "dashboard-publish-step-ready" : ""}`}>
+              <span className="dashboard-publish-step-index">{index + 1}</span>
+              <span className="min-w-0">
+                <span className="dashboard-publish-step-label block truncate font-black text-app-text">{step.label}</span>
+                <span className="dashboard-publish-step-detail mt-0.5 block truncate font-bold text-app-muted">{step.detail}</span>
+              </span>
+            </div>
+          ))}
         </div>
         <div className="dashboard-content-preview grid gap-2 sm:grid-cols-3" aria-label="نمای زنده محتوا">
           {contentPreviewItems.length ? contentPreviewItems.map((item, index) => (
@@ -467,8 +480,10 @@ export default function HomePage() {
             <p className="mt-1 text-sm leading-7 text-app-muted">{reportInsight.detail}</p>
           </div>
         </div>
-        <NTrendBars values={weeklyActivity} labels={weeklyLabels} />
-        <NStatusPill tone={reportInsight.tone}>{completionRate}% تکمیل · {failureRate}% خطا</NStatusPill>
+        <div className="flex flex-wrap gap-2">
+          <NStatusPill tone={reportInsight.tone}>{completionRate}% تکمیل</NStatusPill>
+          <NStatusPill tone={failureRate ? "warning" : "success"}>{failureRate}% خطا</NStatusPill>
+        </div>
       </div>
     </NSection>
   );
