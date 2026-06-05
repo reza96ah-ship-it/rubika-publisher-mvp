@@ -1229,6 +1229,7 @@ a {
     border-radius: var(--n-radius-xs);
     background: rgb(var(--n-color-surface-muted));
     padding: 0.62rem;
+    text-decoration: none;
     box-shadow: var(--n-shadow-hairline);
     transition: border-color var(--n-motion-base) var(--n-ease-standard), box-shadow var(--n-motion-base) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard);
   }
@@ -1237,6 +1238,11 @@ a {
     border-color: rgb(var(--n-color-primary) / 0.22);
     box-shadow: 0 10px 24px rgb(var(--n-color-ink) / 0.06);
     transform: translateY(-1px);
+  }
+
+  .dashboard-publish-step:focus-visible {
+    outline: 2px solid rgb(var(--n-color-primary) / 0.36);
+    outline-offset: 3px;
   }
 
   .dashboard-publish-step-index {
@@ -1263,6 +1269,7 @@ a {
 
   .dashboard-publish-step-copy {
     display: grid;
+    flex: 1;
     gap: 0.15rem;
     padding-top: 0.05rem;
   }
@@ -1294,6 +1301,32 @@ a {
   .dashboard-publish-step-detail {
     font-size: 0.625rem;
     line-height: 1.75;
+  }
+
+  .dashboard-publish-step-action {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.18rem;
+    align-self: center;
+    border-radius: 999px;
+    color: rgb(var(--n-color-primary-strong));
+    font-size: 0.62rem;
+    font-weight: 900;
+    line-height: 1;
+    opacity: 0.82;
+    transition: opacity var(--n-motion-base) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard);
+  }
+
+  .dashboard-publish-step-action-icon {
+    height: 0.75rem;
+    width: 0.75rem;
+    stroke-width: 2.5;
+  }
+
+  .dashboard-publish-step:hover .dashboard-publish-step-action {
+    opacity: 1;
+    transform: translateX(-2px);
   }
 
   .dashboard-publish-step-ready {
