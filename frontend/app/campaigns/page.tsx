@@ -949,6 +949,7 @@ export default function CampaignsPage() {
               title="پورتفولیوی کمپین"
               description="کمپین‌ها را بر اساس وضعیت، سلامت و حجم محتوای متصل بررسی کنید."
               action={<StatusToken tone="neutral">{campaignRows.length} نتیجه</StatusToken>}
+              className="campaign-portfolio-panel"
             >
               <DataToolbar
                 meta={(
@@ -974,7 +975,7 @@ export default function CampaignsPage() {
                 </div>
               ) : null}
 
-              <div className="mt-3 grid max-h-[62vh] gap-2 overflow-y-auto pr-1">
+              <div className="campaign-card-list mt-3">
                 {campaignRows.map((row) => {
                   const selected = selectedRow?.campaign.id === row.campaign.id;
                   return (
@@ -982,32 +983,31 @@ export default function CampaignsPage() {
                       key={row.campaign.id}
                       type="button"
                       onClick={() => editCampaign(row.campaign)}
-                      className={`app-row grid gap-3 rounded-lg border p-3 text-right transition hover:bg-blue-50/40 lg:grid-cols-[minmax(0,1fr)_130px_110px] lg:items-center ${
-                        selected ? "border-blue-200 bg-blue-50/70 ring-1 ring-blue-100" : "border-app-border bg-white"
-                      }`}
+                      className={`campaign-card-row app-interactive ${selected ? "campaign-card-row-active" : ""}`}
+                      style={{ "--campaign-accent": row.campaign.color } as CSSProperties}
                     >
-                      <span className="flex min-w-0 items-start gap-3">
-                        <span className="mt-1 h-9 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: row.campaign.color }} />
-                        <span className="min-w-0">
-                          <span className="flex flex-wrap items-center gap-2">
-                            <span className="truncate text-sm font-black text-app-text">{row.campaign.name}</span>
+                      <span className="campaign-card-main">
+                        <span className="campaign-card-mark" />
+                        <span className="campaign-card-copy">
+                          <span className="campaign-card-title-row">
+                            <span className="campaign-card-title">{row.campaign.name}</span>
                             <StatusToken tone={campaignStatusTone(row.campaign.status)}>{statusLabels[row.campaign.status] ?? row.campaign.status}</StatusToken>
                           </span>
-                          <span className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{row.campaign.goal || row.campaign.notes || "هدف کمپین هنوز تعریف نشده است."}</span>
+                          <span className="campaign-card-goal">{row.campaign.goal || row.campaign.notes || "هدف کمپین هنوز تعریف نشده است."}</span>
                         </span>
                       </span>
-                      <span className="grid grid-cols-3 gap-2 text-center lg:grid-cols-1 lg:text-right">
-                        <span className="text-xs font-bold text-app-muted"><strong className="text-app-text">{row.stats.total}</strong> پست</span>
-                        <span className="text-xs font-bold text-app-muted"><strong className="text-emerald-700">{row.stats.published}</strong> منتشر</span>
-                        <span className="text-xs font-bold text-app-muted"><strong className={row.stats.failed ? "text-rose-700" : "text-app-text"}>{row.stats.failed}</strong> خطا</span>
+                      <span className="campaign-card-stats">
+                        <span><strong>{row.stats.total}</strong> پست</span>
+                        <span><strong>{row.stats.published}</strong> منتشر</span>
+                        <span><strong className={row.stats.failed ? "text-rose-700" : ""}>{row.stats.failed}</strong> خطا</span>
                       </span>
-                      <span className="min-w-0">
-                        <span className="mb-1 flex items-center justify-between gap-2">
-                          <span className="text-[11px] font-black text-app-muted">سلامت</span>
-                          <span className="text-xs font-black text-app-text">{row.stats.health}%</span>
+                      <span className="campaign-card-health">
+                        <span>
+                          <span>سلامت</span>
+                          <strong>{row.stats.health}%</strong>
                         </span>
-                        <span className="block h-2 overflow-hidden rounded-full bg-slate-100">
-                          <span className="block h-full rounded-full" style={{ width: `${row.stats.health}%`, backgroundColor: row.stats.health >= 76 ? "#059669" : row.stats.health >= 50 ? "#D97706" : "#E11D48" }} />
+                        <span className="campaign-health-track">
+                          <span style={{ width: `${row.stats.health}%`, backgroundColor: row.stats.health >= 76 ? "#059669" : row.stats.health >= 50 ? "#D97706" : "#E11D48" }} />
                         </span>
                       </span>
                     </button>
@@ -1020,13 +1020,13 @@ export default function CampaignsPage() {
               <WorkspacePanel title="جزئیات کمپین" description="سلامت، زمان‌بندی و ریسک‌های کمپین انتخاب‌شده." bodyClassName="max-h-[58vh] overflow-y-auto p-3 sm:p-4 lg:max-h-none">
                 {selectedRow ? (
                   <div className="space-y-4">
-                    <div className="rounded-lg border border-app-border bg-app-surfaceMuted p-3">
+                    <div className="campaign-detail-hero-card" style={{ "--campaign-accent": selectedRow.campaign.color } as CSSProperties}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-[11px] font-black text-app-muted">کمپین انتخاب‌شده</p>
                           <h2 className="mt-1 truncate text-lg font-black text-app-text">{selectedRow.campaign.name}</h2>
                         </div>
-                        <span className="h-10 w-10 shrink-0 rounded-lg shadow-hairline" style={{ backgroundColor: selectedRow.campaign.color }} />
+                        <span className="campaign-detail-swatch" />
                       </div>
                       <p className="mt-3 text-sm leading-6 text-app-muted">{selectedRow.campaign.goal || selectedRow.campaign.notes || "هدف و یادداشت کمپین هنوز تکمیل نشده است."}</p>
                     </div>
@@ -1040,25 +1040,25 @@ export default function CampaignsPage() {
                       ]}
                     />
 
-                    <div className="grid gap-2 sm:grid-cols-3">
-                      <div className="rounded-md bg-emerald-50 p-3 text-emerald-800 shadow-hairline">
+                    <div className="campaign-health-grid">
+                      <div className="campaign-health-tile" data-tone="success">
                         <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                         <p className="mt-2 text-lg font-black">{selectedRow.stats.published}</p>
                         <p className="text-[11px] font-bold">منتشرشده</p>
                       </div>
-                      <div className="rounded-md bg-blue-50 p-3 text-blue-800 shadow-hairline">
+                      <div className="campaign-health-tile" data-tone="info">
                         <TimerReset className="h-4 w-4" aria-hidden="true" />
                         <p className="mt-2 text-lg font-black">{queuedCount}</p>
                         <p className="text-[11px] font-bold">در جریان</p>
                       </div>
-                      <div className="rounded-md bg-rose-50 p-3 text-rose-800 shadow-hairline">
+                      <div className="campaign-health-tile" data-tone="alert">
                         <AlertTriangle className="h-4 w-4" aria-hidden="true" />
                         <p className="mt-2 text-lg font-black">{failedCount}</p>
                         <p className="text-[11px] font-bold">نیازمند توجه</p>
                       </div>
                     </div>
 
-                    <div className="rounded-md border border-app-border bg-white p-3 shadow-hairline">
+                    <div className="campaign-funnel-card">
                       <div className="mb-3 flex items-center justify-between gap-3">
                         <p className="text-xs font-black text-app-text">قیف عملکرد کمپین</p>
                         <StatusToken tone="neutral">{selectedRow.stats.total} پست</StatusToken>
@@ -1076,8 +1076,8 @@ export default function CampaignsPage() {
                               <span className="text-app-muted">{item.label}</span>
                               <span className="text-app-text">{ratio}%</span>
                             </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                              <div className="h-full rounded-full" style={{ width: `${ratio}%`, backgroundColor: item.color }} />
+                            <div className="campaign-funnel-track">
+                              <div style={{ width: `${ratio}%`, backgroundColor: item.color }} />
                             </div>
                           </div>
                         );

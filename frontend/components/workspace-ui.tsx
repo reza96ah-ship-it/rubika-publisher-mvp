@@ -288,7 +288,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
 
 export function StatusToken({ tone = "neutral", children, className = "" }: StatusTokenProps) {
   return (
-    <span className={`inline-flex items-center rounded px-2 py-1 text-[11px] font-black leading-none border transition-colors duration-200 ${tokenToneClasses[tone]} ${className}`}>
+    <span className={`inline-flex min-h-6 items-center rounded-md border px-2.5 py-1 text-[11px] font-black leading-none transition-colors duration-200 ${tokenToneClasses[tone]} ${className}`}>
       {children}
     </span>
   );

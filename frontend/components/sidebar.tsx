@@ -12,7 +12,8 @@ import {
   PenLine,
   Rocket,
   Settings2,
-  Store
+  Store,
+  Target
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -41,6 +42,7 @@ const todayNavItem: NavItem = { label: "داشبورد", href: "/", icon: Layout
 const composeNavItem: NavItem = { label: "ساخت", href: "/compose", icon: PenLine };
 const onboardingNavItem: NavItem = { label: "راه‌اندازی", href: "/onboarding", icon: Rocket };
 const plannerNavItem: NavItem = { label: "برنامه‌ریز", href: "/calendar", icon: CalendarDays };
+const campaignsNavItem: NavItem = { label: "کمپین‌ها", href: "/campaigns", icon: Target };
 const contentNavItem: NavItem = { label: "محتوا", href: "/content", icon: FileText };
 const mediaNavItem: NavItem = { label: "رسانه", href: "/media", icon: GalleryHorizontalEnd };
 const inboxNavItem: NavItem = { label: "پیام‌ها", href: "/inbox", icon: BellRing };
@@ -51,6 +53,7 @@ const primaryNavItems: NavItem[] = [
   todayNavItem,
   composeNavItem,
   plannerNavItem,
+  campaignsNavItem,
   contentNavItem,
   mediaNavItem,
   inboxNavItem,
@@ -69,7 +72,8 @@ function isActiveRoute(pathname: string, href: string) {
 }
 
 function isNavItemActive(pathname: string, item: NavItem) {
-  if (item.href === "/calendar") return isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/campaigns");
+  if (item.href === "/calendar") return isActiveRoute(pathname, "/calendar");
+  if (item.href === "/campaigns") return isActiveRoute(pathname, "/campaigns");
   if (item.href === "/content") return isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue");
   if (item.href === "/store") {
     return (
@@ -92,8 +96,12 @@ export function getActiveNav(pathname: string) {
     return { group: { title: "ساخت", items: [composeNavItem] }, item: composeNavItem };
   }
 
-  if (isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/campaigns")) {
+  if (isActiveRoute(pathname, "/calendar")) {
     return { group: { title: "برنامه‌ریز", items: [plannerNavItem] }, item: plannerNavItem };
+  }
+
+  if (isActiveRoute(pathname, "/campaigns")) {
+    return { group: { title: "کمپین‌ها", items: [campaignsNavItem] }, item: campaignsNavItem };
   }
 
   if (isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue")) {

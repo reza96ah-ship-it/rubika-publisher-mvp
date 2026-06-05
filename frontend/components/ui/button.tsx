@@ -31,15 +31,15 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "min-h-compact px-2.5 text-xs",
-  md: "min-h-standard px-3.5 text-sm",
-  lg: "min-h-comfortable px-4 text-sm"
+  sm: "min-h-9 px-3 text-xs",
+  md: "min-h-10 px-3.5 text-sm",
+  lg: "min-h-11 px-4 text-sm"
 };
 
 export function Button(props: ButtonProps) {
   const { variant = "primary", size = "md", className = "", children } = props;
   const classes = [
-    "app-interactive nahrino-control-radius inline-flex items-center justify-center gap-2 rounded-nsm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60",
+    "app-interactive nahrino-control-radius inline-flex items-center justify-center gap-2 whitespace-nowrap font-bold leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60",
     variantClasses[variant],
     sizeClasses[size],
     className
