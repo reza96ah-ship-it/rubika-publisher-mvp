@@ -691,10 +691,6 @@ export default function CalendarPage() {
                         </span>
                       ))}
                     </div>
-                    <Button type="button" onClick={() => openQuickCreate(selectedDayValue)} size="sm">
-                      <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                      {selectedCampaignOption ? `پست جدید برای ${selectedCampaignOption.label}` : `پست جدید در ${selectedDayLabel}`}
-                    </Button>
                   </div>
                 </div>
 

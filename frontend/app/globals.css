@@ -1533,12 +1533,12 @@ a {
   }
 
   .calendar-planner-viewport {
-    max-height: 68vh;
-    overflow: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   .calendar-planner-board {
-    min-width: 820px;
+    min-width: 0;
   }
 
   .calendar-inspector-wrap {
@@ -1572,16 +1572,6 @@ a {
   @media (min-width: 1024px) {
     .dashboard-recent-content-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .calendar-pro-workspace {
-      grid-template-columns: minmax(0, 1fr) 310px;
-    }
-
-    .calendar-inspector-wrap {
-      position: sticky;
-      top: 5rem;
-      align-self: start;
     }
   }
 
