@@ -295,10 +295,12 @@ a {
   .app-workspace-bg {
     background-color: rgb(var(--n-color-canvas));
     background-image:
-      radial-gradient(circle at 88% 0%, rgb(var(--n-color-primary) / 0.055), transparent 26rem),
-      radial-gradient(circle at 18% 12%, rgb(var(--n-color-secondary) / 0.035), transparent 21rem),
+      linear-gradient(120deg, transparent 0 24%, rgb(var(--n-color-primary) / 0.045) 24.2% 24.35%, transparent 24.55% 100%),
+      linear-gradient(62deg, transparent 0 62%, rgb(var(--n-color-secondary) / 0.04) 62.15% 62.3%, transparent 62.5% 100%),
+      repeating-linear-gradient(90deg, rgb(var(--n-color-ink) / 0.018) 0 1px, transparent 1px 72px),
+      repeating-linear-gradient(0deg, rgb(var(--n-color-ink) / 0.012) 0 1px, transparent 1px 72px),
       linear-gradient(180deg, rgb(var(--n-color-canvas)) 0%, rgb(var(--n-color-canvas-soft)) 100%);
-    background-size: 100% 100%, 100% 100%, 100% 100%;
+    background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
   }
 
   .rounded-nxs {
@@ -431,14 +433,30 @@ a {
   }
 
   .nahrino-shell {
+    position: relative;
+    overflow: hidden;
     background:
-      linear-gradient(180deg, rgb(var(--n-color-frost) / 0.56), rgb(var(--n-color-canvas) / 0.92)),
-      repeating-radial-gradient(circle at 0 0, rgb(var(--n-color-ink) / 0.012) 0 1px, transparent 1px 4px);
+      linear-gradient(180deg, rgb(var(--n-color-frost) / 0.58), rgb(var(--n-color-canvas) / 0.9)),
+      linear-gradient(135deg, transparent 0 52%, rgb(var(--n-color-primary) / 0.035) 52.15% 52.35%, transparent 52.55%),
+      repeating-linear-gradient(90deg, rgb(var(--n-color-ink) / 0.014) 0 1px, transparent 1px 56px);
+  }
+
+  .nahrino-shell::before {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, transparent, rgb(var(--n-color-primary) / 0.04), transparent),
+      linear-gradient(180deg, rgb(var(--n-color-frost) / 0.2), transparent 28%);
+    mask-image: linear-gradient(180deg, black, transparent 46%);
+    content: "";
   }
 
   .nahrino-sidebar {
     border-inline-start: 1px solid var(--n-glass-border);
-    background: var(--n-glass-surface);
+    background:
+      linear-gradient(180deg, var(--n-glass-surface-strong), var(--n-glass-surface)),
+      repeating-linear-gradient(0deg, rgb(var(--n-color-primary) / 0.04) 0 1px, transparent 1px 42px);
     box-shadow: inset -1px 0 0 rgb(var(--n-color-ink) / 0.06), 0 12px 30px rgb(var(--n-color-ink) / 0.04);
     backdrop-filter: blur(var(--n-glass-blur-desktop)) saturate(var(--n-glass-saturation));
   }
@@ -917,21 +935,27 @@ a {
   .app-workspace-bg {
     background-color: rgb(var(--n-color-canvas));
     background-image:
-      radial-gradient(circle at 88% 0%, rgb(var(--n-color-primary) / 0.055), transparent 26rem),
-      radial-gradient(circle at 18% 12%, rgb(var(--n-color-secondary) / 0.035), transparent 21rem),
-      linear-gradient(180deg, rgb(var(--n-color-canvas)) 0%, rgb(var(--n-color-canvas-soft)) 100%),
-      repeating-radial-gradient(circle at 0 0, rgb(var(--n-color-ink) / 0.012) 0 1px, transparent 1px 4px);
+      linear-gradient(120deg, transparent 0 24%, rgb(var(--n-color-primary) / 0.045) 24.2% 24.35%, transparent 24.55% 100%),
+      linear-gradient(62deg, transparent 0 62%, rgb(var(--n-color-secondary) / 0.04) 62.15% 62.3%, transparent 62.5% 100%),
+      repeating-linear-gradient(90deg, rgb(var(--n-color-ink) / 0.018) 0 1px, transparent 1px 72px),
+      repeating-linear-gradient(0deg, rgb(var(--n-color-ink) / 0.012) 0 1px, transparent 1px 72px),
+      linear-gradient(180deg, rgb(var(--n-color-canvas)) 0%, rgb(var(--n-color-canvas-soft)) 100%);
   }
 
   .nahrino-shell {
+    position: relative;
+    overflow: hidden;
     background:
-      linear-gradient(180deg, rgb(var(--n-color-frost) / 0.56), rgb(var(--n-color-canvas) / 0.92)),
-      repeating-radial-gradient(circle at 0 0, rgb(var(--n-color-ink) / 0.012) 0 1px, transparent 1px 4px);
+      linear-gradient(180deg, rgb(var(--n-color-frost) / 0.58), rgb(var(--n-color-canvas) / 0.9)),
+      linear-gradient(135deg, transparent 0 52%, rgb(var(--n-color-primary) / 0.035) 52.15% 52.35%, transparent 52.55%),
+      repeating-linear-gradient(90deg, rgb(var(--n-color-ink) / 0.014) 0 1px, transparent 1px 56px);
   }
 
   .nahrino-sidebar {
-    border-inline-start: 1px solid rgb(var(--n-color-frost-border) / 0.62);
-    background: rgb(var(--n-color-frost) / 0.68);
+    border-inline-start: 1px solid var(--n-glass-border);
+    background:
+      linear-gradient(180deg, var(--n-glass-surface-strong), var(--n-glass-surface)),
+      repeating-linear-gradient(0deg, rgb(var(--n-color-primary) / 0.04) 0 1px, transparent 1px 42px);
     box-shadow: inset -1px 0 0 rgb(var(--n-color-ink) / 0.06), 0 12px 30px rgb(var(--n-color-ink) / 0.04);
     backdrop-filter: blur(var(--n-glass-blur-desktop)) saturate(var(--n-glass-saturation));
   }
@@ -1055,10 +1079,27 @@ a {
     animation: dashboard-preview-enter var(--n-motion-emphasized) var(--n-ease-standard) both;
   }
 
-  .dashboard-kpi-strip .nahrino-metric-card,
-  .nahrino-metric-card {
-    background: rgb(var(--n-color-surface));
-    backdrop-filter: none;
+  .dashboard-kpi-strip .nahrino-metric-card {
+    min-height: 82px;
+    border-color: var(--n-glass-border);
+    border-radius: var(--n-radius-xs) !important;
+    background:
+      linear-gradient(145deg, var(--n-glass-surface-strong), var(--n-glass-surface-soft)),
+      repeating-linear-gradient(90deg, rgb(var(--metric-accent, var(--n-color-primary)) / 0.08) 0 1px, transparent 1px 18px);
+    box-shadow: var(--n-shadow-hairline), 0 12px 28px rgb(var(--n-color-ink) / 0.055);
+    backdrop-filter: blur(20px) saturate(148%);
+  }
+
+  .dashboard-kpi-strip .nahrino-metric-card::after {
+    display: block;
+    inset: auto 0 0 0;
+    width: 100%;
+    height: 2px;
+    aspect-ratio: auto;
+    border-radius: 0;
+    background: linear-gradient(90deg, transparent, rgb(var(--metric-accent, var(--n-color-primary)) / 0.58), transparent);
+    transform: none;
+    animation: dashboard-live-edge 3.2s var(--n-ease-standard) infinite;
   }
 
   .nahrino-metric-card::after {
@@ -1207,6 +1248,19 @@ a {
   .analytics-kpi-delta {
     background: rgb(var(--n-color-surface) / 0.78);
     box-shadow: var(--n-shadow-hairline);
+  }
+
+  .analytics-trend-stage {
+    overflow: hidden;
+  }
+
+  .analytics-trend-bucket {
+    border-radius: var(--n-radius-control) var(--n-radius-control) 0 0;
+  }
+
+  .analytics-trend-bucket:hover,
+  .analytics-trend-bucket-active {
+    background: rgb(var(--n-color-primary-soft) / 0.72);
   }
 
   nav[aria-label="ناوبری اصلی"].fixed {

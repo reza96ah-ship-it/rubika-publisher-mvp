@@ -149,9 +149,9 @@ function dayLabel(key: string) {
   return new Intl.DateTimeFormat("fa-IR", { month: "short", day: "numeric" }).format(new Date(`${key}T00:00:00Z`));
 }
 
-function dayLongLabel(key: string) {
-  if (key === "unknown") return "نامشخص";
-  return new Intl.DateTimeFormat("fa-IR", { weekday: "long", year: "numeric", month: "long", day: "numeric" }).format(new Date(`${key}T00:00:00Z`));
+function trendRangeLabel(startKey: string, endKey: string) {
+  if (startKey === endKey) return dayLabel(startKey);
+  return `${dayLabel(startKey)} تا ${dayLabel(endKey)}`;
 }
 
 function deltaPercent(current: number, previous: number) {
@@ -346,19 +346,38 @@ export default function AnalyticsPage() {
       sourceAttempts.forEach((attempt) => keys.add(dayKey(attempt.created_at)));
     }
 
-    return Array.from(keys).sort().map((key) => {
+    const dailyTrend = Array.from(keys).sort().map((key) => {
       const dayAttempts = scopedAttempts.filter((attempt) => dayKey(attempt.created_at) === key);
       const success = dayAttempts.filter((attempt) => attempt.status === "success").length;
       const failed = dayAttempts.filter((attempt) => attempt.status === "failed").length;
       const started = dayAttempts.filter((attempt) => attempt.status === "started").length;
-      return { key, success, failed, started, total: dayAttempts.length };
+      return { key, startKey: key, endKey: key, label: dayLabel(key), success, failed, started, total: dayAttempts.length };
     });
+
+    const bucketSize = timeRange === "7d" ? 1 : timeRange === "30d" ? 2 : timeRange === "90d" ? 7 : Math.max(1, Math.ceil(dailyTrend.length / 12));
+    if (bucketSize === 1) return dailyTrend;
+
+    const buckets = [];
+    for (let index = 0; index < dailyTrend.length; index += bucketSize) {
+      const slice = dailyTrend.slice(index, index + bucketSize);
+      const startKey = slice[0]?.startKey ?? "unknown";
+      const endKey = slice[slice.length - 1]?.endKey ?? startKey;
+      buckets.push({
+        key: `${startKey}-${endKey}`,
+        startKey,
+        endKey,
+        label: trendRangeLabel(startKey, endKey),
+        success: slice.reduce((sum, item) => sum + item.success, 0),
+        failed: slice.reduce((sum, item) => sum + item.failed, 0),
+        started: slice.reduce((sum, item) => sum + item.started, 0),
+        total: slice.reduce((sum, item) => sum + item.total, 0)
+      });
+    }
+    return buckets;
   }, [scopedAttempts, timeRange]);
 
   const maxTrendTotal = Math.max(1, ...trend.map((item) => item.total));
-  const trendTickInterval = timeRange === "7d" ? 1 : timeRange === "30d" ? 5 : timeRange === "90d" ? 15 : Math.max(1, Math.ceil(trend.length / 7));
-  const trendColumnWidth = timeRange === "7d" ? 78 : timeRange === "30d" ? 56 : 44;
-  const trendMinWidth = timeRange === "7d" ? "560px" : `${Math.max(680, trend.length * trendColumnWidth)}px`;
+  const trendTickInterval = timeRange === "7d" ? 1 : timeRange === "30d" ? 2 : timeRange === "90d" ? 1 : Math.max(1, Math.ceil(trend.length / 6));
   function showTrendTick(index: number) {
     return index === 0 || index === trend.length - 1 || index % trendTickInterval === 0;
   }
@@ -366,10 +385,14 @@ export default function AnalyticsPage() {
   const selectedTrendAttempts = useMemo(() => {
     if (!selectedTrendKey) return [];
     return scopedAttempts
-      .filter((attempt) => dayKey(attempt.created_at) === selectedTrendKey)
+      .filter((attempt) => {
+        const key = dayKey(attempt.created_at);
+        const selected = trend.find((item) => item.key === selectedTrendKey);
+        return selected ? key >= selected.startKey && key <= selected.endKey : key === selectedTrendKey;
+      })
       .sort((first, second) => (toTime(second.created_at) ?? 0) - (toTime(first.created_at) ?? 0))
       .slice(0, 5);
-  }, [scopedAttempts, selectedTrendKey]);
+  }, [scopedAttempts, selectedTrendKey, trend]);
   const failedPosts = scopedPosts.filter((post) => post.status === "failed" || post.last_error).slice(0, 5);
   const queuedPosts = scopedPosts.filter((post) => ["ready", "scheduled", "publishing"].includes(post.status)).slice(0, 5);
   const highAttemptPosts = useMemo(() => {
@@ -634,10 +657,10 @@ export default function AnalyticsPage() {
                   <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-rose-500" /> ناموفق</span>
                   <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-sky-500" /> در حال اجرا</span>
                 </div>
-                <div className="overflow-x-auto pb-2">
+                <div className="analytics-trend-stage pb-2">
                   <div
-                    className="grid h-48 items-end gap-2 border-b border-app-border px-8 pt-3"
-                    style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(${trendColumnWidth}px, 1fr))`, minWidth: trendMinWidth }}
+                    className="grid h-48 min-w-0 items-end gap-1.5 border-b border-app-border px-2 pt-3 sm:gap-2 sm:px-4"
+                    style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(0, 1fr))` }}
                   >
                     {trend.map((item, index) => (
                       <button
@@ -646,23 +669,23 @@ export default function AnalyticsPage() {
                         onClick={() => setSelectedTrendKey((current) => current === item.key ? "" : item.key)}
                         data-trend-inspector
                         data-trend-bar
-                        className={`relative flex h-full min-w-0 flex-col justify-end overflow-visible rounded-t pb-6 text-center transition hover:bg-blue-50/70 ${selectedTrend?.key === item.key ? "bg-blue-50 ring-1 ring-inset ring-blue-100" : ""}`}
-                        title={`${dayLongLabel(item.key)}: ${item.total} تلاش`}
+                        className={`analytics-trend-bucket relative flex h-full min-w-0 flex-col justify-end overflow-visible rounded-t pb-6 text-center transition ${selectedTrend?.key === item.key ? "analytics-trend-bucket-active ring-1 ring-inset ring-blue-100" : ""}`}
+                        title={`${item.label}: ${item.total} تلاش`}
                       >
                         <p className="mb-2 text-[10px] font-black text-app-muted">{item.total || ""}</p>
                         <div className="flex h-40 items-end justify-center">
                           <div
                             className={`flex w-5 flex-col-reverse overflow-hidden rounded-t bg-slate-100 transition ${selectedTrend?.key === item.key ? "ring-2 ring-app-primary ring-offset-2" : ""}`}
                             style={{ height: item.total ? `${Math.max(8, percent(item.total, maxTrendTotal))}%` : "0%" }}
-                            title={`${dayLongLabel(item.key)}: ${item.total} تلاش`}
+                            title={`${item.label}: ${item.total} تلاش`}
                           >
                             <span className="bg-emerald-500" style={{ height: `${percent(item.success, Math.max(1, item.total))}%` }} />
                             <span className="bg-rose-500" style={{ height: `${percent(item.failed, Math.max(1, item.total))}%` }} />
                             <span className="bg-sky-500" style={{ height: `${percent(item.started, Math.max(1, item.total))}%` }} />
                           </div>
                         </div>
-                        <p className={`absolute bottom-0 left-1/2 min-h-4 w-24 -translate-x-1/2 whitespace-nowrap text-center text-[10px] font-bold ${showTrendTick(index) ? "text-app-muted" : "text-transparent"}`}>
-                          {showTrendTick(index) ? dayLabel(item.key) : ""}
+                        <p className={`absolute bottom-0 left-1/2 min-h-4 max-w-[5.5rem] -translate-x-1/2 truncate whitespace-nowrap text-center text-[10px] font-bold ${showTrendTick(index) ? "text-app-muted" : "text-transparent"}`}>
+                          {showTrendTick(index) ? item.label : ""}
                         </p>
                       </button>
                     ))}
@@ -823,7 +846,7 @@ export default function AnalyticsPage() {
               {selectedTrend ? (
                 <WorkspacePanel
                   title="بازرس روز انتخاب‌شده"
-                  description={dayLongLabel(selectedTrend.key)}
+                  description={selectedTrend.label}
                   action={(
                     <button
                       type="button"
