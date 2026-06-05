@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import {
-  Activity,
   AlertTriangle,
   ArrowUpLeft,
   BarChart3,
@@ -13,14 +12,11 @@ import {
   FileText,
   Megaphone,
   MessageSquare,
-  Network,
   PlugZap,
   RefreshCw,
-  ShieldCheck,
-  Target,
-  TimerReset,
-  TrendingUp
+  Target
 } from "lucide-react";
+import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../components/app-shell";
 import { AuthGate } from "../components/auth-gate";
@@ -28,7 +24,6 @@ import { WorkspaceAvatar } from "../components/brand-mark";
 import { Skeleton } from "../components/loading-skeleton";
 import {
   NButton,
-  NDonutChart,
   NEmptyState,
   NMetricTile,
   NNotice,
@@ -46,7 +41,7 @@ import {
   loadReadNotificationIds,
   OperationalNotifications
 } from "../lib/notifications";
-import { apiUrl, authHeaders, formatDateTime, Post } from "../lib/posts";
+import { apiUrl, authHeaders, Post } from "../lib/posts";
 import { productName } from "../lib/product";
 import { isRubikaConnected, isStoreConfigured, loadWorkspaceOverview, RubikaSettings, StoreProfile } from "../lib/workspace";
 
@@ -145,7 +140,6 @@ export default function HomePage() {
   };
   const draftCount = statusCount(posts, "draft");
   const publishedCount = statusCount(posts, "published");
-  const manualReadyCount = statusCount(posts, "manual_ready");
   const queueTotal = queueCounts.ready + queueCounts.scheduled + queueCounts.publishing + queueCounts.failed;
   const storeReady = isStoreConfigured(store);
   const rubikaReady = isRubikaConnected(rubika);
@@ -160,10 +154,11 @@ export default function HomePage() {
   const blockedWorkCount = priorityAlerts.length + queueCounts.failed + pendingApprovalCount + Number(!storeReady) + Number(!rubikaReady);
   const completionRate = percent(publishedCount, Math.max(posts.length - draftCount, 0));
   const failureRate = percent(queueCounts.failed, Math.max(queueTotal, 0));
-  const averageAttempts = posts.length ? (posts.reduce((sum, post) => sum + (post.attempt_count || 0), 0) / posts.length).toFixed(1) : "0";
-  const latestPublishedPost = posts
-    .filter((post) => post.status === "published" && post.published_at)
-    .sort((first, second) => dateTime(second.published_at) - dateTime(first.published_at))[0];
+  const todayKey = dayKey(new Date());
+  const scheduledTodayCount = scheduledPosts.filter((post) => {
+    const date = post.scheduled_at ? new Date(post.scheduled_at) : null;
+    return date && !Number.isNaN(date.getTime()) ? dayKey(date) === todayKey : false;
+  }).length;
 
   const nextAction = priorityAlerts[0]
     ? { label: priorityAlerts[0].action_label, href: priorityAlerts[0].action_href, detail: priorityAlerts[0].title }
@@ -201,60 +196,30 @@ export default function HomePage() {
     return date ? dayKey(date) === key : false;
   }).length);
   const weeklyLabels = weekKeys.map((key) => new Date(`${key}T00:00:00`).toLocaleDateString("fa-IR", { weekday: "short" }));
-  const pipelineDistribution = [
-    { label: "پیش‌نویس", value: draftCount, color: "rgb(var(--n-chart-draft))" },
-    { label: "آماده", value: queueCounts.ready, color: "rgb(var(--n-chart-ready))" },
-    { label: "زمان‌بندی", value: queueCounts.scheduled, color: "rgb(var(--n-chart-scheduled))" },
-    { label: "دستی", value: manualReadyCount, color: "rgb(var(--n-chart-manual))" },
-    { label: "منتشر", value: publishedCount, color: "rgb(var(--n-chart-published))" },
-    { label: "ناموفق", value: queueCounts.failed, color: "rgb(var(--n-chart-failed))" }
-  ];
-  const pipelineTotal = pipelineDistribution.reduce((sum, item) => sum + item.value, 0);
-  const channelCounts = posts.reduce<Record<string, number>>((acc, post) => {
-    const key = post.platform?.trim() || "عمومی";
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
-  const channelItems = [
-    { label: "روبیکا", value: channelCounts.rubika || channelCounts.Rubika || 0, healthy: rubikaReady, detail: rubikaReady ? "اتصال آماده" : "نیازمند تست اتصال" },
-    { label: "اینستاگرام", value: channelCounts.instagram || channelCounts.Instagram || 0, healthy: false, detail: "انتشار محدود به حساب حرفه‌ای" },
-    { label: "عمومی", value: channelCounts["عمومی"] || channelCounts.general || 0, healthy: true, detail: "بدون کانال مشخص" }
-  ];
-  const dashboardInsights = [
-    queueCounts.failed
-      ? { icon: AlertTriangle, title: "بازیابی قبل از تولید", description: `${queueCounts.failed} آیتم ناموفق در صف وجود دارد.`, tone: "alert" as const, href: "/queue" }
-      : { icon: ShieldCheck, title: "صف پایدار", description: "خطای فعال در صف دیده نمی‌شود.", tone: "success" as const, href: "/queue" },
-    pendingApprovalCount
-      ? { icon: MessageSquare, title: "بازبینی مسدودکننده", description: `${pendingApprovalCount} محتوا منتظر تایید یا اصلاح است.`, tone: "warning" as const, href: "/content?approval=pending" }
-      : { icon: MessageSquare, title: "بازبینی آرام", description: "مورد بازبینی مسدودکننده دیده نمی‌شود.", tone: "primary" as const, href: "/content" },
-    !rubikaReady
-      ? { icon: Network, title: "ریسک کانال", description: "کانال اصلی هنوز آماده انتشار نیست.", tone: "warning" as const, href: "/channels" }
-      : { icon: Network, title: "کانال اصلی آماده", description: "اتصال اصلی برای انتشار آماده است.", tone: "success" as const, href: "/channels" }
-  ];
   const topMetrics = [
     {
-      label: "انتشار بعدی",
-      value: compactDateTime(nextPosts[0]?.scheduled_at),
-      detail: nextPosts[0]?.title || "تقویم هنوز سبک است",
+      label: "زمان‌بندی امروز",
+      value: scheduledTodayCount,
+      detail: nextPosts[0]?.scheduled_at ? `بعدی ${compactDateTime(nextPosts[0].scheduled_at)}` : "امروز چیزی در برنامه نیست",
       icon: CalendarClock,
       tone: "warning" as const,
       href: "/calendar"
     },
     {
-      label: "نیازمند رسیدگی",
+      label: "در معرض ریسک",
       value: blockedWorkCount,
-      detail: unreadAlerts ? `${unreadAlerts} اعلان تازه` : "خطا، هشدار یا بازبینی",
+      detail: "خطا، تایید، اتصال یا راه‌اندازی",
       icon: AlertTriangle,
       tone: blockedWorkCount ? "alert" as const : "success" as const,
-      href: "/inbox"
+      href: blockedWorkCount ? "/queue" : "/inbox"
     },
     {
-      label: "صف فعال",
-      value: queueTotal,
-      detail: "آماده، زمان بندی و انتشار",
-      icon: TimerReset,
-      tone: queueCounts.failed ? "alert" as const : "info" as const,
-      href: "/content"
+      label: "پیام‌های موعددار",
+      value: unreadAlerts,
+      detail: unreadAlerts ? "اعلان تازه نیازمند اقدام" : "تعهد پاسخ آرام است",
+      icon: MessageSquare,
+      tone: unreadAlerts ? "warning" as const : "success" as const,
+      href: "/inbox"
     },
     {
       label: "کمپین فعال",
@@ -265,44 +230,6 @@ export default function HomePage() {
       href: "/campaigns?status=active"
     }
   ];
-  const timelineItems = nextPosts.length
-    ? nextPosts.slice(0, 3).map((post) => ({
-      id: `post-${post.id}`,
-      title: post.title,
-      detail: compactDateTime(post.scheduled_at),
-      href: `/compose?postId=${post.id}`,
-      tone: "warning" as const,
-      icon: CalendarClock,
-      meta: "زمان بندی"
-    }))
-    : activeCampaigns.slice(0, 3).map((campaign) => ({
-      id: `campaign-${campaign.id}`,
-      title: campaign.name,
-      detail: campaign.goal || campaign.notes || "کمپین فعال بدون خلاصه",
-      href: `/campaigns?campaignId=${campaign.id}`,
-      tone: "primary" as const,
-      icon: Megaphone,
-      meta: "کمپین"
-    }));
-  const decisionItems = priorityAlerts.length
-    ? priorityAlerts.slice(0, 3).map((alert) => ({
-      id: alert.id,
-      icon: alert.severity === "critical" ? CircleAlert : alert.severity === "warning" ? AlertTriangle : CheckCircle2,
-      title: alert.title,
-      detail: alert.description,
-      href: alert.action_href,
-      tone: alert.severity === "critical" ? "alert" as const : alert.severity === "warning" ? "warning" as const : "success" as const,
-      meta: alert.action_label
-    }))
-    : dashboardInsights.map((insight) => ({
-      id: insight.title,
-      icon: insight.icon,
-      title: insight.title,
-      detail: insight.description,
-      href: insight.href,
-      tone: insight.tone,
-      meta: insight.tone === "success" ? "پایدار" : insight.tone === "warning" ? "بررسی" : "اقدام"
-    }));
   const statusLabels: Record<string, string> = {
     draft: "پیش‌نویس",
     ready: "آماده",
@@ -325,192 +252,192 @@ export default function HomePage() {
       time: compactDateTime(post.scheduled_at || post.published_at || post.updated_at || post.created_at),
       tone: post.status === "failed" ? "alert" as const : post.status === "published" ? "success" as const : post.status === "scheduled" ? "warning" as const : "primary" as const
     }));
+  const riskQueueItems = [
+    ...(queueCounts.failed
+      ? [{ id: "failed", icon: AlertTriangle, title: "انتشار ناموفق", detail: `${queueCounts.failed} آیتم نیازمند بازیابی`, tone: "alert" as const, href: "/queue" }]
+      : []),
+    ...(pendingApprovalCount
+      ? [{ id: "approval", icon: MessageSquare, title: "بازبینی مسدود", detail: `${pendingApprovalCount} محتوا پشت تایید`, tone: "warning" as const, href: "/content?approval=pending" }]
+      : []),
+    ...(!rubikaReady
+      ? [{ id: "rubika", icon: PlugZap, title: "اتصال کانال", detail: "روبیکا هنوز آماده انتشار نیست", tone: "warning" as const, href: "/channels" }]
+      : []),
+    ...(!storeReady
+      ? [{ id: "store", icon: Target, title: "هویت کاری", detail: "مشخصات فضای کاری ناقص است", tone: "warning" as const, href: "/store" }]
+      : []),
+    ...priorityAlerts.slice(0, 2).map((alert) => ({
+      id: alert.id,
+      icon: alert.severity === "critical" ? CircleAlert : AlertTriangle,
+      title: alert.title,
+      detail: alert.description,
+      tone: alert.severity === "critical" ? "alert" as const : "warning" as const,
+      href: alert.action_href
+    }))
+  ];
+  const plannerSnapshot = weekKeys.map((key, index) => {
+    const postsForDay = scheduledPosts.filter((post) => {
+      const date = post.scheduled_at ? new Date(post.scheduled_at) : null;
+      return date && !Number.isNaN(date.getTime()) ? dayKey(date) === key : false;
+    });
+    return {
+      key,
+      label: weeklyLabels[index],
+      count: postsForDay.length,
+      campaign: postsForDay.find((post) => post.campaign)?.campaign || activeCampaigns[0]?.name || "",
+      href: `/calendar?date=${key}`
+    };
+  });
+  const publishMode = rubikaReady ? "API آماده" : "دستی/نیازمند اتصال";
+  const publishState = queueCounts.publishing ? "در حال انتشار" : nextPosts[0] ? "زمان‌بندی شده" : queueCounts.ready ? "آماده صف" : "بدون برنامه نزدیک";
+  const insightTone = failureRate ? "warning" as const : completionRate >= 60 ? "success" as const : "info" as const;
+  const reportInsight = failureRate
+    ? { title: "ریسک انتشار بالاست", detail: `${failureRate}% از صف فعال خطا دارد؛ بازیابی صف قبل از تولید تازه ارزشمندتر است.`, href: "/analytics?view=failures", tone: insightTone }
+    : { title: "ریتم انتشار قابل اتکاست", detail: `${completionRate}% تکمیل در داده فعلی؛ برنامه نزدیک را با یک پست زمان‌بندی‌شده تقویت کنید.`, href: "/analytics", tone: insightTone };
+  const campaignMomentumItems = activeCampaigns.length ? activeCampaigns : campaigns.slice(0, 3);
 
   return (
     <AuthGate>
       <AppShell>
-        <NPage className="pb-5">
-          <section className="dashboard-command-surface overflow-hidden rounded-xl border border-app-border bg-app-surface p-3 shadow-soft sm:p-4">
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-stretch">
-              <div className="min-w-0">
-                <div className="flex min-w-0 items-start gap-3">
-                  <WorkspaceAvatar name={store?.name || productName} size="lg" color={brandColor} imageUrl={brandImageUrl} />
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="app-section-kicker text-[10px] font-black">داشبورد امروز</p>
-                      <NStatusPill tone={healthTone}>
-                        {healthTone === "success" ? "پایدار" : healthTone === "warning" ? "آماده سازی" : "رسیدگی"}
-                      </NStatusPill>
-                      {lastUpdatedAt ? <NStatusPill tone="neutral">{lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</NStatusPill> : null}
-                    </div>
-                    <h1 className="mt-2 text-2xl font-black leading-tight text-app-text sm:text-3xl">داشبورد</h1>
-                    <p className="mt-1 truncate text-xs font-bold text-app-muted">{store?.name || "فضای کاری اجتماعی"} · {store?.category || store?.brand_voice || "مدیریت چندکاناله محتوا"}</p>
-                    <p className="mt-3 max-w-3xl text-sm leading-7 text-app-muted">{briefing}</p>
+        <NPage className="dashboard-spec-page pb-5">
+          <section className="dashboard-command-brief">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+              <div className="flex min-w-0 items-start gap-3">
+                <WorkspaceAvatar name={store?.name || productName} size="lg" color={brandColor} imageUrl={brandImageUrl} />
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="app-section-kicker text-[10px] font-black">داشبورد</p>
+                    <NStatusPill tone={healthTone}>{healthTone === "success" ? "فضای کاری پایدار" : healthTone === "warning" ? "نیازمند تکمیل" : "نیازمند رسیدگی"}</NStatusPill>
+                    {lastUpdatedAt ? <NStatusPill tone="neutral">{lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</NStatusPill> : null}
                   </div>
-                </div>
-
-                <div className="mt-4 rounded-lg border border-app-primary/15 bg-app-soft/80 p-3">
-                  <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-                    <div className="flex min-w-0 items-start gap-3">
-                      <span className="nahrino-live-signal mt-1 h-3 w-3 shrink-0 rounded-full bg-app-primary" />
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-black text-app-primary">اقدام بعدی</p>
-                        <h2 className="mt-1 line-clamp-1 text-base font-black text-app-text">{nextAction.label}</h2>
-                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 lg:justify-end">
-                      <NButton href={nextAction.href} trailingIcon={ArrowUpLeft}>ادامه</NButton>
-                      <NButton type="button" variant="secondary" icon={RefreshCw} loading={refreshing} onClick={() => loadDashboard(true)}>
-                        تازه سازی
-                      </NButton>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="dashboard-content-preview mt-3 grid gap-2 sm:grid-cols-3" aria-label="نمای زنده محتوا">
-                  {contentPreviewItems.length ? contentPreviewItems.map((item, index) => (
-                    <Link key={item.id} href={item.href} className="dashboard-preview-card app-interactive group rounded-lg p-2.5" style={{ animationDelay: `${index * 80}ms` }}>
-                      <span className="flex items-center justify-between gap-2">
-                        <span className="min-w-0 truncate text-[10px] font-black text-app-primary">{item.channel}</span>
-                        <NStatusPill tone={item.tone}>{item.status}</NStatusPill>
-                      </span>
-                      <strong className="mt-2 block truncate text-sm font-black text-app-text">{item.title}</strong>
-                      <span className="mt-1 block line-clamp-2 text-[11px] leading-5 text-app-muted">{item.caption}</span>
-                      <span className="mt-2 flex items-center justify-between gap-2 text-[10px] font-black text-app-muted">
-                        <span>{item.time}</span>
-                        <ArrowUpLeft className="h-3.5 w-3.5 shrink-0 opacity-0 transition group-hover:opacity-100" aria-hidden="true" />
-                      </span>
-                    </Link>
-                  )) : (
-                    <div className="dashboard-preview-card rounded-lg p-2.5 sm:col-span-3">
-                      <p className="text-xs font-black text-app-text">هنوز محتوایی برای نمایش زنده وجود ندارد</p>
-                      <p className="mt-1 text-[11px] leading-5 text-app-muted">اولین پیش‌نویس، این بخش را به مسیر کاری واقعی تبدیل می‌کند.</p>
-                    </div>
-                  )}
+                  <h1 className="mt-2 text-[22px] font-black leading-8 text-app-text sm:text-2xl">داشبورد امروز</h1>
+                  <p className="mt-1 max-w-4xl text-sm leading-7 text-app-muted">{briefing}</p>
                 </div>
               </div>
 
-              <aside className="dashboard-frost-panel rounded-xl p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-black text-app-text">نمای زنده کار</p>
-                    <p className="mt-1 text-[11px] leading-5 text-app-muted">صف، ریسک و خروجی هفته</p>
-                  </div>
-                  <NStatusPill tone={rubikaReady ? "success" : "warning"}>{rubikaReady ? "کانال آماده" : "کانال ناقص"}</NStatusPill>
-                </div>
-
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  <div className="dashboard-live-stat rounded-lg border border-app-border bg-app-surface/80 p-2 text-center shadow-hairline">
-                    <p className="text-lg font-black text-app-text">{publishedCount}</p>
-                    <p className="mt-1 truncate text-[10px] font-bold text-app-muted">منتشر</p>
-                  </div>
-                  <div className="dashboard-live-stat rounded-lg border border-app-border bg-app-surface/80 p-2 text-center shadow-hairline">
-                    <p className="text-lg font-black text-app-text">{queueTotal}</p>
-                    <p className="mt-1 truncate text-[10px] font-bold text-app-muted">در صف</p>
-                  </div>
-                  <div className="dashboard-live-stat rounded-lg border border-app-border bg-app-surface/80 p-2 text-center shadow-hairline">
-                    <p className="text-lg font-black text-app-text">{blockedWorkCount}</p>
-                    <p className="mt-1 truncate text-[10px] font-bold text-app-muted">ریسک</p>
+              <div className="dashboard-next-action min-w-0 rounded-xl p-3 lg:w-[360px]">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="nahrino-live-signal mt-1 h-3 w-3 shrink-0 rounded-full bg-app-primary" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-black text-app-primary">اقدام بعدی</p>
+                    <h2 className="mt-1 line-clamp-1 text-base font-black text-app-text">{nextAction.label}</h2>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
                   </div>
                 </div>
-
-                <div className="mt-3">
-                  <NTrendBars values={weeklyActivity} labels={weeklyLabels} />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <NButton href={nextAction.href} trailingIcon={ArrowUpLeft}>ادامه</NButton>
+                  <NButton type="button" variant="secondary" size="sm" icon={RefreshCw} loading={refreshing} onClick={() => loadDashboard(true)}>
+                    تازه‌سازی
+                  </NButton>
                 </div>
-              </aside>
+              </div>
             </div>
           </section>
 
           {error ? <NNotice tone="alert">{error}</NNotice> : null}
           {loading ? <Skeleton className="h-4 w-44" /> : null}
 
-          <section className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
+          <section className="dashboard-kpi-strip grid grid-cols-2 gap-3 lg:grid-cols-4">
             {topMetrics.map((metric) => (
               <NMetricTile key={metric.label} {...metric} />
             ))}
           </section>
 
-          <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <NSection
-              title="تابلوی انتشار"
-              description="ترکیب محتوا، سلامت صف و روند کوتاه مدت در یک سطح تصمیم گیری."
-              action={<NButton href="/content" variant="secondary" size="sm">کتابخانه</NButton>}
-              className="dashboard-section-quiet"
-            >
-              <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)] lg:items-stretch">
-                <div className="hidden sm:block">
-                  <NDonutChart items={pipelineDistribution} total={pipelineTotal} label="محتوا" />
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+            <div className="grid gap-4 lg:grid-cols-[5fr_4fr]">
+              <NSection title="نبض انتشار" description="انتشار بعدی، وضعیت job و مسیر کانال در یک نمای عملیاتی." action={<NButton href="/calendar" variant="secondary" size="sm">تقویم</NButton>} className="dashboard-spec-card dashboard-publish-pulse">
+                <div className="grid gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-app-muted">انتشار بعدی</p>
+                      <p className="dashboard-kpi-number mt-1 truncate text-2xl font-black text-app-text">{compactDateTime(nextPosts[0]?.scheduled_at)}</p>
+                      <p className="mt-1 line-clamp-1 text-xs leading-5 text-app-muted">{nextPosts[0]?.title || "برای فعال شدن نبض، یک پست زمان‌بندی کنید."}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <NStatusPill tone={nextPosts[0] ? "warning" : "neutral"}>{publishState}</NStatusPill>
+                      <NStatusPill tone={rubikaReady ? "success" : "warning"}>{publishMode}</NStatusPill>
+                    </div>
+                  </div>
+                  <div className="dashboard-publish-track">
+                    <span style={{ width: `${Math.min(100, Math.max(18, queueTotal * 18 + scheduledTodayCount * 12))}%` }} />
+                  </div>
+                  <div className="dashboard-content-preview grid gap-2 sm:grid-cols-3" aria-label="نمای زنده محتوا">
+                    {contentPreviewItems.length ? contentPreviewItems.map((item, index) => (
+                      <Link key={item.id} href={item.href} className="dashboard-preview-card app-interactive group rounded-xl p-3" style={{ animationDelay: `${index * 80}ms` }}>
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="min-w-0 truncate text-[10px] font-black text-app-primary">{item.channel}</span>
+                          <NStatusPill tone={item.tone}>{item.status}</NStatusPill>
+                        </span>
+                        <strong className="mt-2 block truncate text-sm font-black text-app-text">{item.title}</strong>
+                        <span className="mt-1 block line-clamp-2 text-[11px] leading-5 text-app-muted">{item.caption}</span>
+                      </Link>
+                    )) : <NEmptyState icon={FileText} title="محتوای نزدیک وجود ندارد" detail="اولین پیش‌نویس یا زمان‌بندی این قسمت را فعال می‌کند." />}
+                  </div>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <NMetricTile label="نرخ تکمیل" value={`${completionRate}%`} detail="منتشرشده نسبت به محتوای قابل اجرا" icon={TrendingUp} tone={completionRate > 65 ? "success" : "warning"} />
-                  <NMetricTile label="نرخ خطا" value={`${failureRate}%`} detail="خطا نسبت به صف فعال" icon={AlertTriangle} tone={failureRate ? "alert" : "success"} />
-                  <NMetricTile label="میانگین تلاش" value={averageAttempts} detail="تلاش انتشار برای هر محتوا" icon={Activity} tone="info" />
-                  <NMetricTile label="آخرین خروجی" value={latestPublishedPost?.title || "بدون خروجی"} detail={latestPublishedPost?.published_at ? formatDateTime(latestPublishedPost.published_at) : "بعد از اولین انتشار تکمیل می‌شود"} icon={CheckCircle2} tone="primary" />
-                </div>
-              </div>
-            </NSection>
+              </NSection>
 
-            <NSection
-              title="اولویت تصمیم"
-              description="مواردی که قبل از ادامه انتشار ارزش رسیدگی دارند."
-              action={<NButton href="/inbox" variant="secondary" size="sm">پیام ها</NButton>}
-              className="dashboard-section-quiet"
-            >
-              <div className="grid gap-2">
-                {!priorityAlerts.length && !workspaceReady ? (
-                  <>
-                    {!storeReady ? <NRow icon={Target} title="هویت فضای کاری کامل نیست" detail="نام، دسته‌بندی و لحن برند را کامل کنید." href="/store" tone="warning" /> : null}
-                    {!rubikaReady ? <NRow icon={PlugZap} title="کانال اصلی آماده نیست" detail="اتصال کانال‌ها قبل از انتشار جدی بررسی شود." href="/channels" tone="warning" /> : null}
-                  </>
-                ) : null}
-                {decisionItems.slice(0, 4).map((item) => (
-                  <NRow key={item.id} icon={item.icon} title={item.title} detail={item.detail} tone={item.tone} href={item.href} meta={<NStatusPill tone={item.tone}>{item.meta}</NStatusPill>} />
-                ))}
-                {!decisionItems.length && workspaceReady ? <NEmptyState icon={CheckCircle2} title="مورد فوری وجود ندارد" detail="صف، اتصال و آماده سازی در وضعیت قابل قبول هستند." /> : null}
-              </div>
-            </NSection>
+              <NSection title="نمای برنامه" description="هفت روز آینده با تراکم محتوا و اشاره کمپین." action={<NButton href="/calendar" variant="secondary" size="sm">Planner</NButton>} className="dashboard-spec-card dashboard-planner-snapshot">
+                <div className="grid grid-cols-7 gap-1.5">
+                  {plannerSnapshot.map((day) => (
+                    <Link key={day.key} href={day.href} className={`dashboard-day-cell app-interactive rounded-xl p-2 ${day.count ? "dashboard-day-cell-active" : ""}`}>
+                      <span className="block text-center text-[10px] font-black text-app-muted">{day.label}</span>
+                      <span className="dashboard-kpi-number mt-2 block text-center text-lg font-black text-app-text">{day.count}</span>
+                      <span className="mx-auto mt-2 block h-1.5 w-8 rounded-full bg-app-primary/20">
+                        <span className="block h-full rounded-full bg-app-primary" style={{ width: `${Math.min(100, Math.max(12, day.count * 30))}%` }} />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+                <p className="mt-3 line-clamp-1 text-xs font-bold text-app-muted">{activeCampaigns[0]?.name ? `کمپین فعال: ${activeCampaigns[0].name}` : "کمپین فعالی روی برنامه نزدیک دیده نمی‌شود."}</p>
+              </NSection>
+            </div>
+
+            <aside className="grid gap-4">
+              <NSection title="صف ریسک" description="اگر چیزی مسدود باشد، اول همینجا دیده می‌شود." action={<NButton href="/queue" variant="secondary" size="sm">بازیابی</NButton>} className="dashboard-spec-card dashboard-risk-card">
+                <div className="grid gap-2">
+                  {riskQueueItems.length ? riskQueueItems.slice(0, 4).map((item) => (
+                    <NRow key={item.id} icon={item.icon} title={item.title} detail={item.detail} tone={item.tone} href={item.href} meta={<NStatusPill tone={item.tone}>اقدام</NStatusPill>} />
+                  )) : <NEmptyState icon={CheckCircle2} title="ریسک فوری وجود ندارد" detail="صف، تایید و اتصال در وضعیت قابل قبول هستند." />}
+                </div>
+              </NSection>
+
+              <NSection title="تریاژ پیام‌ها" description="تعهد پاسخ، پیام‌های عقب‌افتاده و کارهای من." action={<NButton href="/inbox" variant="secondary" size="sm">Inbox</NButton>} className="dashboard-spec-card dashboard-inbox-card">
+                <div className="grid gap-2">
+                  <NRow icon={MessageSquare} title="پیام‌های نیازمند اقدام" detail={unreadAlerts ? `${unreadAlerts} اعلان تازه` : "اعلان خوانده‌نشده عملیاتی نیست"} tone={unreadAlerts ? "warning" : "success"} href="/inbox" meta={<NStatusPill tone={unreadAlerts ? "warning" : "success"}>{unreadAlerts}</NStatusPill>} />
+                  <NRow icon={Clock3} title="SLA امروز" detail={blockedWorkCount ? "اولویت با ریسک‌های فعال" : "زمان پاسخ در محدوده امن است"} tone={blockedWorkCount ? "warning" : "success"} href="/inbox" />
+                </div>
+              </NSection>
+            </aside>
           </section>
 
-          <section className="grid gap-3 lg:grid-cols-3">
-            <NSection title="برنامه نزدیک" description="پست ها یا کمپین هایی که همین حالا مهم اند." action={<NButton href="/calendar" variant="secondary" size="sm">تقویم</NButton>} className="dashboard-section-compact">
-              <div className="grid gap-2">
-                {timelineItems.length ? timelineItems.map((item) => (
-                  <NRow
-                    key={item.id}
-                    icon={item.icon}
-                    title={item.title}
-                    detail={item.detail}
-                    tone={item.tone}
-                    href={item.href}
-                    meta={<NStatusPill tone={item.tone}>{item.meta}</NStatusPill>}
-                  />
-                )) : <NEmptyState icon={CalendarClock} title="برنامه نزدیک نیست" detail="از تقویم یا ساخت پست، برنامه را کامل کنید." />}
+          <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+            <NSection title="حرکت کمپین‌ها" description="ریل‌های باریک کمپین، مرحله‌ها و تحویل بعدی." action={<NButton href="/campaigns" variant="secondary" size="sm">کمپین‌ها</NButton>} className="dashboard-spec-card dashboard-campaign-momentum">
+              <div className="grid gap-2 md:grid-cols-3">
+                {campaignMomentumItems.length ? campaignMomentumItems.slice(0, 3).map((campaign, index) => (
+                  <Link key={campaign.id} href={`/campaigns?campaignId=${campaign.id}`} className="dashboard-campaign-rail app-interactive rounded-xl p-3" style={{ "--campaign-accent": index === 0 ? "var(--n-chart-ready)" : index === 1 ? "var(--n-chart-scheduled)" : "var(--n-chart-draft)" } as CSSProperties}>
+                    <span className="block truncate text-sm font-black text-app-text">{campaign.name}</span>
+                    <span className="mt-1 block line-clamp-2 text-xs leading-5 text-app-muted">{campaign.goal || campaign.notes || "تحویل بعدی هنوز تعریف نشده است."}</span>
+                    <span className="mt-3 flex items-center justify-between text-[10px] font-black text-app-muted">
+                    <span>{campaign.status || "campaign"}</span>
+                      <ArrowUpLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                    </span>
+                  </Link>
+                )) : <NEmptyState icon={Megaphone} title="کمپین فعالی نیست" detail="برای دیدن ریل کمپین، یک کمپین تازه بسازید." />}
               </div>
             </NSection>
 
-            <NSection title="سلامت کانال" description="آمادگی انتشار چندکاناله." action={<NButton href="/channels" variant="secondary" size="sm">مدیریت</NButton>} className="dashboard-section-compact">
-              <div className="grid gap-2">
-                {channelItems.map((channel) => (
-                  <NRow
-                    key={channel.label}
-                    icon={Network}
-                    title={channel.label}
-                    detail={channel.detail}
-                    tone={channel.healthy ? "success" : "warning"}
-                    href="/channels"
-                    meta={<NStatusPill tone={channel.healthy ? "success" : "warning"}>{channel.value}</NStatusPill>}
-                  />
-                ))}
-              </div>
-            </NSection>
-
-            <NSection title="بینش سریع" description="سیگنال های کوتاه برای ادامه کار." action={<NButton href="/analytics" variant="secondary" size="sm">گزارش ها</NButton>} className="dashboard-section-compact">
-              <div className="grid gap-2">
-                <NRow icon={BarChart3} title="کارایی انتشار" detail={`${completionRate}% تکمیل و ${failureRate}% خطا در داده فعلی`} tone={failureRate ? "warning" : "success"} href="/analytics" />
-                <NRow icon={Clock3} title="برنامه نزدیک" detail={nextPosts[0]?.scheduled_at ? compactDateTime(nextPosts[0].scheduled_at) : "زمان‌بندی بعدی هنوز مشخص نیست"} tone="warning" href="/calendar" />
-                <NRow icon={FileText} title="محتوای خام" detail={`${draftCount} پیش‌نویس و ${manualReadyCount} آماده دستی`} tone="info" href="/content" />
+            <NSection title="بینش امروز" description="یک پاسخ کوتاه، نه انبار آمار." action={<NButton href={reportInsight.href} variant="secondary" size="sm">گزارش</NButton>} className="dashboard-spec-card dashboard-insight-card">
+              <div className="grid gap-3">
+                <div className="flex items-start gap-3">
+                  <span className="nahrino-token-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
+                    <BarChart3 className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <h2 className="text-base font-black text-app-text">{reportInsight.title}</h2>
+                    <p className="mt-1 text-sm leading-7 text-app-muted">{reportInsight.detail}</p>
+                  </div>
+                </div>
+                <NTrendBars values={weeklyActivity} labels={weeklyLabels} />
+                <NStatusPill tone={reportInsight.tone}>{completionRate}% تکمیل · {failureRate}% خطا</NStatusPill>
               </div>
             </NSection>
           </section>

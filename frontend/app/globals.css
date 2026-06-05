@@ -842,6 +842,156 @@ a {
   .operation-stage-orb-live {
     animation: operation-orb-live 2.2s ease-in-out infinite;
   }
+
+  .app-workspace-bg {
+    background-color: rgb(var(--n-color-canvas));
+    background-image:
+      linear-gradient(180deg, rgb(var(--n-color-canvas)) 0%, rgb(var(--n-color-canvas-soft)) 100%),
+      repeating-radial-gradient(circle at 0 0, rgb(var(--n-color-ink) / 0.018) 0 1px, transparent 1px 4px);
+  }
+
+  .nahrino-shell {
+    background:
+      linear-gradient(180deg, rgb(var(--n-color-frost) / 0.62), rgb(var(--n-color-canvas) / 0.92)),
+      repeating-radial-gradient(circle at 0 0, rgb(var(--n-color-ink) / 0.015) 0 1px, transparent 1px 4px);
+  }
+
+  .nahrino-sidebar {
+    border-inline-start: 1px solid rgb(var(--n-color-frost-border) / 0.62);
+    background: rgb(var(--n-color-frost) / 0.58);
+    box-shadow: inset -1px 0 0 rgb(var(--n-color-ink) / 0.06), 0 12px 30px rgb(var(--n-color-ink) / 0.04);
+    backdrop-filter: blur(14px) saturate(135%);
+  }
+
+  .nahrino-topbar {
+    background: rgb(var(--n-color-frost) / 0.62);
+    border-bottom: 1px solid rgb(var(--n-color-ink) / 0.06);
+    box-shadow: 0 12px 30px rgb(var(--n-color-ink) / 0.04);
+    backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  .dashboard-spec-page {
+    max-width: 1440px;
+    gap: 1rem;
+  }
+
+  .dashboard-command-brief,
+  .dashboard-spec-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgb(var(--n-color-border));
+    background: rgb(var(--n-color-surface));
+    box-shadow: var(--n-shadow-soft);
+    animation: dashboard-panel-rise var(--n-motion-section) var(--n-ease-standard) both;
+  }
+
+  .dashboard-command-brief {
+    border-radius: 20px;
+    padding: 18px;
+  }
+
+  .dashboard-command-brief::before {
+    position: absolute;
+    inset-inline: 18px;
+    top: 0;
+    height: 3px;
+    border-radius: 0 0 999px 999px;
+    background: rgb(var(--n-color-primary));
+    content: "";
+  }
+
+  .dashboard-next-action {
+    border: 1px solid rgb(var(--n-color-primary) / 0.18);
+    background: rgb(var(--n-color-primary-soft) / 0.72);
+  }
+
+  .dashboard-spec-card {
+    border-radius: 18px;
+  }
+
+  .dashboard-spec-card.nahrino-section-card {
+    background: rgb(var(--n-color-surface));
+    box-shadow: var(--n-shadow-soft);
+  }
+
+  .dashboard-kpi-strip .nahrino-metric-card,
+  .nahrino-metric-card {
+    background: rgb(var(--n-color-surface));
+    backdrop-filter: none;
+  }
+
+  .nahrino-metric-card::after {
+    display: none;
+  }
+
+  .dashboard-kpi-number {
+    font-family: Estedad, Vazirmatn, Tahoma, Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dashboard-publish-track {
+    height: 0.5rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgb(var(--n-color-canvas-soft));
+    box-shadow: inset 0 0 0 1px rgb(var(--n-color-border));
+  }
+
+  .dashboard-publish-track > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgb(var(--n-color-primary)), rgb(var(--n-chart-ready)));
+    transition: width var(--n-motion-emphasized) var(--n-ease-standard);
+  }
+
+  .dashboard-preview-card {
+    border: 1px solid rgb(var(--n-color-border));
+    background: rgb(var(--n-color-surface-muted));
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .dashboard-preview-card::before {
+    inset-inline: 0.75rem;
+    background: rgb(var(--n-color-primary) / 0.42);
+  }
+
+  .dashboard-day-cell,
+  .dashboard-campaign-rail {
+    position: relative;
+    border: 1px solid rgb(var(--n-color-border));
+    background: rgb(var(--n-color-surface));
+    box-shadow: var(--n-shadow-hairline);
+  }
+
+  .dashboard-day-cell-active {
+    border-color: rgb(var(--n-color-primary) / 0.28);
+    background: rgb(var(--n-color-primary-soft) / 0.5);
+  }
+
+  .dashboard-campaign-rail::before {
+    position: absolute;
+    inset-block: 0.75rem;
+    inset-inline-start: 0.6rem;
+    width: 3px;
+    border-radius: 999px;
+    background: rgb(var(--campaign-accent, var(--n-color-primary)));
+    content: "";
+  }
+
+  .dashboard-campaign-rail > * {
+    padding-inline-start: 0.65rem;
+  }
+
+  .dashboard-risk-card .nahrino-data-row::before {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+
+  .dashboard-insight-card .nahrino-trend-bar {
+    background: linear-gradient(180deg, rgb(var(--n-color-primary)), rgb(var(--n-color-primary-strong)));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
