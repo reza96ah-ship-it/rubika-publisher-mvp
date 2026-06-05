@@ -1516,16 +1516,48 @@ a {
     border-radius: var(--n-radius-xs) !important;
   }
 
+  .calendar-pro-page {
+    position: relative;
+    overflow: clip;
+  }
+
+  .calendar-pro-page::before,
+  .calendar-pro-page::after {
+    position: fixed;
+    z-index: -1;
+    pointer-events: none;
+    content: "";
+  }
+
+  .calendar-pro-page::before {
+    inset-block-start: 7rem;
+    inset-inline-end: 8%;
+    width: min(44vw, 34rem);
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background:
+      radial-gradient(circle at 35% 35%, rgb(var(--n-color-primary) / 0.16), transparent 58%),
+      radial-gradient(circle at 70% 72%, rgb(var(--n-color-success) / 0.11), transparent 54%);
+    filter: blur(26px);
+    opacity: 0.78;
+    animation: calendar-ambient-float 14s var(--n-ease-standard) infinite alternate;
+  }
+
+  .calendar-pro-page::after {
+    inset-block-start: 22rem;
+    inset-inline-start: 4%;
+    width: min(34vw, 25rem);
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgb(var(--n-chart-ready) / 0.11), transparent 62%);
+    filter: blur(30px);
+    opacity: 0.62;
+    animation: calendar-ambient-float 16s var(--n-ease-standard) infinite alternate-reverse;
+  }
+
   .calendar-pro-workspace {
     display: grid;
     gap: 0.85rem;
-  }
-
-  @media (min-width: 1280px) {
-    .calendar-pro-workspace {
-      grid-template-columns: minmax(0, 1fr) 16rem;
-      align-items: start;
-    }
   }
 
   .calendar-pro-planner {
@@ -1553,22 +1585,63 @@ a {
   }
 
   .calendar-action-rail {
+    position: relative;
+    order: -1;
+    overflow: hidden;
     min-width: 0;
     border: 1px solid var(--n-glass-border);
     border-radius: var(--n-radius-sm);
     background:
-      linear-gradient(145deg, rgb(var(--n-color-frost) / 0.72), rgb(var(--n-color-surface) / 0.78)),
-      radial-gradient(circle at 18% 0%, rgb(var(--n-color-primary) / 0.055), transparent 15rem);
-    padding: 0.8rem;
-    box-shadow: var(--n-shadow-hairline), 0 16px 34px rgb(var(--n-color-ink) / 0.045);
-    backdrop-filter: blur(18px) saturate(148%);
+      linear-gradient(135deg, rgb(var(--n-color-frost) / 0.76), rgb(var(--n-color-surface) / 0.68)),
+      radial-gradient(circle at 92% 0%, rgb(var(--n-color-primary) / 0.12), transparent 17rem),
+      radial-gradient(circle at 4% 100%, rgb(var(--n-color-success) / 0.08), transparent 16rem);
+    padding: 0.82rem;
+    box-shadow: var(--n-shadow-hairline), 0 20px 48px rgb(var(--n-color-ink) / 0.06), inset 0 1px 0 rgb(255 255 255 / 0.62);
+    backdrop-filter: blur(22px) saturate(154%);
+    transition: border-color var(--n-motion-base) var(--n-ease-standard), box-shadow var(--n-motion-base) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard);
   }
 
-  @media (min-width: 1280px) {
-    .calendar-action-rail {
-      position: sticky;
-      top: 1rem;
-    }
+  .calendar-action-rail::before {
+    position: absolute;
+    inset-block: 0.5rem;
+    inset-inline-start: 0.5rem;
+    width: 0.22rem;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgb(var(--n-color-primary)), rgb(var(--n-color-success)));
+    box-shadow: 0 0 26px rgb(var(--n-color-primary) / 0.28);
+    content: "";
+  }
+
+  .calendar-action-rail::after {
+    position: absolute;
+    inset-block-start: -45%;
+    inset-inline-start: -22%;
+    width: 38%;
+    height: 190%;
+    transform: rotate(18deg);
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.26), transparent);
+    content: "";
+    opacity: 0.42;
+    animation: calendar-command-sheen 7s var(--n-ease-standard) infinite;
+  }
+
+  .calendar-action-rail:hover {
+    border-color: rgb(var(--n-color-primary) / 0.18);
+    box-shadow: var(--n-shadow-hairline), 0 26px 58px rgb(var(--n-color-primary) / 0.075), inset 0 1px 0 rgb(255 255 255 / 0.72);
+    transform: translateY(-1px);
+  }
+
+  .calendar-action-rail > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .calendar-action-rail-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.85rem;
+    padding-inline-start: 0.8rem;
   }
 
   .calendar-action-rail-head h2 {
@@ -1587,16 +1660,37 @@ a {
     line-height: 1.85;
   }
 
+  .calendar-action-rail-context {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4rem;
+  }
+
   .calendar-action-rail-stack {
-    display: grid;
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.45rem;
-    margin-top: 0.75rem;
+    margin-top: 0.85rem;
+    padding-inline-start: 0.8rem;
+  }
+
+  .calendar-action-rail-stack :is(a, button) {
+    min-height: 2.15rem;
+    transition: transform var(--n-motion-base) var(--n-ease-standard), box-shadow var(--n-motion-base) var(--n-ease-standard), border-color var(--n-motion-base) var(--n-ease-standard);
+  }
+
+  .calendar-action-rail-stack :is(a, button):hover {
+    transform: translateY(-1px);
+  }
+
+  .calendar-action-primary {
+    box-shadow: 0 12px 26px rgb(var(--n-color-primary) / 0.16);
   }
 
   .calendar-action-rail-status {
-    margin-top: 0.75rem;
-    border-top: 1px solid rgb(var(--n-color-border));
-    padding-top: 0.75rem;
+    margin-top: 0.7rem;
+    padding-inline-start: 0.8rem;
   }
 
   .calendar-action-rail-alert,
@@ -1621,6 +1715,24 @@ a {
     border: 1px solid rgb(var(--n-color-success) / 0.16);
     background: rgb(var(--n-color-success) / 0.075);
     color: rgb(var(--n-color-success));
+  }
+
+  @keyframes calendar-command-sheen {
+    0%, 42% {
+      transform: translateX(0) rotate(18deg);
+    }
+    68%, 100% {
+      transform: translateX(360%) rotate(18deg);
+    }
+  }
+
+  @keyframes calendar-ambient-float {
+    from {
+      transform: translate3d(0, 0, 0) scale(0.98);
+    }
+    to {
+      transform: translate3d(1.4rem, -1rem, 0) scale(1.04);
+    }
   }
 
   .calendar-week-header {
@@ -2479,9 +2591,48 @@ a {
     .calendar-toolbar-status-chips,
     .calendar-toolbar-campaign-filter,
     .calendar-toolbar-density-toggle,
-    .calendar-toolbar-status-filter-row,
-    .calendar-action-rail {
+    .calendar-toolbar-status-filter-row {
       display: none;
+    }
+
+    .calendar-action-rail {
+      order: 3;
+      margin: 0.5rem;
+      padding: 0.65rem;
+      border-radius: var(--n-radius-xs);
+    }
+
+    .calendar-action-rail::after {
+      display: none;
+    }
+
+    .calendar-action-rail-head {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.45rem;
+      padding-inline-start: 0.65rem;
+    }
+
+    .calendar-action-rail-head p:not(.app-section-kicker) {
+      display: none;
+    }
+
+    .calendar-action-rail-context {
+      justify-content: flex-start;
+    }
+
+    .calendar-action-rail-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      padding-inline-start: 0.65rem;
+    }
+
+    .calendar-action-rail-stack :is(a, button) {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .calendar-action-route {
+      display: none !important;
     }
 
     .calendar-toolbar-filter-row {

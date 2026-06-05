@@ -1002,27 +1002,35 @@ export default function CalendarPage() {
 
             <aside className="calendar-action-rail" aria-label="عملیات برنامه‌ریز">
               <div className="calendar-action-rail-head">
-                <p className="app-section-kicker text-[10px] font-black">عملیات</p>
-                <h2>کنترل انتشار</h2>
-                <p>جزئیات روز در نمای روز است؛ این بخش فقط مسیرهای سریع را نگه می‌دارد.</p>
+                <div className="min-w-0">
+                  <p className="app-section-kicker text-[10px] font-black">مرکز کنترل</p>
+                  <h2>کنترل انتشار</h2>
+                  <p>{selectedDayLabel} · {selectedDayPosts.length ? `${selectedDayPosts.length} پست برنامه‌ریزی‌شده` : "روز آزاد برای ساخت برنامه"}</p>
+                </div>
+                <div className="calendar-action-rail-context">
+                  <StatusToken tone={selectedDayInsights.conflicts.length || selectedDayInsights.failed.length || selectedDayInsights.rubikaBlocked ? "alert" : selectedDayInsights.missingMedia.length ? "warning" : "success"}>
+                    {selectedDayInsights.conflicts.length || selectedDayInsights.failed.length || selectedDayInsights.rubikaBlocked ? "نیازمند رسیدگی" : selectedDayInsights.missingMedia.length ? "قابل بهبود" : "آماده انتشار"}
+                  </StatusToken>
+                  <StatusToken tone="neutral">{visibleRangeCount} پست در بازه</StatusToken>
+                </div>
               </div>
               <div className="calendar-action-rail-stack">
-                <Button type="button" onClick={() => openQuickCreate(selectedDayValue)} className="w-full" size="sm">
+                <Button type="button" onClick={() => openQuickCreate(selectedDayValue)} className="calendar-action-primary" size="sm">
                   <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
                   پست جدید برای این روز
                 </Button>
                 {selectedPost ? (
                   <>
-                    <Button type="button" variant="secondary" className="w-full" size="sm" onClick={() => setQuickPreviewPostId(selectedPost.id)}>
+                    <Button type="button" variant="secondary" size="sm" onClick={() => setQuickPreviewPostId(selectedPost.id)}>
                       پیش‌نمایش پست انتخابی
                     </Button>
-                    <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary" className="w-full" size="sm">
+                    <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary" size="sm">
                       ویرایش پست انتخابی
                     </Button>
                   </>
                 ) : null}
-                <Button href="/queue" variant="ghost" className="w-full" size="sm">صف انتشار</Button>
-                <Button href="/campaigns" variant="ghost" className="w-full" size="sm">مدیر کمپین</Button>
+                <Button href="/queue" variant="ghost" className="calendar-action-route" size="sm">صف انتشار</Button>
+                <Button href="/campaigns" variant="ghost" className="calendar-action-route" size="sm">مدیر کمپین</Button>
               </div>
               <div className="calendar-action-rail-status">
                 {attentionPosts.length ? (
