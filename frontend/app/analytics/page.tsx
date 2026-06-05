@@ -6,10 +6,11 @@ import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { WorkspaceAvatar } from "../../components/brand-mark";
 import { LoadingPanel } from "../../components/loading-skeleton";
+import { NMetricTile, NNotice, NPage, NPageHeader, NSavedViewToolbar, NStatusPill } from "../../components/nahrino-ui";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
 import { DataRow, DataTable } from "../../components/data-view";
-import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel, WorkspaceToolbar } from "../../components/workspace-ui";
+import { DetailGrid, EmptyState, StatusToken, WorkspacePanel } from "../../components/workspace-ui";
 import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { useMediaPreviewUrl } from "../../lib/media-preview";
 import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
@@ -356,8 +357,8 @@ export default function AnalyticsPage() {
 
   const maxTrendTotal = Math.max(1, ...trend.map((item) => item.total));
   const trendTickInterval = timeRange === "7d" ? 1 : timeRange === "30d" ? 5 : timeRange === "90d" ? 15 : Math.max(1, Math.ceil(trend.length / 7));
-  const trendColumnWidth = timeRange === "7d" ? 104 : 100;
-  const trendMinWidth = timeRange === "7d" ? "760px" : `${Math.max(860, trend.length * trendColumnWidth)}px`;
+  const trendColumnWidth = timeRange === "7d" ? 78 : timeRange === "30d" ? 56 : 44;
+  const trendMinWidth = timeRange === "7d" ? "560px" : `${Math.max(680, trend.length * trendColumnWidth)}px`;
   function showTrendTick(index: number) {
     return index === 0 || index === trend.length - 1 || index % trendTickInterval === 0;
   }
@@ -459,10 +460,10 @@ export default function AnalyticsPage() {
       });
   }, [campaigns, postFilter, postSearch, postSort, scopedPosts]);
   const dashboardMetrics = [
-    { label: "منتشرشده", value: publishedCount, detail: "خروجی موفق در بازه", icon: CheckCircle2, tone: "text-emerald-700", delta: deltaPercent(publishedCount, previousPublishedCount), positiveIsGood: true },
-    { label: "موفقیت ارسال", value: `${attemptSummary.successRate}%`, detail: `${attemptSummary.success} از ${attemptSummary.completed} تلاش کامل`, icon: Target, tone: attemptSummary.successRate >= 80 ? "text-emerald-700" : "text-amber-700", delta: successRateDelta, positiveIsGood: true },
-    { label: "نیازمند توجه", value: failedCount, detail: "پست یا تلاش ناموفق", icon: AlertTriangle, tone: failedCount ? "text-rose-700" : "text-slate-500", delta: deltaPercent(failedCount, previousFailedCount), positiveIsGood: false },
-    { label: "در جریان", value: queuedCount, detail: "آماده، زمان‌بندی یا ارسال", icon: CalendarClock, tone: "text-app-primary", delta: deltaPercent(queuedCount, previousQueuedCount), positiveIsGood: true }
+    { label: "منتشرشده", value: publishedCount, detail: "خروجی موفق در بازه", icon: CheckCircle2, tone: "text-emerald-700", tileTone: "success" as const, delta: deltaPercent(publishedCount, previousPublishedCount), positiveIsGood: true, href: "/content?status=published" },
+    { label: "موفقیت ارسال", value: `${attemptSummary.successRate}%`, detail: `${attemptSummary.success} از ${attemptSummary.completed} تلاش کامل`, icon: Target, tone: attemptSummary.successRate >= 80 ? "text-emerald-700" : "text-amber-700", tileTone: attemptSummary.successRate >= 80 ? "success" as const : "warning" as const, delta: successRateDelta, positiveIsGood: true, href: "/logs" },
+    { label: "نیازمند توجه", value: failedCount, detail: "پست یا تلاش ناموفق", icon: AlertTriangle, tone: failedCount ? "text-rose-700" : "text-slate-500", tileTone: failedCount ? "alert" as const : "neutral" as const, delta: deltaPercent(failedCount, previousFailedCount), positiveIsGood: false, href: "/logs" },
+    { label: "در جریان", value: queuedCount, detail: "آماده، زمان‌بندی یا ارسال", icon: CalendarClock, tone: "text-app-primary", tileTone: "primary" as const, delta: deltaPercent(queuedCount, previousQueuedCount), positiveIsGood: true, href: "/queue" }
   ];
   const insightCards = [
     {
@@ -503,141 +504,104 @@ export default function AnalyticsPage() {
   return (
     <AuthGate>
       <AppShell>
-        <WorkspacePage>
-          <section className="app-studio-panel overflow-hidden rounded-lg border-t-4" style={{ borderTopColor: brandColor }}>
-            <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_320px]">
-              <div className="px-3 py-3 lg:px-5">
-                <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-start">
-                  <div className="min-w-0">
-                    <div className="mb-3 flex min-w-0 items-center gap-3">
-                      <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandAvatarUrl} />
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-black text-app-muted">گزارش فعال برای</p>
-                        <p className="mt-1 truncate text-base font-black text-app-text">{store?.name || "پروفایل فروشگاه"}</p>
-                        <p className="mt-0.5 truncate text-xs text-app-muted">{store?.category || store?.brand_voice || "برند workspace هنوز کامل نشده است."}</p>
-                      </div>
+        <NPage className="analytics-pro-page pb-6">
+          <NPageHeader
+            eyebrow="مرکز تحلیل چندکاناله"
+            title="تحلیل عملکرد"
+            description="نمای تصمیم‌ساز برای روند انتشار، سلامت کمپین‌ها، آمادگی رسانه‌ای و پست‌هایی که نیاز به اقدام دارند."
+            meta={(
+              <>
+                <NStatusPill tone={attemptSummary.failed ? "alert" : "success"}>{attemptSummary.failed ? `${attemptSummary.failed} تلاش ناموفق` : "ارسال پایدار"}</NStatusPill>
+                <NStatusPill tone="primary">{scopedPosts.length} پست مرتبط</NStatusPill>
+              </>
+            )}
+            action={<Button href="/logs" variant="secondary" size="sm">سلامت انتشار</Button>}
+            className="analytics-pro-header"
+          />
+
+          <section className="analytics-command-strip grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="grid gap-2 md:grid-cols-3">
+              {insightCards.map((insight) => {
+                const Icon = insight.icon;
+                return (
+                  <div key={insight.title} className="analytics-insight-card app-row rounded-lg p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className={`analytics-insight-icon flex h-9 w-9 items-center justify-center rounded-md ${insight.tone}`}>
+                        <Icon className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      <NStatusPill tone="neutral" className="text-[10px]">{insight.token}</NStatusPill>
                     </div>
-                    <p className="text-[10px] font-black text-app-primary">مرکز گزارش‌ها</p>
-                    <h1 className="mt-1 text-xl font-black text-app-text sm:text-2xl">گزارش عملکرد محتوا</h1>
-                    <p className="mt-1.5 max-w-3xl text-xs leading-5 text-app-muted sm:text-sm sm:leading-6">روند ارسال، سلامت کمپین‌ها، پوشش رسانه‌ای و پست‌های اثرگذار را در یک نمای تصمیم‌ساز بررسی کنید.</p>
+                    <p className="mt-3 text-[11px] font-black text-app-muted">{insight.title}</p>
+                    <p className={`mt-1 truncate text-base font-black ${insight.tone}`}>{insight.value}</p>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{insight.detail}</p>
                   </div>
-                  <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    <StatusToken tone={attemptSummary.failed ? "alert" : "success"}>{attemptSummary.failed ? `${attemptSummary.failed} تلاش ناموفق` : "ارسال پایدار"}</StatusToken>
-                    <StatusToken tone="primary">{store?.name || "Workspace"}</StatusToken>
-                    <StatusToken tone="neutral">{scopedPosts.length} پست مرتبط</StatusToken>
-                    <Button href="/logs" variant="secondary" size="sm">سلامت انتشار</Button>
-                  </div>
-                </div>
-                <div className="mt-3 grid gap-2 md:grid-cols-3">
-                  {insightCards.map((insight) => {
-                    const Icon = insight.icon;
-                    return (
-                      <div key={insight.title} className="app-row rounded-md bg-app-surfaceMuted/85 p-3 shadow-hairline">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className={`flex h-8 w-8 items-center justify-center rounded-md bg-white ${insight.tone}`}>
-                            <Icon className="h-4 w-4" aria-hidden="true" />
-                          </span>
-                          <StatusToken tone="neutral" className="text-[10px]">{insight.token}</StatusToken>
-                        </div>
-                        <p className="mt-3 text-[11px] font-black text-app-muted">{insight.title}</p>
-                        <p className={`mt-1 truncate text-base font-black ${insight.tone}`}>{insight.value}</p>
-                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{insight.detail}</p>
-                      </div>
-                    );
-                  })}
+                );
+              })}
+            </div>
+            <div className="analytics-next-signal rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <span className="analytics-live-orb flex h-9 w-9 items-center justify-center rounded-md text-app-primary">
+                  <Sparkles className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-app-text">سیگنال اجرایی امروز</p>
+                  <p className="mt-1 text-[11px] text-app-muted">اولویت بعدی بر اساس داده همین بازه</p>
                 </div>
               </div>
-              <div className="dashboard-pulse hidden border-t border-app-border p-3 lg:block xl:border-r xl:border-t-0">
-                <div className="rounded-lg bg-white/86 p-3 shadow-hairline">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-md bg-teal-50 text-app-primary">
-                      <Sparkles className="h-4 w-4" aria-hidden="true" />
-                    </span>
-                    <div>
-                      <p className="text-xs font-black text-app-text">سیگنال اجرایی امروز</p>
-                      <p className="mt-1 text-[11px] text-app-muted">اولویت بعدی بر اساس داده همین بازه</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 rounded-md border border-app-border bg-app-surfaceMuted p-3">
-                    <p className="text-sm font-black text-app-text">
-                      {failedCount ? "ابتدا خطاهای انتشار را پاک کنید" : visualReadinessRate < 60 ? "پوشش تصویری پست‌ها را کامل‌تر کنید" : queuedCount ? "صف زمان‌بندی را برای ارسال بعدی بررسی کنید" : "عملکرد بازه فعلی پایدار است"}
-                    </p>
-                    <p className="mt-2 text-xs leading-5 text-app-muted">
-                      {failedCount ? `${failedCount} مورد نیازمند توجه در پست‌ها یا تلاش‌ها دیده می‌شود.` : visualReadinessRate < 60 ? "پست‌های دارای تصویر در مقایسه با کل محتوا هنوز کم هستند." : queuedCount ? `${queuedCount} پست آماده یا زمان‌بندی‌شده در جریان است.` : "برای رشد بهتر، کمپین بعدی را با رسانه و زمان پیشنهادی بسازید."}
-                    </p>
-                  </div>
-                </div>
+              <div className="mt-3 rounded-md border border-app-border bg-app-surface/82 p-3">
+                <p className="text-sm font-black text-app-text">
+                  {failedCount ? "ابتدا خطاهای انتشار را پاک کنید" : visualReadinessRate < 60 ? "پوشش تصویری پست‌ها را کامل‌تر کنید" : queuedCount ? "صف زمان‌بندی را برای ارسال بعدی بررسی کنید" : "عملکرد بازه فعلی پایدار است"}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-app-muted">
+                  {failedCount ? `${failedCount} مورد نیازمند توجه در پست‌ها یا تلاش‌ها دیده می‌شود.` : visualReadinessRate < 60 ? "پست‌های دارای تصویر در مقایسه با کل محتوا هنوز کم هستند." : queuedCount ? `${queuedCount} پست آماده یا زمان‌بندی‌شده در جریان است.` : "برای رشد بهتر، کمپین بعدی را با رسانه و زمان پیشنهادی بسازید."}
+                </p>
               </div>
             </div>
           </section>
 
-          <WorkspaceToolbar
-            meta={(
-              <>
-                <StatusToken tone="neutral">{scopedAttempts.length} تلاش در بازه</StatusToken>
-                <StatusToken tone="neutral">{scopedPosts.length} پست مرتبط</StatusToken>
-                {campaignFilter !== "all" ? <StatusToken tone="primary">فیلتر کمپین فعال</StatusToken> : null}
-                {hasComparison ? <StatusToken tone="info">مقایسه با بازه قبلی فعال</StatusToken> : <StatusToken tone="neutral">بدون مقایسه تاریخی</StatusToken>}
-              </>
-            )}
-          >
-            <div className="flex flex-wrap gap-2">
-              {rangeOptions.map((option) => {
-                const active = timeRange === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setTimeRange(option.value)}
-                    className={`rounded px-3 py-1.5 text-xs font-bold transition ${
-                      active ? "bg-app-primary text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-              <label className="flex min-w-[190px] items-center gap-2 rounded-md border border-app-border bg-white px-3 py-1.5 text-xs font-bold text-app-muted shadow-hairline">
+          <NSavedViewToolbar
+            views={rangeOptions.map((option) => ({ label: option.label, value: option.value }))}
+            activeView={timeRange}
+            onViewChange={(value) => setTimeRange(value as TimeRange)}
+            filters={(
+              <label className="flex min-h-9 min-w-[190px] items-center gap-2 rounded-md border border-app-border bg-white px-3 text-xs font-bold text-app-muted shadow-hairline">
                 <Layers3 className="h-4 w-4 shrink-0" aria-hidden="true" />
                 <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
                   <option value="all">همه کمپین‌ها</option>
                   {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
                 </select>
               </label>
-            </div>
-          </WorkspaceToolbar>
+            )}
+            meta={(
+              <>
+                <NStatusPill tone="neutral">{scopedAttempts.length} تلاش</NStatusPill>
+                {campaignFilter !== "all" ? <NStatusPill tone="primary">فیلتر کمپین</NStatusPill> : null}
+                {hasComparison ? <NStatusPill tone="info">مقایسه فعال</NStatusPill> : <NStatusPill tone="neutral">بدون مقایسه</NStatusPill>}
+              </>
+            )}
+          />
 
-          {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
+          {error ? <NNotice tone="alert" title="نیاز به بررسی">{error}</NNotice> : null}
 
-          <section className="app-studio-surface grid overflow-hidden rounded-lg sm:grid-cols-2 xl:grid-cols-4">
+          <section className="analytics-kpi-grid grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             {dashboardMetrics.map((metric) => {
-              const Icon = metric.icon;
               const deltaIsGood = metric.delta === 0 ? null : metric.positiveIsGood === false ? metric.delta < 0 : metric.delta > 0;
               return (
-                <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 sm:border-l sm:last:border-l-0 xl:border-b-0">
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${metric.tone}`}>
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0">
-                    <div className="flex items-baseline gap-2">
-                      <p className={`text-lg font-black ${metric.tone}`}>{metric.value}</p>
-                      <p className="truncate text-xs font-bold text-app-text">{metric.label}</p>
-                    </div>
-                    <p className="mt-1 truncate text-[11px] text-app-muted">{metric.detail}</p>
-                    {hasComparison && metric.delta !== null ? (
-                      <p className={`mt-2 inline-flex items-center gap-1 text-[11px] font-black ${deltaIsGood === true ? "text-emerald-700" : deltaIsGood === false ? "text-rose-700" : "text-slate-500"}`}>
-                        {metric.delta > 0 ? <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" /> : metric.delta < 0 ? <TrendingDown className="h-3.5 w-3.5" aria-hidden="true" /> : null}
-                        {metric.delta > 0 ? "+" : ""}{metric.delta}% نسبت به بازه قبل
-                      </p>
-                    ) : null}
-                  </div>
+                <div key={metric.label} className="analytics-kpi-wrap">
+                  <NMetricTile label={metric.label} value={metric.value} detail={metric.detail} icon={metric.icon} tone={metric.tileTone} href={metric.href} />
+                  {hasComparison && metric.delta !== null ? (
+                    <p className={`analytics-kpi-delta mt-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-black ${deltaIsGood === true ? "text-emerald-700" : deltaIsGood === false ? "text-rose-700" : "text-slate-500"}`}>
+                      {metric.delta > 0 ? <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" /> : metric.delta < 0 ? <TrendingDown className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+                      {metric.delta > 0 ? "+" : ""}{metric.delta}% نسبت به بازه قبل
+                    </p>
+                  ) : null}
                 </div>
               );
             })}
           </section>
 
-          <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="min-w-0 space-y-3 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
+          <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="min-w-0 space-y-3">
               <WorkspacePanel
                 title="روند تلاش‌های انتشار"
                 description="مقایسه تلاش‌های موفق، ناموفق و در حال اجرا در بازه انتخاب‌شده."
@@ -822,7 +786,7 @@ export default function AnalyticsPage() {
               </WorkspacePanel>
             </div>
 
-            <aside className="hidden space-y-3 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
+            <aside className="grid gap-3 lg:grid-cols-2 xl:block xl:space-y-3 xl:self-start">
               <WorkspacePanel title="هویت گزارش" description="برندی که این تحلیل با آن آماده می‌شود." bodyClassName="p-4">
                 <div className="flex items-center gap-3">
                   <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandAvatarUrl} />
@@ -1059,7 +1023,7 @@ export default function AnalyticsPage() {
               </WorkspacePanel>
             </aside>
           </section>
-        </WorkspacePage>
+        </NPage>
       </AppShell>
     </AuthGate>
   );
