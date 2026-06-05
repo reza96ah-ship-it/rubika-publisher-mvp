@@ -3125,6 +3125,121 @@ a {
     margin-top: 0.8rem;
   }
 
+  .campaigns-pro-page {
+    position: relative;
+    overflow: clip;
+  }
+
+  .campaigns-pro-page::before {
+    position: fixed;
+    inset-block-start: 8rem;
+    inset-inline-end: 4%;
+    z-index: -1;
+    width: min(42vw, 32rem);
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background:
+      radial-gradient(circle at 36% 32%, rgb(var(--n-color-primary) / 0.13), transparent 58%),
+      radial-gradient(circle at 72% 72%, rgb(var(--n-color-success) / 0.1), transparent 54%);
+    filter: blur(28px);
+    opacity: 0.76;
+    content: "";
+    pointer-events: none;
+  }
+
+  .campaign-command-strip {
+    --campaign-accent: rgb(var(--n-color-primary));
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.9rem;
+    overflow: hidden;
+    border: 1px solid var(--n-glass-border);
+    border-radius: var(--n-radius-sm);
+    background:
+      linear-gradient(135deg, rgb(var(--n-color-frost) / 0.78), rgb(var(--n-color-surface) / 0.7)),
+      radial-gradient(circle at 94% 0%, color-mix(in srgb, var(--campaign-accent) 20%, transparent), transparent 18rem),
+      radial-gradient(circle at 2% 100%, rgb(var(--n-color-primary) / 0.07), transparent 16rem);
+    padding: 0.9rem;
+    box-shadow: var(--n-shadow-hairline), 0 20px 50px rgb(var(--n-color-ink) / 0.065), inset 0 1px 0 rgb(255 255 255 / 0.66);
+    backdrop-filter: blur(22px) saturate(152%);
+  }
+
+  .campaign-command-strip::before {
+    position: absolute;
+    inset-block: 0.7rem;
+    inset-inline-start: 0.65rem;
+    width: 0.22rem;
+    border-radius: 999px;
+    background: var(--campaign-accent);
+    box-shadow: 0 0 28px color-mix(in srgb, var(--campaign-accent) 34%, transparent);
+    content: "";
+  }
+
+  .campaign-command-copy {
+    min-width: 0;
+    padding-inline-start: 0.85rem;
+  }
+
+  .campaign-command-copy h2 {
+    margin-top: 0.18rem;
+    overflow: hidden;
+    color: rgb(var(--n-color-ink));
+    font-size: 1.05rem;
+    font-weight: 950;
+    line-height: 1.7;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .campaign-command-copy p:not(.app-section-kicker) {
+    margin-top: 0.08rem;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    color: rgb(var(--n-color-muted));
+    font-size: 0.74rem;
+    font-weight: 800;
+    line-height: 1.8;
+  }
+
+  .campaign-command-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(4.4rem, 1fr));
+    gap: 0.42rem;
+    min-width: min(100%, 20rem);
+  }
+
+  .campaign-command-metrics span {
+    display: grid;
+    gap: 0.1rem;
+    border: 1px solid rgb(var(--n-color-border));
+    border-radius: var(--n-radius-xs);
+    background: rgb(var(--n-color-surface) / 0.68);
+    padding: 0.48rem 0.55rem;
+    color: rgb(var(--n-color-muted));
+    font-size: 0.66rem;
+    font-weight: 900;
+    line-height: 1.4;
+    box-shadow: var(--n-shadow-hairline), inset 0 1px 0 rgb(255 255 255 / 0.56);
+  }
+
+  .campaign-command-metrics strong {
+    color: rgb(var(--n-color-ink));
+    font-size: 0.95rem;
+    font-weight: 950;
+    line-height: 1.2;
+  }
+
+  .campaign-command-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.45rem;
+  }
+
   @keyframes calendar-modal-fade {
     from {
       opacity: 0;
@@ -3467,6 +3582,32 @@ a {
     .calendar-reschedule-body,
     .calendar-reschedule-selectors {
       grid-template-columns: minmax(0, 1fr);
+    }
+
+    .campaign-command-strip {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.65rem;
+      border-radius: var(--n-radius-xs);
+      padding: 0.72rem;
+    }
+
+    .campaign-command-copy {
+      padding-inline-start: 0.7rem;
+    }
+
+    .campaign-command-metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      min-width: 0;
+    }
+
+    .campaign-command-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      justify-content: stretch;
+    }
+
+    .campaign-command-actions :is(a, button) {
+      width: 100%;
     }
   }
 

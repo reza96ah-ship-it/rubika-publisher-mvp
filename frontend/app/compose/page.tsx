@@ -87,6 +87,7 @@ function ComposePageContent() {
   const searchParams = useSearchParams();
   const editingPostId = searchParams.get("postId");
   const presetScheduledAt = searchParams.get("scheduledAt");
+  const presetCampaignId = searchParams.get("campaignId");
   const isEditing = Boolean(editingPostId);
 
   const [store, setStore] = useState<StoreProfile | null>(null);
@@ -299,6 +300,7 @@ function ComposePageContent() {
       setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
       setShowComposerEntry(false);
     } else {
+      const presetCampaign = presetCampaignId ? loadedCampaigns.find((campaign) => String(campaign.id) === presetCampaignId) ?? null : null;
       let restoredDraft: { form: typeof emptyForm; selectedMediaId: string; savedAt: string } | null = null;
       try {
         const savedDraft = window.localStorage.getItem(localDraftKey);
@@ -307,11 +309,18 @@ function ComposePageContent() {
         window.localStorage.removeItem(localDraftKey);
       }
       setEditingPost(null);
-      setForm(restoredDraft?.form ? { ...emptyForm, ...restoredDraft.form, scheduled_at: presetScheduledAt || restoredDraft.form.scheduled_at } : { ...emptyForm, scheduled_at: presetScheduledAt });
+      const nextForm = restoredDraft?.form
+        ? { ...emptyForm, ...restoredDraft.form, scheduled_at: presetScheduledAt || restoredDraft.form.scheduled_at }
+        : { ...emptyForm, scheduled_at: presetScheduledAt };
+      if (presetCampaign) {
+        nextForm.campaign_id = presetCampaign.id;
+        nextForm.campaign = presetCampaign.name;
+      }
+      setForm(nextForm);
       const restoredMediaId = restoredDraft?.selectedMediaId ?? "";
       setSelectedMediaId(loadedMediaAssets.some((asset) => String(asset.id) === restoredMediaId) ? restoredMediaId : "");
-      setShowOptionalDetails(Boolean(restoredDraft?.form?.campaign_id || restoredDraft?.form?.campaign || restoredDraft?.form?.internal_note));
-      setShowComposerEntry(!restoredDraft?.form && !restoredMediaId && !presetScheduledAt);
+      setShowOptionalDetails(Boolean(presetCampaign || restoredDraft?.form?.campaign_id || restoredDraft?.form?.campaign || restoredDraft?.form?.internal_note));
+      setShowComposerEntry(!restoredDraft?.form && !restoredMediaId && !presetScheduledAt && !presetCampaign);
       if (restoredDraft?.savedAt) {
         setAutosaveState("restored");
         setAutosaveAt(restoredDraft.savedAt);
@@ -320,7 +329,7 @@ function ComposePageContent() {
 
     setComposerReady(true);
     setLoading(false);
-  }, [editingPostId, presetScheduledAt]);
+  }, [editingPostId, presetCampaignId, presetScheduledAt]);
 
   useEffect(() => {
     loadData().catch((err) => {

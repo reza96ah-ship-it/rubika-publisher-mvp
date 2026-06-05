@@ -203,6 +203,7 @@ function visibleCalendarText(post: Post) {
 export default function CalendarPage() {
   const { showToast } = useToast();
   const agendaRef = useRef<HTMLElement | null>(null);
+  const [presetCampaignId, setPresetCampaignId] = useState("");
   const [posts, setPosts] = useState<Post[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
@@ -264,6 +265,10 @@ export default function CalendarPage() {
   }, [loadPosts]);
 
   useEffect(() => {
+    setPresetCampaignId(new URLSearchParams(window.location.search).get("campaignId") ?? "");
+  }, []);
+
+  useEffect(() => {
     const imageAssets = assets.filter((asset) => asset.post_id && asset.content_type.startsWith("image/"));
     if (imageAssets.length === 0) {
       setMediaPreviewUrls({});
@@ -306,8 +311,20 @@ export default function CalendarPage() {
       .filter((post) => !query || visibleCalendarText(post).includes(query));
   }, [calendarPosts, campaignFilter, searchTerm, statusFilter]);
 
-  const campaignOptions = useMemo(() => buildCampaignFilterOptions(calendarPosts, campaigns), [calendarPosts, campaigns]);
+  const campaignOptions = useMemo(() => {
+    const options = buildCampaignFilterOptions(calendarPosts, campaigns);
+    if (!presetCampaignId || options.some((option) => option.value === `id:${presetCampaignId}`)) return options;
+    const routedCampaign = campaigns.find((campaign) => String(campaign.id) === presetCampaignId);
+    return routedCampaign ? [{ value: `id:${routedCampaign.id}`, label: routedCampaign.name, color: routedCampaign.color, count: 0 }, ...options] : options;
+  }, [calendarPosts, campaigns, presetCampaignId]);
   const selectedCampaignOption = useMemo(() => campaignOptions.find((option) => option.value === campaignFilter) ?? null, [campaignFilter, campaignOptions]);
+  const selectedCampaignIdForRoute = selectedCampaignOption?.value.startsWith("id:") ? selectedCampaignOption.value.replace("id:", "") : "";
+
+  useEffect(() => {
+    if (!presetCampaignId) return;
+    const nextValue = `id:${presetCampaignId}`;
+    if (campaignOptions.some((option) => option.value === nextValue)) setCampaignFilter(nextValue);
+  }, [campaignOptions, presetCampaignId]);
 
   const postsByDay = useMemo(() => {
     const map = new Map<string, Post[]>();
@@ -964,7 +981,7 @@ export default function CalendarPage() {
                     <StatusToken tone="primary">{selectedCampaignWorkload.publishing} در انتشار</StatusToken>
                     <StatusToken tone="success">{selectedCampaignWorkload.published} منتشر</StatusToken>
                     <StatusToken tone={selectedCampaignWorkload.failed ? "alert" : "success"}>{selectedCampaignWorkload.failed} خطا</StatusToken>
-                    <Button href="/campaigns" variant="ghost" size="sm">مدیر کمپین</Button>
+                    {selectedCampaignIdForRoute ? <Button href={`/campaigns?campaignId=${selectedCampaignIdForRoute}`} variant="ghost" size="sm">مدیر کمپین</Button> : null}
                   </div>
                 ) : null}
               </div>
@@ -988,6 +1005,11 @@ export default function CalendarPage() {
                         <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
                         ساخت پست
                       </Button>
+                      {selectedCampaignIdForRoute ? (
+                        <Button href={`/compose?scheduledAt=${encodeURIComponent(selectedDayValue)}&campaignId=${selectedCampaignIdForRoute}`} variant="secondary" size="sm">
+                          پست برای کمپین
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
 

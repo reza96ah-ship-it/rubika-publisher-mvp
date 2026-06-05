@@ -1,8 +1,8 @@
 "use client";
 
-import { AlertTriangle, BarChart3, CheckCircle2, CheckSquare2, Download, FileImage, ImageIcon, PieChart, Plus, Printer, RefreshCw, Target, TimerReset, TrendingUp, XCircle, Zap } from "lucide-react";
+import { AlertTriangle, BarChart3, CalendarDays, CheckCircle2, CheckSquare2, Download, FileImage, ImageIcon, PieChart, Plus, Printer, RefreshCw, Target, TimerReset, TrendingUp, XCircle, Zap } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CSSProperties, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { DataRow, DataSearchField, DataTable, DataToolbar } from "../../components/data-view";
@@ -364,6 +364,7 @@ function escapeHtml(value: string | number | null | undefined) {
 
 export default function CampaignsPage() {
   const { showToast } = useToast();
+  const [routeCampaignId, setRouteCampaignId] = useState("");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [attempts, setAttempts] = useState<PublishAttempt[]>([]);
@@ -422,6 +423,18 @@ export default function CampaignsPage() {
       setRefreshing(false);
     });
   }, [loadWorkspace]);
+
+  useEffect(() => {
+    setRouteCampaignId(new URLSearchParams(window.location.search).get("campaignId") ?? "");
+  }, []);
+
+  useEffect(() => {
+    if (!routeCampaignId || campaigns.length === 0) return;
+    const routedCampaign = campaigns.find((campaign) => String(campaign.id) === routeCampaignId);
+    if (!routedCampaign) return;
+    setSelectedCampaignId(routedCampaign.id);
+    setEditorMode("edit");
+  }, [campaigns, routeCampaignId]);
 
   useEffect(() => {
     if (mediaAssets.length === 0) {
@@ -866,7 +879,7 @@ export default function CampaignsPage() {
   return (
     <AuthGate>
       <AppShell>
-        <WorkspacePage>
+        <WorkspacePage className="campaigns-pro-page">
           <PublishingWorkspaceHeader
             activeTab="campaigns"
             title="مرکز کمپین‌ها"
@@ -901,6 +914,35 @@ export default function CampaignsPage() {
 
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
           {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
+
+          {selectedRow ? (
+            <section className="campaign-command-strip" style={{ "--campaign-accent": selectedRow.campaign.color } as CSSProperties}>
+              <div className="campaign-command-copy">
+                <p className="app-section-kicker text-[10px] font-black">اتاق فرمان کمپین</p>
+                <h2>{selectedRow.campaign.name}</h2>
+                <p>{selectedRow.campaign.goal || selectedRow.campaign.notes || "هدف کمپین را کامل کنید تا برنامه انتشار دقیق‌تر شود."}</p>
+              </div>
+              <div className="campaign-command-metrics" aria-label="خلاصه کمپین انتخاب‌شده">
+                <span><strong>{selectedRow.stats.total}</strong> پست</span>
+                <span><strong>{selectedRow.stats.health}%</strong> سلامت</span>
+                <span><strong>{queuedCount}</strong> در جریان</span>
+                <span><strong>{failedCount}</strong> ریسک</span>
+              </div>
+              <div className="campaign-command-actions">
+                <Button href={`/calendar?campaignId=${selectedRow.campaign.id}`} size="sm">
+                  <CalendarDays className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                  تقویم کمپین
+                </Button>
+                <Button href={`/compose?campaignId=${selectedRow.campaign.id}`} variant="secondary" size="sm">
+                  <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                  پست برای کمپین
+                </Button>
+                <Button href={`/media?campaignId=${selectedRow.campaign.id}`} variant="ghost" size="sm">
+                  رسانه‌ها
+                </Button>
+              </div>
+            </section>
+          ) : null}
 
           <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_360px]">
             <WorkspacePanel
