@@ -19,7 +19,9 @@ body {
   min-height: 100%;
   background: rgb(var(--n-color-canvas));
   color: rgb(var(--n-color-ink));
-  font-family: Vazirmatn, Tahoma, Arial, sans-serif;
+  font-family: var(--font-ui-fa, Vazirmatn, "Noto Sans Arabic", Tahoma, sans-serif);
+  font-feature-settings: "ss01" 1, "calt" 1, "tnum" 1;
+  font-variant-numeric: tabular-nums;
 }
 
 body {
@@ -284,12 +286,19 @@ a {
 }
 
 @layer utilities {
+  :root {
+    --font-ui-fa: Vazirmatn, "Noto Sans Arabic", Tahoma, sans-serif;
+    --font-ui-latin: "InterVariable", Inter, ui-sans-serif, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", "Roboto Mono", monospace;
+  }
+
   .app-workspace-bg {
     background-color: rgb(var(--n-color-canvas));
     background-image:
-      radial-gradient(circle at 12% 0%, rgb(var(--n-color-primary) / 0.045), transparent 24rem),
-      linear-gradient(180deg, rgb(var(--n-color-canvas-soft)) 0%, rgb(var(--n-color-canvas)) 62%, rgb(var(--n-primitive-neutral-100)) 100%);
-    background-size: 100% 100%;
+      radial-gradient(circle at 88% 0%, rgb(var(--n-color-primary) / 0.055), transparent 26rem),
+      radial-gradient(circle at 18% 12%, rgb(var(--n-color-secondary) / 0.035), transparent 21rem),
+      linear-gradient(180deg, rgb(var(--n-color-canvas)) 0%, rgb(var(--n-color-canvas-soft)) 100%);
+    background-size: 100% 100%, 100% 100%, 100% 100%;
   }
 
   .app-studio-surface {
@@ -376,37 +385,42 @@ a {
 
   .nahrino-shell {
     background:
-      linear-gradient(180deg, rgb(var(--n-color-frost) / 0.66), rgb(var(--n-color-canvas) / 0.78)),
-      radial-gradient(circle at 86% 8%, rgb(var(--n-color-primary) / 0.04), transparent 18rem);
+      linear-gradient(180deg, rgb(var(--n-color-frost) / 0.56), rgb(var(--n-color-canvas) / 0.92)),
+      repeating-radial-gradient(circle at 0 0, rgb(var(--n-color-ink) / 0.012) 0 1px, transparent 1px 4px);
   }
 
   .nahrino-sidebar {
-    background: linear-gradient(180deg, rgb(var(--n-color-surface) / 0.97), rgb(var(--n-color-canvas-soft) / 0.93));
-    box-shadow: inset -1px 0 0 rgb(var(--n-color-ink) / 0.08);
+    border-inline-start: 1px solid rgb(var(--n-color-frost-border) / 0.62);
+    background: rgb(var(--n-color-frost) / 0.68);
+    box-shadow: inset -1px 0 0 rgb(var(--n-color-ink) / 0.06), 0 12px 30px rgb(var(--n-color-ink) / 0.04);
+    backdrop-filter: blur(var(--n-glass-blur-desktop)) saturate(var(--n-glass-saturation));
   }
 
   .nahrino-topbar {
-    background: rgb(var(--n-color-frost) / 0.82);
-    box-shadow: 0 1px 0 rgb(var(--n-color-ink) / 0.075), 0 10px 30px rgb(var(--n-color-ink) / 0.035);
-    backdrop-filter: blur(14px);
+    background: rgb(var(--n-color-frost) / 0.72);
+    border-bottom: 1px solid rgb(var(--n-color-ink) / 0.06);
+    box-shadow: 0 12px 30px rgb(var(--n-color-ink) / 0.04);
+    backdrop-filter: blur(var(--n-glass-blur-desktop)) saturate(var(--n-glass-saturation));
   }
 
   .nahrino-card {
     border: 1px solid rgb(var(--n-color-border) / 0.95);
     background: rgb(var(--n-color-surface) / 0.98);
+    border-radius: var(--n-radius-lg) !important;
     box-shadow: var(--n-shadow-soft);
   }
 
   .nahrino-section-card {
     border: 1px solid rgb(var(--n-color-border) / 0.95);
-    background:
-      linear-gradient(180deg, rgb(var(--n-color-surface) / 0.99), rgb(var(--n-color-canvas-soft) / 0.98));
+    background: rgb(var(--n-color-surface));
+    border-radius: var(--n-radius-lg) !important;
     box-shadow: var(--n-shadow-soft);
   }
 
   .nahrino-card-muted {
     border: 1px solid rgb(var(--n-color-border) / 0.88);
-    background: rgb(var(--n-color-surface-muted) / 0.86);
+    background: rgb(var(--n-color-surface-muted) / 0.92);
+    border-radius: var(--n-radius-md) !important;
     box-shadow: 0 6px 14px rgb(var(--n-color-ink) / 0.03);
   }
 
@@ -414,6 +428,7 @@ a {
     position: relative;
     overflow: hidden;
     border: 1px solid rgb(var(--n-color-border) / 0.95);
+    border-radius: var(--n-radius-lg) !important;
     background:
       radial-gradient(circle at 50% 0%, rgb(var(--metric-accent, var(--n-color-primary)) / 0.08), transparent 4.5rem),
       rgb(var(--n-color-frost) / 0.84);
@@ -850,28 +865,30 @@ a {
   .app-workspace-bg {
     background-color: rgb(var(--n-color-canvas));
     background-image:
+      radial-gradient(circle at 88% 0%, rgb(var(--n-color-primary) / 0.055), transparent 26rem),
+      radial-gradient(circle at 18% 12%, rgb(var(--n-color-secondary) / 0.035), transparent 21rem),
       linear-gradient(180deg, rgb(var(--n-color-canvas)) 0%, rgb(var(--n-color-canvas-soft)) 100%),
-      repeating-radial-gradient(circle at 0 0, rgb(var(--n-color-ink) / 0.018) 0 1px, transparent 1px 4px);
+      repeating-radial-gradient(circle at 0 0, rgb(var(--n-color-ink) / 0.012) 0 1px, transparent 1px 4px);
   }
 
   .nahrino-shell {
     background:
-      linear-gradient(180deg, rgb(var(--n-color-frost) / 0.62), rgb(var(--n-color-canvas) / 0.92)),
-      repeating-radial-gradient(circle at 0 0, rgb(var(--n-color-ink) / 0.015) 0 1px, transparent 1px 4px);
+      linear-gradient(180deg, rgb(var(--n-color-frost) / 0.56), rgb(var(--n-color-canvas) / 0.92)),
+      repeating-radial-gradient(circle at 0 0, rgb(var(--n-color-ink) / 0.012) 0 1px, transparent 1px 4px);
   }
 
   .nahrino-sidebar {
     border-inline-start: 1px solid rgb(var(--n-color-frost-border) / 0.62);
-    background: rgb(var(--n-color-frost) / 0.58);
+    background: rgb(var(--n-color-frost) / 0.68);
     box-shadow: inset -1px 0 0 rgb(var(--n-color-ink) / 0.06), 0 12px 30px rgb(var(--n-color-ink) / 0.04);
-    backdrop-filter: blur(14px) saturate(135%);
+    backdrop-filter: blur(var(--n-glass-blur-desktop)) saturate(var(--n-glass-saturation));
   }
 
   .nahrino-topbar {
-    background: rgb(var(--n-color-frost) / 0.62);
+    background: rgb(var(--n-color-frost) / 0.72);
     border-bottom: 1px solid rgb(var(--n-color-ink) / 0.06);
     box-shadow: 0 12px 30px rgb(var(--n-color-ink) / 0.04);
-    backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(var(--n-glass-blur-desktop)) saturate(var(--n-glass-saturation));
   }
 
   .nahrino-quick-create-panel {
@@ -950,7 +967,7 @@ a {
   }
 
   .dashboard-spec-card {
-    border-radius: 18px;
+    border-radius: var(--n-radius-lg);
   }
 
   .dashboard-spec-card.nahrino-section-card {

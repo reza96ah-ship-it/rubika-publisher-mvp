@@ -322,7 +322,7 @@ export function NPageHeader({ title, description, eyebrow, meta, action, classNa
 export function NButton(props: NButtonProps) {
   const { children, className = "", variant = "primary", size = "md", icon: Icon, trailingIcon: TrailingIcon, loading = false } = props;
   const classes = [
-    "app-interactive inline-flex items-center justify-center gap-2 rounded-md border font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60",
+    "app-interactive inline-flex items-center justify-center gap-2 rounded-nsm border font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60",
     buttonVariantClasses[variant],
     buttonSizeClasses[size],
     className
@@ -378,7 +378,7 @@ export function NIconButton({ label, icon: Icon, variant = "secondary", size = "
   return (
     <button
       type={type ?? "button"}
-      className={`app-interactive relative inline-flex items-center justify-center rounded-md border font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60 ${buttonVariantClasses[variant]} ${iconButtonSizeClasses[size]} ${className}`}
+      className={`app-interactive relative inline-flex items-center justify-center rounded-nsm border font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60 ${buttonVariantClasses[variant]} ${iconButtonSizeClasses[size]} ${className}`}
       aria-label={label}
       title={label}
       {...props}
