@@ -9,7 +9,6 @@ import {
   GalleryHorizontalEnd,
   LayoutDashboard,
   LucideIcon,
-  Megaphone,
   PenLine,
   Rocket,
   Settings2,
@@ -39,41 +38,28 @@ type SidebarProps = {
 };
 
 const todayNavItem: NavItem = { label: "داشبورد", href: "/", icon: LayoutDashboard };
-const composeNavItem: NavItem = { label: "ساخت پست", href: "/compose", icon: PenLine };
+const composeNavItem: NavItem = { label: "ساخت", href: "/compose", icon: PenLine };
 const onboardingNavItem: NavItem = { label: "راه‌اندازی", href: "/onboarding", icon: Rocket };
-const plannerNavItem: NavItem = { label: "تقویم", href: "/calendar", icon: CalendarDays };
-const campaignsNavItem: NavItem = { label: "کمپین‌ها", href: "/campaigns", icon: Megaphone };
+const plannerNavItem: NavItem = { label: "برنامه‌ریز", href: "/calendar", icon: CalendarDays };
 const contentNavItem: NavItem = { label: "محتوا", href: "/content", icon: FileText };
+const mediaNavItem: NavItem = { label: "رسانه", href: "/media", icon: GalleryHorizontalEnd };
+const inboxNavItem: NavItem = { label: "پیام‌ها", href: "/inbox", icon: BellRing };
+const reportsNavItem: NavItem = { label: "گزارش‌ها", href: "/analytics", icon: BarChart3 };
 const settingsNavItem: NavItem = { label: "تنظیمات", href: "/store", icon: Store };
 
-const primaryNavGroups: NavGroup[] = [
-  {
-    title: "برنامه",
-    items: [
-      todayNavItem,
-      plannerNavItem,
-      campaignsNavItem
-    ]
-  },
-  {
-    title: "دارایی‌ها",
-    items: [
-      contentNavItem,
-      { label: "رسانه", href: "/media", icon: GalleryHorizontalEnd },
-      { label: "پیام‌ها", href: "/inbox", icon: BellRing }
-    ]
-  },
-  {
-    title: "رشد",
-    items: [
-      { label: "گزارش‌ها", href: "/analytics", icon: BarChart3 }
-    ]
-  }
+const primaryNavItems: NavItem[] = [
+  todayNavItem,
+  composeNavItem,
+  plannerNavItem,
+  contentNavItem,
+  mediaNavItem,
+  inboxNavItem,
+  reportsNavItem
 ];
 
 const settingsNavItems: NavItem[] = [settingsNavItem];
 const navGroups = [
-  ...primaryNavGroups,
+  { title: "محصول", items: primaryNavItems },
   { title: "تنظیمات", items: settingsNavItems }
 ];
 
@@ -83,8 +69,7 @@ function isActiveRoute(pathname: string, href: string) {
 }
 
 function isNavItemActive(pathname: string, item: NavItem) {
-  if (item.href === "/calendar") return isActiveRoute(pathname, "/calendar");
-  if (item.href === "/campaigns") return isActiveRoute(pathname, "/campaigns");
+  if (item.href === "/calendar") return isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/campaigns");
   if (item.href === "/content") return isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue");
   if (item.href === "/store") {
     return (
@@ -104,15 +89,11 @@ export function getActiveNav(pathname: string) {
   }
 
   if (isActiveRoute(pathname, composeNavItem.href)) {
-    return { group: { title: "ساخت پست", items: [composeNavItem] }, item: composeNavItem };
+    return { group: { title: "ساخت", items: [composeNavItem] }, item: composeNavItem };
   }
 
-  if (isActiveRoute(pathname, "/calendar")) {
-    return { group: { title: "تقویم", items: [plannerNavItem] }, item: plannerNavItem };
-  }
-
-  if (isActiveRoute(pathname, "/campaigns")) {
-    return { group: { title: "کمپین‌ها", items: [campaignsNavItem] }, item: campaignsNavItem };
+  if (isActiveRoute(pathname, "/calendar") || isActiveRoute(pathname, "/campaigns")) {
+    return { group: { title: "برنامه‌ریز", items: [plannerNavItem] }, item: plannerNavItem };
   }
 
   if (isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue")) {
@@ -133,7 +114,7 @@ export function getActiveNav(pathname: string) {
     const item = group.items.find((entry) => isActiveRoute(pathname, entry.href));
     if (item) return { group, item };
   }
-  return { group: primaryNavGroups[0], item: todayNavItem };
+  return { group: navGroups[0], item: todayNavItem };
 }
 
 function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
@@ -147,8 +128,8 @@ function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
             : "nahrino-nav-idle hover:shadow-hairline"
       }`}
     >
-      {active ? <span className="absolute inset-y-2 right-0 w-0.5 rounded-l-full bg-app-soft" /> : null}
-      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-app-soft" : "text-app-muted group-hover:text-app-primary"}`} aria-hidden="true" />
+      {active ? <span className="absolute inset-y-2 right-0 w-0.5 rounded-l-full bg-app-primary" /> : null}
+      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-app-primary" : "text-app-muted group-hover:text-app-primary"}`} aria-hidden="true" />
       <span className="truncate">{item.label}</span>
     </Link>
   );
@@ -182,18 +163,14 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
 
       </div>
 
-      <nav className="flex-1 space-y-3 overflow-y-auto px-3 py-3" aria-label="ناوبری اصلی">
-        {primaryNavGroups.map((group) => (
-          <div key={group.title}>
-            <p className="mb-1 px-2.5 text-[10px] font-black text-app-muted">{group.title}</p>
-            <div className="space-y-1">
-              {group.items.map((item) => {
-                const active = isNavItemActive(pathname, item);
-                return <NavEntry key={item.href} item={item} active={active} />;
-              })}
-            </div>
-          </div>
-        ))}
+      <nav className="flex-1 px-3 py-3" aria-label="ناوبری اصلی">
+        <p className="mb-2 px-2.5 text-[10px] font-black text-app-muted">محصول</p>
+        <div className="space-y-1">
+          {primaryNavItems.map((item) => {
+            const active = isNavItemActive(pathname, item);
+            return <NavEntry key={item.href} item={item} active={active} />;
+          })}
+        </div>
       </nav>
 
       <div className="shrink-0 border-t border-app-border/80 bg-white/45 p-3">
@@ -220,7 +197,7 @@ const mobileNavItems = [
   plannerNavItem,
   composeNavItem,
   contentNavItem,
-  { label: "گزارش‌ها", href: "/analytics", icon: BarChart3 }
+  reportsNavItem
 ];
 
 export function MobileNav() {
@@ -238,14 +215,14 @@ export function MobileNav() {
             href={item.href}
             aria-label={item.label}
             className={`app-interactive flex min-w-0 flex-col items-center gap-1 text-[10px] font-bold ${
-              isCompose ? "-mt-5 text-app-graphite" : active ? "text-app-graphite" : "text-app-muted"
+              isCompose ? "-mt-5 text-app-primary" : active ? "text-app-primary" : "text-app-muted"
             }`}
           >
             <span className={`flex items-center justify-center rounded-md ${
               isCompose
-                ? "h-11 w-11 bg-app-graphite text-white shadow-accent"
+                ? "h-11 w-11 bg-app-primary text-white shadow-accent"
                 : active
-                  ? "h-7 w-9 bg-app-soft text-app-graphite"
+                  ? "h-7 w-9 bg-app-soft text-app-primary"
                   : "h-7 w-9 text-app-muted"
             }`}>
               <Icon className={isCompose ? "h-5 w-5" : "h-4 w-4"} aria-hidden="true" />
