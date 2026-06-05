@@ -6,7 +6,7 @@ import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { WorkspaceAvatar } from "../../components/brand-mark";
 import { LoadingPanel } from "../../components/loading-skeleton";
-import { NMetricTile, NNotice, NPage, NPageHeader, NSavedViewToolbar, NStatusPill } from "../../components/nahrino-ui";
+import { NButton, NMetricTile, NNotice, NPage, NPageHeader, NSavedViewToolbar, NStatusPill } from "../../components/nahrino-ui";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
 import { DataRow, DataTable } from "../../components/data-view";
@@ -515,7 +515,7 @@ export default function AnalyticsPage() {
                 <NStatusPill tone="primary">{scopedPosts.length} پست مرتبط</NStatusPill>
               </>
             )}
-            action={<Button href="/logs" variant="secondary" size="sm">سلامت انتشار</Button>}
+            action={<NButton href="/logs" variant="secondary" size="sm">سلامت انتشار</NButton>}
             className="analytics-pro-header"
           />
 

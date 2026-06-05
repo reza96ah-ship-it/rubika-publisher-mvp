@@ -24,22 +24,22 @@ type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
 type NativeButtonType = NonNullable<ButtonHTMLAttributes<HTMLButtonElement>["type"]>;
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "border border-app-primary bg-app-primary text-white shadow-accent hover:border-app-primaryHover hover:bg-app-primaryHover",
-  secondary: "border border-app-border bg-white text-slate-700 shadow-hairline hover:border-blue-200 hover:bg-blue-50 hover:text-app-primary",
-  ghost: "border border-transparent bg-transparent text-slate-600 hover:bg-blue-50 hover:text-app-primary",
-  danger: "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+  primary: "nahrino-primary-cta border border-app-primary text-white shadow-accent hover:border-app-primaryHover hover:bg-app-primaryHover",
+  secondary: "border border-app-border bg-app-surface/88 text-app-text shadow-hairline backdrop-blur-md hover:border-app-primary/24 hover:bg-app-soft hover:text-app-primary",
+  ghost: "border border-transparent bg-transparent text-app-muted hover:bg-app-surface/82 hover:text-app-primary",
+  danger: "border border-rose-200 bg-rose-50/88 text-rose-700 shadow-hairline hover:bg-rose-100"
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "px-2.5 py-1.5 text-xs",
-  md: "px-3.5 py-2 text-sm",
-  lg: "px-4 py-2.5 text-sm"
+  sm: "min-h-compact px-2.5 text-xs",
+  md: "min-h-standard px-3.5 text-sm",
+  lg: "min-h-comfortable px-4 text-sm"
 };
 
 export function Button(props: ButtonProps) {
   const { variant = "primary", size = "md", className = "", children } = props;
   const classes = [
-    "app-interactive inline-flex items-center justify-center rounded-nsm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60",
+    "app-interactive inline-flex items-center justify-center gap-2 rounded-nsm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60",
     variantClasses[variant],
     sizeClasses[size],
     className

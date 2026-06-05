@@ -16,7 +16,7 @@ import {
   RefreshCw,
   Target
 } from "lucide-react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../components/app-shell";
 import { AuthGate } from "../components/auth-gate";
@@ -31,6 +31,7 @@ import {
   NRow,
   NSection,
   NStatusPill,
+  NTabs,
   NTrendBars
 } from "../components/nahrino-ui";
 import { Campaign, loadCampaigns } from "../lib/campaigns";
@@ -115,6 +116,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const [dashboardView, setDashboardView] = useState("overview");
   const [error, setError] = useState("");
 
   const loadDashboard = useCallback(async (quiet = false) => {
@@ -341,6 +343,116 @@ export default function HomePage() {
       score: deliveryScore(post),
       href: `/compose?postId=${post.id}`
     }));
+  const dashboardFocusTabs = [
+    { label: "نمای امروز", value: "overview", count: blockedWorkCount },
+    { label: "برنامه", value: "planner", count: nextPosts.length },
+    { label: "ریسک", value: "risk", count: riskQueueItems.length },
+    { label: "کمپین", value: "campaigns", count: campaignMomentumItems.length }
+  ];
+  const publishPulsePanel: ReactNode = (
+    <NSection title="نبض انتشار" description="انتشار بعدی، وضعیت job و مسیر کانال در یک نمای عملیاتی." action={<NButton href="/calendar" variant="secondary" size="sm">تقویم</NButton>} className="dashboard-spec-card dashboard-publish-pulse">
+      <div className="grid gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-app-muted">انتشار بعدی</p>
+            <p className="dashboard-kpi-number mt-1 truncate text-2xl font-black text-app-text">{compactDateTime(nextPosts[0]?.scheduled_at)}</p>
+            <p className="mt-1 line-clamp-1 text-xs leading-5 text-app-muted">{nextPosts[0]?.title || "برای فعال شدن نبض، یک پست زمان‌بندی کنید."}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <NStatusPill tone={nextPosts[0] ? "warning" : "neutral"}>{publishState}</NStatusPill>
+            <NStatusPill tone={rubikaReady ? "success" : "warning"}>{publishMode}</NStatusPill>
+          </div>
+        </div>
+        <div className="dashboard-publish-track">
+          <span style={{ width: `${Math.min(100, Math.max(18, queueTotal * 18 + scheduledTodayCount * 12))}%` }} />
+        </div>
+        <div className="dashboard-content-preview grid gap-2 sm:grid-cols-3" aria-label="نمای زنده محتوا">
+          {contentPreviewItems.length ? contentPreviewItems.map((item, index) => (
+            <Link key={item.id} href={item.href} className="dashboard-preview-card app-interactive group rounded-xl p-3" style={{ animationDelay: `${index * 80}ms` }}>
+              <span className="flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate text-[10px] font-black text-app-primary">{item.channel}</span>
+                <NStatusPill tone={item.tone}>{item.status}</NStatusPill>
+              </span>
+              <strong className="mt-2 block truncate text-sm font-black text-app-text">{item.title}</strong>
+              <span className="mt-1 block line-clamp-2 text-[11px] leading-5 text-app-muted">{item.caption}</span>
+            </Link>
+          )) : <NEmptyState icon={FileText} title="محتوای نزدیک وجود ندارد" detail="اولین پیش‌نویس یا زمان‌بندی این قسمت را فعال می‌کند." />}
+        </div>
+      </div>
+    </NSection>
+  );
+  const plannerPanel: ReactNode = (
+    <NSection title="نمای برنامه" description="هفت روز آینده با تراکم محتوا و اشاره کمپین." action={<NButton href="/calendar" variant="secondary" size="sm">تقویم کامل</NButton>} className="dashboard-spec-card dashboard-planner-snapshot">
+      <div className="grid grid-cols-7 gap-1.5">
+        {plannerSnapshot.map((day) => (
+          <Link key={day.key} href={day.href} className={`dashboard-day-cell app-interactive rounded-xl p-2 ${day.count ? "dashboard-day-cell-active" : ""}`}>
+            <span className="block text-center text-[10px] font-black text-app-muted">{day.label}</span>
+            <span className="dashboard-kpi-number mt-2 block text-center text-lg font-black text-app-text">{day.count}</span>
+            <span className="mx-auto mt-2 block h-1.5 w-8 rounded-full bg-app-primary/20">
+              <span className="block h-full rounded-full bg-app-primary" style={{ width: `${Math.min(100, Math.max(12, day.count * 30))}%` }} />
+            </span>
+          </Link>
+        ))}
+      </div>
+      <p className="mt-3 line-clamp-1 text-xs font-bold text-app-muted">{activeCampaigns[0]?.name ? `کمپین فعال: ${activeCampaigns[0].name}` : "کمپین فعالی روی برنامه نزدیک دیده نمی‌شود."}</p>
+    </NSection>
+  );
+  const riskPanel: ReactNode = (
+    <NSection title="صف ریسک" description="اگر چیزی مسدود باشد، اول همینجا دیده می‌شود." action={<NButton href="/queue" variant="secondary" size="sm">بازیابی</NButton>} className="dashboard-spec-card dashboard-risk-card">
+      <div className="grid gap-2">
+        {riskQueueItems.length ? riskQueueItems.slice(0, 4).map((item) => (
+          <NRow key={item.id} icon={item.icon} title={item.title} detail={item.detail} tone={item.tone} href={item.href} meta={<NStatusPill tone={item.tone}>اقدام</NStatusPill>} />
+        )) : <NEmptyState icon={CheckCircle2} title="ریسک فوری وجود ندارد" detail="صف، تایید و اتصال در وضعیت قابل قبول هستند." />}
+      </div>
+    </NSection>
+  );
+  const inboxPanel: ReactNode = (
+    <NSection title="تریاژ پیام‌ها" description="تعهد پاسخ، پیام‌های عقب‌افتاده و کارهای من." action={<NButton href="/inbox" variant="secondary" size="sm">Inbox</NButton>} className="dashboard-spec-card dashboard-inbox-card">
+      <div className="grid gap-2">
+        <NRow icon={MessageSquare} title="پیام‌های نیازمند اقدام" detail={unreadAlerts ? `${unreadAlerts} اعلان تازه` : "اعلان خوانده‌نشده عملیاتی نیست"} tone={unreadAlerts ? "warning" : "success"} href="/inbox" meta={<NStatusPill tone={unreadAlerts ? "warning" : "success"}>{unreadAlerts}</NStatusPill>} />
+        <NRow icon={Clock3} title="SLA امروز" detail={blockedWorkCount ? "اولویت با ریسک‌های فعال" : "زمان پاسخ در محدوده امن است"} tone={blockedWorkCount ? "warning" : "success"} href="/inbox" />
+      </div>
+    </NSection>
+  );
+  const campaignPanel: ReactNode = (
+    <NSection title="حرکت کمپین‌ها" description="ریل‌های باریک کمپین، مرحله‌ها و تحویل بعدی." action={<NButton href="/campaigns" variant="secondary" size="sm">کمپین‌ها</NButton>} className="dashboard-spec-card dashboard-campaign-momentum">
+      <div className="grid gap-2 md:grid-cols-3">
+        {campaignMomentumItems.length ? campaignMomentumItems.slice(0, 3).map((campaign, index) => (
+          <Link key={campaign.id} href={`/campaigns?campaignId=${campaign.id}`} className="dashboard-campaign-rail app-interactive rounded-xl p-3" style={{ "--campaign-accent": index === 0 ? "var(--n-chart-ready)" : index === 1 ? "var(--n-chart-scheduled)" : "var(--n-chart-draft)" } as CSSProperties}>
+            <span className="block truncate text-sm font-black text-app-text">{campaign.name}</span>
+            <span className="mt-1 block line-clamp-2 text-xs leading-5 text-app-muted">{campaign.goal || campaign.notes || "تحویل بعدی هنوز تعریف نشده است."}</span>
+            <span className="mt-3 flex items-center justify-between text-[10px] font-black text-app-muted">
+              <span>{campaign.status || "campaign"}</span>
+              <ArrowUpLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            </span>
+          </Link>
+        )) : <NEmptyState icon={Megaphone} title="کمپین فعالی نیست" detail="برای دیدن ریل کمپین، یک کمپین تازه بسازید." />}
+      </div>
+    </NSection>
+  );
+  const insightPanel: ReactNode = (
+    <NSection title="بینش امروز" description="یک پاسخ کوتاه، نه انبار آمار." action={<NButton href={reportInsight.href} variant="secondary" size="sm">گزارش</NButton>} className="dashboard-spec-card dashboard-insight-card">
+      <div className="grid gap-3">
+        <div className="flex items-start gap-3">
+          <span className="nahrino-token-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
+            <BarChart3 className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-base font-black text-app-text">{reportInsight.title}</h2>
+            <p className="mt-1 text-sm leading-7 text-app-muted">{reportInsight.detail}</p>
+          </div>
+        </div>
+        <NTrendBars values={weeklyActivity} labels={weeklyLabels} />
+        <NStatusPill tone={reportInsight.tone}>{completionRate}% تکمیل · {failureRate}% خطا</NStatusPill>
+      </div>
+    </NSection>
+  );
+  const dashboardFocusLayouts: Record<string, ReactNode> = {
+    overview: <section className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.9fr)]">{publishPulsePanel}{insightPanel}</section>,
+    planner: <section className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.9fr)]">{plannerPanel}{publishPulsePanel}</section>,
+    risk: <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.9fr)]">{riskPanel}{inboxPanel}</section>,
+    campaigns: <section className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.9fr)]">{campaignPanel}{insightPanel}</section>
+  };
 
   return (
     <AuthGate>
@@ -389,104 +501,17 @@ export default function HomePage() {
             ))}
           </section>
 
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-            <div className="grid gap-4 lg:grid-cols-[5fr_4fr]">
-              <NSection title="نبض انتشار" description="انتشار بعدی، وضعیت job و مسیر کانال در یک نمای عملیاتی." action={<NButton href="/calendar" variant="secondary" size="sm">تقویم</NButton>} className="dashboard-spec-card dashboard-publish-pulse">
-                <div className="grid gap-3">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-app-muted">انتشار بعدی</p>
-                      <p className="dashboard-kpi-number mt-1 truncate text-2xl font-black text-app-text">{compactDateTime(nextPosts[0]?.scheduled_at)}</p>
-                      <p className="mt-1 line-clamp-1 text-xs leading-5 text-app-muted">{nextPosts[0]?.title || "برای فعال شدن نبض، یک پست زمان‌بندی کنید."}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <NStatusPill tone={nextPosts[0] ? "warning" : "neutral"}>{publishState}</NStatusPill>
-                      <NStatusPill tone={rubikaReady ? "success" : "warning"}>{publishMode}</NStatusPill>
-                    </div>
-                  </div>
-                  <div className="dashboard-publish-track">
-                    <span style={{ width: `${Math.min(100, Math.max(18, queueTotal * 18 + scheduledTodayCount * 12))}%` }} />
-                  </div>
-                  <div className="dashboard-content-preview grid gap-2 sm:grid-cols-3" aria-label="نمای زنده محتوا">
-                    {contentPreviewItems.length ? contentPreviewItems.map((item, index) => (
-                      <Link key={item.id} href={item.href} className="dashboard-preview-card app-interactive group rounded-xl p-3" style={{ animationDelay: `${index * 80}ms` }}>
-                        <span className="flex items-center justify-between gap-2">
-                          <span className="min-w-0 truncate text-[10px] font-black text-app-primary">{item.channel}</span>
-                          <NStatusPill tone={item.tone}>{item.status}</NStatusPill>
-                        </span>
-                        <strong className="mt-2 block truncate text-sm font-black text-app-text">{item.title}</strong>
-                        <span className="mt-1 block line-clamp-2 text-[11px] leading-5 text-app-muted">{item.caption}</span>
-                      </Link>
-                    )) : <NEmptyState icon={FileText} title="محتوای نزدیک وجود ندارد" detail="اولین پیش‌نویس یا زمان‌بندی این قسمت را فعال می‌کند." />}
-                  </div>
-                </div>
-              </NSection>
-
-              <NSection title="نمای برنامه" description="هفت روز آینده با تراکم محتوا و اشاره کمپین." action={<NButton href="/calendar" variant="secondary" size="sm">Planner</NButton>} className="dashboard-spec-card dashboard-planner-snapshot">
-                <div className="grid grid-cols-7 gap-1.5">
-                  {plannerSnapshot.map((day) => (
-                    <Link key={day.key} href={day.href} className={`dashboard-day-cell app-interactive rounded-xl p-2 ${day.count ? "dashboard-day-cell-active" : ""}`}>
-                      <span className="block text-center text-[10px] font-black text-app-muted">{day.label}</span>
-                      <span className="dashboard-kpi-number mt-2 block text-center text-lg font-black text-app-text">{day.count}</span>
-                      <span className="mx-auto mt-2 block h-1.5 w-8 rounded-full bg-app-primary/20">
-                        <span className="block h-full rounded-full bg-app-primary" style={{ width: `${Math.min(100, Math.max(12, day.count * 30))}%` }} />
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-                <p className="mt-3 line-clamp-1 text-xs font-bold text-app-muted">{activeCampaigns[0]?.name ? `کمپین فعال: ${activeCampaigns[0].name}` : "کمپین فعالی روی برنامه نزدیک دیده نمی‌شود."}</p>
-              </NSection>
+          <section className="dashboard-focus-shell rounded-2xl p-2.5 sm:p-3">
+            <div className="flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
+              <div className="min-w-0 px-1">
+                <p className="text-[10px] font-black text-app-primary">نمای متمرکز</p>
+                <h2 className="mt-1 text-sm font-black text-app-text">هر بار فقط یک مسیر تصمیم‌گیری</h2>
+              </div>
+              <NTabs tabs={dashboardFocusTabs} activeTab={dashboardView} onTabChange={setDashboardView} className="w-full lg:w-auto" />
             </div>
-
-            <aside className="grid gap-4">
-              <NSection title="صف ریسک" description="اگر چیزی مسدود باشد، اول همینجا دیده می‌شود." action={<NButton href="/queue" variant="secondary" size="sm">بازیابی</NButton>} className="dashboard-spec-card dashboard-risk-card">
-                <div className="grid gap-2">
-                  {riskQueueItems.length ? riskQueueItems.slice(0, 4).map((item) => (
-                    <NRow key={item.id} icon={item.icon} title={item.title} detail={item.detail} tone={item.tone} href={item.href} meta={<NStatusPill tone={item.tone}>اقدام</NStatusPill>} />
-                  )) : <NEmptyState icon={CheckCircle2} title="ریسک فوری وجود ندارد" detail="صف، تایید و اتصال در وضعیت قابل قبول هستند." />}
-                </div>
-              </NSection>
-
-              <NSection title="تریاژ پیام‌ها" description="تعهد پاسخ، پیام‌های عقب‌افتاده و کارهای من." action={<NButton href="/inbox" variant="secondary" size="sm">Inbox</NButton>} className="dashboard-spec-card dashboard-inbox-card">
-                <div className="grid gap-2">
-                  <NRow icon={MessageSquare} title="پیام‌های نیازمند اقدام" detail={unreadAlerts ? `${unreadAlerts} اعلان تازه` : "اعلان خوانده‌نشده عملیاتی نیست"} tone={unreadAlerts ? "warning" : "success"} href="/inbox" meta={<NStatusPill tone={unreadAlerts ? "warning" : "success"}>{unreadAlerts}</NStatusPill>} />
-                  <NRow icon={Clock3} title="SLA امروز" detail={blockedWorkCount ? "اولویت با ریسک‌های فعال" : "زمان پاسخ در محدوده امن است"} tone={blockedWorkCount ? "warning" : "success"} href="/inbox" />
-                </div>
-              </NSection>
-            </aside>
-          </section>
-
-          <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
-            <NSection title="حرکت کمپین‌ها" description="ریل‌های باریک کمپین، مرحله‌ها و تحویل بعدی." action={<NButton href="/campaigns" variant="secondary" size="sm">کمپین‌ها</NButton>} className="dashboard-spec-card dashboard-campaign-momentum">
-              <div className="grid gap-2 md:grid-cols-3">
-                {campaignMomentumItems.length ? campaignMomentumItems.slice(0, 3).map((campaign, index) => (
-                  <Link key={campaign.id} href={`/campaigns?campaignId=${campaign.id}`} className="dashboard-campaign-rail app-interactive rounded-xl p-3" style={{ "--campaign-accent": index === 0 ? "var(--n-chart-ready)" : index === 1 ? "var(--n-chart-scheduled)" : "var(--n-chart-draft)" } as CSSProperties}>
-                    <span className="block truncate text-sm font-black text-app-text">{campaign.name}</span>
-                    <span className="mt-1 block line-clamp-2 text-xs leading-5 text-app-muted">{campaign.goal || campaign.notes || "تحویل بعدی هنوز تعریف نشده است."}</span>
-                    <span className="mt-3 flex items-center justify-between text-[10px] font-black text-app-muted">
-                    <span>{campaign.status || "campaign"}</span>
-                      <ArrowUpLeft className="h-3.5 w-3.5" aria-hidden="true" />
-                    </span>
-                  </Link>
-                )) : <NEmptyState icon={Megaphone} title="کمپین فعالی نیست" detail="برای دیدن ریل کمپین، یک کمپین تازه بسازید." />}
-              </div>
-            </NSection>
-
-            <NSection title="بینش امروز" description="یک پاسخ کوتاه، نه انبار آمار." action={<NButton href={reportInsight.href} variant="secondary" size="sm">گزارش</NButton>} className="dashboard-spec-card dashboard-insight-card">
-              <div className="grid gap-3">
-                <div className="flex items-start gap-3">
-                  <span className="nahrino-token-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
-                    <BarChart3 className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0">
-                    <h2 className="text-base font-black text-app-text">{reportInsight.title}</h2>
-                    <p className="mt-1 text-sm leading-7 text-app-muted">{reportInsight.detail}</p>
-                  </div>
-                </div>
-                <NTrendBars values={weeklyActivity} labels={weeklyLabels} />
-                <NStatusPill tone={reportInsight.tone}>{completionRate}% تکمیل · {failureRate}% خطا</NStatusPill>
-              </div>
-            </NSection>
+            <div className="mt-3 dashboard-focus-panel">
+              {dashboardFocusLayouts[dashboardView] ?? dashboardFocusLayouts.overview}
+            </div>
           </section>
 
           <NSection
