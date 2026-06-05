@@ -799,7 +799,7 @@ export default function CalendarPage() {
           <section className="calendar-pro-workspace">
             <section className="app-studio-panel calendar-pro-planner min-w-0 overflow-hidden rounded-lg">
               <div className="calendar-pro-toolbar border-b border-app-border px-3 py-2.5 sm:py-3">
-                <div className="flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
+                <div className="calendar-toolbar-main">
                   <div className="calendar-toolbar-title-row flex flex-wrap items-center gap-2">
                     <h2 className="text-base font-black text-app-text">{viewMode === "week" ? dayRangeLabel(activeWeekDays) : formatJalaliMonth(monthAnchor)}</h2>
                     <div className="calendar-toolbar-status-chips flex flex-wrap items-center gap-2">
@@ -810,14 +810,16 @@ export default function CalendarPage() {
                       {reschedulingPostId ? <StatusToken tone="warning">در حال ذخیره جابجایی</StatusToken> : null}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 rounded-md bg-app-surfaceMuted p-1 shadow-hairline">
-                    <button type="button" onClick={() => movePlannerMonth(1)} className="rounded p-2 text-slate-600 transition hover:bg-slate-100" aria-label="ماه بعد">
+                  <div className="calendar-month-controls" aria-label="کنترل بازه تقویم">
+                    <button type="button" onClick={() => movePlannerMonth(1)} className="calendar-month-nav-button" aria-label="ماه بعد">
                       <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                      <span>ماه بعد</span>
                     </button>
-                    <button type="button" onClick={goToToday} className="rounded px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-100">
+                    <button type="button" onClick={goToToday} className="calendar-today-button">
                       امروز
                     </button>
-                    <button type="button" onClick={() => movePlannerMonth(-1)} className="rounded p-2 text-slate-600 transition hover:bg-slate-100" aria-label="ماه قبل">
+                    <button type="button" onClick={() => movePlannerMonth(-1)} className="calendar-month-nav-button" aria-label="ماه قبل">
+                      <span>ماه قبل</span>
                       <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>
@@ -836,7 +838,7 @@ export default function CalendarPage() {
                       {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
                     </select>
                   </label>
-                  <div className="flex w-fit rounded-md bg-app-surfaceMuted p-1 shadow-hairline">
+                  <div className="calendar-segment-control" aria-label="نوع نمایش تقویم">
                     {viewModes.map((mode) => {
                       const Icon = mode.icon;
                       const active = viewMode === mode.value;
@@ -845,9 +847,7 @@ export default function CalendarPage() {
                           key={mode.value}
                           type="button"
                           onClick={() => setViewMode(mode.value)}
-                          className={`inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-bold transition ${
-                            active ? "bg-white text-app-primary shadow-sm ring-1 ring-blue-200" : "text-slate-600 hover:text-app-primary"
-                          }`}
+                          className={`calendar-segment-option ${active ? "calendar-segment-option-active" : ""}`}
                         >
                           <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                           {mode.label}
@@ -855,11 +855,11 @@ export default function CalendarPage() {
                       );
                     })}
                   </div>
-                  <div className="calendar-toolbar-density-toggle flex w-fit rounded-md bg-app-surfaceMuted p-1 shadow-hairline" aria-label="تراکم تقویم">
+                  <div className="calendar-segment-control calendar-toolbar-density-toggle" aria-label="تراکم تقویم">
                     <button
                       type="button"
                       onClick={() => setDensityMode("compact")}
-                      className={`inline-flex items-center gap-1 rounded px-2.5 py-1.5 text-xs font-bold transition ${densityMode === "compact" ? "bg-white text-app-primary shadow-sm ring-1 ring-blue-200" : "text-slate-600 hover:text-app-primary"}`}
+                      className={`calendar-segment-option ${densityMode === "compact" ? "calendar-segment-option-active" : ""}`}
                     >
                       <Minimize2 className="h-3.5 w-3.5" aria-hidden="true" />
                       فشرده
@@ -867,7 +867,7 @@ export default function CalendarPage() {
                     <button
                       type="button"
                       onClick={() => setDensityMode("comfortable")}
-                      className={`inline-flex items-center gap-1 rounded px-2.5 py-1.5 text-xs font-bold transition ${densityMode === "comfortable" ? "bg-white text-app-primary shadow-sm ring-1 ring-blue-200" : "text-slate-600 hover:text-app-primary"}`}
+                      className={`calendar-segment-option ${densityMode === "comfortable" ? "calendar-segment-option-active" : ""}`}
                     >
                       <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />
                       باز
@@ -876,7 +876,7 @@ export default function CalendarPage() {
                 </div>
 
                 <div className="calendar-toolbar-status-filter-row mt-2 flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="calendar-status-filter-group">
                     {calendarFilters.map((filter) => {
                       const active = statusFilter === filter.value;
                       return (
@@ -884,12 +884,10 @@ export default function CalendarPage() {
                           key={filter.value}
                           type="button"
                           onClick={() => setStatusFilter(filter.value)}
-                          className={`rounded px-2.5 py-1.5 text-xs font-bold transition ${
-                            active ? "bg-app-primary text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"
-                          }`}
+                          className={`calendar-status-filter-chip ${active ? "calendar-status-filter-chip-active" : ""}`}
                         >
                           {filter.label}
-                          <span className={`mr-1.5 rounded px-1.5 py-0.5 ${active ? "bg-white/20 text-white" : "bg-white text-slate-500"}`}>
+                          <span>
                             {statusCount(calendarPosts, filter.value)}
                           </span>
                         </button>
