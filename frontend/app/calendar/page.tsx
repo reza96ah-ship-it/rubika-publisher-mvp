@@ -27,6 +27,7 @@ import { PlannerComposerDrawer } from "../../components/planner-composer-drawer"
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
+import { NMetricTile } from "../../components/nahrino-ui";
 import { DetailGrid, EmptyState, InspectorPanel, NoticeBanner, StatusToken, Timeline, WorkspacePage } from "../../components/workspace-ui";
 import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { apiUrl, authHeaders, type Post } from "../../lib/posts";
@@ -565,26 +566,22 @@ export default function CalendarPage() {
             </div>
           </section>
 
-          <section className="calendar-pro-summary" aria-label="خلاصه تقویم انتشار">
+          <section className="dashboard-kpi-strip calendar-kpi-strip grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="خلاصه تقویم انتشار">
             {[
-              { label: "بازه فعال", value: currentRangeLabel, detail: `${visibleRangeCount} در دید · ${publishedCount} منتشر`, tone: "primary" },
-              { label: "زمان‌بندی‌شده", value: scheduledCount, detail: "در انتظار انتشار", tone: "warning" },
-              { label: "در انتشار", value: publishingCount, detail: "job فعال", tone: "primary" },
-              { label: "ریسک", value: attentionPosts.length, detail: failedCount ? `${failedCount} ناموفق` : "بدون مانع جدی", tone: attentionPosts.length ? "alert" : "success" }
+              { label: "بازه فعال", value: currentRangeLabel, detail: `${visibleRangeCount} در دید · ${publishedCount} منتشر`, tone: "primary" as const, icon: CalendarDays },
+              { label: "زمان‌بندی‌شده", value: scheduledCount, detail: "در انتظار انتشار", tone: "warning" as const, icon: Clock3 },
+              { label: "در انتشار", value: publishingCount, detail: "job فعال", tone: "primary" as const, icon: Rows3 },
+              { label: "ریسک", value: attentionPosts.length, detail: failedCount ? `${failedCount} ناموفق` : "بدون مانع جدی", tone: attentionPosts.length ? "alert" as const : "success" as const, icon: AlertCircle }
             ].map((item) => (
-              <article key={item.label} className="calendar-pro-summary-card" data-tone={item.tone}>
-                <span className="calendar-pro-summary-label">{item.label}</span>
-                <strong className="dashboard-kpi-number">{item.value}</strong>
-                <span className="calendar-pro-summary-detail">{item.detail}</span>
-              </article>
+              <NMetricTile key={item.label} {...item} />
             ))}
           </section>
 
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
           <section className="calendar-pro-workspace">
-            <section className="app-studio-panel min-w-0 overflow-hidden rounded-lg">
-              <div className="border-b border-app-border px-3 py-2.5 sm:py-3">
+            <section className="app-studio-panel calendar-pro-planner min-w-0 overflow-hidden rounded-lg">
+              <div className="calendar-pro-toolbar border-b border-app-border px-3 py-2.5 sm:py-3">
                 <div className="flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-base font-black text-app-text">{viewMode === "week" ? dayRangeLabel(activeWeekDays) : formatJalaliMonth(monthAnchor)}</h2>
@@ -722,10 +719,10 @@ export default function CalendarPage() {
               {!loading && viewMode !== "list" ? (
                 <div className="calendar-planner-viewport">
                   <div className="calendar-planner-board">
-                    <div className="grid grid-cols-7 border-b border-app-border bg-slate-50 text-center text-xs font-black text-slate-500">
+                    <div className="calendar-week-header grid grid-cols-7 border-b border-app-border bg-slate-50 text-center text-xs font-black text-slate-500">
                       {weekDays.map((day) => <div key={day} className="px-2 py-2.5">{day}</div>)}
                     </div>
-                    <div className="grid grid-cols-7">
+                    <div className="calendar-days-grid grid grid-cols-7">
                       {(viewMode === "week" ? activeWeekDays : monthGrid).map((day, index) => {
                         const dayPosts = day ? postsByDay.get(day.key) ?? [] : [];
                         const isToday = day?.key === todayKey;
@@ -737,7 +734,7 @@ export default function CalendarPage() {
                             onClick={() => day ? selectDay(day, dayPosts) : undefined}
                             onDragOver={(event) => day ? allowDropOnDay(event, day) : undefined}
                             onDrop={(event) => day ? dropPostOnDay(event, day) : undefined}
-                            className={`${calendarCellHeight} border-b border-l border-app-border p-2 text-right transition last:border-l-0 ${
+                            className={`calendar-day-cell ${day ? "" : "calendar-day-empty"} ${calendarCellHeight} border-b border-l border-app-border p-2 text-right transition last:border-l-0 ${
                               day ? "bg-white hover:bg-blue-50/40" : "bg-slate-50/70"
                             } ${isSelectedDay ? "bg-blue-50/70 ring-1 ring-inset ring-blue-200" : ""} ${
                               day && draggingPostId && dragTargetDayKey === day.key ? "bg-blue-100/80 ring-2 ring-inset ring-app-primary" : ""
