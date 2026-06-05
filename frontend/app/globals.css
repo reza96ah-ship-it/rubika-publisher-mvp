@@ -1462,9 +1462,156 @@ a {
     stroke-width: 2.4;
   }
 
+  .calendar-pro-page {
+    max-width: 1440px;
+  }
+
+  .calendar-pro-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    overflow: hidden;
+    border: 1px solid var(--n-glass-border);
+    border-radius: var(--n-radius-md);
+    background:
+      linear-gradient(135deg, rgb(var(--n-color-frost) / 0.72), rgb(var(--n-color-surface) / 0.76)),
+      radial-gradient(circle at 8% 0%, rgb(var(--n-color-primary) / 0.075), transparent 22rem);
+    padding: 1rem;
+    box-shadow: var(--n-shadow-hairline), 0 18px 42px rgb(var(--n-color-ink) / 0.055);
+    backdrop-filter: blur(22px) saturate(148%);
+  }
+
+  .calendar-pro-hero-copy {
+    min-width: 0;
+  }
+
+  .calendar-pro-hero h1 {
+    margin-top: 0.35rem;
+    color: rgb(var(--n-color-ink));
+    font-size: 1.55rem;
+    font-weight: 950;
+    line-height: 1.55;
+  }
+
+  .calendar-pro-hero p:not(.calendar-pro-kicker) {
+    margin-top: 0.25rem;
+    max-width: 56rem;
+    color: rgb(var(--n-color-muted));
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 2;
+  }
+
+  .calendar-pro-hero-actions {
+    display: flex;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .calendar-pro-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .calendar-pro-summary-card {
+    min-width: 0;
+    border: 1px solid var(--n-glass-border);
+    border-radius: var(--n-radius-xs);
+    background:
+      radial-gradient(circle at 82% 0%, rgb(var(--metric-accent, var(--n-color-primary)) / 0.12), transparent 7rem),
+      linear-gradient(145deg, rgb(var(--n-color-frost) / 0.72), rgb(var(--n-color-frost) / 0.48));
+    padding: 0.75rem;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.62), var(--n-shadow-hairline);
+    backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  .calendar-pro-summary-card[data-tone="primary"] {
+    --metric-accent: var(--n-color-primary);
+  }
+
+  .calendar-pro-summary-card[data-tone="warning"] {
+    --metric-accent: var(--n-chart-scheduled);
+  }
+
+  .calendar-pro-summary-card[data-tone="success"] {
+    --metric-accent: var(--n-chart-published);
+  }
+
+  .calendar-pro-summary-card[data-tone="alert"] {
+    --metric-accent: var(--n-chart-failed);
+  }
+
+  .calendar-pro-summary-label,
+  .calendar-pro-summary-detail {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .calendar-pro-summary-label {
+    color: rgb(var(--n-color-muted));
+    font-size: 0.68rem;
+    font-weight: 900;
+  }
+
+  .calendar-pro-summary-card strong {
+    display: block;
+    margin-top: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: rgb(var(--n-color-ink));
+    font-size: 1.05rem;
+    font-weight: 950;
+  }
+
+  .calendar-pro-summary-detail {
+    margin-top: 0.2rem;
+    color: rgb(var(--n-color-muted));
+    font-size: 0.68rem;
+    font-weight: 800;
+  }
+
+  .calendar-pro-workspace {
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .calendar-planner-viewport {
+    max-height: 68vh;
+    overflow: auto;
+  }
+
+  .calendar-planner-board {
+    min-width: 820px;
+  }
+
+  .calendar-inspector-wrap {
+    min-width: 0;
+  }
+
   @media (min-width: 1024px) {
     .dashboard-recent-content-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .calendar-pro-summary {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .calendar-pro-workspace {
+      grid-template-columns: minmax(0, 1fr) 310px;
+    }
+
+    .calendar-inspector-wrap {
+      position: sticky;
+      top: 5rem;
+      align-self: start;
     }
   }
 
@@ -1485,6 +1632,28 @@ a {
 
     .dashboard-recent-content-icon {
       display: none;
+    }
+
+    .calendar-pro-hero {
+      display: grid;
+      padding: 0.85rem;
+    }
+
+    .calendar-pro-hero h1 {
+      font-size: 1.25rem;
+    }
+
+    .calendar-pro-hero-actions {
+      justify-content: flex-start;
+    }
+
+    .calendar-planner-viewport {
+      max-height: none;
+      overflow: visible;
+    }
+
+    .calendar-planner-board {
+      min-width: 0;
     }
   }
 

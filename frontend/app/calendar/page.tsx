@@ -23,7 +23,6 @@ import { ChannelBadges } from "../../components/channel-badges";
 import { LoadingRows } from "../../components/loading-skeleton";
 import { CountdownBadge } from "../../components/countdown-badge";
 import { DataSearchField } from "../../components/data-view";
-import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
 import { PlannerComposerDrawer } from "../../components/planner-composer-drawer";
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
@@ -360,6 +359,11 @@ export default function CalendarPage() {
   const publishedCount = calendarPosts.filter((post) => post.status === "published").length;
   const scheduledCount = calendarPosts.filter((post) => post.status === "scheduled").length;
   const failedCount = calendarPosts.filter((post) => post.status === "failed").length;
+  const publishingCount = calendarPosts.filter((post) => post.status === "publishing").length;
+  const plannerHealthTone = attentionPosts.length ? "alert" : failedCount ? "warning" : "success";
+  const plannerHealthLabel = attentionPosts.length ? `${attentionPosts.length} اقدام فوری` : failedCount ? `${failedCount} خطا` : "برنامه پایدار";
+  const currentRangeLabel = viewMode === "week" ? dayRangeLabel(activeWeekDays) : viewMode === "list" ? "فهرست برنامه" : formatJalaliMonth(monthAnchor);
+  const visibleRangeCount = filteredPosts.filter((post) => post.scheduled_at && activeRangeDayKeys.has(jalaliDateKey(post.scheduled_at))).length;
   const visiblePostLimit = viewMode === "week" ? (densityMode === "compact" ? 4 : 6) : densityMode === "compact" ? 2 : 3;
   const calendarCellHeight = densityMode === "compact" ? "min-h-24" : "min-h-36";
   const selectedPostAsset = selectedPost ? assetByPostId.get(selectedPost.id) : null;
@@ -545,27 +549,40 @@ export default function CalendarPage() {
   return (
     <AuthGate>
       <AppShell>
-        <WorkspacePage>
-          <PublishingWorkspaceHeader
-            activeTab="calendar"
-            title="تقویم انتشار"
-            description="برنامه انتشار را با نماهای ماه، هفته و لیست کنترل کنید."
-            counts={{
-              calendar: calendarPosts.length,
-              queue: scheduledCount
-            }}
-            meta={(
-              <>
-                <StatusToken tone="warning">{scheduledCount} زمان‌بندی‌شده</StatusToken>
-                <StatusToken tone="success">{publishedCount} منتشرشده</StatusToken>
-                <StatusToken tone={failedCount ? "alert" : "success"}>{failedCount ? `${failedCount} خطای تقویمی` : "بدون خطای تقویمی"}</StatusToken>
-              </>
-            )}
-          />
+        <WorkspacePage className="calendar-pro-page">
+          <section className="calendar-pro-hero">
+            <div className="calendar-pro-hero-copy">
+              <p className="app-section-kicker calendar-pro-kicker text-[10px] font-black">برنامه‌ریز</p>
+              <h1>تقویم انتشار</h1>
+              <p>نمای عملیاتی برنامه محتوا؛ ببینید چه چیزی زمان‌دار است، چه چیزی گیر کرده و کدام روز ظرفیت دارد.</p>
+            </div>
+            <div className="calendar-pro-hero-actions">
+              <StatusToken tone={plannerHealthTone}>{plannerHealthLabel}</StatusToken>
+              <Button type="button" onClick={() => openQuickCreate(selectedDayValue)} size="sm">
+                <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                پست جدید
+              </Button>
+            </div>
+          </section>
+
+          <section className="calendar-pro-summary" aria-label="خلاصه تقویم انتشار">
+            {[
+              { label: "بازه فعال", value: currentRangeLabel, detail: `${visibleRangeCount} در دید · ${publishedCount} منتشر`, tone: "primary" },
+              { label: "زمان‌بندی‌شده", value: scheduledCount, detail: "در انتظار انتشار", tone: "warning" },
+              { label: "در انتشار", value: publishingCount, detail: "job فعال", tone: "primary" },
+              { label: "ریسک", value: attentionPosts.length, detail: failedCount ? `${failedCount} ناموفق` : "بدون مانع جدی", tone: attentionPosts.length ? "alert" : "success" }
+            ].map((item) => (
+              <article key={item.label} className="calendar-pro-summary-card" data-tone={item.tone}>
+                <span className="calendar-pro-summary-label">{item.label}</span>
+                <strong className="dashboard-kpi-number">{item.value}</strong>
+                <span className="calendar-pro-summary-detail">{item.detail}</span>
+              </article>
+            ))}
+          </section>
 
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
-          <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_310px]">
+          <section className="calendar-pro-workspace">
             <section className="app-studio-panel min-w-0 overflow-hidden rounded-lg">
               <div className="border-b border-app-border px-3 py-2.5 sm:py-3">
                 <div className="flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
@@ -703,8 +720,8 @@ export default function CalendarPage() {
               {loading ? <LoadingRows rows={5} /> : null}
 
               {!loading && viewMode !== "list" ? (
-                <div className="max-h-[68vh] overflow-auto">
-                  <div className="min-w-[820px]">
+                <div className="calendar-planner-viewport">
+                  <div className="calendar-planner-board">
                     <div className="grid grid-cols-7 border-b border-app-border bg-slate-50 text-center text-xs font-black text-slate-500">
                       {weekDays.map((day) => <div key={day} className="px-2 py-2.5">{day}</div>)}
                     </div>
@@ -825,7 +842,7 @@ export default function CalendarPage() {
               ) : null}
             </section>
 
-            <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
+            <div className="calendar-inspector-wrap">
               <InspectorPanel
                 title="برنامه روز"
                 description={`${selectedDayLabel} · ${selectedDayPosts.length} پست`}
