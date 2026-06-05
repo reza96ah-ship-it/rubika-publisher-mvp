@@ -668,13 +668,15 @@ export default function CalendarPage() {
             <section className="app-studio-panel calendar-pro-planner min-w-0 overflow-hidden rounded-lg">
               <div className="calendar-pro-toolbar border-b border-app-border px-3 py-2.5 sm:py-3">
                 <div className="flex flex-col justify-between gap-3 xl:flex-row xl:items-center">
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="calendar-toolbar-title-row flex flex-wrap items-center gap-2">
                     <h2 className="text-base font-black text-app-text">{viewMode === "week" ? dayRangeLabel(activeWeekDays) : formatJalaliMonth(monthAnchor)}</h2>
-                    <StatusToken tone="neutral">{monthPostCount} پست در ماه</StatusToken>
-                    {nextPost ? <StatusToken tone="success">بعدی: {formatJalaliDateTime(nextPost.scheduled_at)}</StatusToken> : null}
-                    <StatusToken tone={attentionPosts.length ? "alert" : "success"}>{attentionPosts.length ? `${attentionPosts.length} نیازمند توجه` : "برنامه پایدار"}</StatusToken>
-                    <StatusToken tone="info">پست زمان‌بندی‌شده را برای تغییر روز بکشید</StatusToken>
-                    {reschedulingPostId ? <StatusToken tone="warning">در حال ذخیره جابجایی</StatusToken> : null}
+                    <div className="calendar-toolbar-status-chips flex flex-wrap items-center gap-2">
+                      <StatusToken tone="neutral">{monthPostCount} پست در ماه</StatusToken>
+                      {nextPost ? <StatusToken tone="success">بعدی: {formatJalaliDateTime(nextPost.scheduled_at)}</StatusToken> : null}
+                      <StatusToken tone={attentionPosts.length ? "alert" : "success"}>{attentionPosts.length ? `${attentionPosts.length} نیازمند توجه` : "برنامه پایدار"}</StatusToken>
+                      <StatusToken tone="info">پست زمان‌بندی‌شده را برای تغییر روز بکشید</StatusToken>
+                      {reschedulingPostId ? <StatusToken tone="warning">در حال ذخیره جابجایی</StatusToken> : null}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1 rounded-md bg-app-surfaceMuted p-1 shadow-hairline">
                     <button type="button" onClick={() => movePlannerMonth(1)} className="rounded p-2 text-slate-600 transition hover:bg-slate-100" aria-label="ماه بعد">
@@ -689,13 +691,13 @@ export default function CalendarPage() {
                   </div>
                 </div>
 
-                <div className="mt-2 grid gap-2 2xl:grid-cols-[minmax(220px,1fr)_190px_auto_auto] 2xl:items-center">
+                <div className="calendar-toolbar-filter-row mt-2 grid gap-2 2xl:grid-cols-[minmax(220px,1fr)_190px_auto_auto] 2xl:items-center">
                   <DataSearchField
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
                     placeholder="جست‌وجوی عنوان، کپشن، کمپین یا خطا"
                   />
-                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted shadow-hairline">
+                  <label className="calendar-toolbar-campaign-filter flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted shadow-hairline">
                     <CalendarDays className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
                       <option value="all">همه کمپین‌ها</option>
@@ -721,7 +723,7 @@ export default function CalendarPage() {
                       );
                     })}
                   </div>
-                  <div className="flex w-fit rounded-md bg-app-surfaceMuted p-1 shadow-hairline" aria-label="تراکم تقویم">
+                  <div className="calendar-toolbar-density-toggle flex w-fit rounded-md bg-app-surfaceMuted p-1 shadow-hairline" aria-label="تراکم تقویم">
                     <button
                       type="button"
                       onClick={() => setDensityMode("compact")}
@@ -741,7 +743,7 @@ export default function CalendarPage() {
                   </div>
                 </div>
 
-                <div className="mt-2 flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
+                <div className="calendar-toolbar-status-filter-row mt-2 flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
                   <div className="flex flex-wrap gap-1.5">
                     {calendarFilters.map((filter) => {
                       const active = statusFilter === filter.value;
