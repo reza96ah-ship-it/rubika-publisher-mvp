@@ -347,10 +347,10 @@ export default function HomePage() {
   const publishMode = rubikaReady ? "API آماده" : "دستی/نیازمند اتصال";
   const publishState = queueCounts.publishing ? "در حال انتشار" : nextPosts[0] ? "زمان‌بندی شده" : queueCounts.ready ? "آماده صف" : "بدون برنامه نزدیک";
   const publishPulseSteps = [
-    { label: "محتوا", detail: contentPreviewItems.length ? `${contentPreviewItems.length} آیتم نزدیک` : "بدون آیتم نزدیک", ready: Boolean(contentPreviewItems.length) },
-    { label: "صف", detail: queueTotal ? `${queueTotal} job فعال` : "صف خالی", ready: queueTotal > 0 && !queueCounts.failed },
-    { label: "کانال", detail: publishMode, ready: rubikaReady },
-    { label: "زمان", detail: nextPosts[0] ? compactDateTime(nextPosts[0].scheduled_at) : "انتخاب نشده", ready: Boolean(nextPosts[0]) }
+    { label: "محتوا", detail: contentPreviewItems.length ? `${contentPreviewItems.length} آیتم نزدیک آماده بررسی است` : "هنوز محتوای نزدیک ندارید", ready: Boolean(contentPreviewItems.length), status: contentPreviewItems.length ? "آماده" : "بسازید" },
+    { label: "صف انتشار", detail: queueCounts.failed ? `${queueCounts.failed} job ناموفق باید بازیابی شود` : queueTotal ? `${queueTotal} job در چرخه انتشار است` : "صف هنوز خالی است", ready: queueTotal > 0 && !queueCounts.failed, status: queueCounts.failed ? "ریسک" : queueTotal ? "سالم" : "خالی" },
+    { label: "کانال", detail: rubikaReady ? "اتصال انتشار آماده است" : "اتصال کانال نیازمند بررسی است", ready: rubikaReady, status: rubikaReady ? "متصل" : "بررسی" },
+    { label: "زمان انتشار", detail: nextPosts[0] ? compactDateTime(nextPosts[0].scheduled_at) : "برای انتشار خودکار زمان انتخاب نشده", ready: Boolean(nextPosts[0]), status: nextPosts[0] ? "زمان‌دار" : "بدون زمان" }
   ];
   const insightTone = failureRate ? "warning" as const : completionRate >= 60 ? "success" as const : "info" as const;
   const reportInsight = failureRate
@@ -393,13 +393,18 @@ export default function HomePage() {
             <NStatusPill tone={rubikaReady ? "success" : "warning"}>{publishMode}</NStatusPill>
           </div>
         </div>
-        <div className="dashboard-publish-checkpoints" aria-label="وضعیت مرحله‌های انتشار">
+        <div className="dashboard-publish-flow" aria-label="مسیر آمادگی انتشار">
           {publishPulseSteps.map((step, index) => (
-            <div key={step.label} className={`dashboard-publish-step ${step.ready ? "dashboard-publish-step-ready" : ""}`}>
-              <span className="dashboard-publish-step-index">{index + 1}</span>
-              <span className="min-w-0">
-                <span className="dashboard-publish-step-label block truncate font-black text-app-text">{step.label}</span>
-                <span className="dashboard-publish-step-detail mt-0.5 block truncate font-bold text-app-muted">{step.detail}</span>
+            <div key={step.label} className={`dashboard-publish-step ${step.ready ? "dashboard-publish-step-ready" : "dashboard-publish-step-waiting"}`}>
+              <span className="dashboard-publish-step-index" aria-hidden="true">
+                {step.ready ? <CheckCircle2 className="dashboard-publish-step-icon" /> : index + 1}
+              </span>
+              <span className="dashboard-publish-step-copy min-w-0">
+                <span className="dashboard-publish-step-top">
+                  <span className="dashboard-publish-step-label truncate font-black text-app-text">{step.label}</span>
+                  <span className="dashboard-publish-step-status">{step.status}</span>
+                </span>
+                <span className="dashboard-publish-step-detail mt-1 block font-bold text-app-muted">{step.detail}</span>
               </span>
             </div>
           ))}
