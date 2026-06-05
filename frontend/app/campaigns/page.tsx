@@ -12,7 +12,8 @@ import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { Field, Input, Select, Textarea } from "../../components/ui/form";
-import { DetailGrid, EmptyState, NoticeBanner, StatusToken, Timeline, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { NMetricTile } from "../../components/nahrino-ui";
+import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { assignPostsToCampaign, campaignColorForPost, campaignLabelForPost, createCampaign, loadCampaigns, updateCampaign, type Campaign, type CampaignStatus } from "../../lib/campaigns";
 import { getJalaliMonthLength, getJalaliMonthStartOffset, getJalaliPickerParts, jalaliMonthNames, jalaliPickerPartsToIso, persianWeekdays, type JalaliPickerParts } from "../../lib/jalali-picker";
 import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
@@ -372,6 +373,7 @@ export default function CampaignsPage() {
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [selectedCampaignId, setSelectedCampaignId] = useState<number | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>("edit");
+  const [editorOpen, setEditorOpen] = useState(false);
   const [campaignForm, setCampaignForm] = useState<CampaignForm>(emptyCampaignForm);
   const [campaignColorDraft, setCampaignColorDraft] = useState(emptyCampaignForm.color);
   const [openCampaignCalendar, setOpenCampaignCalendar] = useState<CampaignDateField | null>(null);
@@ -408,6 +410,7 @@ export default function CampaignsPage() {
       setSelectedCampaignId((current) => current ?? campaignResponse[0]?.id ?? null);
       if (campaignResponse.length === 0) {
         setEditorMode("create");
+        setEditorOpen(true);
         setCampaignForm(emptyCampaignForm);
       }
     } finally {
@@ -434,6 +437,7 @@ export default function CampaignsPage() {
     if (!routedCampaign) return;
     setSelectedCampaignId(routedCampaign.id);
     setEditorMode("edit");
+    setEditorOpen(false);
   }, [campaigns, routeCampaignId]);
 
   useEffect(() => {
@@ -645,13 +649,14 @@ export default function CampaignsPage() {
 
   function focusCampaignEditor() {
     window.setTimeout(() => {
-      document.getElementById("campaign-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("campaign-editor")?.scrollIntoView({ behavior: "smooth", block: "center" });
       window.setTimeout(() => document.getElementById("campaign-name-input")?.focus(), 250);
-    }, 0);
+    }, 90);
   }
 
   function startNewCampaign() {
     setEditorMode("create");
+    setEditorOpen(true);
     setCampaignForm(emptyCampaignForm);
     setSelectedCampaignId(null);
     setMessage("");
@@ -659,12 +664,32 @@ export default function CampaignsPage() {
     focusCampaignEditor();
   }
 
-  function editCampaign(campaign: Campaign) {
+  function selectCampaign(campaign: Campaign) {
     setEditorMode("edit");
+    setEditorOpen(false);
     setSelectedCampaignId(campaign.id);
     setCampaignForm(campaignToForm(campaign));
     setMessage("");
     setError("");
+  }
+
+  function openEditCampaign(campaign: Campaign) {
+    setEditorMode("edit");
+    setEditorOpen(true);
+    setSelectedCampaignId(campaign.id);
+    setCampaignForm(campaignToForm(campaign));
+    setMessage("");
+    setError("");
+    focusCampaignEditor();
+  }
+
+  function closeCampaignEditor() {
+    setEditorOpen(false);
+    setEditorMode("edit");
+    if (selectedRow) {
+      setCampaignForm(campaignToForm(selectedRow.campaign));
+    }
+    setOpenCampaignCalendar(null);
   }
 
   async function saveCampaign(event: FormEvent<HTMLFormElement>) {
@@ -704,6 +729,7 @@ export default function CampaignsPage() {
       });
       setSelectedCampaignId(savedCampaign.id);
       setEditorMode("edit");
+      setEditorOpen(false);
       setCampaignForm(campaignToForm(savedCampaign));
       setMessage(editorMode === "create" ? "کمپین جدید ساخته شد." : "کمپین به‌روزرسانی شد.");
       showToast({ title: editorMode === "create" ? "کمپین ساخته شد" : "کمپین ذخیره شد", description: savedCampaign.name, tone: "success" });
@@ -1007,7 +1033,7 @@ export default function CampaignsPage() {
                     <button
                       key={row.campaign.id}
                       type="button"
-                      onClick={() => editCampaign(row.campaign)}
+                      onClick={() => selectCampaign(row.campaign)}
                       className={`campaign-card-row app-interactive ${selected ? "campaign-card-row-active" : ""}`}
                       style={{ "--campaign-accent": row.campaign.color } as CSSProperties}
                     >
@@ -1042,7 +1068,12 @@ export default function CampaignsPage() {
             </WorkspacePanel>
 
             <aside className="campaign-management-stack">
-              <WorkspacePanel title="جزئیات کمپین" description="سلامت، زمان‌بندی و ریسک‌های کمپین انتخاب‌شده." bodyClassName="p-3 sm:p-4">
+              <WorkspacePanel
+                title="جزئیات کمپین"
+                description="سلامت، زمان‌بندی و ریسک‌های کمپین انتخاب‌شده."
+                bodyClassName="p-3 sm:p-4"
+                action={selectedRow ? <Button type="button" variant="secondary" size="sm" onClick={() => openEditCampaign(selectedRow.campaign)}>ویرایش</Button> : null}
+              >
                 {selectedRow ? (
                   <div className="space-y-4">
                     <div className="campaign-detail-hero-card" style={{ "--campaign-accent": selectedRow.campaign.color } as CSSProperties}>
@@ -1065,23 +1096,12 @@ export default function CampaignsPage() {
                       ]}
                     />
 
-                    <div className="campaign-health-grid">
-                      <div className="campaign-health-tile" data-tone="success">
-                        <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                        <p className="mt-2 text-lg font-black">{selectedRow.stats.published}</p>
-                        <p className="text-[11px] font-bold">منتشرشده</p>
-                      </div>
-                      <div className="campaign-health-tile" data-tone="info">
-                        <TimerReset className="h-4 w-4" aria-hidden="true" />
-                        <p className="mt-2 text-lg font-black">{queuedCount}</p>
-                        <p className="text-[11px] font-bold">در جریان</p>
-                      </div>
-                      <div className="campaign-health-tile" data-tone="alert">
-                        <AlertTriangle className="h-4 w-4" aria-hidden="true" />
-                        <p className="mt-2 text-lg font-black">{failedCount}</p>
-                        <p className="text-[11px] font-bold">نیازمند توجه</p>
-                      </div>
-                    </div>
+                    <section className="dashboard-kpi-strip campaign-kpi-strip grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="خلاصه کمپین">
+                      <NMetricTile label="منتشرشده" value={selectedRow.stats.published} detail="خروجی موفق کمپین" icon={CheckCircle2} tone="success" />
+                      <NMetricTile label="در جریان" value={queuedCount} detail="آماده، زمان‌بندی یا انتشار" icon={TimerReset} tone="info" />
+                      <NMetricTile label="نیازمند توجه" value={failedCount} detail="خطا یا ریسک فعال" icon={AlertTriangle} tone={failedCount ? "alert" : "success"} />
+                      <NMetricTile label="پوشش رسانه" value={`${campaignInsights.mediaCoverage}%`} detail={`${campaignInsights.withMedia} پست دارای رسانه`} icon={FileImage} tone="primary" />
+                    </section>
 
                     <div className="campaign-funnel-card">
                       <div className="mb-3 flex items-center justify-between gap-3">
@@ -1109,34 +1129,13 @@ export default function CampaignsPage() {
                       })}
                     </div>
 
-                    <Timeline
-                      items={[
-                        {
-                          title: "تعریف کمپین",
-                          description: selectedRow.campaign.goal || "کمپین ساخته شده اما هدف آن هنوز کامل نیست.",
-                          meta: formatDateTime(selectedRow.campaign.created_at),
-                          tone: "primary"
-                        },
-                        {
-                          title: "برنامه محتوا",
-                          description: selectedRow.stats.scheduled ? `${selectedRow.stats.scheduled} پست زمان‌بندی شده است.` : "هنوز پست زمان‌بندی‌شده‌ای برای این کمپین دیده نمی‌شود.",
-                          meta: selectedRow.campaign.starts_at ? `شروع: ${formatDateTime(selectedRow.campaign.starts_at)}` : undefined,
-                          tone: selectedRow.stats.scheduled ? "warning" : "neutral"
-                        },
-                        {
-                          title: failedCount ? "ریسک فعال" : "وضعیت پایدار",
-                          description: failedCount ? `${failedCount} پست یا تلاش نیازمند بازیابی است.` : "خطای فعالی برای این کمپین دیده نمی‌شود.",
-                          meta: selectedRow.campaign.ends_at ? `پایان: ${formatDateTime(selectedRow.campaign.ends_at)}` : undefined,
-                          tone: failedCount ? "alert" : "success"
-                        }
-                      ]}
-                    />
                   </div>
                 ) : (
                   <EmptyState title="کمپینی انتخاب نشده است" description="از لیست کمپین‌ها یک مورد را انتخاب کنید." />
                 )}
               </WorkspacePanel>
 
+              {editorOpen ? (
               <WorkspacePanel
                 title={editorMode === "create" ? "ساخت کمپین" : "ویرایش کمپین"}
                 description={editorMode === "create" ? "کمپین جدید را با هدف، رنگ و مالک مشخص بسازید." : "مشخصات عملیاتی کمپین انتخاب‌شده را به‌روزرسانی کنید."}
@@ -1203,13 +1202,14 @@ export default function CampaignsPage() {
                       {savingCampaign ? "در حال ذخیره" : editorMode === "create" ? "ساخت کمپین" : "ذخیره تغییرات"}
                     </Button>
                     {editorMode === "create" && selectedRow ? (
-                      <Button type="button" variant="ghost" onClick={() => editCampaign(selectedRow.campaign)} disabled={savingCampaign}>لغو</Button>
+                      <Button type="button" variant="ghost" onClick={closeCampaignEditor} disabled={savingCampaign}>لغو</Button>
                     ) : (
-                      <Button type="button" variant="ghost" onClick={startNewCampaign} disabled={savingCampaign}>کمپین جدید</Button>
+                      <Button type="button" variant="ghost" onClick={closeCampaignEditor} disabled={savingCampaign}>بستن</Button>
                     )}
                   </div>
                 </form>
               </WorkspacePanel>
+              ) : null}
             </aside>
           </section>
 
