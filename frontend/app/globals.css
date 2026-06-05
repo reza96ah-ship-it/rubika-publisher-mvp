@@ -889,6 +889,7 @@ a {
     border: 1px solid rgb(var(--n-color-primary-strong) / 0.88);
     background: rgb(var(--n-color-primary-strong));
     box-shadow: 0 12px 30px rgb(var(--n-color-primary) / 0.22);
+    pointer-events: auto;
   }
 
   .nahrino-quick-create-fab:hover {
@@ -898,6 +899,7 @@ a {
 
   .nahrino-quick-create {
     padding-bottom: max(0px, env(safe-area-inset-bottom));
+    pointer-events: none;
   }
 
   .nahrino-quick-create-toggle:checked ~ .nahrino-quick-create-panel {
