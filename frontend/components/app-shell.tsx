@@ -131,6 +131,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handleCommandPalette);
   }, []);
 
+  useEffect(() => {
+    function handleTouchHaptic(event: PointerEvent) {
+      if (event.pointerType === "mouse") return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target?.closest("button, a, [role='button']")) return;
+      window.navigator.vibrate?.(8);
+    }
+
+    window.addEventListener("pointerup", handleTouchHaptic, { passive: true });
+    return () => window.removeEventListener("pointerup", handleTouchHaptic);
+  }, []);
+
   const storeReady = !overviewLoading && isStoreConfigured(overview.store);
   const rubikaReady = !overviewLoading && isRubikaConnected(overview.rubika);
   const shellReady = storeReady && rubikaReady;

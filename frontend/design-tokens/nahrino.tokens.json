@@ -53,6 +53,15 @@
         "600": { "$type": "color", "$value": "#6D28D9" },
         "focus": { "$type": "color", "$value": "#2563EB" }
       },
+      "chart": {
+        "indigo": { "$type": "color", "$value": "#6366F1" },
+        "cyan": { "$type": "color", "$value": "#06B6D4" },
+        "amber": { "$type": "color", "$value": "#F59E0B" },
+        "violet": { "$type": "color", "$value": "#8B5CF6" },
+        "emerald": { "$type": "color", "$value": "#10B981" },
+        "rose": { "$type": "color", "$value": "#F43F5E" },
+        "empty": { "$type": "color", "$value": "#E7E2D8" }
+      },
       "studio": {
         "bg": { "$type": "color", "$value": "#0F141B" },
         "surface": { "$type": "color", "$value": "#111827" },
@@ -140,6 +149,15 @@
         "danger": { "$type": "color", "$value": "{primitive.color.red.600}" },
         "alert": { "$type": "color", "$value": "{primitive.color.red.700}" },
         "info": { "$type": "color", "$value": "{primitive.color.blue.700}" }
+      },
+      "chart": {
+        "draft": { "$type": "color", "$value": "{primitive.color.chart.indigo}" },
+        "ready": { "$type": "color", "$value": "{primitive.color.chart.cyan}" },
+        "scheduled": { "$type": "color", "$value": "{primitive.color.chart.amber}" },
+        "manual": { "$type": "color", "$value": "{primitive.color.chart.violet}" },
+        "published": { "$type": "color", "$value": "{primitive.color.chart.emerald}" },
+        "failed": { "$type": "color", "$value": "{primitive.color.chart.rose}" },
+        "empty": { "$type": "color", "$value": "{primitive.color.chart.empty}" }
       }
     },
     "density": {

@@ -92,6 +92,17 @@ Latest live measurement at `1186 x 794` viewport:
 - primary CTA background resolves to `rgb(15, 61, 58)`,
 - document has no horizontal overflow.
 
+Latest polish pass:
+
+- duplicate seven-day trend chart removed from `تابلوی انتشار`,
+- trend chart remains only in `نمای زنده کار`,
+- donut chart now uses a dedicated modern chart palette instead of semantic status colors,
+- donut legend rows are full-width so dots, labels, and numbers do not collide,
+- command surface has subtle ambient/grid motion,
+- frosted live panel has backdrop blur and entrance motion,
+- chart bars and donut have reveal animation,
+- touch-capable browsers receive light haptic feedback on interactive controls.
+
 ## 5. Acceptance
 
 This checkpoint satisfies V-4 foundation:

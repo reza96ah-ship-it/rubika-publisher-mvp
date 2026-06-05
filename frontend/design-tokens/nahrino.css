@@ -34,6 +34,13 @@
   --n-primitive-purple-50: 243 238 255;
   --n-primitive-purple-600: 109 40 217;
   --n-primitive-purple-focus: 37 99 235;
+  --n-primitive-chart-indigo: 99 102 241;
+  --n-primitive-chart-cyan: 6 182 212;
+  --n-primitive-chart-amber: 245 158 11;
+  --n-primitive-chart-violet: 139 92 246;
+  --n-primitive-chart-emerald: 16 185 129;
+  --n-primitive-chart-rose: 244 63 94;
+  --n-primitive-chart-empty: 231 226 216;
   --n-primitive-studio-bg: 15 20 27;
   --n-primitive-studio-surface: 17 24 39;
   --n-primitive-studio-raised: 24 33 47;
@@ -82,6 +89,13 @@
   --n-color-studio-text: var(--n-primitive-studio-text);
   --n-color-studio-muted: var(--n-primitive-studio-muted);
   --n-color-studio-primary: var(--n-primitive-studio-primary);
+  --n-chart-draft: var(--n-primitive-chart-indigo);
+  --n-chart-ready: var(--n-primitive-chart-cyan);
+  --n-chart-scheduled: var(--n-primitive-chart-amber);
+  --n-chart-manual: var(--n-primitive-chart-violet);
+  --n-chart-published: var(--n-primitive-chart-emerald);
+  --n-chart-failed: var(--n-primitive-chart-rose);
+  --n-chart-empty: var(--n-primitive-chart-empty);
 
   /* Semantic density, radius, elevation, and motion tokens */
   --n-density-compact: 2.25rem;

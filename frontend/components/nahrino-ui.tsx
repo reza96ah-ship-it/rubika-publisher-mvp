@@ -727,24 +727,24 @@ export function NDonutChart({ items, total, label = "کل" }: NDonutChartProps) 
         return `${item.color} ${start}deg ${cursor}deg`;
       })
       .join(", ")
-    : "rgb(var(--n-color-border)) 0deg 360deg";
+    : "rgb(var(--n-chart-empty, var(--n-color-border))) 0deg 360deg";
 
   return (
     <div className="flex flex-col items-center justify-center gap-3">
-      <div className="relative h-32 w-32 rounded-full shadow-hairline sm:h-40 sm:w-40" style={{ background: `conic-gradient(${background})` } as CSSProperties}>
-        <div className="absolute inset-4 flex flex-col items-center justify-center rounded-full bg-white shadow-inner sm:inset-5">
+      <div className="nahrino-donut-chart relative h-32 w-32 rounded-full shadow-hairline sm:h-40 sm:w-40" style={{ background: `conic-gradient(${background})` } as CSSProperties}>
+        <div className="absolute inset-4 flex flex-col items-center justify-center rounded-full bg-app-surface shadow-inner sm:inset-5">
           <span className="text-xl font-black text-app-text sm:text-2xl">{total}</span>
           <span className="mt-1 text-[10px] font-bold text-app-muted">{label}</span>
         </div>
       </div>
-      <div className="grid w-full grid-cols-3 gap-1.5 text-[10px] sm:grid-cols-2 sm:gap-2 sm:text-xs">
+      <div className="grid w-full grid-cols-1 gap-1.5 text-[10px] sm:gap-2 sm:text-xs">
         {items.map((item) => (
-          <div key={item.label} className="flex items-center justify-between gap-1.5 rounded-md bg-app-surfaceMuted px-2 py-1.5 sm:gap-2 sm:px-2.5 sm:py-2">
-            <span className="flex min-w-0 items-center gap-2 font-bold text-app-muted">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-              {item.label}
+          <div key={item.label} className="nahrino-chart-legend-row grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md bg-app-surfaceMuted px-2 py-1.5 sm:px-2.5 sm:py-2">
+            <span className="flex min-w-0 items-center gap-1.5 font-bold text-app-muted">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-white" style={{ backgroundColor: item.color, opacity: item.value ? 1 : 0.48 }} />
+              <span className="min-w-0 truncate">{item.label}</span>
             </span>
-            <span className="font-black text-app-text">{item.value}</span>
+            <span className="min-w-5 shrink-0 text-left font-black tabular-nums text-app-text">{item.value}</span>
           </div>
         ))}
       </div>
@@ -760,7 +760,7 @@ export function NTrendBars({ values, labels }: NTrendBarsProps) {
       {values.map((value, index) => (
         <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-1">
           <span
-            className="w-full rounded-t-md bg-app-primary shadow-accent transition-all"
+            className="nahrino-trend-bar w-full rounded-t-md transition-all"
             style={{ height: `${Math.max(10, (value / max) * 88)}px` }}
             aria-label={`${value} items`}
           />

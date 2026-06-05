@@ -201,12 +201,12 @@ export default function HomePage() {
   }).length);
   const weeklyLabels = weekKeys.map((key) => new Date(`${key}T00:00:00`).toLocaleDateString("fa-IR", { weekday: "short" }));
   const pipelineDistribution = [
-    { label: "پیش‌نویس", value: draftCount, color: "rgb(var(--n-color-muted))" },
-    { label: "آماده", value: queueCounts.ready, color: "rgb(var(--n-color-info))" },
-    { label: "زمان‌بندی", value: queueCounts.scheduled, color: "rgb(var(--n-color-warning))" },
-    { label: "دستی", value: manualReadyCount, color: "rgb(var(--n-color-plum))" },
-    { label: "منتشر", value: publishedCount, color: "rgb(var(--n-color-success))" },
-    { label: "ناموفق", value: queueCounts.failed, color: "rgb(var(--n-color-danger))" }
+    { label: "پیش‌نویس", value: draftCount, color: "rgb(var(--n-chart-draft))" },
+    { label: "آماده", value: queueCounts.ready, color: "rgb(var(--n-chart-ready))" },
+    { label: "زمان‌بندی", value: queueCounts.scheduled, color: "rgb(var(--n-chart-scheduled))" },
+    { label: "دستی", value: manualReadyCount, color: "rgb(var(--n-chart-manual))" },
+    { label: "منتشر", value: publishedCount, color: "rgb(var(--n-chart-published))" },
+    { label: "ناموفق", value: queueCounts.failed, color: "rgb(var(--n-chart-failed))" }
   ];
   const pipelineTotal = pipelineDistribution.reduce((sum, item) => sum + item.value, 0);
   const channelCounts = posts.reduce<Record<string, number>>((acc, post) => {
@@ -394,7 +394,7 @@ export default function HomePage() {
               action={<NButton href="/content" variant="secondary" size="sm">کتابخانه</NButton>}
               className="dashboard-section-quiet"
             >
-              <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)] 2xl:grid-cols-[190px_minmax(0,1fr)_240px] lg:items-stretch">
+              <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)] lg:items-stretch">
                 <div className="hidden sm:block">
                   <NDonutChart items={pipelineDistribution} total={pipelineTotal} label="محتوا" />
                 </div>
@@ -403,16 +403,6 @@ export default function HomePage() {
                   <NMetricTile label="نرخ خطا" value={`${failureRate}%`} detail="خطا نسبت به صف فعال" icon={AlertTriangle} tone={failureRate ? "alert" : "success"} />
                   <NMetricTile label="میانگین تلاش" value={averageAttempts} detail="تلاش انتشار برای هر محتوا" icon={Activity} tone="info" />
                   <NMetricTile label="آخرین خروجی" value={latestPublishedPost?.title || "بدون خروجی"} detail={latestPublishedPost?.published_at ? formatDateTime(latestPublishedPost.published_at) : "بعد از اولین انتشار تکمیل می‌شود"} icon={CheckCircle2} tone="primary" />
-                </div>
-                <div className="hidden rounded-lg border border-app-border bg-app-surfaceMuted p-3 md:block lg:col-span-2 2xl:col-span-1">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-black text-app-text">روند فعالیت</p>
-                      <p className="mt-1 text-[11px] leading-5 text-app-muted">ساخت، زمان‌بندی یا انتشار</p>
-                    </div>
-                    <NStatusPill tone={weeklyActivity.some(Boolean) ? "success" : "neutral"}>{weeklyActivity.reduce((sum, value) => sum + value, 0)}</NStatusPill>
-                  </div>
-                  <NTrendBars values={weeklyActivity} labels={weeklyLabels} />
                 </div>
               </div>
             </NSection>

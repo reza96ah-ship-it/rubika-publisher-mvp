@@ -176,6 +176,65 @@ a {
   }
 }
 
+@keyframes dashboard-ambient-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    opacity: 0.82;
+    transform: translate3d(-0.5rem, 0.35rem, 0) scale(1.03);
+  }
+}
+
+@keyframes dashboard-grid-drift {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 56px 28px;
+  }
+}
+
+@keyframes dashboard-panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes nahrino-chart-rise {
+  from {
+    opacity: 0.65;
+    transform: scaleY(0.35);
+  }
+
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes nahrino-donut-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.92) rotate(-10deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
 @layer utilities {
   .app-workspace-bg {
     background-color: rgb(var(--n-color-canvas));
@@ -455,6 +514,20 @@ a {
       radial-gradient(circle at 8% 12%, rgb(var(--n-color-primary) / 0.075), transparent 17rem);
   }
 
+  .dashboard-command-surface::after {
+    position: absolute;
+    inset: -28%;
+    z-index: -2;
+    background:
+      radial-gradient(circle at 18% 72%, rgb(var(--n-chart-ready) / 0.14), transparent 20rem),
+      radial-gradient(circle at 86% 8%, rgb(var(--n-chart-scheduled) / 0.16), transparent 18rem),
+      radial-gradient(circle at 54% 18%, rgb(var(--n-chart-draft) / 0.1), transparent 16rem);
+    content: "";
+    filter: blur(22px);
+    pointer-events: none;
+    animation: dashboard-ambient-breathe 8s var(--n-ease-standard) infinite;
+  }
+
   .dashboard-command-surface::before {
     position: absolute;
     inset: 0;
@@ -467,6 +540,7 @@ a {
     mask-image: linear-gradient(90deg, transparent, rgb(0 0 0) 16%, rgb(0 0 0) 86%, transparent);
     opacity: 0.62;
     pointer-events: none;
+    animation: dashboard-grid-drift 18s linear infinite alternate;
   }
 
   .dashboard-frost-panel {
@@ -474,15 +548,39 @@ a {
     background: rgb(var(--n-color-frost) / 0.72);
     box-shadow: var(--n-shadow-hairline), 0 16px 34px rgb(var(--n-color-ink) / 0.055);
     backdrop-filter: blur(14px);
+    animation: dashboard-panel-rise var(--n-motion-section) var(--n-ease-standard) both;
   }
 
   .dashboard-section-quiet {
     background:
       linear-gradient(180deg, rgb(var(--n-color-surface) / 0.985), rgb(var(--n-color-canvas-soft) / 0.74));
+    animation: dashboard-panel-rise var(--n-motion-section) var(--n-ease-standard) both;
   }
 
   .dashboard-section-compact {
     background: rgb(var(--n-color-surface) / 0.96);
+    animation: dashboard-panel-rise var(--n-motion-section) var(--n-ease-standard) both;
+  }
+
+  .nahrino-trend-bar {
+    background: linear-gradient(180deg, rgb(var(--n-chart-ready)), rgb(var(--n-color-primary-strong)));
+    box-shadow: 0 8px 18px rgb(var(--n-chart-ready) / 0.2);
+    transform-origin: bottom center;
+    animation: nahrino-chart-rise var(--n-motion-section) var(--n-ease-standard) both;
+  }
+
+  .nahrino-donut-chart {
+    animation: nahrino-donut-reveal var(--n-motion-section) var(--n-ease-standard) both;
+  }
+
+  .nahrino-chart-legend-row {
+    transition: background-color var(--n-motion-fast) var(--n-ease-standard), transform var(--n-motion-fast) var(--n-ease-standard), box-shadow var(--n-motion-fast) var(--n-ease-standard);
+  }
+
+  .nahrino-chart-legend-row:hover {
+    background: rgb(var(--n-color-surface));
+    box-shadow: var(--n-shadow-hairline);
+    transform: translateY(-1px);
   }
 
   .dashboard-flow-track {
