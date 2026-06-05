@@ -3207,30 +3207,35 @@ a {
 
   .campaign-command-metrics {
     display: grid;
-    grid-template-columns: repeat(4, minmax(4.4rem, 1fr));
-    gap: 0.42rem;
-    min-width: min(100%, 20rem);
+    grid-template-columns: repeat(4, minmax(4.15rem, auto));
+    gap: 0.38rem;
+    min-width: 0;
   }
 
   .campaign-command-metrics span {
-    display: grid;
-    gap: 0.1rem;
-    border: 1px solid rgb(var(--n-color-border));
-    border-radius: var(--n-radius-xs);
-    background: rgb(var(--n-color-surface) / 0.68);
-    padding: 0.48rem 0.55rem;
+    display: inline-flex;
+    min-height: 2rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.28rem;
+    border: 1px solid rgb(var(--n-color-border) / 0.84);
+    border-radius: var(--n-radius-control);
+    background: rgb(var(--n-color-surface) / 0.58);
+    padding-inline: 0.58rem;
     color: rgb(var(--n-color-muted));
-    font-size: 0.66rem;
+    font-size: 0.7rem;
     font-weight: 900;
-    line-height: 1.4;
+    line-height: 1;
+    white-space: nowrap;
     box-shadow: var(--n-shadow-hairline), inset 0 1px 0 rgb(255 255 255 / 0.56);
+    backdrop-filter: blur(12px) saturate(132%);
   }
 
   .campaign-command-metrics strong {
     color: rgb(var(--n-color-ink));
-    font-size: 0.95rem;
+    font-size: 0.82rem;
     font-weight: 950;
-    line-height: 1.2;
+    line-height: 1;
   }
 
   .campaign-command-actions {
@@ -3564,20 +3569,6 @@ a {
     padding: 0.9rem;
     box-shadow: var(--n-shadow-hairline), inset 0 1px 0 rgb(255 255 255 / 0.58);
     backdrop-filter: blur(16px) saturate(138%);
-  }
-
-  @media (min-width: 1180px) {
-    .campaign-manager-shell {
-      grid-template-columns: minmax(0, 1fr) minmax(22rem, 0.46fr);
-      align-items: start;
-    }
-  }
-
-  @media (min-width: 1400px) {
-    .campaign-insight-section {
-      grid-template-columns: minmax(0, 1fr) minmax(22rem, 0.42fr);
-      align-items: start;
-    }
   }
 
   @media (max-width: 920px) {

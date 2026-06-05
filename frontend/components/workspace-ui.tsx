@@ -84,6 +84,7 @@ type StatusTokenTone = "neutral" | "primary" | "success" | "warning" | "alert" |
 
 type StatusTokenProps = {
   tone?: StatusTokenTone;
+  size?: "sm" | "md" | "lg";
   children: ReactNode;
   className?: string;
 };
@@ -122,6 +123,12 @@ const tokenToneClasses: Record<StatusTokenTone, string> = {
   alert: "border-rose-200 bg-rose-50 text-rose-700",
   info: "border-sky-200 bg-sky-50 text-sky-700",
   dark: "border-blue-500 bg-app-primary text-white"
+};
+
+const tokenSizeClasses: Record<NonNullable<StatusTokenProps["size"]>, string> = {
+  sm: "min-h-6 px-2.5 py-1 text-[11px]",
+  md: "min-h-7 px-3 py-1 text-xs",
+  lg: "min-h-8 px-3.5 py-1.5 text-xs"
 };
 
 const noticeToneClasses: Record<NoticeTone, string> = {
@@ -286,9 +293,9 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
   );
 }
 
-export function StatusToken({ tone = "neutral", children, className = "" }: StatusTokenProps) {
+export function StatusToken({ tone = "neutral", size = "sm", children, className = "" }: StatusTokenProps) {
   return (
-    <span className={`inline-flex min-h-6 items-center rounded-md border px-2.5 py-1 text-[11px] font-black leading-none transition-colors duration-200 ${tokenToneClasses[tone]} ${className}`}>
+    <span className={`inline-flex items-center justify-center rounded-md border font-black leading-none transition-colors duration-200 ${tokenSizeClasses[size]} ${tokenToneClasses[tone]} ${className}`}>
       {children}
     </span>
   );
