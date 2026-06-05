@@ -317,6 +317,20 @@ a {
     border-radius: var(--n-radius-lg) !important;
   }
 
+  .nahrino-control-radius,
+  button.app-interactive,
+  a.app-interactive.inline-flex {
+    border-radius: var(--n-radius-control) !important;
+  }
+
+  button.app-interactive[class*="bg-white"],
+  a.app-interactive.inline-flex[class*="bg-white"] {
+    border-color: rgb(var(--n-color-frost-border) / 0.78);
+    background: rgb(var(--n-color-frost) / 0.76) !important;
+    box-shadow: var(--n-shadow-hairline), 0 8px 20px rgb(var(--n-color-ink) / 0.04);
+    backdrop-filter: blur(14px) saturate(135%);
+  }
+
   .app-studio-surface {
     border: 1px solid rgb(var(--n-color-frost-border) / 0.76);
     background-color: rgb(var(--n-color-frost) / 0.86);
@@ -420,24 +434,29 @@ a {
   }
 
   .nahrino-card {
-    border: 1px solid rgb(var(--n-color-border) / 0.95);
-    background: rgb(var(--n-color-surface) / 0.98);
+    border: 1px solid rgb(var(--n-color-frost-border) / 0.72);
+    background:
+      linear-gradient(135deg, rgb(var(--n-color-frost) / 0.74), rgb(var(--n-color-surface) / 0.82)),
+      radial-gradient(circle at 8% 0%, rgb(var(--n-color-primary) / 0.035), transparent 16rem);
     border-radius: var(--n-radius-lg) !important;
     box-shadow: var(--n-shadow-soft);
+    backdrop-filter: blur(18px) saturate(140%);
   }
 
   .nahrino-section-card {
-    border: 1px solid rgb(var(--n-color-border) / 0.95);
-    background: rgb(var(--n-color-surface));
+    border: 1px solid rgb(var(--n-color-frost-border) / 0.72);
+    background: rgb(var(--n-color-frost) / 0.68);
     border-radius: var(--n-radius-lg) !important;
     box-shadow: var(--n-shadow-soft);
+    backdrop-filter: blur(16px) saturate(138%);
   }
 
   .nahrino-card-muted {
-    border: 1px solid rgb(var(--n-color-border) / 0.88);
-    background: rgb(var(--n-color-surface-muted) / 0.92);
+    border: 1px solid rgb(var(--n-color-frost-border) / 0.68);
+    background: rgb(var(--n-color-frost) / 0.56);
     border-radius: var(--n-radius-md) !important;
     box-shadow: 0 6px 14px rgb(var(--n-color-ink) / 0.03);
+    backdrop-filter: blur(14px) saturate(134%);
   }
 
   .nahrino-metric-card {

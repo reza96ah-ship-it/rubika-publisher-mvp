@@ -39,7 +39,7 @@ const sizeClasses: Record<ButtonSize, string> = {
 export function Button(props: ButtonProps) {
   const { variant = "primary", size = "md", className = "", children } = props;
   const classes = [
-    "app-interactive inline-flex items-center justify-center gap-2 rounded-nsm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60",
+    "app-interactive nahrino-control-radius inline-flex items-center justify-center gap-2 rounded-nsm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60",
     variantClasses[variant],
     sizeClasses[size],
     className
