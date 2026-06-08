@@ -3151,8 +3151,8 @@ a {
     --campaign-accent: rgb(var(--n-color-primary));
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
     gap: 0.9rem;
     overflow: hidden;
     border: 1px solid var(--n-glass-border);
@@ -3206,36 +3206,11 @@ a {
   }
 
   .campaign-command-metrics {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(4.15rem, auto));
-    gap: 0.38rem;
     min-width: 0;
   }
 
-  .campaign-command-metrics span {
-    display: inline-flex;
-    min-height: 2rem;
-    align-items: center;
-    justify-content: center;
-    gap: 0.28rem;
-    border: 1px solid rgb(var(--n-color-border) / 0.84);
-    border-radius: var(--n-radius-control);
-    background: rgb(var(--n-color-surface) / 0.58);
-    padding-inline: 0.58rem;
-    color: rgb(var(--n-color-muted));
-    font-size: 0.7rem;
-    font-weight: 900;
-    line-height: 1;
-    white-space: nowrap;
-    box-shadow: var(--n-shadow-hairline), inset 0 1px 0 rgb(255 255 255 / 0.56);
-    backdrop-filter: blur(12px) saturate(132%);
-  }
-
-  .campaign-command-metrics strong {
-    color: rgb(var(--n-color-ink));
-    font-size: 0.82rem;
-    font-weight: 950;
-    line-height: 1;
+  .campaign-command-metrics .nahrino-metric-card {
+    min-height: 82px;
   }
 
   .campaign-command-actions {
@@ -3243,68 +3218,6 @@ a {
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.45rem;
-  }
-
-  .campaign-benchmark-strip {
-    --campaign-accent: rgb(var(--n-color-primary));
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.7rem;
-  }
-
-  .campaign-benchmark-tile {
-    display: grid;
-    min-width: 0;
-    gap: 0.3rem;
-    border: 1px solid rgb(var(--n-color-border) / 0.82);
-    border-radius: var(--n-radius-xs);
-    background:
-      linear-gradient(135deg, rgb(var(--n-color-surface) / 0.74), rgb(var(--n-color-frost) / 0.54)),
-      radial-gradient(circle at 92% 10%, color-mix(in srgb, var(--campaign-accent) 13%, transparent), transparent 8rem);
-    padding: 0.78rem;
-    color: rgb(var(--n-color-muted));
-    box-shadow: var(--n-shadow-hairline), inset 0 1px 0 rgb(255 255 255 / 0.58);
-    backdrop-filter: blur(18px) saturate(142%);
-    transition:
-      border-color var(--n-motion-base) var(--n-ease-standard),
-      box-shadow var(--n-motion-base) var(--n-ease-standard),
-      transform var(--n-motion-base) var(--n-ease-standard);
-  }
-
-  .campaign-benchmark-tile:hover {
-    border-color: color-mix(in srgb, var(--campaign-accent) 26%, rgb(var(--n-color-border)));
-    box-shadow: var(--n-shadow-hairline), 0 16px 34px color-mix(in srgb, var(--campaign-accent) 10%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.66);
-    transform: translateY(-1px);
-  }
-
-  .campaign-benchmark-tile svg {
-    color: color-mix(in srgb, var(--campaign-accent) 72%, rgb(var(--n-color-primary)));
-  }
-
-  .campaign-benchmark-tile span {
-    display: flex;
-    min-width: 0;
-    align-items: baseline;
-    gap: 0.32rem;
-    color: rgb(var(--n-color-ink));
-    font-size: 0.78rem;
-    font-weight: 950;
-    line-height: 1.55;
-  }
-
-  .campaign-benchmark-tile strong {
-    font-size: 1.05rem;
-  }
-
-  .campaign-benchmark-tile small {
-    display: block;
-    overflow: hidden;
-    color: rgb(var(--n-color-muted));
-    font-size: 0.68rem;
-    font-weight: 800;
-    line-height: 1.6;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .campaign-manager-shell {
@@ -3713,10 +3626,6 @@ a {
       grid-template-columns: minmax(0, 1fr);
     }
 
-    .campaign-benchmark-strip {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .campaign-command-metrics {
       min-width: 0;
       width: 100%;
@@ -3758,10 +3667,6 @@ a {
   }
 
   @media (max-width: 560px) {
-    .campaign-benchmark-strip {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
     .campaign-command-metrics {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }

@@ -971,57 +971,34 @@ export default function CampaignsPage() {
           {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
 
           {selectedRow ? (
-            <section className="campaign-command-strip" style={{ "--campaign-accent": selectedRow.campaign.color } as CSSProperties}>
-              <div className="campaign-command-copy">
-                <p className="app-section-kicker text-[10px] font-black">اتاق فرمان کمپین</p>
-                <h2>{selectedRow.campaign.name}</h2>
-                <p>{selectedRow.campaign.goal || selectedRow.campaign.notes || "هدف کمپین را کامل کنید تا برنامه انتشار دقیق‌تر شود."}</p>
-              </div>
-              <div className="campaign-command-metrics" aria-label="خلاصه کمپین انتخاب‌شده">
-                <span><strong>{selectedRow.stats.total}</strong> پست</span>
-                <span><strong>{selectedRow.stats.health}%</strong> سلامت</span>
-                <span><strong>{queuedCount}</strong> در جریان</span>
-                <span><strong>{failedCount}</strong> ریسک</span>
-              </div>
-              <div className="campaign-command-actions">
-                <Button href={`/calendar?campaignId=${selectedRow.campaign.id}`} size="sm">
-                  <CalendarDays className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                  تقویم کمپین
-                </Button>
-                <Button href={`/compose?campaignId=${selectedRow.campaign.id}`} variant="secondary" size="sm">
-                  <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                  پست برای کمپین
-                </Button>
-                <Button href={`/media?campaignId=${selectedRow.campaign.id}`} variant="ghost" size="sm">
-                  رسانه‌ها
-                </Button>
-              </div>
-            </section>
-          ) : null}
-
-          {selectedRow ? (
-            <section className="campaign-benchmark-strip" style={{ "--campaign-accent": selectedRow.campaign.color } as CSSProperties} aria-label="مسیرهای سریع کمپین">
-              <Link href={`/calendar?campaignId=${selectedRow.campaign.id}`} className="campaign-benchmark-tile app-interactive">
-                <CalendarDays className="h-4 w-4" aria-hidden="true" />
-                <span><strong>{selectedRow.stats.scheduled}</strong> زمان‌بندی</span>
-                <small>نمای تقویم و فاصله‌های خالی</small>
-              </Link>
-              <Link href={`/content?campaignId=${selectedRow.campaign.id}`} className="campaign-benchmark-tile app-interactive">
-                <CheckSquare2 className="h-4 w-4" aria-hidden="true" />
-                <span><strong>{selectedRow.stats.ready + selectedRow.stats.draft}</strong> آماده‌سازی</span>
-                <small>پست‌های پیش‌نویس و آماده</small>
-              </Link>
-              <Link href={`/media?campaignId=${selectedRow.campaign.id}`} className="campaign-benchmark-tile app-interactive">
-                <FileImage className="h-4 w-4" aria-hidden="true" />
-                <span><strong>{selectedAssets.length}</strong> دارایی</span>
-                <small>رسانه‌های متصل به کمپین</small>
-              </Link>
-              <Link href="/analytics" className="campaign-benchmark-tile app-interactive">
-                <BarChart3 className="h-4 w-4" aria-hidden="true" />
-                <span><strong>{campaignInsights.deliveryRate}%</strong> تحویل</span>
-                <small>عملکرد و گزارش کمپین</small>
-              </Link>
-            </section>
+            <>
+              <section className="campaign-command-strip" style={{ "--campaign-accent": selectedRow.campaign.color } as CSSProperties}>
+                <div className="campaign-command-copy">
+                  <p className="app-section-kicker text-[10px] font-black">اتاق فرمان کمپین</p>
+                  <h2>{selectedRow.campaign.name}</h2>
+                  <p>{selectedRow.campaign.goal || selectedRow.campaign.notes || "هدف کمپین را کامل کنید تا برنامه انتشار دقیق‌تر شود."}</p>
+                </div>
+                <div className="campaign-command-actions">
+                  <Button href={`/calendar?campaignId=${selectedRow.campaign.id}`} size="sm">
+                    <CalendarDays className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                    تقویم کمپین
+                  </Button>
+                  <Button href={`/compose?campaignId=${selectedRow.campaign.id}`} variant="secondary" size="sm">
+                    <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                    پست برای کمپین
+                  </Button>
+                  <Button href={`/media?campaignId=${selectedRow.campaign.id}`} variant="ghost" size="sm">
+                    رسانه‌ها
+                  </Button>
+                </div>
+              </section>
+              <section className="dashboard-kpi-strip campaign-command-metrics grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="خلاصه کمپین انتخاب‌شده">
+                <NMetricTile label="پست‌ها" value={selectedRow.stats.total} detail="محتوای متصل به کمپین" icon={Target} tone="primary" />
+                <NMetricTile label="سلامت" value={`${selectedRow.stats.health}%`} detail="کیفیت عملیاتی کمپین" icon={CheckCircle2} tone={healthTone} />
+                <NMetricTile label="در جریان" value={queuedCount} detail="آماده، زمان‌بندی یا انتشار" icon={TimerReset} tone="info" />
+                <NMetricTile label="ریسک" value={failedCount} detail="خطا یا نیازمند بررسی" icon={AlertTriangle} tone={failedCount ? "alert" : "success"} />
+              </section>
+            </>
           ) : null}
 
           <section className="campaign-manager-shell">
