@@ -1,13 +1,15 @@
-﻿import * as React from "react";
+﻿import Link, { LinkProps } from "next/link";
+import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonLinkProps
+  extends LinkProps,
+    React.AnchorHTMLAttributes<HTMLAnchorElement> {
   variant?: "primary" | "secondary" | "tertiary" | "destructive" | "ghost";
   size?: "sm" | "md" | "lg" | "icon" | "icon-sm";
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+const ButtonLink = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
   ({ className, variant = "primary", size = "md", ...props }, ref) => {
     const variantStyles = {
       primary: "bg-app-primary text-white hover:bg-app-primaryHover active:bg-app-primaryActive",
@@ -26,9 +28,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     return (
-      <button
+      <Link
         className={cn(
-          "inline-flex items-center justify-center gap-2 whitespace-nowrap font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed",
+          "inline-flex items-center justify-center gap-2 whitespace-nowrap font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-primary focus-visible:ring-offset-2",
           variantStyles[variant],
           sizeStyles[size],
           className
@@ -39,6 +41,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
   }
 );
-Button.displayName = "Button";
+ButtonLink.displayName = "ButtonLink";
 
-export { Button };
+export { ButtonLink };
