@@ -207,8 +207,8 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
 
 const mobileNavItems = [
   todayNavItem,
-  composeNavItem,
   plannerNavItem,
+  composeNavItem,
   campaignsNavItem,
   contentNavItem
 ];
@@ -221,24 +221,21 @@ export function MobileNav() {
       {mobileNavItems.map((item) => {
         const active = isNavItemActive(pathname, item);
         const Icon = item.icon;
-        const isCompose = item.href === "/compose";
         return (
           <Link
             key={item.href}
             href={item.href}
             aria-label={item.label}
             className={`app-interactive flex min-w-0 flex-col items-center gap-1 text-[10px] font-bold ${
-              isCompose ? "-mt-5 text-app-primary" : active ? "text-app-primary" : "text-app-muted"
+              active ? "-mt-5 text-app-primary" : "text-app-muted"
             }`}
           >
             <span className={`flex items-center justify-center rounded-md ${
-              isCompose
+              active
                 ? "h-11 w-11 bg-app-primary text-white shadow-accent"
-                : active
-                  ? "h-7 w-9 bg-app-soft text-app-primary"
-                  : "h-7 w-9 text-app-muted"
+                : "h-7 w-9 text-app-muted"
             }`}>
-              <Icon className={isCompose ? "h-5 w-5" : "h-4 w-4"} aria-hidden="true" />
+              <Icon className={active ? "h-5 w-5" : "h-4 w-4"} aria-hidden="true" />
             </span>
             <span className="truncate">{item.label}</span>
           </Link>

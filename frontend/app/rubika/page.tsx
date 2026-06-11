@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   AlertTriangle,
@@ -36,12 +36,12 @@ type DiagnosticItem = {
 };
 
 function statusLabel(status: string, dirty = false, testFresh = false) {
-  if (dirty) return "طھط؛غŒغŒط±ط§طھ ط°ط®غŒط±ظ‡ ظ†ط´ط¯ظ‡";
-  if (status === "connected" && testFresh) return "ط§طھطµط§ظ„ طھط§غŒغŒط¯ ط´ط¯ظ‡";
-  if (status === "connected") return "ظ†غŒط§ط²ظ…ظ†ط¯ طھط³طھ ظ…ط¬ط¯ط¯";
-  if (status === "failed") return "ط§طھطµط§ظ„ ط®ط·ط§ ط¯ط§ط±ط¯";
-  if (status === "missing_settings") return "طھظ†ط¸غŒظ…ط§طھ ظ†ط§ظ‚طµ ط§ط³طھ";
-  return "ظ†غŒط§ط²ظ…ظ†ط¯ طھط³طھ ط§طھطµط§ظ„";
+  if (dirty) return "تغییرات ذخیره نشده";
+  if (status === "connected" && testFresh) return "اتصال تایید شده";
+  if (status === "connected") return "نیازمند تست مجدد";
+  if (status === "failed") return "اتصال خطا دارد";
+  if (status === "missing_settings") return "تنظیمات ناقص است";
+  return "نیازمند تست اتصال";
 }
 
 function statusTone(status: string, dirty = false, testFresh = false): "success" | "warning" | "alert" | "neutral" {
@@ -53,29 +53,29 @@ function statusTone(status: string, dirty = false, testFresh = false): "success"
 }
 
 function formatLastTest(value: string) {
-  if (!value) return "ظ‡ظ†ظˆط² ط§ط¬ط±ط§ ظ†ط´ط¯ظ‡";
+  if (!value) return "هنوز اجرا نشده";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "ط²ظ…ط§ظ† ظ†ط§ظ…ط¹طھط¨ط±";
+  if (Number.isNaN(date.getTime())) return "زمان نامعتبر";
   return new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
 function buildDiagnostics(maskedToken: string, chatId: string, status: string, dirty: boolean, testFresh: boolean): DiagnosticItem[] {
   return [
     {
-      label: "طھظˆع©ظ† ط±ط¨ط§طھ",
-      detail: maskedToken ? "طھظˆع©ظ† ط§ظ…ظ† ط°ط®غŒط±ظ‡ ط´ط¯ظ‡ ط§ط³طھ." : "ط¨ط±ط§غŒ ط§ظ†طھط´ط§ط± ط®ظˆط¯ع©ط§ط± ط¨ط§غŒط¯ طھظˆع©ظ† ط±ط¨ط§طھ ط±ط§ ط°ط®غŒط±ظ‡ ع©ظ†غŒط¯.",
+      label: "توکن ربات",
+      detail: maskedToken ? "توکن امن ذخیره شده است." : "برای انتشار خودکار باید توکن ربات را ذخیره کنید.",
       done: Boolean(maskedToken),
       tone: maskedToken ? "success" : "warning"
     },
     {
-      label: "ظ…ظ‚طµط¯ ط§ظ†طھط´ط§ط±",
-      detail: chatId ? "ط´ظ†ط§ط³ظ‡ ظ…ظ‚طµط¯ ط«ط¨طھ ط´ط¯ظ‡ ط§ط³طھ." : "ط´ظ†ط§ط³ظ‡ ع©ط§ظ†ط§ظ„ غŒط§ ع¯ظپطھâ€Œظˆع¯ظˆغŒ ظ…ظ‚طµط¯ ط±ط§ ظˆط§ط±ط¯ ع©ظ†غŒط¯.",
+      label: "مقصد انتشار",
+      detail: chatId ? "شناسه مقصد ثبت شده است." : "شناسه کانال یا گفت‌وگوی مقصد را وارد کنید.",
       done: Boolean(chatId.trim()),
       tone: chatId ? "success" : "warning"
     },
     {
-      label: "طھط³طھ ط§طھطµط§ظ„",
-      detail: dirty ? "ط§ط¨طھط¯ط§ طھط؛غŒغŒط±ط§طھ ط±ط§ ط°ط®غŒط±ظ‡ ع©ظ†غŒط¯طŒ ط³ظ¾ط³ طھط³طھ ط§طھطµط§ظ„ ط±ط§ ط§ط¬ط±ط§ ع©ظ†غŒط¯." : status === "connected" && testFresh ? "Rubika API ط¯ط± 24 ط³ط§ط¹طھ ط§ط®غŒط± ط¨ط§ ط§غŒظ† طھظ†ط¸غŒظ…ط§طھ ظ¾ط§ط³ط® ظ…ظˆظپظ‚ ط¯ط§ط¯ظ‡ ط§ط³طھ." : status === "connected" ? "ط¢ط®ط±غŒظ† طھط³طھ ط§طھطµط§ظ„ ظ‚ط¯غŒظ…غŒ ط§ط³طھط› ط¨ط±ط§غŒ ط¨ط§ط² ط´ط¯ظ† ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ط¯ظˆط¨ط§ط±ظ‡ طھط³طھ ع©ظ†غŒط¯." : "ط¨ط¹ط¯ ط§ط² ط°ط®غŒط±ظ‡طŒ طھط³طھ ط§طھطµط§ظ„ ط±ط§ ط§ط¬ط±ط§ ع©ظ†غŒط¯.",
+      label: "تست اتصال",
+      detail: dirty ? "ابتدا تغییرات را ذخیره کنید، سپس تست اتصال را اجرا کنید." : status === "connected" && testFresh ? "Rubika API در 24 ساعت اخیر با این تنظیمات پاسخ موفق داده است." : status === "connected" ? "آخرین تست اتصال قدیمی است؛ برای باز شدن زمان‌بندی دوباره تست کنید." : "بعد از ذخیره، تست اتصال را اجرا کنید.",
       done: status === "connected" && testFresh && !dirty,
       tone: status === "failed" ? "alert" : status === "connected" ? "success" : "warning"
     }
@@ -116,7 +116,7 @@ export default function RubikaPage() {
     async function loadSettings() {
       const response = await fetch(`${apiUrl}/rubika/settings`, { headers: authHeaders() });
 
-      if (!response.ok) throw new Error("ط®ط·ط§ ط¯ط± ط¯ط±غŒط§ظپطھ طھظ†ط¸غŒظ…ط§طھ ط±ظˆط¨غŒع©ط§");
+      if (!response.ok) throw new Error("خطا در دریافت تنظیمات روبیکا");
 
       const data = await response.json();
       if (data) {
@@ -132,7 +132,7 @@ export default function RubikaPage() {
     }
 
     loadSettings().catch(() => {
-      setError("ط®ط·ط§ ط¯ط± ط¯ط±غŒط§ظپطھ طھظ†ط¸غŒظ…ط§طھ ط±ظˆط¨غŒع©ط§");
+      setError("خطا در دریافت تنظیمات روبیکا");
       setLoading(false);
     });
   }, []);
@@ -146,9 +146,9 @@ export default function RubikaPage() {
   const canSave = Boolean(chatId.trim()) && (Boolean(botToken.trim()) || hasSavedToken);
   const canTest = Boolean(maskedToken) && Boolean(savedChatId.trim()) && !dirty && !testing && !saving;
   const journeySteps = [
-    { label: "ط«ط¨طھ ط§ط¹طھط¨ط§ط±ظ†ط§ظ…ظ‡", detail: "طھظˆع©ظ† ظˆ ظ…ظ‚طµط¯ ط§ظ†طھط´ط§ط± ط°ط®غŒط±ظ‡ ط´ط¯ظ‡â€Œط§ظ†ط¯.", done: Boolean(maskedToken && savedChatId.trim()) && !dirty, icon: KeyRound },
-    { label: "طھط³طھ ط³ظ„ط§ظ…طھ ط§طھطµط§ظ„", detail: testFresh ? "ط§طھطµط§ظ„ ط¯ط± 24 ط³ط§ط¹طھ ط§ط®غŒط± طھط§غŒغŒط¯ ط´ط¯ظ‡ ط§ط³طھ." : "غŒع© طھط³طھ طھط§ط²ظ‡ ط¨ط±ط§غŒ ط§ط·ظ…غŒظ†ط§ظ† ط§ط² ط³ظ„ط§ظ…طھ ع©ط§ظ†ط§ظ„ ط§ط¬ط±ط§ ع©ظ†غŒط¯.", done: connectionReady, icon: RadioTower },
-    { label: "ط¨ط§ط² ط´ط¯ظ† ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ", detail: connectionReady ? "طµظپ ط§ظ†طھط´ط§ط± ط§ط¬ط§ط²ظ‡ ط¯ط±غŒط§ظپطھ ظ¾ط³طھ ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒâ€Œط´ط¯ظ‡ ط±ط§ ط¯ط§ط±ط¯." : "طھط§ طھط§غŒغŒط¯ طھط³طھ طھط§ط²ظ‡طŒ ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ط¯ط± API ظ‚ظپظ„ ظ…غŒâ€Œظ…ط§ظ†ط¯.", done: connectionReady, icon: LockKeyhole }
+    { label: "ثبت اعتبارنامه", detail: "توکن و مقصد انتشار ذخیره شده‌اند.", done: Boolean(maskedToken && savedChatId.trim()) && !dirty, icon: KeyRound },
+    { label: "تست سلامت اتصال", detail: testFresh ? "اتصال در 24 ساعت اخیر تایید شده است." : "یک تست تازه برای اطمینان از سلامت کانال اجرا کنید.", done: connectionReady, icon: RadioTower },
+    { label: "باز شدن زمان‌بندی", detail: connectionReady ? "صف انتشار اجازه دریافت پست زمان‌بندی‌شده را دارد." : "تا تایید تست تازه، زمان‌بندی در API قفل می‌ماند.", done: connectionReady, icon: LockKeyhole }
   ];
 
   function resetChanges() {
@@ -164,8 +164,8 @@ export default function RubikaPage() {
     setError("");
 
     if (!canSave) {
-      setError("طھظˆع©ظ† ط±ط¨ط§طھ ظˆ ط´ظ†ط§ط³ظ‡ ظ…ظ‚طµط¯ ط¨ط±ط§غŒ ط°ط®غŒط±ظ‡ ظ„ط§ط²ظ… ط§ط³طھ");
-      showToast({ title: "ط§ط·ظ„ط§ط¹ط§طھ ط§طھطµط§ظ„ ع©ط§ظ…ظ„ ظ†غŒط³طھ", description: "طھظˆع©ظ† ط±ط¨ط§طھ ظˆ ط´ظ†ط§ط³ظ‡ ظ…ظ‚طµط¯ ط±ط§ ط¨ط±ط±ط³غŒ ع©ظ†غŒط¯.", tone: "warning" });
+      setError("توکن ربات و شناسه مقصد برای ذخیره لازم است");
+      showToast({ title: "اطلاعات اتصال کامل نیست", description: "توکن ربات و شناسه مقصد را بررسی کنید.", tone: "warning" });
       return;
     }
 
@@ -181,7 +181,7 @@ export default function RubikaPage() {
         body: JSON.stringify({ bot_token: botToken.trim(), chat_id: chatId.trim() })
       });
 
-      if (!response.ok) throw new Error("ط°ط®غŒط±ظ‡ طھظ†ط¸غŒظ…ط§طھ ط±ظˆط¨غŒع©ط§ ظ†ط§ظ…ظˆظپظ‚ ط¨ظˆط¯");
+      if (!response.ok) throw new Error("ذخیره تنظیمات روبیکا ناموفق بود");
       const data = await response.json();
       setChatId(data.chat_id ?? "");
       setSavedChatId(data.chat_id ?? "");
@@ -189,15 +189,15 @@ export default function RubikaPage() {
       setStatus(data.status ?? "not_tested");
       setLastError(data.last_error ?? "");
       setLastTestAt(data.last_test_at ?? "");
-      const nextMessage = botToken.trim() ? "طھظ†ط¸غŒظ…ط§طھ ط±ظˆط¨غŒع©ط§ ط°ط®غŒط±ظ‡ ط´ط¯ط› ط­ط§ظ„ط§ طھط³طھ ط§طھطµط§ظ„ ط±ط§ ط§ط¬ط±ط§ ع©ظ†غŒط¯" : "ظ…ظ‚طµط¯ ط°ط®غŒط±ظ‡ ط´ط¯ ظˆ طھظˆع©ظ† ظ‚ط¨ظ„غŒ ط­ظپط¸ ط´ط¯";
+      const nextMessage = botToken.trim() ? "تنظیمات روبیکا ذخیره شد؛ حالا تست اتصال را اجرا کنید" : "مقصد ذخیره شد و توکن قبلی حفظ شد";
       setMessage(nextMessage);
-      showToast({ title: "طھظ†ط¸غŒظ…ط§طھ ط±ظˆط¨غŒع©ط§ ط°ط®غŒط±ظ‡ ط´ط¯", description: nextMessage, tone: "success" });
+      showToast({ title: "تنظیمات روبیکا ذخیره شد", description: nextMessage, tone: "success" });
       setBotToken("");
       notifyWorkspaceUpdated();
     } catch (err) {
-      const nextError = err instanceof Error ? err.message : "ط®ط·ط§غŒ ط°ط®غŒط±ظ‡ طھظ†ط¸غŒظ…ط§طھ";
+      const nextError = err instanceof Error ? err.message : "خطای ذخیره تنظیمات";
       setError(nextError);
-      showToast({ title: "ط°ط®غŒط±ظ‡ ط§طھطµط§ظ„ ظ†ط§ظ…ظˆظپظ‚ ط¨ظˆط¯", description: nextError, tone: "alert" });
+      showToast({ title: "ذخیره اتصال ناموفق بود", description: nextError, tone: "alert" });
     } finally {
       setSaving(false);
     }
@@ -221,17 +221,17 @@ export default function RubikaPage() {
       setLastTestAt(data.last_test_at ?? "");
       notifyWorkspaceUpdated();
       if (data.ok) {
-        setMessage("ط§طھطµط§ظ„ ط±ظˆط¨غŒع©ط§ ظ…ظˆظپظ‚ ط¨ظˆط¯");
-        showToast({ title: "ط§طھطµط§ظ„ ط±ظˆط¨غŒع©ط§ طھط§غŒغŒط¯ ط´ط¯", description: "ع©ط§ظ†ط§ظ„ ط¨ط±ط§غŒ ط§ظ†طھط´ط§ط± ط®ظˆط¯ع©ط§ط± ط¢ظ…ط§ط¯ظ‡ ط§ط³طھ.", tone: "success" });
+        setMessage("اتصال روبیکا موفق بود");
+        showToast({ title: "اتصال روبیکا تایید شد", description: "کانال برای انتشار خودکار آماده است.", tone: "success" });
       } else {
-        const nextError = data.error || "طھط³طھ ط§طھطµط§ظ„ ظ†ط§ظ…ظˆظپظ‚ ط¨ظˆط¯";
+        const nextError = data.error || "تست اتصال ناموفق بود";
         setError(nextError);
-        showToast({ title: "طھط³طھ ط§طھطµط§ظ„ ظ†ط§ظ…ظˆظپظ‚ ط¨ظˆط¯", description: nextError, tone: "alert" });
+        showToast({ title: "تست اتصال ناموفق بود", description: nextError, tone: "alert" });
       }
     } catch (err) {
-      const nextError = err instanceof Error ? err.message : "ط®ط·ط§غŒ طھط³طھ ط§طھطµط§ظ„";
+      const nextError = err instanceof Error ? err.message : "خطای تست اتصال";
       setError(nextError);
-      showToast({ title: "طھط³طھ ط§طھطµط§ظ„ ظ†ط§ظ…ظˆظپظ‚ ط¨ظˆط¯", description: nextError, tone: "alert" });
+      showToast({ title: "تست اتصال ناموفق بود", description: nextError, tone: "alert" });
     } finally {
       setTesting(false);
     }
@@ -254,13 +254,13 @@ export default function RubikaPage() {
           <section className="app-studio-panel rounded-lg px-4 py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
-                <p className="text-[10px] font-black text-app-primary">طھظ†ط¸غŒظ…ط§طھ ع©ط§ظ†ط§ظ„</p>
-                <h1 className="mt-1 text-xl font-black text-app-text">ط§طھطµط§ظ„ ط±ظˆط¨غŒع©ط§</h1>
-                <p className="mt-1 text-xs leading-5 text-app-muted">ط§ط¹طھط¨ط§ط±ظ†ط§ظ…ظ‡طŒ ظ…ظ‚طµط¯ ظˆ طھط³طھ ط¹ظ…ظ„غŒط§طھغŒ ط§ظ†طھط´ط§ط± ط±ط§ ط§ط² غŒع© طµظپط­ظ‡ ع©ظ†طھط±ظ„ ع©ظ†غŒط¯.</p>
+                <p className="text-[10px] font-black text-app-primary">تنظیمات کانال</p>
+                <h1 className="mt-1 text-xl font-black text-app-text">اتصال روبیکا</h1>
+                <p className="mt-1 text-xs leading-5 text-app-muted">اعتبارنامه، مقصد و تست عملیاتی انتشار را از یک صفحه کنترل کنید.</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <StatusToken tone={statusTone(status, dirty, testFresh)}>{saving ? "ط¯ط± ط­ط§ظ„ ط°ط®غŒط±ظ‡ طھظ†ط¸غŒظ…ط§طھ" : testing ? "ط¯ط± ط­ط§ظ„ طھط³طھ ط§طھطµط§ظ„" : statusLabel(status, dirty, testFresh)}</StatusToken>
-                <StatusToken tone={readyCount === 3 ? "success" : "warning"}>{readyCount}/3 ط¢ظ…ط§ط¯ظ‡</StatusToken>
+                <StatusToken tone={statusTone(status, dirty, testFresh)}>{saving ? "در حال ذخیره تنظیمات" : testing ? "در حال تست اتصال" : statusLabel(status, dirty, testFresh)}</StatusToken>
+                <StatusToken tone={readyCount === 3 ? "success" : "warning"}>{readyCount}/3 آماده</StatusToken>
                 {botName ? <StatusToken tone="primary">{botName}</StatusToken> : null}
               </div>
             </div>
@@ -268,9 +268,9 @@ export default function RubikaPage() {
 
           <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-3">
             {[
-              { label: "ظˆط¶ط¹غŒطھ ط§طھطµط§ظ„", value: statusLabel(status, dirty, testFresh), detail: dirty ? "ط¨ط¹ط¯ ط§ط² ط°ط®غŒط±ظ‡ ط¯ظˆط¨ط§ط±ظ‡ طھط³طھ ع©ظ†غŒط¯" : testFresh ? "ط¢ط®ط±غŒظ† ظ†طھغŒط¬ظ‡ طھط³طھ ط¹ظ…ظ„غŒط§طھغŒ ظ…ط¹طھط¨ط± ط§ط³طھ" : "ط¨ط±ط§غŒ ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒطŒ طھط³طھ طھط§ط²ظ‡ ظ„ط§ط²ظ… ط§ط³طھ", icon: PlugZap, tone: connectionReady ? "text-emerald-700" : status === "failed" ? "text-rose-700" : "text-amber-700" },
-              { label: "طھط´ط®غŒطµ ط¢ظ…ط§ط¯ظ‡â€Œط³ط§ط²غŒ", value: `${readyCount}/3`, detail: "طھظˆع©ظ†طŒ ظ…ظ‚طµط¯ ظˆ طھط³طھ ط§طھطµط§ظ„", icon: ShieldCheck, tone: readyCount === 3 ? "text-emerald-700" : "text-amber-700" },
-              { label: "ط¢ط®ط±غŒظ† طھط³طھ", value: formatLastTest(lastTestAt), detail: testFresh ? "ظ…ط¹طھط¨ط± طھط§ 24 ط³ط§ط¹طھ ظ¾ط³ ط§ط² طھط³طھ" : "طھط³طھ ظ…ط¬ط¯ط¯ ط¨ط±ط§غŒ ط¨ط§ط² ط´ط¯ظ† ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ظ„ط§ط²ظ… ط§ط³طھ", icon: Clock3, tone: testFresh ? "text-emerald-700" : "text-amber-700" }
+              { label: "وضعیت اتصال", value: statusLabel(status, dirty, testFresh), detail: dirty ? "بعد از ذخیره دوباره تست کنید" : testFresh ? "آخرین نتیجه تست عملیاتی معتبر است" : "برای زمان‌بندی، تست تازه لازم است", icon: PlugZap, tone: connectionReady ? "text-emerald-700" : status === "failed" ? "text-rose-700" : "text-amber-700" },
+              { label: "تشخیص آماده‌سازی", value: `${readyCount}/3`, detail: "توکن، مقصد و تست اتصال", icon: ShieldCheck, tone: readyCount === 3 ? "text-emerald-700" : "text-amber-700" },
+              { label: "آخرین تست", value: formatLastTest(lastTestAt), detail: testFresh ? "معتبر تا 24 ساعت پس از تست" : "تست مجدد برای باز شدن زمان‌بندی لازم است", icon: Clock3, tone: testFresh ? "text-emerald-700" : "text-amber-700" }
             ].map((metric) => {
               const Icon = metric.icon;
               return (
@@ -293,11 +293,11 @@ export default function RubikaPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <Route className="h-4 w-4 text-app-primary" aria-hidden="true" />
-                  <h2 className="text-sm font-black text-app-text">ظ…ط³غŒط± ط¢ظ…ط§ط¯ظ‡â€Œط³ط§ط²غŒ ط§ظ†طھط´ط§ط±</h2>
+                  <h2 className="text-sm font-black text-app-text">مسیر آماده‌سازی انتشار</h2>
                 </div>
-                <p className="mt-1 text-xs leading-5 text-app-muted">ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ظپظ‚ط· ظ¾ط³ ط§ط² ط°ط®غŒط±ظ‡ طھظ†ط¸غŒظ…ط§طھ ظˆ طھط§غŒغŒط¯ طھط³طھ ط§طھطµط§ظ„ طھط§ط²ظ‡ ط¨ط§ط² ظ…غŒâ€Œط´ظˆط¯.</p>
+                <p className="mt-1 text-xs leading-5 text-app-muted">زمان‌بندی فقط پس از ذخیره تنظیمات و تایید تست اتصال تازه باز می‌شود.</p>
               </div>
-              <StatusToken tone={connectionReady ? "success" : "warning"}>{connectionReady ? "ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ط¨ط§ط² ط§ط³طھ" : "ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ظ‚ظپظ„ ط§ط³طھ"}</StatusToken>
+              <StatusToken tone={connectionReady ? "success" : "warning"}>{connectionReady ? "زمان‌بندی باز است" : "زمان‌بندی قفل است"}</StatusToken>
             </div>
             <div className="grid divide-y divide-app-border md:grid-cols-3 md:divide-x md:divide-x-reverse md:divide-y-0">
               {journeySteps.map((step, index) => {
@@ -324,33 +324,33 @@ export default function RubikaPage() {
           {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
           {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
           {!dirty && status === "connected" && !testFresh ? (
-            <NoticeBanner tone="warning" title="طھط³طھ ط§طھطµط§ظ„ ظ†غŒط§ط²ظ…ظ†ط¯ طھظ…ط¯غŒط¯ ط§ط³طھ">
-              ط¨ط±ط§غŒ ط§غŒظ…ظ†غŒ ط§ظ†طھط´ط§ط±طŒ طھط³طھ ظ…ظˆظپظ‚ ط§طھطµط§ظ„ ظپظ‚ط· 24 ط³ط§ط¹طھ ظ…ط¹طھط¨ط± ط§ط³طھ. طھط³طھ ط±ط§ ط¯ظˆط¨ط§ط±ظ‡ ط§ط¬ط±ط§ ع©ظ†غŒط¯ طھط§ ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ظ¾ط³طھâ€Œظ‡ط§ ط¨ط§ط² ط´ظˆط¯.
+            <NoticeBanner tone="warning" title="تست اتصال نیازمند تمدید است">
+              برای ایمنی انتشار، تست موفق اتصال فقط 24 ساعت معتبر است. تست را دوباره اجرا کنید تا زمان‌بندی پست‌ها باز شود.
             </NoticeBanner>
           ) : null}
 
           <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-            <WorkspacePanel title="ط§ط¹طھط¨ط§ط±ظ†ط§ظ…ظ‡ ظˆ ظ…ظ‚طµط¯ ط§ظ†طھط´ط§ط±" description="طھظˆع©ظ† ظپظ‚ط· ظ‡ظ†ع¯ط§ظ… ط¬ط§غŒع¯ط²غŒظ†غŒ ظ„ط§ط²ظ… ط§ط³طھ. ط¨ط±ط§غŒ ط­ظپط¸ طھظˆع©ظ† ط°ط®غŒط±ظ‡â€Œط´ط¯ظ‡طŒ ظپغŒظ„ط¯ ط¢ظ† ط±ط§ ط®ط§ظ„غŒ ط¨ع¯ط°ط§ط±غŒط¯.">
+            <WorkspacePanel title="اعتبارنامه و مقصد انتشار" description="توکن فقط هنگام جایگزینی لازم است. برای حفظ توکن ذخیره‌شده، فیلد آن را خالی بگذارید.">
               {loading ? (
                 <LoadingPanel />
               ) : (
                 <form onSubmit={saveSettings} className="space-y-5">
                   <Field
-                    label="طھظˆع©ظ† ط±ط¨ط§طھ ط±ظˆط¨غŒع©ط§"
+                    label="توکن ربات روبیکا"
                     required={!hasSavedToken}
-                    hint={hasSavedToken ? "ط¨ط±ط§غŒ ط­ظپط¸ طھظˆع©ظ† ظپط¹ظ„غŒ ط§غŒظ† ظپغŒظ„ط¯ ط±ط§ ط®ط§ظ„غŒ ط¨ع¯ط°ط§ط±غŒط¯ط› ط¨ط±ط§غŒ ط¬ط§غŒع¯ط²غŒظ†غŒطŒ طھظˆع©ظ† ط¬ط¯غŒط¯ ط±ط§ ظˆط§ط±ط¯ ع©ظ†غŒط¯." : "طھظˆع©ظ† ط±ط¨ط§طھ ط¨ط±ط§غŒ ط§ظ†طھط´ط§ط± ط®ظˆط¯ع©ط§ط± ط¶ط±ظˆط±غŒ ط§ط³طھ."}
+                    hint={hasSavedToken ? "برای حفظ توکن فعلی این فیلد را خالی بگذارید؛ برای جایگزینی، توکن جدید را وارد کنید." : "توکن ربات برای انتشار خودکار ضروری است."}
                   >
                     <Input
                       value={botToken}
                       onChange={(event) => setBotToken(event.target.value)}
                       className="text-left"
                       dir="ltr"
-                      placeholder={maskedToken || "طھظˆع©ظ† ط±ط¨ط§طھ ط±ط§ ظˆط§ط±ط¯ ع©ظ†غŒط¯"}
+                      placeholder={maskedToken || "توکن ربات را وارد کنید"}
                       required={!hasSavedToken}
                     />
                   </Field>
 
-                  <Field label="Chat ID / Channel ID" required hint="ط´ظ†ط§ط³ظ‡ ع©ط§ظ†ط§ظ„ غŒط§ ع¯ظپطھâ€Œظˆع¯ظˆغŒ ظ…ظ‚طµط¯ ع©ظ‡ ظ¾ط³طھâ€Œظ‡ط§ ط¯ط± ط¢ظ† ظ…ظ†طھط´ط± ظ…غŒâ€Œط´ظˆظ†ط¯.">
+                  <Field label="Chat ID / Channel ID" required hint="شناسه کانال یا گفت‌وگوی مقصد که پست‌ها در آن منتشر می‌شوند.">
                     <Input
                       value={chatId}
                       onChange={(event) => setChatId(event.target.value)}
@@ -362,28 +362,28 @@ export default function RubikaPage() {
 
                   <div className="grid gap-3 rounded-md border border-app-border bg-slate-50 p-4 text-sm text-app-muted md:grid-cols-2">
                     <div>
-                      <p className="font-bold text-app-text">طھظˆع©ظ† ط°ط®غŒط±ظ‡â€Œط´ط¯ظ‡</p>
-                      <p className="mt-1 break-all text-left font-mono text-xs" dir="ltr">{maskedToken || "ظ‡ظ†ظˆط² ط°ط®غŒط±ظ‡ ظ†ط´ط¯ظ‡"}</p>
+                      <p className="font-bold text-app-text">توکن ذخیره‌شده</p>
+                      <p className="mt-1 break-all text-left font-mono text-xs" dir="ltr">{maskedToken || "هنوز ذخیره نشده"}</p>
                     </div>
                     <div>
-                      <p className="font-bold text-app-text">ط±ظپطھط§ط± ط°ط®غŒط±ظ‡</p>
-                      <p className="mt-1 text-xs leading-6">{botToken.trim() ? "طھظˆع©ظ† ط¬ط¯غŒط¯ ط¬ط§غŒع¯ط²غŒظ† ظ…غŒâ€Œط´ظˆط¯." : hasSavedToken ? "طھظˆع©ظ† ظ‚ط¨ظ„غŒ ط­ظپط¸ ظ…غŒâ€Œط´ظˆط¯." : "طھظˆع©ظ† ظ„ط§ط²ظ… ط§ط³طھ."}</p>
+                      <p className="font-bold text-app-text">رفتار ذخیره</p>
+                      <p className="mt-1 text-xs leading-6">{botToken.trim() ? "توکن جدید جایگزین می‌شود." : hasSavedToken ? "توکن قبلی حفظ می‌شود." : "توکن لازم است."}</p>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-3 rounded-md border border-app-border bg-white p-3 shadow-sm md:flex-row md:items-center md:justify-between">
                     <div>
-                      <p className="text-sm font-black text-app-text">{dirty ? "طھط؛غŒغŒط±ط§طھ ط¢ظ…ط§ط¯ظ‡ ط°ط®غŒط±ظ‡ ط§ط³طھ" : "طھظ†ط¸غŒظ…ط§طھ ط§طھطµط§ظ„ ط¨ظ‡â€Œط±ظˆط² ط§ط³طھ"}</p>
-                      <p className="mt-1 text-xs text-app-muted">{dirty ? "ط°ط®غŒط±ظ‡ ع©ظ†غŒط¯ طھط§ طھط³طھ ط§طھطµط§ظ„ ط¨ط±ط§غŒ ظ†ط³ط®ظ‡ ط¬ط¯غŒط¯ ظپط¹ط§ظ„ ط´ظˆط¯." : "ط¨ط±ط§غŒ ط§ط·ظ…غŒظ†ط§ظ† ط§ط² ط³ظ„ط§ظ…طھ ع©ط§ظ†ط§ظ„طŒ طھط³طھ ط¹ظ…ظ„غŒط§طھغŒ ط±ط§ ط§ط¬ط±ط§ ع©ظ†غŒط¯."}</p>
+                      <p className="text-sm font-black text-app-text">{dirty ? "تغییرات آماده ذخیره است" : "تنظیمات اتصال به‌روز است"}</p>
+                      <p className="mt-1 text-xs text-app-muted">{dirty ? "ذخیره کنید تا تست اتصال برای نسخه جدید فعال شود." : "برای اطمینان از سلامت کانال، تست عملیاتی را اجرا کنید."}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button type="button" variant="secondary" onClick={resetChanges} disabled={!dirty || saving}>
                         <Undo2 className="ml-2 h-4 w-4" aria-hidden="true" />
-                        ط¨ط§ط²ع¯ط±ط¯ط§ظ†غŒ
+                        بازگردانی
                       </Button>
                       <Button type="submit" disabled={saving || !canSave || !dirty}>
                         <Save className="ml-2 h-4 w-4" aria-hidden="true" />
-                        {saving ? "ط¯ط± ط­ط§ظ„ ط°ط®غŒط±ظ‡..." : "ط°ط®غŒط±ظ‡ طھط؛غŒغŒط±ط§طھ"}
+                        {saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
                       </Button>
                     </div>
                   </div>
@@ -392,46 +392,46 @@ export default function RubikaPage() {
             </WorkspacePanel>
 
             <aside className="space-y-4">
-              <WorkspacePanel title="ظˆط¶ط¹غŒطھ ط¹ظ…ظ„غŒط§طھغŒ" description="ظ‚ط¨ظ„ ط§ط² ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ط¬ط¯غŒطŒ طھط³طھ ط§طھطµط§ظ„ ط¨ط§غŒط¯ ظ…ظˆظپظ‚ ط¨ط§ط´ط¯.">
+              <WorkspacePanel title="وضعیت عملیاتی" description="قبل از زمان‌بندی جدی، تست اتصال باید موفق باشد.">
                 <div className="space-y-0">
                   {diagnostics.map((item) => <DiagnosticRow key={item.label} item={item} />)}
                 </div>
                 {lastError ? (
                   <div className="mt-4">
-                    <NoticeBanner tone="alert" title="ط¢ط®ط±غŒظ† ط®ط·ط§">
+                    <NoticeBanner tone="alert" title="آخرین خطا">
                       {lastError}
                     </NoticeBanner>
                   </div>
                 ) : null}
               </WorkspacePanel>
 
-              <WorkspacePanel title="طھط³طھ ط¹ظ…ظ„غŒط§طھغŒ" description="ط§غŒظ† طھط³طھ ط¨ط§ طھظ†ط¸غŒظ…ط§طھ ط°ط®غŒط±ظ‡â€Œط´ط¯ظ‡طŒ ط¯ط³طھط±ط³غŒ ط±ط¨ط§طھ ط±ظˆط¨غŒع©ط§ ط±ط§ ط¨ط±ط±ط³غŒ ظ…غŒâ€Œع©ظ†ط¯ ظˆ ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ط±ط§ ط¨ط±ط§غŒ 24 ط³ط§ط¹طھ ط¨ط§ط² ظ…غŒâ€Œع©ظ†ط¯.">
+              <WorkspacePanel title="تست عملیاتی" description="این تست با تنظیمات ذخیره‌شده، دسترسی ربات روبیکا را بررسی می‌کند و زمان‌بندی را برای 24 ساعت باز می‌کند.">
                 <Button type="button" className="w-full" onClick={testConnection} disabled={!canTest}>
                   <RefreshCw className={`ml-2 h-4 w-4 ${testing ? "animate-spin" : ""}`} aria-hidden="true" />
-                  {testing ? "ط¯ط± ط­ط§ظ„ ط¨ط±ط±ط³غŒ ط§طھطµط§ظ„..." : "ط§ط¬ط±ط§غŒ طھط³طھ ط§طھطµط§ظ„"}
+                  {testing ? "در حال بررسی اتصال..." : "اجرای تست اتصال"}
                 </Button>
-                {dirty ? <p className="mt-3 text-xs leading-6 text-amber-700">ط¨ط±ط§غŒ ط§ط¬ط±ط§غŒ طھط³طھطŒ ط§ط¨طھط¯ط§ طھط؛غŒغŒط±ط§طھ ط±ط§ ط°ط®غŒط±ظ‡ ع©ظ†غŒط¯.</p> : null}
+                {dirty ? <p className="mt-3 text-xs leading-6 text-amber-700">برای اجرای تست، ابتدا تغییرات را ذخیره کنید.</p> : null}
               </WorkspacePanel>
 
-              <WorkspacePanel title="ط¬ط²ط¦غŒط§طھ ع©ط§ظ†ط§ظ„" description="ط®ظ„ط§طµظ‡â€Œط§غŒ ط§ط² طھظ†ط¸غŒظ…ط§طھ ط°ط®غŒط±ظ‡â€Œط´ط¯ظ‡ ظˆ ط¢ط®ط±غŒظ† ط¨ط±ط±ط³غŒ.">
+              <WorkspacePanel title="جزئیات کانال" description="خلاصه‌ای از تنظیمات ذخیره‌شده و آخرین بررسی.">
                 <DetailGrid
                   items={[
-                    { label: "طھظˆع©ظ†", value: <span className="block break-all text-left font-mono text-xs" dir="ltr">{maskedToken || "ط«ط¨طھ ظ†ط´ط¯ظ‡"}</span> },
-                    { label: "ظ…ظ‚طµط¯ ط°ط®غŒط±ظ‡â€Œط´ط¯ظ‡", value: <span className="block break-all text-left font-mono text-xs" dir="ltr">{savedChatId || "ط«ط¨طھ ظ†ط´ط¯ظ‡"}</span> },
-                    { label: "ظ†ط§ظ… ط±ط¨ط§طھ", value: botName || "ظ†ط§ظ…ط´ط®طµ" },
-                    { label: "ط¢ط®ط±غŒظ† طھط³طھ", value: formatLastTest(lastTestAt) }
+                    { label: "توکن", value: <span className="block break-all text-left font-mono text-xs" dir="ltr">{maskedToken || "ثبت نشده"}</span> },
+                    { label: "مقصد ذخیره‌شده", value: <span className="block break-all text-left font-mono text-xs" dir="ltr">{savedChatId || "ثبت نشده"}</span> },
+                    { label: "نام ربات", value: botName || "نامشخص" },
+                    { label: "آخرین تست", value: formatLastTest(lastTestAt) }
                   ]}
                 />
               </WorkspacePanel>
 
-              <WorkspacePanel title="ظ…ط³غŒط± ط¨ط¹ط¯غŒ" description="ط¨ط¹ط¯ ط§ط² طھط³طھ ظ…ظˆظپظ‚طŒ ط§ظ†طھط´ط§ط± ط¯ط³طھغŒ غŒط§ ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ط±ط§ ط´ط±ظˆط¹ ع©ظ†غŒط¯.">
+              <WorkspacePanel title="مسیر بعدی" description="بعد از تست موفق، انتشار دستی یا زمان‌بندی را شروع کنید.">
                 <div className="grid gap-2">
                   <Button href="/compose">
                     <Send className="ml-2 h-4 w-4" aria-hidden="true" />
-                    ط§غŒط¬ط§ط¯ ظ¾ط³طھ
+                    ایجاد پست
                   </Button>
-                  <Button href="/queue" variant="secondary">ط¨ط±ط±ط³غŒ طµظپ ط§ظ†طھط´ط§ط±</Button>
-                  <Button href="/logs" variant="secondary">ظ…ط´ط§ظ‡ط¯ظ‡ ظ„ط§ع¯ ط§طھطµط§ظ„ ظˆ ط§ظ†طھط´ط§ط±</Button>
+                  <Button href="/queue" variant="secondary">بررسی صف انتشار</Button>
+                  <Button href="/logs" variant="secondary">مشاهده لاگ اتصال و انتشار</Button>
                 </div>
               </WorkspacePanel>
             </aside>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { BadgeCheck, Instagram, KeyRound, RefreshCw, Route, Save, ShieldCheck } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -30,11 +30,11 @@ type InstagramSettings = {
 const DEFAULT_INSTAGRAM_PERMISSIONS = "instagram_basic, instagram_content_publish, pages_show_list, pages_read_engagement";
 
 function statusLabel(status: string) {
-  if (status === "connected") return "ط§طھطµط§ظ„ طھط§غŒغŒط¯ ط´ط¯ظ‡";
-  if (status === "reminder_ready") return "ط¢ظ…ط§ط¯ظ‡ غŒط§ط¯ط¢ظˆط±غŒ ط¯ط³طھغŒ";
-  if (status === "oauth_required") return "ظ†غŒط§ط²ظ…ظ†ط¯ Meta OAuth";
-  if (status === "failed") return "ط§طھطµط§ظ„ ط®ط·ط§ ط¯ط§ط±ط¯";
-  return "ط¯ط± ط­ط§ظ„ ط¢ظ…ط§ط¯ظ‡â€Œط³ط§ط²غŒ";
+  if (status === "connected") return "اتصال تایید شده";
+  if (status === "reminder_ready") return "آماده یادآوری دستی";
+  if (status === "oauth_required") return "نیازمند Meta OAuth";
+  if (status === "failed") return "اتصال خطا دارد";
+  return "در حال آماده‌سازی";
 }
 
 function statusTone(status: string): "success" | "warning" | "alert" | "neutral" {
@@ -46,9 +46,9 @@ function statusTone(status: string): "success" | "warning" | "alert" | "neutral"
 }
 
 function formatDateTime(value?: string | null) {
-  if (!value) return "ظ‡ظ†ظˆط² ط§ط¬ط±ط§ ظ†ط´ط¯ظ‡";
+  if (!value) return "هنوز اجرا نشده";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "ط²ظ…ط§ظ† ظ†ط§ظ…ط¹طھط¨ط±";
+  if (Number.isNaN(date.getTime())) return "زمان نامعتبر";
   return new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
@@ -69,7 +69,7 @@ export default function InstagramPage() {
   useEffect(() => {
     async function loadSettings() {
       const response = await fetch(`${apiUrl}/instagram/settings`, { headers: authHeaders() });
-      if (!response.ok) throw new Error("ط¯ط±غŒط§ظپطھ طھظ†ط¸غŒظ…ط§طھ ط§غŒظ†ط³طھط§ع¯ط±ط§ظ… ظ†ط§ظ…ظˆظپظ‚ ط¨ظˆط¯");
+      if (!response.ok) throw new Error("دریافت تنظیمات اینستاگرام ناموفق بود");
       const data = await response.json();
       if (data) {
         setSaved(data);
@@ -83,7 +83,7 @@ export default function InstagramPage() {
     }
 
     loadSettings().catch((err) => {
-      setError(err instanceof Error ? err.message : "ط®ط·ط§ ط¯ط± ط¯ط±غŒط§ظپطھ طھظ†ط¸غŒظ…ط§طھ ط§غŒظ†ط³طھط§ع¯ط±ط§ظ…");
+      setError(err instanceof Error ? err.message : "خطا در دریافت تنظیمات اینستاگرام");
       setLoading(false);
     });
   }, []);
@@ -100,9 +100,9 @@ export default function InstagramPage() {
   const publishMode = accountType === "personal" ? "reminder" : "direct";
   const hasIdentity = Boolean(username.trim() || professionalAccountId.trim() || pageId.trim());
   const readiness = [
-    { label: accountType === "personal" ? "ط§ع©ط§ظ†طھ ظ…ط¹ظ…ظˆظ„غŒ" : "ط­ط³ط§ط¨ ط­ط±ظپظ‡â€Œط§غŒ", detail: hasIdentity ? "ظ†ط§ظ… ع©ط§ط±ط¨ط±غŒ غŒط§ ط´ظ†ط§ط³ظ‡ ط­ط³ط§ط¨ ط«ط¨طھ ط´ط¯ظ‡ ط§ط³طھ." : "ظ†ط§ظ… ع©ط§ط±ط¨ط±غŒ غŒط§ ط´ظ†ط§ط³ظ‡ ع©ط§ظ†ط§ظ„ ط±ط§ ظ…ط´ط®طµ ع©ظ†غŒط¯.", done: hasIdentity, icon: Instagram },
-    { label: accountType === "personal" ? "غŒط§ط¯ط¢ظˆط±غŒ ط¯ط³طھغŒ" : "ظ…ط¬ظˆط²ظ‡ط§غŒ Meta", detail: accountType === "personal" ? "ط¨ط±ط§غŒ ط§ع©ط§ظ†طھ ظ…ط¹ظ…ظˆظ„غŒطŒ ط§ظ†طھط´ط§ط± ظ…ط³طھظ‚غŒظ… ط؛غŒط±ظپط¹ط§ظ„ ظˆ غŒط§ط¯ط¢ظˆط±غŒ ط¯ط³طھغŒ ظپط¹ط§ظ„ ظ…غŒâ€Œط´ظˆط¯." : permissions.trim() ? "ظ„غŒط³طھ ظ…ط¬ظˆط²ظ‡ط§غŒ ظ…ظˆط±ط¯ظ†غŒط§ط² ظ…ط³طھظ†ط¯ ط´ط¯ظ‡ ط§ط³طھ." : "ظ…ط¬ظˆط²ظ‡ط§غŒ Meta Graph ط±ط§ ظ…ط´ط®طµ ع©ظ†غŒط¯.", done: accountType === "personal" || Boolean(permissions.trim()), icon: ShieldCheck },
-    { label: accountType === "personal" ? "ظ‚ط§ط¨ظ„ ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ" : "OAuth ظˆط§ظ‚ط¹غŒ", detail: accountType === "personal" ? "ظ¾ط³طھ ط¯ط± ط²ظ…ط§ظ† ظ…ظ‚ط±ط± ط¨ظ‡ ظˆط¶ط¹غŒطھ ط¢ظ…ط§ط¯ظ‡ ط§ظ†طھط´ط§ط± ط¯ط³طھغŒ ظ…غŒâ€Œط±ط³ط¯." : saved?.status === "connected" ? "طھظˆع©ظ† ظ…ط¹طھط¨ط± ظ…طھطµظ„ ط§ط³طھ." : "ط¯ط± ظپط§ط² ط¨ط¹ط¯غŒ ط¨ط§غŒط¯ ط¬ط±غŒط§ظ† OAuth ظˆ refresh token ط§ط¶ط§ظپظ‡ ط´ظˆط¯.", done: accountType === "personal" || saved?.status === "connected", icon: KeyRound }
+    { label: accountType === "personal" ? "اکانت معمولی" : "حساب حرفه‌ای", detail: hasIdentity ? "نام کاربری یا شناسه حساب ثبت شده است." : "نام کاربری یا شناسه کانال را مشخص کنید.", done: hasIdentity, icon: Instagram },
+    { label: accountType === "personal" ? "یادآوری دستی" : "مجوزهای Meta", detail: accountType === "personal" ? "برای اکانت معمولی، انتشار مستقیم غیرفعال و یادآوری دستی فعال می‌شود." : permissions.trim() ? "لیست مجوزهای موردنیاز مستند شده است." : "مجوزهای Meta Graph را مشخص کنید.", done: accountType === "personal" || Boolean(permissions.trim()), icon: ShieldCheck },
+    { label: accountType === "personal" ? "قابل زمان‌بندی" : "OAuth واقعی", detail: accountType === "personal" ? "پست در زمان مقرر به وضعیت آماده انتشار دستی می‌رسد." : saved?.status === "connected" ? "توکن معتبر متصل است." : "در فاز بعدی باید جریان OAuth و refresh token اضافه شود.", done: accountType === "personal" || saved?.status === "connected", icon: KeyRound }
   ];
   const readyCount = readiness.filter((item) => item.done).length;
 
@@ -124,16 +124,16 @@ export default function InstagramPage() {
           permissions: permissions.trim()
         })
       });
-      if (!response.ok) throw new Error("ط°ط®غŒط±ظ‡ طھظ†ط¸غŒظ…ط§طھ ط§غŒظ†ط³طھط§ع¯ط±ط§ظ… ظ†ط§ظ…ظˆظپظ‚ ط¨ظˆط¯");
+      if (!response.ok) throw new Error("ذخیره تنظیمات اینستاگرام ناموفق بود");
       const data = (await response.json()) as InstagramSettings;
       setSaved(data);
-      setMessage(accountType === "personal" ? "ط§ع©ط§ظ†طھ ظ…ط¹ظ…ظˆظ„غŒ ط¨ط±ط§غŒ غŒط§ط¯ط¢ظˆط±غŒ ط§ظ†طھط´ط§ط± ط¯ط³طھغŒ ط¢ظ…ط§ط¯ظ‡ ط´ط¯" : "ظ¾ط±ظˆظپط§غŒظ„ ط§غŒظ†ط³طھط§ع¯ط±ط§ظ… ط¨ط±ط§غŒ ظپط§ط² ط§طھطµط§ظ„ ظˆط§ظ‚ط¹غŒ ط¢ظ…ط§ط¯ظ‡ ط´ط¯");
-      showToast({ title: "طھظ†ط¸غŒظ…ط§طھ ط§غŒظ†ط³طھط§ع¯ط±ط§ظ… ط°ط®غŒط±ظ‡ ط´ط¯", description: accountType === "personal" ? "ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ط¯ط³طھغŒ ط¨ط±ط§غŒ ط§ع©ط§ظ†طھ ظ…ط¹ظ…ظˆظ„غŒ ظپط¹ط§ظ„ ط´ط¯." : "ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ظ…ط³طھظ‚غŒظ… ط¨ط¹ط¯ ط§ط² Meta OAuth ظپط¹ط§ظ„ ظ…غŒâ€Œط´ظˆط¯.", tone: "success" });
+      setMessage(accountType === "personal" ? "اکانت معمولی برای یادآوری انتشار دستی آماده شد" : "پروفایل اینستاگرام برای فاز اتصال واقعی آماده شد");
+      showToast({ title: "تنظیمات اینستاگرام ذخیره شد", description: accountType === "personal" ? "زمان‌بندی دستی برای اکانت معمولی فعال شد." : "زمان‌بندی مستقیم بعد از Meta OAuth فعال می‌شود.", tone: "success" });
       notifyWorkspaceUpdated();
     } catch (err) {
-      const nextError = err instanceof Error ? err.message : "ط®ط·ط§غŒ ط°ط®غŒط±ظ‡ طھظ†ط¸غŒظ…ط§طھ";
+      const nextError = err instanceof Error ? err.message : "خطای ذخیره تنظیمات";
       setError(nextError);
-      showToast({ title: "ط°ط®غŒط±ظ‡ ط§غŒظ†ط³طھط§ع¯ط±ط§ظ… ظ†ط§ظ…ظˆظپظ‚ ط¨ظˆط¯", description: nextError, tone: "alert" });
+      showToast({ title: "ذخیره اینستاگرام ناموفق بود", description: nextError, tone: "alert" });
     } finally {
       setSaving(false);
     }
@@ -148,17 +148,17 @@ export default function InstagramPage() {
       const data = await response.json();
       setSaved((current) => current ? { ...current, status: data.status, last_error: data.error, last_test_at: data.last_test_at } : current);
       if (data.ok) {
-        setMessage(data.error || "ط§ع©ط§ظ†طھ ظ…ط¹ظ…ظˆظ„غŒ ط¨ط±ط§غŒ غŒط§ط¯ط¢ظˆط±غŒ ط¯ط³طھغŒ ط¢ظ…ط§ط¯ظ‡ ط§ط³طھ");
-        showToast({ title: "ط­ط§ظ„طھ غŒط§ط¯ط¢ظˆط±غŒ ظپط¹ط§ظ„ ط§ط³طھ", description: "ظ¾ط³طھâ€Œظ‡ط§ ط¯ط± ط²ظ…ط§ظ† ظ…ظ‚ط±ط± ط¨ط±ط§غŒ ط§ظ†طھط´ط§ط± ط¯ط³طھغŒ ط¢ظ…ط§ط¯ظ‡ ظ…غŒâ€Œط´ظˆظ†ط¯.", tone: "success" });
+        setMessage(data.error || "اکانت معمولی برای یادآوری دستی آماده است");
+        showToast({ title: "حالت یادآوری فعال است", description: "پست‌ها در زمان مقرر برای انتشار دستی آماده می‌شوند.", tone: "success" });
       } else {
-        setError(data.error || "Meta OAuth ظ‡ظ†ظˆط² ظ…طھطµظ„ ظ†غŒط³طھ");
-        showToast({ title: "ط§طھطµط§ظ„ ط§غŒظ†ط³طھط§ع¯ط±ط§ظ… ظ‡ظ†ظˆط² ع©ط§ظ…ظ„ ظ†غŒط³طھ", description: "ط¨ط±ط§غŒ ط§ظ†طھط´ط§ط± ظ…ط³طھظ‚غŒظ… ط¨ط§غŒط¯ Meta OAuth ظˆ ظ…ط¬ظˆط²ظ‡ط§غŒ ط§ظ†طھط´ط§ط± ط§ط¶ط§ظپظ‡ ط´ظˆط¯.", tone: "warning" });
+        setError(data.error || "Meta OAuth هنوز متصل نیست");
+        showToast({ title: "اتصال اینستاگرام هنوز کامل نیست", description: "برای انتشار مستقیم باید Meta OAuth و مجوزهای انتشار اضافه شود.", tone: "warning" });
       }
       notifyWorkspaceUpdated();
     } catch (err) {
-      const nextError = err instanceof Error ? err.message : "ط®ط·ط§غŒ طھط³طھ ط§طھطµط§ظ„ ط§غŒظ†ط³طھط§ع¯ط±ط§ظ…";
+      const nextError = err instanceof Error ? err.message : "خطای تست اتصال اینستاگرام";
       setError(nextError);
-      showToast({ title: "طھط³طھ ط§غŒظ†ط³طھط§ع¯ط±ط§ظ… ظ†ط§ظ…ظˆظپظ‚ ط¨ظˆط¯", description: nextError, tone: "alert" });
+      showToast({ title: "تست اینستاگرام ناموفق بود", description: nextError, tone: "alert" });
     } finally {
       setTesting(false);
     }
@@ -171,34 +171,34 @@ export default function InstagramPage() {
           <section className="app-studio-panel rounded-lg px-4 py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
-                <p className="text-[10px] font-black text-app-primary">طھظ†ط¸غŒظ…ط§طھ ع©ط§ظ†ط§ظ„</p>
-                <h1 className="mt-1 text-xl font-black text-app-text">ط§طھطµط§ظ„ ط§غŒظ†ط³طھط§ع¯ط±ط§ظ…</h1>
-                <p className="mt-1 text-xs leading-5 text-app-muted">ط§ع©ط§ظ†طھ ظ…ط¹ظ…ظˆظ„غŒ ط¨ط§ غŒط§ط¯ط¢ظˆط±غŒ ط¯ط³طھغŒ ع©ط§ط± ظ…غŒâ€Œع©ظ†ط¯ط› Creator ظˆ Business ط¨ط¹ط¯ ط§ط² Meta OAuth ط§ظ†طھط´ط§ط± ظ…ط³طھظ‚غŒظ… ظ…غŒâ€Œع¯غŒط±ظ†ط¯.</p>
+                <p className="text-[10px] font-black text-app-primary">تنظیمات کانال</p>
+                <h1 className="mt-1 text-xl font-black text-app-text">اتصال اینستاگرام</h1>
+                <p className="mt-1 text-xs leading-5 text-app-muted">اکانت معمولی با یادآوری دستی کار می‌کند؛ Creator و Business بعد از Meta OAuth انتشار مستقیم می‌گیرند.</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <StatusToken tone={dirty ? "warning" : statusTone(status)}>{dirty ? "طھط؛غŒغŒط±ط§طھ ط°ط®غŒط±ظ‡ ظ†ط´ط¯ظ‡" : statusLabel(status)}</StatusToken>
-                <StatusToken tone={readyCount === 3 ? "success" : "warning"}>{readyCount}/3 ط¢ظ…ط§ط¯ظ‡</StatusToken>
+                <StatusToken tone={dirty ? "warning" : statusTone(status)}>{dirty ? "تغییرات ذخیره نشده" : statusLabel(status)}</StatusToken>
+                <StatusToken tone={readyCount === 3 ? "success" : "warning"}>{readyCount}/3 آماده</StatusToken>
                 <Button type="button" variant="secondary" size="sm" disabled={testing || dirty} onClick={testConnection}>
                   <RefreshCw className={`ml-2 h-4 w-4 ${testing ? "animate-spin" : ""}`} aria-hidden="true" />
-                  طھط³طھ ط§طھطµط§ظ„
+                  تست اتصال
                 </Button>
               </div>
             </div>
           </section>
 
           {loading ? <LoadingPanel /> : null}
-          {message ? <NoticeBanner tone="success" title="ط§ظ†ط¬ط§ظ… ط´ط¯">{message}</NoticeBanner> : null}
-          {error ? <NoticeBanner tone="warning" title="ظˆط¶ط¹غŒطھ ط§طھطµط§ظ„">{error}</NoticeBanner> : null}
+          {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
+          {error ? <NoticeBanner tone="warning" title="وضعیت اتصال">{error}</NoticeBanner> : null}
 
           {!loading ? (
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-              <WorkspacePanel title="ظ¾ط±ظˆظپط§غŒظ„ ع©ط§ظ†ط§ظ„" description="ط§ط·ظ„ط§ط¹ط§طھغŒ ع©ظ‡ ط¯ط± ظپط§ط² OAuth ط¨ط±ط§غŒ ط§طھطµط§ظ„ ط¨ظ‡ ط­ط³ط§ط¨ ط­ط±ظپظ‡â€Œط§غŒ Meta ظ„ط§ط²ظ… ظ…غŒâ€Œط´ظˆط¯.">
+              <WorkspacePanel title="پروفایل کانال" description="اطلاعاتی که در فاز OAuth برای اتصال به حساب حرفه‌ای Meta لازم می‌شود.">
                 <form onSubmit={saveSettings} className="grid gap-4">
                   <section className="grid gap-2 rounded-md border border-app-border bg-app-surfaceMuted p-3 sm:grid-cols-3">
                     {[
-                      { value: "personal", label: "ظ…ط¹ظ…ظˆظ„غŒ", detail: "غŒط§ط¯ط¢ظˆط±غŒ ط¯ط³طھغŒطŒ ط¨ط¯ظˆظ† ط§ظ†طھط´ط§ط± ط®ظˆط¯ع©ط§ط±" },
-                      { value: "creator", label: "Creator", detail: "ط§ظ†طھط´ط§ط± ظ…ط³طھظ‚غŒظ… ط¨ط¹ط¯ ط§ط² Meta OAuth" },
-                      { value: "business", label: "Business", detail: "ط§ظ†طھط´ط§ط± ظ…ط³طھظ‚غŒظ… ط¨ط¹ط¯ ط§ط² ط§طھطµط§ظ„ Page" }
+                      { value: "personal", label: "معمولی", detail: "یادآوری دستی، بدون انتشار خودکار" },
+                      { value: "creator", label: "Creator", detail: "انتشار مستقیم بعد از Meta OAuth" },
+                      { value: "business", label: "Business", detail: "انتشار مستقیم بعد از اتصال Page" }
                     ].map((option) => (
                       <button
                         key={option.value}
@@ -215,38 +215,38 @@ export default function InstagramPage() {
                     ))}
                   </section>
 
-                  <Field label="ظ†ط§ظ… ع©ط§ط±ط¨ط±غŒ ط§غŒظ†ط³طھط§ع¯ط±ط§ظ…" hint="ظ…ط«ظ„ط§ظ‹ brand_shop">
+                  <Field label="نام کاربری اینستاگرام" hint="مثلاً brand_shop">
                     <Input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="instagram_username" />
                   </Field>
                   {accountType !== "personal" ? (
                     <>
-                      <Field label="Instagram Professional Account ID" hint="ط¨ط¹ط¯ ط§ط² OAuth ط¨ظ‡ طµظˆط±طھ ط®ظˆط¯ع©ط§ط± ظ‚ط§ط¨ظ„ ط¯ط±غŒط§ظپطھ ط§ط³طھ.">
+                      <Field label="Instagram Professional Account ID" hint="بعد از OAuth به صورت خودکار قابل دریافت است.">
                         <Input value={professionalAccountId} onChange={(event) => setProfessionalAccountId(event.target.value)} placeholder="1784..." dir="ltr" />
                       </Field>
-                      <Field label="Facebook Page ID" hint="ط¨ط±ط§غŒ Graph API ط§ظ†طھط´ط§ط± ظ…ط­طھظˆط§ ط¨ظ‡ Page linkage ظ†غŒط§ط² ط§ط³طھ.">
+                      <Field label="Facebook Page ID" hint="برای Graph API انتشار محتوا به Page linkage نیاز است.">
                         <Input value={pageId} onChange={(event) => setPageId(event.target.value)} placeholder="page_id" dir="ltr" />
                       </Field>
-                      <Field label="ظ…ط¬ظˆط²ظ‡ط§غŒ ظ…ظˆط±ط¯ظ†غŒط§ط²" hint="ط¯ط± ظپط§ط² OAuth ط¨ظ‡ scopeظ‡ط§غŒ Meta طھط¨ط¯غŒظ„ ظ…غŒâ€Œط´ظˆط¯.">
+                      <Field label="مجوزهای موردنیاز" hint="در فاز OAuth به scopeهای Meta تبدیل می‌شود.">
                         <Textarea value={permissions} onChange={(event) => setPermissions(event.target.value)} className="min-h-24" dir="ltr" />
                       </Field>
                     </>
                   ) : (
-                    <NoticeBanner tone="info" title="ط­ط§ظ„طھ ط§ع©ط§ظ†طھ ظ…ط¹ظ…ظˆظ„غŒ">
-                      ط§غŒظ† ط­ط§ظ„طھ ظ¾ط³طھ ط±ط§ ط®ظˆط¯ع©ط§ط± ظ…ظ†طھط´ط± ظ†ظ…غŒâ€Œع©ظ†ط¯. ط¯ط± ط²ظ…ط§ظ† ظ…ظ‚ط±ط±طŒ ظ¾ط³طھ ط¨ظ‡ ظˆط¶ط¹غŒطھ ط¢ظ…ط§ط¯ظ‡ ط§ظ†طھط´ط§ط± ط¯ط³طھغŒ ظ…غŒâ€Œط±ط³ط¯ طھط§ ع©ظ¾ط´ظ† ط±ط§ ع©ظ¾غŒ ع©ظ†غŒط¯ ظˆ ط¯ط± Instagram ظ…ظ†طھط´ط± ع©ظ†غŒط¯.
+                    <NoticeBanner tone="info" title="حالت اکانت معمولی">
+                      این حالت پست را خودکار منتشر نمی‌کند. در زمان مقرر، پست به وضعیت آماده انتشار دستی می‌رسد تا کپشن را کپی کنید و در Instagram منتشر کنید.
                     </NoticeBanner>
                   )}
                   <div className="flex flex-wrap gap-2">
                     <Button type="submit" disabled={saving}>
                       <Save className="ml-2 h-4 w-4" aria-hidden="true" />
-                      {saving ? "ط¯ط± ط­ط§ظ„ ط°ط®غŒط±ظ‡" : "ط°ط®غŒط±ظ‡ طھظ†ط¸غŒظ…ط§طھ"}
+                      {saving ? "در حال ذخیره" : "ذخیره تنظیمات"}
                     </Button>
-                    <Button href="/compose" variant="secondary">ط±ظپطھظ† ط¨ظ‡ composer</Button>
+                    <Button href="/compose" variant="secondary">رفتن به composer</Button>
                   </div>
                 </form>
               </WorkspacePanel>
 
               <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-                <WorkspacePanel title={accountType === "personal" ? "ظ…ط³غŒط± ط§ع©ط§ظ†طھ ظ…ط¹ظ…ظˆظ„غŒ" : "ظ…ط³غŒط± ط§طھطµط§ظ„ ظˆط§ظ‚ط¹غŒ"} description={accountType === "personal" ? "ط¨ط¯ظˆظ† ظ¾ط³ظˆط±ط¯ ظˆ ط¨ط¯ظˆظ† ط§طھظˆظ…ط§ط³غŒظˆظ† ظ†ط§ط§ظ…ظ†ط› ظپظ‚ط· غŒط§ط¯ط¢ظˆط±غŒ ظˆ ط¢ظ…ط§ط¯ظ‡â€Œط³ط§ط²غŒ ط¯ط³طھغŒ." : "ط§غŒظ† ظپط§ط² ط¹ظ…ط¯ط§ظ‹ طھظˆع©ظ† ط¬ط¹ظ„غŒ ط°ط®غŒط±ظ‡ ظ†ظ…غŒâ€Œع©ظ†ط¯."} action={<StatusToken tone={accountType === "personal" ? "success" : "warning"}>{accountType === "personal" ? "Reminder mode" : "OAuth pending"}</StatusToken>}>
+                <WorkspacePanel title={accountType === "personal" ? "مسیر اکانت معمولی" : "مسیر اتصال واقعی"} description={accountType === "personal" ? "بدون پسورد و بدون اتوماسیون ناامن؛ فقط یادآوری و آماده‌سازی دستی." : "این فاز عمداً توکن جعلی ذخیره نمی‌کند."} action={<StatusToken tone={accountType === "personal" ? "success" : "warning"}>{accountType === "personal" ? "Reminder mode" : "OAuth pending"}</StatusToken>}>
                   <div className="space-y-3">
                     {readiness.map((item) => {
                       const Icon = item.icon;
@@ -265,27 +265,27 @@ export default function InstagramPage() {
                   </div>
                 </WorkspacePanel>
 
-                <WorkspacePanel title="ظ‚ط±ط§ط±ط¯ط§ط¯ ط§ظ†طھط´ط§ط±" description={accountType === "personal" ? "ط§ع©ط§ظ†طھ ظ…ط¹ظ…ظˆظ„غŒ ظپظ‚ط· غŒط§ط¯ط¢ظˆط±غŒ ط¯ط³طھغŒ ظ…غŒâ€Œع¯غŒط±ط¯." : "ظ‚ط¨ظ„ ط§ط² ط§طھطµط§ظ„ ظˆط§ظ‚ط¹غŒطŒ ط§ظ†طھط´ط§ط± ظ…ط³طھظ‚غŒظ… ط§غŒظ†ط³طھط§ع¯ط±ط§ظ… ظ…ط³ط¯ظˆط¯ ظ…غŒâ€Œظ…ط§ظ†ط¯."}>
+                <WorkspacePanel title="قرارداد انتشار" description={accountType === "personal" ? "اکانت معمولی فقط یادآوری دستی می‌گیرد." : "قبل از اتصال واقعی، انتشار مستقیم اینستاگرام مسدود می‌ماند."}>
                   <DetailGrid
                     items={[
-                      { label: "ظˆط¶ط¹غŒطھ", value: statusLabel(status), hint: "ظˆط¶ط¹غŒطھ ط¢ظ…ط§ط¯ظ‡â€Œط³ط§ط²غŒ ع©ط§ظ†ط§ظ„" },
-                      { label: "ط¢ط®ط±غŒظ† طھط³طھ", value: formatDateTime(saved?.last_test_at), hint: "طھط³طھ ظپط¹ظ„غŒ ظپظ‚ط· OAuth pending ط±ط§ ع¯ط²ط§ط±ط´ ظ…غŒâ€Œع©ظ†ط¯" },
-                      { label: "ظ†ظˆط¹ ط­ط³ط§ط¨", value: accountType === "personal" ? "ظ…ط¹ظ…ظˆظ„غŒ" : accountType === "creator" ? "Creator" : "Business", hint: accountType === "personal" ? "غŒط§ط¯ط¢ظˆط±غŒ ط¯ط³طھغŒ" : "ط§ظ†طھط´ط§ط± ظ…ط³طھظ‚غŒظ… ط¨ط¹ط¯ ط§ط² OAuth" },
-                      { label: "ظ¾ط´طھغŒط¨ط§ظ†غŒ ظپط¹ظ„غŒ", value: accountType === "personal" ? "ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ غŒط§ط¯ط¢ظˆط±غŒ" : "ظ¾غŒط´â€Œظ†ظˆغŒط³ ظˆ ط§ظ†طھط®ط§ط¨ ع©ط§ظ†ط§ظ„", hint: accountType === "personal" ? "ط¨ط¯ظˆظ† auto-publish" : "ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ظ…ط³طھظ‚غŒظ… ط¨ط¹ط¯ ط§ط² OAuth" },
-                      { label: "ظ…ط³غŒط± ط¨ط¹ط¯غŒ", value: accountType === "personal" ? "Push reminder + copy flow" : "Meta OAuth + publisher adapter", hint: accountType === "personal" ? "طھط¬ط±ط¨ظ‡ ط¯ط³طھغŒ ط­ط±ظپظ‡â€Œط§غŒ" : "Graph API content publishing" }
+                      { label: "وضعیت", value: statusLabel(status), hint: "وضعیت آماده‌سازی کانال" },
+                      { label: "آخرین تست", value: formatDateTime(saved?.last_test_at), hint: "تست فعلی فقط OAuth pending را گزارش می‌کند" },
+                      { label: "نوع حساب", value: accountType === "personal" ? "معمولی" : accountType === "creator" ? "Creator" : "Business", hint: accountType === "personal" ? "یادآوری دستی" : "انتشار مستقیم بعد از OAuth" },
+                      { label: "پشتیبانی فعلی", value: accountType === "personal" ? "زمان‌بندی یادآوری" : "پیش‌نویس و انتخاب کانال", hint: accountType === "personal" ? "بدون auto-publish" : "زمان‌بندی مستقیم بعد از OAuth" },
+                      { label: "مسیر بعدی", value: accountType === "personal" ? "Push reminder + copy flow" : "Meta OAuth + publisher adapter", hint: accountType === "personal" ? "تجربه دستی حرفه‌ای" : "Graph API content publishing" }
                     ]}
                   />
-                  <NoticeBanner tone="info" title="ع¯ط§ظ… ط¨ط¹ط¯غŒ ظپظ†غŒ">
-                    {accountType === "personal" ? "ط¨ط±ط§غŒ ط§ع©ط§ظ†طھ ظ…ط¹ظ…ظˆظ„غŒ ط¨ط§غŒط¯ push reminderطŒ copy caption ظˆ open Instagram flow ط±ط§ ع©ط§ظ…ظ„ ع©ظ†غŒظ…." : "ط¨ط§غŒط¯ flow ظˆط±ظˆط¯ MetaطŒ ط°ط®غŒط±ظ‡ refresh tokenطŒ ط¨ط±ط±ط³غŒ ظ…ط¬ظˆط²ظ‡ط§ ظˆ adapter ط§ظ†طھط´ط§ط± Instagram ط§ط¶ط§ظپظ‡ ط´ظˆط¯."}
+                  <NoticeBanner tone="info" title="گام بعدی فنی">
+                    {accountType === "personal" ? "برای اکانت معمولی باید push reminder، copy caption و open Instagram flow را کامل کنیم." : "باید flow ورود Meta، ذخیره refresh token، بررسی مجوزها و adapter انتشار Instagram اضافه شود."}
                   </NoticeBanner>
                   <Button href="/queue" variant="secondary" className="mt-4 w-full">
                     <Route className="ml-2 h-4 w-4" aria-hidden="true" />
-                    ظ…ط´ط§ظ‡ط¯ظ‡ طµظپ ط§ظ†طھط´ط§ط±
+                    مشاهده صف انتشار
                   </Button>
                 </WorkspacePanel>
 
-                <NoticeBanner tone={accountType === "personal" ? "success" : "warning"} title="طھظˆط¬ظ‡">
-                  {accountType === "personal" ? "ط§ع©ط§ظ†طھ ظ…ط¹ظ…ظˆظ„غŒ ظ…غŒâ€Œطھظˆط§ظ†ط¯ ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ط´ظˆط¯طŒ ط§ظ…ط§ ط§ظ†طھط´ط§ط± ظ†ظ‡ط§غŒغŒ ط¯ط³طھغŒ ط§ط³طھ." : "ط§ظ†طھط®ط§ط¨ ط§غŒظ†ط³طھط§ع¯ط±ط§ظ… ط¯ط± composer ط¨ط±ط§غŒ ط¢ظ…ط§ط¯ظ‡â€Œط³ط§ط²غŒ ظ…ط­طھظˆط§ ظپط¹ط§ظ„ ط§ط³طھطŒ ط§ظ…ط§ ط²ظ…ط§ظ†â€Œط¨ظ†ط¯غŒ ظ…ط³طھظ‚غŒظ… ط¢ظ† طھط§ ط§طھطµط§ظ„ ظˆط§ظ‚ط¹غŒ Meta ظ…ط³ط¯ظˆط¯ ظ…غŒâ€Œط´ظˆط¯."}
+                <NoticeBanner tone={accountType === "personal" ? "success" : "warning"} title="توجه">
+                  {accountType === "personal" ? "اکانت معمولی می‌تواند زمان‌بندی شود، اما انتشار نهایی دستی است." : "انتخاب اینستاگرام در composer برای آماده‌سازی محتوا فعال است، اما زمان‌بندی مستقیم آن تا اتصال واقعی Meta مسدود می‌شود."}
                 </NoticeBanner>
               </aside>
             </div>
