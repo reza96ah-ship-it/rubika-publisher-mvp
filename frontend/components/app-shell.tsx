@@ -1,6 +1,4 @@
-"use client";
-
-import {
+﻿"use client";import {
   AlertCircle,
   BarChart3,
   BellRing,
@@ -9,10 +7,7 @@ import {
   FileText,
   GalleryHorizontalEnd,
   LogOut,
-  Megaphone,
-  MessageSquare,
   Network,
-  Plus,
   Search,
   Settings2,
   Sparkles,
@@ -40,9 +35,7 @@ import { CommandPalette } from "./command-palette";
 import { ProductMark, WorkspaceAvatar } from "./brand-mark";
 import { getActiveNav, MobileNav, Sidebar } from "./sidebar";
 import { useToast } from "./toast-provider";
-import { productName } from "../lib/product";
-
-export function AppShell({ children }: { children: React.ReactNode }) {
+import { productName } from "../lib/product";export function AppShell({ children }: { children: React.ReactNode }) {
   const { showToast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
@@ -55,9 +48,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const knownNotificationIds = useRef<Set<string> | null>(null);
-  const scrollRootRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
+  const scrollRootRef = useRef<HTMLDivElement | null>(null);  useEffect(() => {
     function refreshOverview() {
       setOverviewLoading(true);
       loadWorkspaceOverview()
@@ -90,7 +81,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             showToast({
               title: item.title,
               description: item.description,
-              tone: item.severity === "critical" ? "alert" : item.severity === "warning" ? "warning" : "success",
+              tone: item.severity === "critical" ? "alert" : item.severity === "warning" ? "warning" : "success",       
               actionHref: item.action_href,
               actionLabel: item.action_label
             });
@@ -165,11 +156,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const shellReady = storeReady && rubikaReady;
   const showAttentionAction = !overviewLoading && !shellReady;
   const attentionHref = !storeReady ? "/onboarding" : "/channels";
-  const attentionLabel = !storeReady ? "تکمیل راه‌اندازی" : "اتصال کانال";
+  const attentionLabel = !storeReady ? "طھع©ظ…غŒظ„ ط±ط§ظ‡â€Œط§ظ†ط¯ط§ط²غŒ" : "ط§طھطµط§ظ„ ع©ط§ظ†ط§ظ„";
   const brandAssetId = overview.store?.avatar_asset_id ?? overview.store?.logo_asset_id ?? null;
   const brandImageUrl = useMediaPreviewUrl(brandAssetId);
   const brandColor = overview.store?.brand_primary_color;
-  const workspaceName = overview.store?.name || "پروفایل فروشگاه";
+  const workspaceName = overview.store?.name || "ظ¾ط±ظˆظپط§غŒظ„ ظپط±ظˆط´ع¯ط§ظ‡";
 
   function logout() {
     window.localStorage.removeItem("rubika_publisher_access");
@@ -179,7 +170,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="app-workspace-bg h-screen overflow-hidden text-app-text">
       <div ref={scrollRootRef} data-app-scroll-root className="flex h-full min-h-0 overflow-y-auto overscroll-contain scroll-smooth">
-        <Sidebar storeName={workspaceName} ready={shellReady} brandColor={brandColor} avatarUrl={brandImageUrl} />
+        <Sidebar storeName={workspaceName} ready={shellReady} brandColor={brandColor} avatarUrl={brandImageUrl} />      
         <section className="nahrino-shell flex min-h-full min-w-0 flex-1 flex-col">
           <header className="nahrino-topbar sticky top-0 z-20 shrink-0">
             <div className="flex min-h-[58px] items-center justify-between gap-3 px-3 py-2 lg:px-5">
@@ -187,7 +178,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link href="/" className="lg:hidden" aria-label={productName}>
                   <ProductMark />
                 </Link>
-                <span className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border border-app-border bg-app-surface text-app-primary shadow-hairline lg:flex" style={brandColor ? { color: brandColor } : undefined}>
+                <span className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border border-app-border bg-app-surface text-app-primary shadow-hairline lg:flex" style={brandColor ? { color: brandColor } : undefined}>       
                   <ActiveNavIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
@@ -205,10 +196,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
                   className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md border border-app-border bg-app-surface/90 px-3 text-xs text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary md:flex md:w-56 xl:w-72"
-                  aria-label="باز کردن جست‌وجو و دسترسی سریع"
+                  aria-label="ط¨ط§ط² ع©ط±ط¯ظ† ط¬ط³طھâ€Œظˆط¬ظˆ ظˆ ط¯ط³طھط±ط³غŒ ط³ط±غŒط¹"
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  <span className="truncate">جست‌وجوی پست، مسیر یا کمپین</span>
+                  <span className="truncate">ط¬ط³طھâ€Œظˆط¬ظˆغŒ ظ¾ط³طھطŒ ظ…ط³غŒط± غŒط§ ع©ظ…ظ¾غŒظ†</span>
                   <span className="mr-auto hidden rounded border border-app-border bg-white px-1.5 py-0.5 text-[10px] font-bold text-slate-400 xl:inline">Ctrl K</span>
                 </button>
 
@@ -216,7 +207,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
                   className="app-interactive flex h-9 w-9 items-center justify-center rounded-md border border-app-border bg-app-surface/90 text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary md:hidden"
-                  aria-label="باز کردن جست‌وجو و دسترسی سریع"
+                  aria-label="ط¨ط§ط² ع©ط±ط¯ظ† ط¬ط³طھâ€Œظˆط¬ظˆ ظˆ ط¯ط³طھط±ط³غŒ ط³ط±غŒط¹"
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -234,10 +225,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link
                   href="/inbox"
                   className="app-interactive relative flex h-9 w-9 items-center justify-center rounded-md border border-app-border bg-app-surface/90 text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-coral"
-                  aria-label={notificationCount ? `${notificationCount} اعلان عملیاتی خوانده‌نشده` : "صندوق عملیات انتشار"}
+                  aria-label={notificationCount ? `${notificationCount} ط§ط¹ظ„ط§ظ† ط¹ظ…ظ„غŒط§طھغŒ ط®ظˆط§ظ†ط¯ظ‡â€Œظ†ط´ط¯ظ‡` : "طµظ†ط¯ظˆظ‚ ط¹ظ…ظ„غŒط§طھ ط§ظ†طھط´ط§ط±"}
                 >
                   <BellRing className="h-4 w-4" aria-hidden="true" />
-                  <span className={`absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full ring-2 ring-white ${liveNotificationsReady ? "bg-emerald-500" : "bg-slate-300"}`} aria-label={liveNotificationsReady ? "اعلان زنده فعال" : "اعلان زنده در حال اتصال"} />
+                  <span className={`absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full ring-2 ring-white ${liveNotificationsReady ? "bg-emerald-500" : "bg-slate-300"}`} aria-label={liveNotificationsReady ? "ط§ط¹ظ„ط§ظ† ط²ظ†ط¯ظ‡ ظپط¹ط§ظ„" : "ط§ط¹ظ„ط§ظ† ط²ظ†ط¯ظ‡ ط¯ط± ط­ط§ظ„ ط§طھطµط§ظ„"} />
                   {notificationCount ? (
                     <span className="absolute -left-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-black text-white">
                       {notificationCount > 9 ? "9+" : notificationCount}
@@ -250,7 +241,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     type="button"
                     onClick={() => setAccountMenuOpen((current) => !current)}
                     className="app-interactive flex h-9 items-center gap-2 rounded-md border border-app-border bg-app-surface/90 px-2 text-xs font-bold text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary"
-                    aria-label="منوی حساب کاربری"
+                    aria-label="ظ…ظ†ظˆغŒ ط­ط³ط§ط¨ ع©ط§ط±ط¨ط±غŒ"
                     aria-expanded={accountMenuOpen}
                   >
                     <WorkspaceAvatar name={workspaceName} size="sm" color={brandColor} imageUrl={brandImageUrl} className="h-6 w-6 rounded" />
@@ -264,7 +255,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <div className="flex items-center gap-2">
                           <WorkspaceAvatar name={workspaceName} color={brandColor} imageUrl={brandImageUrl} />
                           <div className="min-w-0">
-                            <p className="flex items-center gap-1.5 text-xs font-black text-app-text"><Sparkles className="h-3.5 w-3.5 text-app-teal" aria-hidden="true" />مدیر فضای کاری</p>
+                            <p className="flex items-center gap-1.5 text-xs font-black text-app-text"><Sparkles className="h-3.5 w-3.5 text-app-teal" aria-hidden="true" />ظ…ط¯غŒط± ظپط¶ط§غŒ ع©ط§ط±غŒ</p>
                             <p className="mt-1 truncate text-[11px] text-app-muted">{workspaceName}</p>
                           </div>
                         </div>
@@ -272,11 +263,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <div className="p-1.5">
                         <Link href="/store" className="app-interactive flex items-center gap-2 rounded px-2.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-app-text">
                           <Settings2 className="h-3.5 w-3.5" aria-hidden="true" />
-                          تنظیمات فضای کاری
+                          طھظ†ط¸غŒظ…ط§طھ ظپط¶ط§غŒ ع©ط§ط±غŒ
                         </Link>
                         <Link href="/channels" className="app-interactive flex items-center gap-2 rounded px-2.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-app-text">
                           <Network className="h-3.5 w-3.5" aria-hidden="true" />
-                          مدیریت کانال‌ها
+                          ظ…ط¯غŒط±غŒطھ ع©ط§ظ†ط§ظ„â€Œظ‡ط§
                         </Link>
                         <button
                           type="button"
@@ -284,7 +275,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           className="app-interactive flex w-full items-center gap-2 rounded px-2.5 py-2 text-right text-xs font-bold text-rose-700 hover:bg-rose-50"
                         >
                           <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
-                          خروج از حساب
+                          ط®ط±ظˆط¬ ط§ط² ط­ط³ط§ط¨
                         </button>
                       </div>
                     </div>
@@ -294,73 +285,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
           <div className="app-enter relative px-3 py-3 pb-24 sm:px-4 lg:px-5 lg:py-4">{children}</div>
-          <QuickCreateDock />
           <MobileNav />
           <CommandPalette open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
         </section>
       </div>
     </main>
-  );
-}
-
-const quickCreateItems = [
-  { label: "پست", href: "/compose", icon: FileText },
-  { label: "کمپین", href: "/campaigns?new=1", icon: Megaphone },
-  { label: "آپلود", href: "/media", icon: GalleryHorizontalEnd },
-  { label: "پاسخ آماده", href: "/inbox", icon: MessageSquare },
-  { label: "خروجی گزارش", href: "/analytics", icon: BarChart3 }
-];
-
-function QuickCreateDock() {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    function handleKeydown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-
-    window.addEventListener("keydown", handleKeydown);
-    return () => window.removeEventListener("keydown", handleKeydown);
-  }, []);
-
-  return (
-    <div className="nahrino-quick-create fixed bottom-[5.8rem] left-3 z-40 flex flex-col items-end gap-2 lg:bottom-5 lg:left-5">
-      {open ? (
-        <div id="nahrino-quick-create-menu" className="app-popover nahrino-quick-create-panel nahrino-quick-create-panel-open grid gap-1.5 rounded-2xl p-2" role="menu" aria-label="ساخت سریع">
-          {quickCreateItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className="app-interactive flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-black text-app-text hover:bg-white/70"
-              >
-                <span className="nahrino-token-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                </span>
-                <span className="min-w-24">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      ) : null}
-      <button
-        type="button"
-        className={`app-interactive nahrino-quick-create-fab flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl text-white ${open ? "nahrino-quick-create-fab-open" : ""}`}
-        aria-label={open ? "بستن ساخت سریع" : "باز کردن ساخت سریع"}
-        aria-expanded={open}
-        aria-controls="nahrino-quick-create-menu"
-        onClick={() => setOpen((current) => !current)}
-      >
-        <Plus className="h-5 w-5" aria-hidden="true" />
-      </button>
-    </div>
   );
 }
