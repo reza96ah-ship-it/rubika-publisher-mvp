@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   BarChart3,
@@ -49,6 +49,8 @@ const mediaNavItem: NavItem = { label: "رسانه", href: "/media", icon: Galle
 const inboxNavItem: NavItem = { label: "پیام‌ها", href: "/inbox", icon: BellRing };
 const reportsNavItem: NavItem = { label: "گزارش‌ها", href: "/analytics", icon: BarChart3 };
 const channelsNavItem: NavItem = { label: "کانال‌ها", href: "/channels", icon: Network };
+const queueNavItem: NavItem = { label: "صف انتظار", href: "/queue", icon: FileText };
+const logsNavItem: NavItem = { label: "گزارش انتشار", href: "/logs", icon: BarChart3 };
 const settingsNavItem: NavItem = { label: "تنظیمات", href: "/store", icon: Store };
 
 const primaryNavItems: NavItem[] = [
@@ -57,9 +59,11 @@ const primaryNavItems: NavItem[] = [
   plannerNavItem,
   campaignsNavItem,
   contentNavItem,
+  queueNavItem,
   mediaNavItem,
   inboxNavItem,
   reportsNavItem,
+  logsNavItem,
   channelsNavItem
 ];
 
@@ -77,8 +81,10 @@ function isActiveRoute(pathname: string, href: string) {
 function isNavItemActive(pathname: string, item: NavItem) {
   if (item.href === "/calendar") return isActiveRoute(pathname, "/calendar");
   if (item.href === "/campaigns") return isActiveRoute(pathname, "/campaigns");
-  if (item.href === "/content") return isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue");
-  if (item.href === "/analytics") return isActiveRoute(pathname, "/analytics") || isActiveRoute(pathname, "/logs");
+  if (item.href === "/content") return isActiveRoute(pathname, "/content");
+  if (item.href === "/queue") return isActiveRoute(pathname, "/queue");
+  if (item.href === "/analytics") return isActiveRoute(pathname, "/analytics");
+  if (item.href === "/logs") return isActiveRoute(pathname, "/logs");
   if (item.href === "/channels") return isActiveRoute(pathname, "/channels") || isActiveRoute(pathname, "/rubika") || isActiveRoute(pathname, "/instagram");
   if (item.href === "/store") return isActiveRoute(pathname, "/store");
   return isActiveRoute(pathname, item.href);

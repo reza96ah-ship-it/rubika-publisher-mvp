@@ -1,4 +1,4 @@
-# Nahrino SocialOps Studio
+﻿# Nahrino SocialOps Studio
 
 Persian-first, RTL-native, Jalali-native social operations platform for planning, creating, scheduling, publishing, monitoring, and reporting content across Rubika, Instagram, and future channels.
 
@@ -64,6 +64,37 @@ docker compose exec backend python -m compileall app
 docker compose exec frontend npm run check
 ```
 
+## Canonical Navigation Structure
+
+The navigation follows the single-source-of-truth design documented in [docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md).
+
+### Primary Navigation (Desktop + Mobile)
+1. **داشبورد** (`/`) - Dashboard overview
+2. **ساخت** (`/compose`) - Content creation studio
+3. **برنامه‌ریزی** (`/calendar`) - Jalali calendar planner
+4. **کمپین‌ها** (`/campaigns`) - Campaign management
+5. **محتوا** (`/content`) - Content library
+6. **صف انتظار** (`/queue`) - Publishing queue
+7. **رسانه** (`/media`) - Media library & editor
+8. **پیام‌ها** (`/inbox`) - Notifications & operations
+9. **گزارش‌ها** (`/analytics`) - Performance reports
+10. **گزارش انتشار** (`/logs`) - Publishing audit trail
+11. **کانال‌ها** (`/channels`) - Channel management hub
+12. **تنظیمات** (`/store`) - Workspace settings
+
+### Navigation Consolidation Status
+✅ Quick Create FAB removed (eliminated 4th redundant entry point)
+✅ Queue & Logs as direct nav items (no hidden multiplexing)
+✅ Channel pages show breadcrumbs (کانال‌ها > Rubika/Instagram)
+✅ Single entry point per major feature
+✅ Mobile-first responsive navigation
+
 ## Current Phase
+
+Phase 1: Navigation Consolidation (✅ IN PROGRESS)
+- Removed Quick Create FAB duplicate
+- Exposed Queue and Logs as direct navigation items
+- Added breadcrumbs to channel sub-pages
+- Next: Media composer hints, campaign unification, final testing
 
 The current branch is focused on professionalizing the multi-channel product shell and campaign workflow before moving into broader navigation simplification, design-system hardening, planner mobile polish, and the Composer Pro rebuild.

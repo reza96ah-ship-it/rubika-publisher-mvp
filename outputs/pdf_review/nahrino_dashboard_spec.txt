@@ -1,0 +1,761 @@
+Professional Visual Design System and Dashboard Specification for Nahrino
+Executive summary
+Your own product documents already identify the core truth: Nahrino is not held back by a lack of color. It is held back by product structure, duplicated patterns, nested scroll, generic cards, and a visual language that still feels like an MVP admin dashboard instead of a world-class Persian-first SocialOps product. The current internal baseline is roughly 4.2/10 overall and 3.2/10 for design and user-journey maturity, and the internal target is a workflow-first product built around Dashboard, Create, Planner, Content, Media, Inbox, Reports, Settings with real product objects rather than repeated boxes. fileciteturn0file10 fileciteturn0file11 fileciteturn0file6 fileciteturn0file12
+The strongest 2026 answer for your app is not full glassmorphism. The strongest answer is a hybrid editorial-glass system: solid, readable work surfaces for data-heavy content; selective “Liquid Glass”-style translucency only on chrome, overlays, navigation, floating controls, drawers, and bottom sheets. Apple’s current iOS 26 design language explicitly frames Liquid Glass as a material for controls, navigation, dynamic tab bars, alerts, search, and icons; meanwhile the leading social-management apps still foreground practical high-density work areas such as queues, calendars, compose flows, inboxes, and reports. That combination makes a hybrid system the most modern and the most professional for Nahrino. [1]
+The exact recommendation is this: keep the internal “calm editorial operations” direction, but upgrade it into a light-first, premium, neutral, material-rich system with Vazirmatn as the default Persian UI font, Estedad as the compact/dense numeric and display companion, a restrained mineral-teal brand accent, spring-based micro-motion, and a one-page-scroll dashboard that uses real thumbnails, channel rails, campaign lanes, response queues, and report surfaces as its beauty layer. That is much closer to what top global products and current platform systems actually reward than a fully frosted “Telegram everywhere” look. fileciteturn0file7 fileciteturn0file5 fileciteturn0file12 [2]
+Decision area
+Recommended choice
+Master theme
+Hybrid Editorial Glass
+Theme mood
+Calm, premium, light-first, content-led, Persian-native
+Glass usage
+App bar, side rail, floating composer tools, drawers, sheets, mobile bottom nav
+Surfaces
+Solid for cards, lists, tables, charts, forms, inbox threads
+Brand accent
+Mineral teal
+Main fonts
+Vazirmatn for UI, Estedad for numeric display and compact dense headings
+Motion
+Spring-driven, stateful, reduced-motion safe
+Dashboard model
+Single vertical page scroll, drawers instead of split panes
+Visual richness source
+Real content previews, channel rails, campaign lanes, insight cards, report miniatures
+Benchmark signals and the theme decision
+The official product pages of the strongest global benchmarks point in the same direction. Buffer presents a “social media workspace” organized around Publish, Create, Community, Analyze, Collaborate, including a queue/calendar publishing space, content-idea organization, filterable comments management, and approvals/permissions. Hootsuite positions itself as a real-time social intelligence tool with one unified dashboard for publishing, live analytics, reputation monitoring, unified inbox, and competitor analysis. Sprout Social emphasizes a single Compose box, queue-based scheduling, media editing, send-time optimization, mobile publishing, and listening. Later keeps the model visual and creator-friendly with plan, schedule, and analyze all your content in one place, plus content creation tools and Link in Bio. Planable makes collaboration native with create, plan, collaborate, approve, schedule, engage, analyze, plus grouped posts, sync on/off, version history, inline visual editing, alt text, and first-comment support. [3]
+That benchmark evidence matters because it shows that the best products do not win by painting the app with louder color. They win through workflow clarity, real product surfaces, variant-aware composition, operational inboxes, reports that feel client-ready, and visual density that remains calm. This is exactly the direction your internal design documents have already been pushing: fewer repeated boxes, no permanent setup noise, one-page scroll, campaign and queue folded into broader workflows, and a visual system built around channel, content, campaign, inbox, and report objects rather than generic dashboard cards. fileciteturn0file7 fileciteturn0file6 fileciteturn0file10 fileciteturn0file12
+Benchmark
+Official evidence
+Design implication for Nahrino
+Buffer
+Queue/calendar publish space, Create space for ideas, Community dashboard for comments, Analyze framed as “Answers, not just analytics,” plus approvals/permissions and reliability language. [4]
+Your dashboard and content ops should feel simple, friendly, and obvious, not like enterprise clutter.
+Hootsuite
+One unified dashboard, live engagement analytics, sentiment/reputation monitoring, automated inbox, saved replies, competitive analysis. [5]
+Your dashboard needs risk, health, inbox, and campaign intelligence in one operating view.
+Sprout Social
+Intuitive Compose box, manual scheduling, queue, drafts, multi-profile publishing, image/video editing, send-time optimization, mobile publishing, listening. [6]
+Your composer must be variant-aware, fast, and media-native.
+Later
+Plan, schedule, analyze in one place; Link in Bio; content creation tools; creator-intelligence framing. [7]
+Your planner and media surfaces must be visual and preview-first, not abstract admin blocks.
+Planable
+Create-plan-collaborate-approve-schedule-engage-analyze; grouped posts; sync ON/OFF; version history; edit visuals; alt text; first comment. [8]
+Your product needs channel variants, approvals beside content, and edit history that feels native.
+Apple’s iOS 26 documentation is the strongest current platform-level visual signal. Apple describes Liquid Glass as a foundation that “reflects and refracts” underlying content in real time, and explicitly applies it to controls, navigation, dynamic toolbars, dynamic tab bars, in-place alerts, bottom-reach search, and icon treatments. That scope strongly suggests a material used for interactive chrome and contextual surfaces, not for every dense panel in a dashboard. On the Android side, Material 3 Expressive emphasizes tokenized color roles, three accent layers plus two neutral surface layers, and spring-based motion that preserves continuity when values change. Together, these sources point to a modern answer that is material-rich but function-first. [9]
+Theme option
+Feels current in 2026
+Fit for Nahrino
+Risk
+Verdict
+Full glassmorphism everywhere
+High at first glance
+Low for a dense Persian SocialOps app
+Contrast loss, chart/table fatigue, weaker scan speed, weaker performance discipline
+Reject
+Classic flat SaaS editorial
+Safe
+Medium
+Too “2022 dashboard” if not upgraded with motion, layering, and richer product objects
+Not enough
+Full expressive color system
+Modern on mobile OS
+Medium
+Can feel playful rather than premium-operational if overused in B2B workflow surfaces
+Use selectively
+Hybrid editorial glass
+Best
+Very high
+Requires discipline to stop glass from spreading everywhere
+Recommended
+The exact design answer, then, is: solid work surfaces + glass chrome + restrained brand color + product-object richness + state-driven motion. If you like the translucency feel of Telegram and iOS, use that feeling on the shell and floating controls, not on lists, analytics tables, and long Persian text blocks.
+Exact theme, palette, typography, layout, and motion
+Modern 2026 product design is not “more colorful”; it is more materialized, more tokenized, more dynamic, and more contextual. Google’s current color-role guidance explicitly treats color as a mapped role between components and meaning, not as uncontrolled decoration, and pairs expressive roles with neutral surfaces and accessible contrast. Your internal docs already reach the same conclusion: avoid black-heavy shells, avoid decorative blobs, avoid overusing teal, and let real content, channel rails, and report surfaces do the work. [10] fileciteturn0file7 fileciteturn0file12
+Recommended master theme
+Use Light-first Calm Editorial Glass:
+Light mode is default and should carry 80–85% of usage.
+Dark mode exists for power users and night work, but should remain editorial, not neon.
+High-contrast mode removes glass, weak strokes, and subtle shadows entirely.
+Glass is limited to the shell, floating layers, and controls that benefit from depth.
+Color is reserved for brand emphasis, semantic state, timeline rails, channel accents, and focus.
+Core light tokens
+Token
+HEX
+RGB
+HSL
+Use
+Canvas
+#F6F7F9
+246, 247, 249
+220, 20%, 97%
+App background
+Canvas Subtle
+#EDF2F7
+237, 242, 247
+210, 38%, 95%
+Toolbar wells, grouped zones
+Surface
+#FFFFFF
+255, 255, 255
+0, 0%, 100%
+Cards, sheets, tables
+Surface Soft
+#FAFBFC
+250, 251, 252
+210, 25%, 98%
+Nested rows, quiet trays
+Stroke Subtle
+#E5EAF0
+229, 234, 240
+213, 27%, 92%
+Hairlines, card division
+Stroke Strong
+#CED6E0
+206, 214, 224
+213, 22%, 84%
+Strong separators, active containers
+Text Primary
+#0F172A
+15, 23, 42
+222, 47%, 11%
+Main text
+Text Secondary
+#475569
+71, 85, 105
+215, 19%, 35%
+Meta text
+Text Tertiary
+#64748B
+100, 116, 139
+215, 16%, 47%
+Disabled, quiet labels
+Brand Primary
+#0F766E
+15, 118, 110
+175, 77%, 26%
+Primary actions, active states
+Brand Hover
+#0D5F59
+13, 95, 89
+176, 76%, 21%
+Hover/pressed brand state
+Brand Container
+#E7F7F4
+231, 247, 244
+169, 50%, 94%
+Soft-selected pills, teal surfaces
+Info
+#2563EB
+37, 99, 235
+221, 83%, 53%
+Links, info states
+Success
+#15803D
+21, 128, 61
+142, 72%, 29%
+Healthy / published
+Warning
+#B7791F
+183, 121, 31
+36, 71%, 42%
+Waiting / manual / attention
+Danger
+#C24150
+194, 65, 80
+353, 51%, 51%
+Failure / blocked / destructive
+Core dark tokens
+Token
+HEX
+RGB
+HSL
+Use
+Canvas Dark
+#0B1220
+11, 18, 32
+220, 49%, 8%
+App background
+Canvas Dark Subtle
+#111827
+17, 24, 39
+221, 39%, 11%
+Grouped zones
+Surface Dark
+#121B2B
+18, 27, 43
+218, 41%, 12%
+Cards, panels
+Surface Dark Soft
+#172033
+23, 32, 51
+221, 38%, 15%
+Secondary layers
+Text Dark Primary
+#F8FAFC
+248, 250, 252
+210, 40%, 98%
+Main text
+Text Dark Secondary
+#CBD5E1
+203, 213, 225
+213, 27%, 84%
+Secondary text
+Text Dark Tertiary
+#94A3B8
+148, 163, 184
+215, 20%, 65%
+Quiet labels
+Brand Dark
+#37C7B9
+55, 199, 185
+174, 57%, 50%
+Primary accent on dark
+Brand Dark Container
+#103633
+16, 54, 51
+175, 54%, 14%
+Soft-selected dark state
+Info Dark
+#7CB5FF
+124, 181, 255
+214, 100%, 74%
+Link/info on dark
+Success Dark
+#4ADE80
+74, 222, 128
+142, 69%, 58%
+Healthy state
+Warning Dark
+#F4B65F
+244, 182, 95
+35, 87%, 66%
+Manual/attention
+Danger Dark
+#FB7185
+251, 113, 133
+351, 95%, 71%
+Failure/destructive
+Accessible status surfaces
+State
+Text
+Background
+Why
+Success
+#166534 on #ECFDF3
+Published, connected, recovered
+Strong readability without oversaturation
+Warning
+#8A5D16 on #FFF7E2
+Manual tasks, pending approval, setup issue
+Better than amber text on white
+Info
+#1D4ED8 on #EFF6FF
+Guidance, filters, secondary callouts
+Clean report/inbox info
+Danger
+#B42318 on #FFF1F3
+Blocked, failed, destructive
+Softer than pure red fills
+High-contrast override
+Use a third “contrast” mode in Figma and in code. W3C now has a stable design tokens specification with theming and accessibility variants, and Figma variable modes can switch light/dark or any other theme mode and export those modes to JSON. WCAG 2.2 requires 4.5:1 minimum text contrast at AA, 7:1 at AAA, 24×24 CSS px minimum targets at AA, and respects motion-disabling needs for interaction-triggered animation. [11]
+Token
+Value
+Contrast Canvas
+#FFFFFF
+Contrast Surface
+#FFFFFF
+Contrast Text
+#000000
+Contrast Stroke
+#000000
+Contrast Brand
+#005A55
+Contrast Info
+#003CBA
+Contrast Success
+#04542B
+Contrast Warning
+#714800
+Contrast Danger
+#8F1020
+Exact glass specification
+Apple’s own current material direction is the best benchmark for what “modern glass” means now: refractive, dynamic, content-forward, and used heavily in controls and navigation. For a web/mobile SaaS product, the best approximation is a restrained glass layer with clear usage boundaries. [12]
+Glass layer
+Parameters
+Use
+App bar glass
+blur(18px) saturate(140%), fill rgba(255,255,255,.62), 1px highlight rgba(255,255,255,.48), outer border rgba(15,23,42,.06)
+Top bar, bottom mobile nav
+Side rail glass
+blur(14px) saturate(135%), fill rgba(255,255,255,.58)
+Desktop sidebar, floating filter rail
+Drawer glass
+blur(24px) saturate(145%), fill rgba(255,255,255,.72)
+Inspector drawers, bottom sheets
+Dark glass
+blur(18px) saturate(120%), fill rgba(17,24,39,.58)
+Dark overlays
+Noise overlay
+1.5–2% monochrome alpha
+Stops blur from feeling synthetic
+Shadow
+0 12px 30px rgba(15,23,42,.10) desktop, 0 6px 18px rgba(15,23,42,.10) mobile
+Floating chrome only
+Glass rules
+Use glass on chrome, not on data surfaces.
+Never place long Persian paragraphs, dense tables, or analytics charts directly on frosted glass.
+Never stack glass-on-glass-on-glass.
+Do not use decorative, full-screen blur backgrounds.
+High-contrast mode disables glass completely.
+Typography and Persian system
+Vazirmatn is the right primary UI family because its own project describes it as a simple, legible Persian/Arabic typeface built for web pages and applications, with built-in Latin combination via Roboto. Estedad is the best secondary display/dense family because its official project describes it as a compact Arabic-Latin sans-serif optimized for screen and web, available in 9 standard weights plus a variable wght axis. That makes the pair unusually strong for Persian SaaS: Vazirmatn for readability, Estedad for compact premium emphasis. [13]
+Role
+Font
+Size desktop / mobile
+Weight
+Line-height
+Notes
+Display KPI XL
+Estedad
+28 / 24
+700
+1.15
+Use tabular numerals
+Page title
+Vazirmatn
+24 / 20
+700
+1.35
+Never decorative
+Section title
+Vazirmatn
+18 / 17
+700
+1.45
+For panel heads
+Card title
+Vazirmatn
+15 / 14
+700
+1.5
+Dense but calm
+Body
+Vazirmatn
+14 / 14
+450–500
+1.7
+Persian-first default
+Small meta
+Vazirmatn
+13 / 13
+450
+1.65
+Timestamps, helper text
+Label / chip
+Vazirmatn
+12 / 12
+600
+1.5
+Controls, pills
+Report summary
+Vazirmatn
+15 / 15
+450
+1.8
+Narrative content
+Persian/RTL specifics
+Use logical CSS properties everywhere: padding-inline, margin-inline, inset-inline, border-inline.
+Mirror directional icons only when the meaning is directional; do not mirror platform logos, charts, or media controls.
+Numeric columns should use tabular numerals and align to end, which gives better scanning in RTL tables.
+Use dir="auto" or unicode-bidi: plaintext for mixed Persian/Latin text like URLs, account handles, or hashtags.
+Default Persian line-height should stay more generous than English dense SaaS defaults.
+Layout and responsive rules
+Your own internal docs are explicit: no persistent two-panel scroll traps, no queue/log pages as separate mental models, no dashboard overloaded with cards, no desktop layout simply stacked on mobile. They also already lock a workflow-first shell and a one-page-scroll rule. Keep that. fileciteturn0file6 fileciteturn0file7 fileciteturn0file10
+Rule
+Desktop
+Tablet
+Mobile
+Grid
+12 columns
+8 columns
+4 columns
+Max page width
+1440px
+100%
+100%
+Gutter
+24px
+20px
+16px
+Page padding
+24px
+20px
+16px
+Sidebar
+232px expanded, 80px collapsed
+collapsible rail
+bottom nav
+Top bar
+56–64px
+56px
+56px
+Scroll model
+one vertical page scroll
+one scroll + temporary sheet
+one task per screen
+Detail model
+drawer
+sheet/drawer
+bottom sheet
+Tables
+allowed, dense rows
+partial
+summary cards first
+Reflow requirement
+no sideways scroll
+no sideways scroll
+no sideways scroll
+WCAG 2.2 also requires content to reflow without loss of information or function at 320 CSS px width for vertical scrolling content, which means your mobile adaptation must simplify and restack rather than horizontally compress. [14]
+Motion system
+Android’s official guidance is clear that spring motion is better for interrupted, stateful UI because it preserves continuity of velocity when targets change. The official spring primitives expose damping ratio and stiffness, and Apple’s current platform direction similarly emphasizes fluid, morphing navigation and living controls. For Nahrino, that means motion should communicate selection, save, publish, retry, assignment, and route change, not decoration. [15]
+Interaction
+Timing target
+Spring / easing
+Exact recommendation
+Button press
+80–120ms
+spring-like snap
+scale 0.985, no bounce
+Hover lift
+120–160ms
+soft ease or low-bounce spring
+translateY -2px, shadow +1 layer
+Card selection
+140–180ms
+medium stiffness, no-bounce
+border accent + container tint
+Drawer / inspector open
+180–240ms
+medium stiffness, low bounce
+fade + translate inline-end 16px -> 0
+Bottom sheet
+220–280ms
+medium stiffness, medium damping
+native-feeling rise
+Drag start
+immediate
+no duration lock-on
+scale 1.01, shadow elevate
+Drag drop settle
+180–220ms
+low-bounce spring
+destination highlight pulse
+Save success
+140ms in, 400ms out
+opacity + scale
+tiny check pulse, no confetti
+Publish success
+220–300ms
+staged
+progress fills, status flips, subtle glow
+Error / blocked
+160ms
+none or slight shake
+border pulse only, not full-card shake
+Chart hover
+80–120ms
+fade
+tooltip + series emphasis
+Live badge
+120ms
+opacity
+subtle dot, never blinking text
+Motion accessibility
+Reduced-motion mode removes scale, parallax, and bounce.
+Interaction-triggered motion must be removable unless essential. [16]
+No looping shimmer backgrounds.
+No blinking KPI numbers.
+No skeleton animation faster than 1.2s cycle.
+Full dashboard page specification
+The new dashboard should act like a daily command center, not a hero page and not an analytics warehouse. Your internal spec is already close: one primary action, next publish, active risks, inbox alert count, campaign pulse, one insight, compact health strip, no permanent setup noise, no decorative hero art, and no long card stack. Keep that, and upgrade the material language and exact composition. fileciteturn0file7 fileciteturn0file12 fileciteturn0file6
+Desktop composition
+Canvas: light neutral canvas with 1.5% monochrome noise.
+Grid: 12 columns, 24px gutters, max width 1440px.
+First viewport target: everything important above ~800px height on a 1440×900 laptop.
+Composition: 12-col command strip, 4 KPI tiles, then 8/4 main split, then one secondary row.
+Dashboard item-by-item spec
+Item
+Desktop span
+Mobile behavior
+Surface and glass
+Content
+Interaction
+App bar
+12
+sticky top
+Glass: blur 18, alpha .62, bottom hairline
+workspace switcher, search, notifications, quick-create
+search expands; alerts open sheet
+Secondary nav rail
+shell
+bottom nav
+Glass side rail, active item gets brand container
+Dashboard, Create, Planner, Content, Media, Inbox, Reports, Settings
+active item morphs, not floods
+Command brief
+12
+first card
+Solid surface, radius 20, 1 strong top accent line
+“Next best action,” workspace state, one CTA
+CTA opens composer / recovery flow
+KPI strip
+3×4
+2×2 grid
+Solid surface, radius 16
+Scheduled today, At risk, Inbox due, Campaigns active
+click filters target surface
+Publish pulse
+5
+full width
+Solid surface, radius 18
+next publish time, publish-job state, channel, manual/API state
+opens publish drawer
+Risk queue
+3
+stacked list
+Solid surface, dense rows
+failed jobs, blocked approvals, channel issues
+row CTA: retry, assign, view cause
+Planner snapshot
+4
+swipeable mini-planner
+Solid surface
+next 7 days, channel badges, campaign lane hints
+click opens planner with filter
+Inbox triage
+4
+stacked after risks
+Solid surface
+unresolved count, overdue thread, assigned-to-me, SLA
+opens inbox view or thread sheet
+Campaign momentum
+8
+second full-width card
+Solid surface with thin campaign rails
+active campaigns, stage counts, next deliverable
+opens planner lane / campaign report
+Insight card
+4
+accordion or compact card
+Solid report-style surface
+one insight, source metric, CTA to report
+opens reports filtered context
+Quick create dock
+floating
+FAB + bottom sheet
+Glass chip group
+Post, Campaign, Upload, Saved reply, Report export
+expands from FAB
+Empty or clean state
+main zone
+full width
+solid but quiet
+“Everything healthy” plus suggested next action
+no celebratory illustration spam
+Exact card language
+Major cards: radius 18px, padding 18–20px, white or dark-surface base.
+Dense rows inside cards: radius 12px, height 56–64px, not mini-cards inside mini-cards.
+KPI tile: title 12/18 Vazirmatn 600, number 28/32 Estedad 700, delta subline 12/18.
+Severity indicator: 3px inline-start rail, never full-card flood.
+Chart usage: single simple sparkline or mini bars in dashboard; full analytics only in Reports.
+Channel badges: 20px icon + 10px gap + text; primary brand colors muted to 20–28% fill.
+Glass usage inside the dashboard
+Allowed: top bar, floating quick-create, transient filter pill, bottom sheets, date mini-popovers.
+Forbidden: KPI tiles, report panels, long list rows, inbox thread cards, tables, channel management matrices.
+User journey flow
+The default focus behavior matters. If any failed publish jobs or blocked approvals exist, the dashboard should auto-focus the Risk Queue first. If not, it should auto-focus Next Publish. That follows both your internal command-center logic and the market pattern where daily social tools answer “what do I need to do now?” before they answer “what happened last month?” fileciteturn0file7 fileciteturn0file10 [17]
+Component library, interaction patterns, backgrounds, and asset system
+Your own documentation is right to move away from generic dashboard cards and toward a product-specific vocabulary such as channel rails, campaign timelines, content preview tiles, inbox threads, recovery panels, and report surfaces. That is also where the benchmark apps differentiate: not in color alone, but in the specificity of their working objects. fileciteturn0file5 fileciteturn0file12 [18]
+Component
+Exact spec
+Primary button
+44px desktop, 48px mobile; radius 12px; solid brand fill; icon optional; no heavy shadow
+Secondary button
+outline or soft-container; same height; for drawers, filters, review actions
+Icon button
+40px desktop, 44px mobile; always circular or 12px rounded square
+Input
+44px desktop, 48px mobile; surface-soft fill; strong focus ring only on focus
+Select / combobox
+same as input; selected chips inside line-height-safe container
+Filter chip
+32px height; quiet by default; selected state uses soft container, not full accent fill
+Table row
+48px default, 56px with thumbnail; zebra striping off; use separators instead
+Content row
+72–88px; thumbnail, caption, channel, campaign, status, owner, CTA
+Card
+only for summary or preview; never a universal wrapper
+Drawer
+width 420px or 33vw, max 480px; glass or solid depending function
+Bottom sheet
+90vh max on mobile; drag handle; one primary footer action
+Modal
+max width 640px; only for confirmation or focused forms
+Toast
+lower start or lower end, 320–420px; one action max
+Tabs / segments
+underlined or soft-pill, not full-width box tabs
+Nav item
+icon + label; active item gets shape + container + motion, not just a color swap
+Interactive patterns
+Use saved views instead of page-by-page custom filter bars.
+Use drawers and sheets instead of permanent split inspectors.
+Make bulk actions contextual only after selection.
+Keep the global create action unique in the shell.
+Keep approval state beside content, not buried in chips.
+Make publish failure states actionable, not just red. Your product backlog already prioritizes PublishJob, retries, idempotency, dead-letter patterns, and recovery-first UX. fileciteturn0file6 fileciteturn0file9
+Background and imagery strategy
+The background should be quiet. Your own UI/UX system explicitly rejects decorative gradient blobs, black-heavy dashboards, and random art. That is correct. Later and Planable both make their interfaces feel premium by foregrounding actual content thumbnails and visual planning, not by turning the app into a wallpaper. fileciteturn0file12 fileciteturn0file7 [19]
+Use this hierarchy:
+Base canvas: neutral light or dark field.
+Ultra subtle top-to-bottom tonal gradient only; no radial orbs.
+1–2% film-grain/noise layer.
+Real media thumbnails and charts as the main visual richness.
+Campaign colors as thin rails, not panel fills.
+Empty states: line icons plus one sentence, never mascot art.
+Icons and illustration system
+System icons: custom 24px outline family, stroke 1.75–2px, optical rounding, consistent cap terminals.
+Navigation icons: slightly larger visual weight than internal toolbar icons.
+Status icons: full set for draft, scheduled, published, failed, manual, assigned, review requested, approved.
+Channel icons: official platform marks, never redrawn without brand guidelines.
+Do not use Apple SF Symbols directly as a cross-platform product icon system.
+Figma export-ready asset list
+Group
+Assets
+Format
+Naming convention
+Foundations
+color collections for light, dark, contrast; spacing; radius; elevation; motion; glass
+variables / JSON export
+foundation/color/light/*
+Typography
+Vazirmatn text styles, Estedad numeric/display styles
+style library
+type/ui/body-14, type/data/kpi-28
+Shell
+app bar, side rail, mobile bottom nav, command palette
+component set
+shell/appbar/default
+Navigation
+nav item, subnav item, command-search result
+component set
+nav/item/active
+Buttons
+primary, secondary, icon, danger, ghost
+component set
+button/primary/md
+Inputs
+text field, combobox, chip field, date trigger
+component set
+form/input/default
+Dashboard
+KPI tile, publish pulse, risk row, planner mini-lane, inbox triage row, insight card
+component set
+dashboard/kpi/scheduled
+Content ops
+content row, publish-job row, channel rail, approval badge
+component set
+ops/content-row/default
+Planner
+calendar chip, week lane, campaign rail, drag highlight
+component set
+planner/lane/campaign
+Media
+asset tile, collection tile, editor toolbar, safe-zone overlay
+component set
+media/asset-tile/default
+Inbox
+thread row, SLA badge, saved-reply picker, internal note
+component set
+inbox/thread-row/open
+Reports
+KPI strip, sparkline card, insight callout, export header
+component set
+report/insight/default
+Icons
+nav, actions, states, channels
+SVG
+ic/nav/dashboard-24.svg
+Motion
+save success, retry success, publish progress, drawer open
+Lottie or motion spec frames
+motion/publish-progress/v1
+Component relationship map
+Implementation tokens, code examples, and roadmap
+The strongest implementation architecture is a single source of truth using a design-token system that maps cleanly from foundations into semantic and component tokens. The W3C Design Tokens Community Group’s stable specification now supports theming, accessibility variants, advanced color spaces, aliases, and cross-platform generation, and Figma variable modes can hold multiple values per variable, switch light/dark or device contexts, and export modes to JSON. That is the right foundation for web, React, and Flutter all at once. [20]
+Sample JSON design tokens
+{  "primitive": {    "color": {      "neutral": {        "0": { "$type": "color", "$value": "#FFFFFF" },        "50": { "$type": "color", "$value": "#F6F7F9" },        "100": { "$type": "color", "$value": "#EDF2F7" },        "900": { "$type": "color", "$value": "#0F172A" }      },      "teal": {        "500": { "$type": "color", "$value": "#0F766E" },        "600": { "$type": "color", "$value": "#0D5F59" }      }    },    "radius": {      "sm": { "$type": "dimension", "$value": "12px" },      "md": { "$type": "dimension", "$value": "16px" },      "lg": { "$type": "dimension", "$value": "20px" }    },    "spacing": {      "2": { "$type": "dimension", "$value": "8px" },      "3": { "$type": "dimension", "$value": "12px" },      "4": { "$type": "dimension", "$value": "16px" },      "5": { "$type": "dimension", "$value": "20px" },      "6": { "$type": "dimension", "$value": "24px" }    }  },  "semantic": {    "light": {      "bg.canvas": { "$type": "color", "$value": "#F6F7F9" },      "bg.surface": { "$type": "color", "$value": "#FFFFFF" },      "text.primary": { "$type": "color", "$value": "#0F172A" },      "text.secondary": { "$type": "color", "$value": "#475569" },      "brand.primary": { "$type": "color", "$value": "#0F766E" }    },    "dark": {      "bg.canvas": { "$type": "color", "$value": "#0B1220" },      "bg.surface": { "$type": "color", "$value": "#121B2B" },      "text.primary": { "$type": "color", "$value": "#F8FAFC" },      "text.secondary": { "$type": "color", "$value": "#CBD5E1" },      "brand.primary": { "$type": "color", "$value": "#37C7B9" }    },    "contrast": {      "bg.canvas": { "$type": "color", "$value": "#FFFFFF" },      "bg.surface": { "$type": "color", "$value": "#FFFFFF" },      "text.primary": { "$type": "color", "$value": "#000000" },      "brand.primary": { "$type": "color", "$value": "#005A55" }    }  },  "component": {    "appbar.glass.blur": { "$type": "dimension", "$value": "18px" },    "sheet.glass.blur": { "$type": "dimension", "$value": "24px" },    "button.primary.height": { "$type": "dimension", "$value": "44px" },    "card.radius": { "$type": "dimension", "$value": "18px" }  }}
+Sample CSS variables and glass class
+:root[data-theme="light"] {  --bg-canvas: #F6F7F9;  --bg-surface: #FFFFFF;  --bg-surface-soft: #FAFBFC;  --text-primary: #0F172A;  --text-secondary: #475569;  --stroke-subtle: #E5EAF0;  --stroke-strong: #CED6E0;  --brand-primary: #0F766E;  --brand-container: #E7F7F4;  --glass-fill: rgba(255, 255, 255, 0.62);  --glass-border: rgba(255, 255, 255, 0.48);  --glass-outline: rgba(15, 23, 42, 0.06);  --glass-blur: 18px;}:root[data-theme="dark"] {  --bg-canvas: #0B1220;  --bg-surface: #121B2B;  --bg-surface-soft: #172033;  --text-primary: #F8FAFC;  --text-secondary: #CBD5E1;  --stroke-subtle: rgba(255,255,255,.08);  --stroke-strong: rgba(255,255,255,.14);  --brand-primary: #37C7B9;  --brand-container: #103633;  --glass-fill: rgba(17, 24, 39, 0.58);  --glass-border: rgba(255, 255, 255, 0.10);  --glass-outline: rgba(255, 255, 255, 0.08);  --glass-blur: 18px;}.glass-shell {  background: var(--glass-fill);  backdrop-filter: blur(var(--glass-blur)) saturate(140%);  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);  border: 1px solid var(--glass-border);  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.10);}.card-surface {  background: var(--bg-surface);  color: var(--text-primary);  border: 1px solid var(--stroke-subtle);  border-radius: 18px;}@keyframes publishSuccessPulse {  0%   { transform: scale(0.98); opacity: 0.92; }  60%  { transform: scale(1.00); opacity: 1; }  100% { transform: scale(1.00); opacity: 1; }}@keyframes subtleAttentionBorder {  0%,100% { box-shadow: 0 0 0 0 rgba(194, 65, 80, 0.00); }  50%     { box-shadow: 0 0 0 3px rgba(194, 65, 80, 0.10); }}
+React example
+import { motion } from "framer-motion";const panelSpring = { type: "spring", stiffness: 420, damping: 34, mass: 0.85 };export function DashboardCard({  title,  value,  onClick,}: {  title: string;  value: string;  onClick?: () => void;}) {  return (    <motion.button      whileHover={{ y: -2, transition: panelSpring }}      whileTap={{ scale: 0.985, transition: panelSpring }}      onClick={onClick}      className="card-surface"      style={{ width: "100%", padding: 20, textAlign: "start" }}    >      <div style={{ fontSize: 12, lineHeight: "18px", color: "var(--text-secondary)" }}>        {title}      </div>      <div style={{ fontFamily: "Estedad, Vazirmatn, sans-serif", fontSize: 28, lineHeight: "32px", fontWeight: 700 }}>        {value}      </div>    </motion.button>  );}
+Flutter example
+import 'dart:ui';import 'package:flutter/material.dart';class FrostedShell extends StatelessWidget {  final Widget child;  const FrostedShell({super.key, required this.child});  @override  Widget build(BuildContext context) {    return ClipRRect(      borderRadius: BorderRadius.circular(20),      child: BackdropFilter(        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),        child: Container(          decoration: BoxDecoration(            color: Colors.white.withValues(alpha: 0.62),            border: Border.all(color: Colors.white.withValues(alpha: 0.48)),            borderRadius: BorderRadius.circular(20),            boxShadow: const [              BoxShadow(                blurRadius: 30,                offset: Offset(0, 12),                color: Color.fromRGBO(15, 23, 42, 0.10),              ),            ],          ),          child: child,        ),      ),    );  }}
+Roadmap
+Your internal roadmap is already strong; it mainly needs to be visual-systemized and made exact. The cleanest design roadmap is below. It aligns with your existing shell reset, dashboard rebuild, planner/composer/content merge, creative studio, inbox, and report phases. fileciteturn0file11 fileciteturn0file10 fileciteturn0file9
+Phase
+Deliverable
+Result
+Token foundation
+Build W3C/DTCG token source, Figma modes, light/dark/contrast themes, typography, radius, spacing, motion
+No more ad-hoc visual decisions
+Shell rebuild
+Sidebar, app bar, mobile nav, command palette, glass chrome only
+App immediately feels like one product
+Dashboard release
+Command brief, KPI strip, publish pulse, risk queue, planner mini, inbox triage, insight card
+First viewport becomes executive-grade
+Workflow surfaces
+Composer, Planner, Content Ops adopt new surfaces, drawers, rows, saved views
+Main workflows stop feeling like old modules
+Creative and inbox
+Media Studio, Inbox, approvals, comments, variants
+Product starts feeling benchmark-competitive
+Reports and polish
+Report surface, exportable insight cards, motion, accessibility, performance
+Product becomes credible in screenshots and real use
+Acceptance gates
+All body text meets WCAG AA 4.5:1 minimum; high-contrast mode meets WCAG AAA where practical. [21]
+Touch targets meet 24×24 CSS px minimum and important controls target 44×44. [22]
+Interaction-triggered motion can be reduced or disabled where not essential. [16]
+The app meets good Core Web Vitals targets: LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1. [23]
+No final route uses nested split-page scroll except truly contained editors or long data tables. fileciteturn0file6
+Open questions and limitations
+A few details remain design decisions rather than pure benchmark facts. Telegram does not publish an official cross-platform “glass” design system equivalent to Apple’s iOS 26 documentation, so the “Telegram-like” reference here should be treated as an aesthetic influence rather than a primary-source pattern. Also, Apple’s web HIG pages were JavaScript-gated in this environment, so Apple’s iOS 26 features PDF was used as the highest-confidence official source for current Liquid Glass behavior. The exact palette and glass parameters in this report are therefore recommendations derived from your internal product direction plus official benchmark/platform evidence, not copied values from any single competitor. [12] fileciteturn0file7 fileciteturn0file12
+[1] [9] [12] https://www.apple.com/os/pdf/All_New_Features_iOS_26_Sept_2025.pdf
+https://www.apple.com/os/pdf/All_New_Features_iOS_26_Sept_2025.pdf
+[2] [5] https://www.hootsuite.com/platform
+https://www.hootsuite.com/platform
+[3] [4] [17] [18] https://buffer.com/
+https://buffer.com/
+[6] https://sproutsocial.com/features/
+https://sproutsocial.com/features/
+[7] [19] https://later.com/
+https://later.com/
+[8] https://planable.io/product/
+https://planable.io/product/
+[10] https://developer.android.com/design/ui/wear/guides/styles/color/roles-tokens
+https://developer.android.com/design/ui/wear/guides/styles/color/roles-tokens
+[11] [20] https://www.w3.org/community/design-tokens/
+https://www.w3.org/community/design-tokens/
+[13] https://github.com/rastikerdar/vazirmatn
+https://github.com/rastikerdar/vazirmatn
+[14] [16] [21] [22] https://www.w3.org/TR/WCAG22/
+https://www.w3.org/TR/WCAG22/
+[15] https://developer.android.com/develop/ui/compose/animation/customize
+https://developer.android.com/develop/ui/compose/animation/customize
+[23] https://web.dev/articles/vitals
+https://web.dev/articles/vitals
