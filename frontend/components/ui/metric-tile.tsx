@@ -34,6 +34,19 @@ export function MetricTile({
   const baseClass = variant === "glass"
     ? "bg-white/30 backdrop-blur-xl border border-white/20"
     : "bg-white border border-app-border";
+  const interactiveProps = onClick
+    ? {
+        onClick,
+        onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onClick();
+          }
+        },
+        role: "button",
+        tabIndex: 0
+      }
+    : {};
 
   return (
     <div
@@ -43,9 +56,7 @@ export function MetricTile({
         onClick && "cursor-pointer hover:scale-105",
         className
       )}
-      onClick={onClick}
-      role="button"
-      tabIndex={onClick ? 0 : -1}
+      {...interactiveProps}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
