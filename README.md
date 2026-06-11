@@ -1,39 +1,24 @@
-# Multi-Channel Social Operations Studio
+# Nahrino SocialOps Studio
 
-یک وب‌اپ فارسی، راست‌به‌چپ و چندکاناله برای مدیریت محتوا، کمپین، رسانه، زمان‌بندی، انتشار، بازیابی خطا، اینباکس و تحلیل شبکه‌های اجتماعی.
+Persian-first, RTL-native, Jalali-native social operations platform for planning, creating, scheduling, publishing, monitoring, and reporting content across Rubika, Instagram, and future channels.
 
-این پروژه از یک MVP روبیکا شروع شد، اما جهت محصول اکنون **مدیریت چندکاناله شبکه‌های اجتماعی** است. روبیکا یکی از کانال‌های انتشار است و Instagram نیز به عنوان کانال دوم با حالت‌های API/دستی در حال اضافه شدن است.
+The project started as a Rubika publisher MVP, but the product direction is now a multi-channel SocialOps web app inspired by the workflow maturity of Buffer, Hootsuite, Sprout Social, and Later, while staying focused on Persian commerce and content teams.
 
 ## Current Product Scope
 
-The app currently includes:
+- Admin authentication and workspace/store profile.
+- Rubika publishing setup, health checks, worker delivery, retries, and publish attempts.
+- Instagram channel foundation with professional-account API path and personal-account reminder/manual mode.
+- Multi-channel composer with campaign, schedule, readiness, media, and preview flows.
+- Jalali planner/calendar.
+- Campaign command center with portfolio, overview, calendar, posts, media, and report views.
+- Content library, media library, Persian-first image editor, queue, logs, inbox, notifications, and analytics foundations.
 
-- Admin authentication.
-- Store/workspace profile and brand defaults.
-- Rubika channel setup and publishing.
-- Instagram channel foundation with account modes and manual publishing workflow.
-- Composer for post creation, media selection, schedule, preview, and readiness.
-- Campaign manager.
-- Calendar/planner.
-- Content library.
-- Media library and Persian-first image editor.
-- Queue, publish attempts, logs, notifications, and retry/recovery.
-- Analytics and inbox foundations.
+## Canonical Product Plan
 
-## Target Product Direction
+The roadmap, RFP, design system direction, backlog, architecture notes, and phase plan now live in one source of truth:
 
-The target product should compete as a professional Persian-first social management platform:
-
-- Command Center.
-- Multi-channel Channels Hub.
-- Multi-channel Composer Studio.
-- Visual Planner.
-- Campaign OS.
-- Media Studio and creative variants.
-- Approvals and collaboration.
-- Reliable publishing operations.
-- Inbox and engagement.
-- Analytics, reports, listening-lite, and AI-assisted insights.
+[docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md)
 
 ## Stack
 
@@ -46,7 +31,10 @@ The target product should compete as a professional Persian-first social managem
 
 ## Run Locally
 
+From WSL Ubuntu:
+
 ```bash
+cd /home/reza/projects/rubika-publisher-mvp
 cp .env.example .env
 docker compose up -d --build
 ```
@@ -54,56 +42,28 @@ docker compose up -d --build
 Frontend:
 
 ```text
-http://localhost:3000
+http://localhost:3100
 ```
 
-Backend health:
-
-```text
-http://localhost:8000/health
-```
-
-Database health:
-
-```text
-http://localhost:8000/health/db
-```
-
-Database migrations:
-
-```bash
-docker compose exec backend alembic current
-docker compose exec backend alembic upgrade head
-```
-
-## Verification
-
-Frontend:
-
-```bash
-docker compose exec frontend npm run check
-```
+The frontend container listens on `3000` internally, but Docker Compose exposes it on host port `3100` by default through `FRONTEND_PORT=3100`, so it does not conflict with local tools that use port `3000`.
 
 Backend:
 
-```bash
-docker compose exec backend python -m compileall app
-docker compose exec backend python -m pytest
+```text
+http://localhost:8000/health
+http://localhost:8000/health/db
 ```
 
-## Product Docs
+## Useful Commands
 
-- [Product Architecture](docs/PRODUCT_ARCHITECTURE.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Multi-Channel RFP](docs/MULTI_CHANNEL_RFP.md)
-- [Domain Model](docs/DOMAIN_MODEL.md)
-- [UI/UX System](docs/UI_UX_SYSTEM.md)
-- [Image Editor Roadmap](docs/IMAGE_EDITOR_ROADMAP.md)
+```bash
+docker compose ps
+docker compose logs --tail=120 frontend
+docker compose logs --tail=120 backend
+docker compose exec backend python -m compileall app
+docker compose exec frontend npm run check
+```
 
-The older Excel roadmap/RFP/backlog artifact is still available, but the Markdown docs above are now the source of truth:
+## Current Phase
 
-- [Professional Webapp Roadmap RFP Backlog](outputs/pro_roadmap/Rubika_Publisher_Professional_Webapp_Roadmap_RFP_Backlog.xlsx)
-
-## Current Strategic Gap
-
-The codebase already contains multi-channel features, but some labels, docs, and architecture still reflect the old Rubika-only MVP identity. The next product phase should reset identity and shell/navigation around a Channels Hub before adding more page-level polish.
+The current branch is focused on professionalizing the multi-channel product shell and campaign workflow before moving into broader navigation simplification, design-system hardening, planner mobile polish, and the Composer Pro rebuild.

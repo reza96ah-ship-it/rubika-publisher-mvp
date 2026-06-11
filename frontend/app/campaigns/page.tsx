@@ -13,7 +13,7 @@ import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { Field, Input, Select, Textarea } from "../../components/ui/form";
 import { NMetricTile } from "../../components/nahrino-ui";
-import { DetailGrid, EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
+import { EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { assignPostsToCampaign, campaignColorForPost, campaignLabelForPost, createCampaign, loadCampaigns, updateCampaign, type Campaign, type CampaignStatus } from "../../lib/campaigns";
 import { getJalaliMonthLength, getJalaliMonthStartOffset, getJalaliPickerParts, jalaliMonthNames, jalaliPickerPartsToIso, persianWeekdays, type JalaliPickerParts } from "../../lib/jalali-picker";
 import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
@@ -1081,7 +1081,7 @@ export default function CampaignsPage() {
                 action={selectedRow ? <Button type="button" variant="secondary" size="sm" onClick={() => openEditCampaign(selectedRow.campaign)}>ویرایش</Button> : null}
               >
                 {selectedRow ? (
-                  <div className="space-y-4">
+                  <div className="campaign-selected-inspector">
                     <div className="campaign-detail-hero-card" style={{ "--campaign-accent": selectedRow.campaign.color } as CSSProperties}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -1093,48 +1093,50 @@ export default function CampaignsPage() {
                       <p className="mt-3 text-sm leading-6 text-app-muted">{selectedRow.campaign.goal || selectedRow.campaign.notes || "هدف و یادداشت کمپین هنوز تکمیل نشده است."}</p>
                     </div>
 
-                    <DetailGrid
-                      items={[
-                        { label: "سلامت کمپین", value: <StatusToken tone={healthTone}>{selectedRow.stats.health}%</StatusToken>, hint: "بر اساس انتشار، صف، رسانه و خطا" },
-                        { label: "وضعیت", value: statusLabels[selectedRow.campaign.status] ?? selectedRow.campaign.status },
-                        { label: "مالک", value: selectedRow.campaign.owner || "تعریف نشده" },
-                        { label: "بازه", value: `${formatDateTime(selectedRow.campaign.starts_at)} تا ${formatDateTime(selectedRow.campaign.ends_at)}` }
-                      ]}
-                    />
+                    <div className="campaign-selected-facts">
+                      <span>
+                        <small>سلامت</small>
+                        <strong><StatusToken tone={healthTone}>{selectedRow.stats.health}%</StatusToken></strong>
+                      </span>
+                      <span>
+                        <small>وضعیت</small>
+                        <strong>{statusLabels[selectedRow.campaign.status] ?? selectedRow.campaign.status}</strong>
+                      </span>
+                      <span>
+                        <small>مالک</small>
+                        <strong>{selectedRow.campaign.owner || "تعریف نشده"}</strong>
+                      </span>
+                      <span>
+                        <small>بازه</small>
+                        <strong>{formatDateTime(selectedRow.campaign.starts_at)} تا {formatDateTime(selectedRow.campaign.ends_at)}</strong>
+                      </span>
+                    </div>
 
-                    <section className="dashboard-kpi-strip campaign-kpi-strip grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="خلاصه کمپین">
-                      <NMetricTile label="منتشرشده" value={selectedRow.stats.published} detail="خروجی موفق کمپین" icon={CheckCircle2} tone="success" />
-                      <NMetricTile label="در جریان" value={queuedCount} detail="آماده، زمان‌بندی یا انتشار" icon={TimerReset} tone="info" />
-                      <NMetricTile label="نیازمند توجه" value={failedCount} detail="خطا یا ریسک فعال" icon={AlertTriangle} tone={failedCount ? "alert" : "success"} />
-                      <NMetricTile label="پوشش رسانه" value={`${campaignInsights.mediaCoverage}%`} detail={`${campaignInsights.withMedia} پست دارای رسانه`} icon={FileImage} tone="primary" />
-                    </section>
-
-                    <div className="campaign-funnel-card">
-                      <div className="mb-3 flex items-center justify-between gap-3">
-                        <p className="text-xs font-black text-app-text">قیف عملکرد کمپین</p>
+                    <div className="campaign-progress-stack">
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <p className="text-xs font-black text-app-text">مسیر اجرای کمپین</p>
                         <StatusToken tone="neutral">{selectedRow.stats.total} پست</StatusToken>
                       </div>
                       {[
-                        { label: "پوشش رسانه", value: selectedRow.stats.media, total: selectedRow.stats.total, color: "#2563EB" },
-                        { label: "در جریان انتشار", value: queuedCount, total: selectedRow.stats.total, color: "#0F766E" },
-                        { label: "انتشار موفق", value: selectedRow.stats.published, total: selectedRow.stats.total, color: "#059669" },
-                        { label: "ریسک خطا", value: failedCount, total: selectedRow.stats.total, color: "#E11D48" }
+                        { label: "پوشش رسانه", value: selectedRow.stats.media, total: selectedRow.stats.total, color: "rgb(var(--n-color-info))" },
+                        { label: "در جریان انتشار", value: queuedCount, total: selectedRow.stats.total, color: "rgb(var(--n-color-primary))" },
+                        { label: "انتشار موفق", value: selectedRow.stats.published, total: selectedRow.stats.total, color: "rgb(var(--n-color-success))" },
+                        { label: "ریسک خطا", value: failedCount, total: selectedRow.stats.total, color: "rgb(var(--n-color-alert))" }
                       ].map((item) => {
                         const ratio = percent(item.value, item.total);
                         return (
-                          <div key={item.label} className="py-2">
-                            <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-black">
-                              <span className="text-app-muted">{item.label}</span>
-                              <span className="text-app-text">{ratio}%</span>
+                          <div key={item.label} className="campaign-progress-row">
+                            <div className="flex items-center justify-between gap-2">
+                              <span>{item.label}</span>
+                              <strong>{ratio}%</strong>
                             </div>
                             <div className="campaign-funnel-track">
-                              <div style={{ width: `${ratio}%`, backgroundColor: item.color }} />
+                              <div style={{ width: `${ratio}%`, background: item.color }} />
                             </div>
                           </div>
                         );
                       })}
                     </div>
-
                   </div>
                 ) : (
                   <EmptyState title="کمپینی انتخاب نشده است" description="از لیست کمپین‌ها یک مورد را انتخاب کنید." />
