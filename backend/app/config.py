@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     admin_email: str = "admin@example.com"
     admin_password: str = "change_this_password"
 
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "http://localhost:3100,http://127.0.0.1:3100,http://localhost:3000"
     database_url: str = "postgresql+psycopg://rubika_user:change_this_db_password@postgres:5432/rubika_publisher"
 
     redis_url: str = "redis://redis:6379/0"
