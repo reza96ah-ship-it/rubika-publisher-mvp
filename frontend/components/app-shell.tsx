@@ -153,11 +153,11 @@ import { productName } from "../lib/product";export function AppShell({ children
   const shellReady = storeReady && rubikaReady;
   const showAttentionAction = !overviewLoading && !shellReady;
   const attentionHref = !storeReady ? "/onboarding" : "/channels";
-  const attentionLabel = !storeReady ? "طھع©ظ…غŒظ„ ط±ط§ظ‡â€Œط§ظ†ط¯ط§ط²غŒ" : "ط§طھطµط§ظ„ ع©ط§ظ†ط§ظ„";
+  const attentionLabel = !storeReady ? "تکمیل راه‌اندازی" : "اتصال کانال";
   const brandAssetId = overview.store?.avatar_asset_id ?? overview.store?.logo_asset_id ?? null;
   const brandImageUrl = useMediaPreviewUrl(brandAssetId);
   const brandColor = overview.store?.brand_primary_color;
-  const workspaceName = overview.store?.name || "ظ¾ط±ظˆظپط§غŒظ„ ظپط±ظˆط´ع¯ط§ظ‡";
+  const workspaceName = overview.store?.name || "پروفایل فروشگاه";
 
   function logout() {
     window.localStorage.removeItem("rubika_publisher_access");
@@ -193,10 +193,10 @@ import { productName } from "../lib/product";export function AppShell({ children
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
                   className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md border border-app-border bg-app-surface/90 px-3 text-xs text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary md:flex md:w-56 xl:w-72"
-                  aria-label="ط¨ط§ط² ع©ط±ط¯ظ† ط¬ط³طھâ€Œظˆط¬ظˆ ظˆ ط¯ط³طھط±ط³غŒ ط³ط±غŒط¹"
+                  aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  <span className="truncate">ط¬ط³طھâ€Œظˆط¬ظˆغŒ ظ¾ط³طھطŒ ظ…ط³غŒط± غŒط§ ع©ظ…ظ¾غŒظ†</span>
+                  <span className="truncate">جست‌وجوی پست، مسیر یا کمپین</span>
                   <span className="mr-auto hidden rounded border border-app-border bg-white px-1.5 py-0.5 text-[10px] font-bold text-slate-400 xl:inline">Ctrl K</span>
                 </button>
 
@@ -204,7 +204,7 @@ import { productName } from "../lib/product";export function AppShell({ children
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
                   className="app-interactive flex h-9 w-9 items-center justify-center rounded-md border border-app-border bg-app-surface/90 text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary md:hidden"
-                  aria-label="ط¨ط§ط² ع©ط±ط¯ظ† ط¬ط³طھâ€Œظˆط¬ظˆ ظˆ ط¯ط³طھط±ط³غŒ ط³ط±غŒط¹"
+                  aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -222,10 +222,10 @@ import { productName } from "../lib/product";export function AppShell({ children
                 <Link
                   href="/inbox"
                   className="app-interactive relative flex h-9 w-9 items-center justify-center rounded-md border border-app-border bg-app-surface/90 text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-coral"
-                  aria-label={notificationCount ? `${notificationCount} ط§ط¹ظ„ط§ظ† ط¹ظ…ظ„غŒط§طھغŒ ط®ظˆط§ظ†ط¯ظ‡â€Œظ†ط´ط¯ظ‡` : "طµظ†ط¯ظˆظ‚ ط¹ظ…ظ„غŒط§طھ ط§ظ†طھط´ط§ط±"}
+                  aria-label={notificationCount ? `${notificationCount} اعلان عملیاتی خوانده‌نشده` : "صندوق عملیات انتشار"}
                 >
                   <BellRing className="h-4 w-4" aria-hidden="true" />
-                  <span className={`absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full ring-2 ring-white ${liveNotificationsReady ? "bg-emerald-500" : "bg-slate-300"}`} aria-label={liveNotificationsReady ? "ط§ط¹ظ„ط§ظ† ط²ظ†ط¯ظ‡ ظپط¹ط§ظ„" : "ط§ط¹ظ„ط§ظ† ط²ظ†ط¯ظ‡ ط¯ط± ط­ط§ظ„ ط§طھطµط§ظ„"} />
+                  <span className={`absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full ring-2 ring-white ${liveNotificationsReady ? "bg-emerald-500" : "bg-slate-300"}`} aria-label={liveNotificationsReady ? "اعلان زنده فعال" : "اعلان زنده در حال اتصال"} />
                   {notificationCount ? (
                     <span className="absolute -left-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-black text-white">
                       {notificationCount > 9 ? "9+" : notificationCount}
@@ -238,7 +238,7 @@ import { productName } from "../lib/product";export function AppShell({ children
                     type="button"
                     onClick={() => setAccountMenuOpen((current) => !current)}
                     className="app-interactive flex h-9 items-center gap-2 rounded-md border border-app-border bg-app-surface/90 px-2 text-xs font-bold text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary"
-                    aria-label="ظ…ظ†ظˆغŒ ط­ط³ط§ط¨ ع©ط§ط±ط¨ط±غŒ"
+                    aria-label="منوی حساب کاربری"
                     aria-expanded={accountMenuOpen}
                   >
                     <WorkspaceAvatar name={workspaceName} size="sm" color={brandColor} imageUrl={brandImageUrl} className="h-6 w-6 rounded" />
@@ -252,7 +252,7 @@ import { productName } from "../lib/product";export function AppShell({ children
                         <div className="flex items-center gap-2">
                           <WorkspaceAvatar name={workspaceName} color={brandColor} imageUrl={brandImageUrl} />
                           <div className="min-w-0">
-                            <p className="flex items-center gap-1.5 text-xs font-black text-app-text"><Sparkles className="h-3.5 w-3.5 text-app-teal" aria-hidden="true" />ظ…ط¯غŒط± ظپط¶ط§غŒ ع©ط§ط±غŒ</p>
+                            <p className="flex items-center gap-1.5 text-xs font-black text-app-text"><Sparkles className="h-3.5 w-3.5 text-app-teal" aria-hidden="true" />مدیر فضای کاری</p>
                             <p className="mt-1 truncate text-[11px] text-app-muted">{workspaceName}</p>
                           </div>
                         </div>
@@ -260,11 +260,11 @@ import { productName } from "../lib/product";export function AppShell({ children
                       <div className="p-1.5">
                         <Link href="/store" className="app-interactive flex items-center gap-2 rounded px-2.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-app-text">
                           <Settings2 className="h-3.5 w-3.5" aria-hidden="true" />
-                          طھظ†ط¸غŒظ…ط§طھ ظپط¶ط§غŒ ع©ط§ط±غŒ
+                          تنظیمات فضای کاری
                         </Link>
                         <Link href="/channels" className="app-interactive flex items-center gap-2 rounded px-2.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-app-text">
                           <Network className="h-3.5 w-3.5" aria-hidden="true" />
-                          ظ…ط¯غŒط±غŒطھ ع©ط§ظ†ط§ظ„â€Œظ‡ط§
+                          مدیریت کانال‌ها
                         </Link>
                         <button
                           type="button"
@@ -272,7 +272,7 @@ import { productName } from "../lib/product";export function AppShell({ children
                           className="app-interactive flex w-full items-center gap-2 rounded px-2.5 py-2 text-right text-xs font-bold text-rose-700 hover:bg-rose-50"
                         >
                           <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
-                          ط®ط±ظˆط¬ ط§ط² ط­ط³ط§ط¨
+                          خروج از حساب
                         </button>
                       </div>
                     </div>
