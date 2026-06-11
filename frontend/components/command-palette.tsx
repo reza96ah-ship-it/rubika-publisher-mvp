@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, BellRing, CalendarDays, FileImage, FileText, Home, ListChecks, Megaphone, PenLine, Rocket, Search, Settings2, X } from "lucide-react";
+import { BarChart3, BellRing, CalendarDays, FileImage, FileText, Home, Megaphone, Network, PenLine, Rocket, Search, Settings2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, authHeaders, type Post } from "../lib/posts";
@@ -13,20 +13,19 @@ type CommandPaletteProps = {
 
 const primaryCommands = [
   { label: "داشبورد", detail: "اولویت امروز، ریسک‌ها، انتشار بعدی و پیام‌های مهم", href: "/", icon: Home },
-  { label: "ساخت پست", detail: "نوشتن، طراحی رسانه، نسخه‌های کانالی و زمان‌بندی", href: "/compose", icon: PenLine },
-  { label: "تقویم", detail: "زمان‌بندی، نمای ماهانه و برنامه انتشار", href: "/calendar", icon: CalendarDays },
+  { label: "ساخت", detail: "نوشتن، طراحی رسانه، نسخه‌های کانالی و زمان‌بندی", href: "/compose", icon: PenLine },
+  { label: "برنامه‌ریز", detail: "زمان‌بندی، نمای ماهانه و برنامه انتشار", href: "/calendar", icon: CalendarDays },
   { label: "کمپین‌ها", detail: "برنامه‌های بازاریابی، بازه‌ها و محتوای کمپین", href: "/campaigns", icon: Megaphone },
   { label: "محتوا", detail: "پست‌ها، پیش‌نویس‌ها، وضعیت‌ها و صف انتشار", href: "/content", icon: FileText },
   { label: "رسانه", detail: "کتابخانه تصاویر و ویرایشگر", href: "/media", icon: FileImage },
   { label: "پیام‌ها", detail: "هشدارها و پیام‌های عملیاتی", href: "/inbox", icon: BellRing },
-  { label: "گزارش‌ها", detail: "روند عملکرد، سلامت انتشار و گزارش مدیریتی", href: "/analytics", icon: BarChart3 },
-  { label: "تنظیمات", detail: "برند، کانال‌ها، اتصال‌ها و سلامت سیستم", href: "/store", icon: Settings2 }
+  { label: "گزارش‌ها", detail: "روند عملکرد، سلامت انتشار و گزارش مدیریتی", href: "/analytics", icon: BarChart3 }
 ];
 
 const secondaryCommands = [
   { label: "راه‌اندازی", detail: "مسیر موقت تکمیل برند، کانال، محتوا و زمان‌بندی", href: "/onboarding", icon: Rocket },
-  { label: "مرکز کانال‌ها", detail: "زیرمجموعه تنظیمات برای مدیریت شبکه‌ها", href: "/channels", icon: Settings2 },
-  { label: "بازیابی انتشار", detail: "نمای زمینه‌ای برای خطاها و اقدام‌های صف", href: "/queue", icon: ListChecks }
+  { label: "کانال‌ها", detail: "اتصال‌ها و مدیریت شبکه‌های اجتماعی", href: "/channels", icon: Network },
+  { label: "تنظیمات", detail: "پروفایل فضای کاری، برند و تنظیمات پایه", href: "/store", icon: Settings2 }
 ];
 
 const commands = [...primaryCommands, ...secondaryCommands];

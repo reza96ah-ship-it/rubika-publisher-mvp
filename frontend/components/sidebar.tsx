@@ -9,6 +9,7 @@ import {
   GalleryHorizontalEnd,
   LayoutDashboard,
   LucideIcon,
+  Network,
   PenLine,
   Rocket,
   Settings2,
@@ -47,6 +48,7 @@ const contentNavItem: NavItem = { label: "محتوا", href: "/content", icon: F
 const mediaNavItem: NavItem = { label: "رسانه", href: "/media", icon: GalleryHorizontalEnd };
 const inboxNavItem: NavItem = { label: "پیام‌ها", href: "/inbox", icon: BellRing };
 const reportsNavItem: NavItem = { label: "گزارش‌ها", href: "/analytics", icon: BarChart3 };
+const channelsNavItem: NavItem = { label: "کانال‌ها", href: "/channels", icon: Network };
 const settingsNavItem: NavItem = { label: "تنظیمات", href: "/store", icon: Store };
 
 const primaryNavItems: NavItem[] = [
@@ -57,7 +59,8 @@ const primaryNavItems: NavItem[] = [
   contentNavItem,
   mediaNavItem,
   inboxNavItem,
-  reportsNavItem
+  reportsNavItem,
+  channelsNavItem
 ];
 
 const settingsNavItems: NavItem[] = [settingsNavItem];
@@ -75,15 +78,9 @@ function isNavItemActive(pathname: string, item: NavItem) {
   if (item.href === "/calendar") return isActiveRoute(pathname, "/calendar");
   if (item.href === "/campaigns") return isActiveRoute(pathname, "/campaigns");
   if (item.href === "/content") return isActiveRoute(pathname, "/content") || isActiveRoute(pathname, "/queue");
-  if (item.href === "/store") {
-    return (
-      isActiveRoute(pathname, "/store") ||
-      isActiveRoute(pathname, "/channels") ||
-      isActiveRoute(pathname, "/rubika") ||
-      isActiveRoute(pathname, "/instagram") ||
-      isActiveRoute(pathname, "/logs")
-    );
-  }
+  if (item.href === "/analytics") return isActiveRoute(pathname, "/analytics") || isActiveRoute(pathname, "/logs");
+  if (item.href === "/channels") return isActiveRoute(pathname, "/channels") || isActiveRoute(pathname, "/rubika") || isActiveRoute(pathname, "/instagram");
+  if (item.href === "/store") return isActiveRoute(pathname, "/store");
   return isActiveRoute(pathname, item.href);
 }
 
@@ -108,13 +105,15 @@ export function getActiveNav(pathname: string) {
     return { group: { title: "محتوا", items: [contentNavItem] }, item: contentNavItem };
   }
 
-  if (
-    isActiveRoute(pathname, "/store") ||
-    isActiveRoute(pathname, "/channels") ||
-    isActiveRoute(pathname, "/rubika") ||
-    isActiveRoute(pathname, "/instagram") ||
-    isActiveRoute(pathname, "/logs")
-  ) {
+  if (isActiveRoute(pathname, "/analytics") || isActiveRoute(pathname, "/logs")) {
+    return { group: { title: "گزارش‌ها", items: [reportsNavItem] }, item: reportsNavItem };
+  }
+
+  if (isActiveRoute(pathname, "/channels") || isActiveRoute(pathname, "/rubika") || isActiveRoute(pathname, "/instagram")) {
+    return { group: { title: "کانال‌ها", items: [channelsNavItem] }, item: channelsNavItem };
+  }
+
+  if (isActiveRoute(pathname, "/store")) {
     return { group: { title: "تنظیمات", items: settingsNavItems }, item: settingsNavItem };
   }
 
@@ -202,10 +201,10 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
 
 const mobileNavItems = [
   todayNavItem,
-  plannerNavItem,
   composeNavItem,
-  contentNavItem,
-  reportsNavItem
+  plannerNavItem,
+  campaignsNavItem,
+  contentNavItem
 ];
 
 export function MobileNav() {
