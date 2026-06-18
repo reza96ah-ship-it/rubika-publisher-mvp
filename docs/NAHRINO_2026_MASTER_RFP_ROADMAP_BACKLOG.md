@@ -1,967 +1,681 @@
-# Nahrino 2026 Master RFP, Product Roadmap, UX System, and Backlog
+# Nahrino 2026 Master PRD, RFP, Roadmap, Phases, and Backlog
 
-Last updated: 2026-06-11  
+Last updated: 2026-06-18  
 Product direction: Persian-first multi-channel SocialOps platform  
-Canonical status: This file replaces all older roadmap, benchmark, design-system, and backlog documents in `docs/`.
+Canonical status: This file is the product source of truth for PRD, RFP, roadmap, backlog, and phase sequencing.  
+Companion spec: [Instagram Comment-to-DM Automation PRD](INSTAGRAM_COMMENT_TO_DM_AUTOMATION_PRD.md)
 
 ## 1. Executive Summary
 
-Nahrino is no longer a Rubika-only publisher. It must become a professional Persian-first multi-channel management app for small businesses, creators, and content teams who need to plan, create, schedule, publish, monitor, and report content across Rubika, Instagram, and future channels.
+Nahrino must move from a Rubika publisher MVP into a professional Persian-first SocialOps platform for small businesses, creators, commerce teams, and agencies. The product should help users plan, create, schedule, publish, monitor, automate, and report content across Rubika, Instagram, and future channels.
 
-The product should compete with the workflow clarity of Buffer, the operational depth of Hootsuite, the analytics and care maturity of Sprout Social, and the visual planning/media experience of Later, while staying simpler, RTL-native, Jalali-native, and tailored to Persian commerce teams.
+The product should compete on workflow clarity, not visual noise. The strongest benchmark products separate creation, planning, engagement, analytics, and channel administration into clear workspaces. Nahrino's advantage is Persian-first UX, RTL-native layout, Jalali-first planning, Rubika support, Instagram professional-account workflows, and practical automation for commerce use cases.
 
-The current app has strong raw capability: posts, scheduling, campaigns, media, image editing, Rubika publishing, Instagram channel modeling, notifications, analytics, and a modern design token direction. The main product risk is not missing pages; it is fragmented UX: duplicate navigation, repeated cards, old MVP surfaces, inconsistent component hierarchy, too much scroll, and workflows that reveal too many controls before the user asks for them.
+The current app has useful raw capability: authentication, store profile, Rubika publishing, Instagram account modeling, multi-channel composer, Jalali planner, campaign manager, content library, media/image editor, queue/logs, notifications, reports, and channel settings. The main gap is product coherence: too many pages still feel like feature prototypes, actions repeat across surfaces, some navigation routes are operational internals rather than user-facing jobs, and several pages need mobile-first redesign.
 
-The rebuild target is a single coherent product:
+The next product target is:
 
-- One product identity: `نشرینو`.
-- One navigation model: dashboard, create, planner, campaigns, library, media, inbox, reports, channels, settings.
-- One visual language: editorial glass, compact command workspaces, soft motion, real content previews, and consistent 8-12px radius rules.
-- One workflow model: overview first, details on demand, edit in drawers/modals, actions where the user expects them.
-- One channel strategy: Rubika auto-publishing, Instagram professional auto-publishing after Meta OAuth, Instagram personal account reminder/manual mode only.
+- One identity: `نشرینو`.
+- One positioning: Persian-first multi-channel SocialOps.
+- One navigation model: dashboard, create, planner, campaigns, content, media, inbox, reports, channels, settings.
+- One visual system: compact glass workspace, 8px standard radius, readable Persian typography, subtle motion, clear hierarchy, and real previews.
+- One workflow principle: overview first, detail on demand, edit in drawer/modal, never duplicate primary actions.
+- One Instagram strategy: professional account API path for auto-publish/engagement; personal account reminder/manual mode only.
 
-## 2. Benchmark Positioning
+## 2. Benchmark Research Summary
 
-### 2.1 Competitor Signals
+Reviewed signals on 2026-06-18:
 
-Sources reviewed on 2026-06-11:
+- Buffer emphasizes simple content creation, organization, repurposing, AI assistance, scheduling, analytics, and a calm unified inbox. Source: https://buffer.com/
+- Buffer's 2026 tool guides call out content batching, social automation, AI assistance, unified comments, and workflow simplicity. Source: https://buffer.com/resources/best-social-media-management-tools/
+- Hootsuite positions around scheduling, content creation, analytics, social listening, AI, integrations, unified inbox, message automation, and enterprise readiness. Sources: https://www.hootsuite.com/ and https://www.hootsuite.com/plans
+- Sprout Social positions around publishing, engagement, reporting, customer care, social intelligence, and AI-driven business insights. Sources: https://sproutsocial.com/ and https://sproutsocial.com/features/
+- Later positions around visual planning, influencer/creator campaigns, Instagram-heavy workflows, link-in-bio, media planning, and AI-powered insights. Source: https://later.com/
+- Meta documentation confirms Instagram private replies, webhooks, messaging API, content publishing, comment moderation, and rate/policy boundaries for professional accounts. Sources: https://developers.facebook.com/docs/instagram-platform/private-replies/ and https://developers.facebook.com/docs/instagram-platform/webhooks/
 
-- Buffer: positioning around creating, organizing, repurposing, scheduling, comments, AI assistance, and simple team collaboration. Source: https://buffer.com/
-- Buffer 2026 tool comparison: emphasizes visual calendar, bulk scheduling, unified inbox, robust analytics, and content batching. Source: https://buffer.com/resources/social-media-scheduling-tools/
-- Hootsuite: scheduling, content creation, analytics, social listening, unified inbox, routing, saved replies, auto-responses, competitive benchmarking, and report exports. Source: https://www.hootsuite.com/
-- Hootsuite plans: unlimited scheduling, bulk scheduling, customizable analytics, message automation, competitor benchmarking, and scheduled report exports. Source: https://www.hootsuite.com/plans
-- Sprout Social: publishing, engagement, customer care, advocacy, AI-powered business intelligence, and deeper reporting. Source: https://sproutsocial.com/
-- Sprout advocacy: pre-approved sharing, employee advocacy, and impact storytelling. Source: https://sproutsocial.com/features/employee-advocacy/
-- Later: visual campaign and creator/influencer management direction with AI-powered insights. Source: https://later.com/
-- Meta Instagram Platform: Instagram publishing requires professional account paths and approved platform access; personal accounts must not be promised auto-publishing. Sources: https://developers.facebook.com/docs/instagram-platform/ and https://developers.facebook.com/docs/instagram-platform/content-publishing/
+## 3. Product Diagnosis
 
-### 2.2 Benchmark Lessons For Nahrino
+### 3.1 Current Strengths
 
-Nahrino should not copy competitor complexity. It should copy their product discipline:
+- Persian-first foundation and RTL app shell.
+- Jalali calendar and Jalali mini-pickers.
+- Multi-channel data model for Rubika and Instagram.
+- Rubika publishing worker, attempts, retry, and health checks.
+- Composer with title, caption, hashtags, media, campaign, channel, schedule, readiness, and preview.
+- Campaign page with portfolio and campaign workbench foundations.
+- Media library and image editor with Persian font direction.
+- Inbox/notifications foundation.
+- Reports and operational analytics foundation.
+- Docker Compose local runtime on port `3100`.
 
-- Buffer lesson: keep creation and scheduling simple enough for one person.
-- Hootsuite lesson: support team operations, inbox, bulk scheduling, and reporting.
-- Sprout lesson: treat analytics, care, and business intelligence as premium value.
-- Later lesson: make media planning and visual previews feel native, not bolted on.
-- Meta lesson: be honest about Instagram account limitations and build professional-account OAuth separately from personal reminder mode.
+### 3.2 Current Product Risks
 
-## 3. RFP Scope
+- Navigation still exposes operational internals (`queue`, `logs`) as top-level product destinations. These should become views inside Planner/Reports unless power-user mode is enabled.
+- Some pages still use dense two-column layouts with nested scrolling, especially planner/campaign/report surfaces.
+- Dashboard and redesigned pages are improving, but visual language is not fully applied everywhere.
+- Composer is now cleaner but still needs stronger channel-specific previews, mobile step flow, and automation hooks.
+- Inbox is currently operational notifications, not a real social inbox for comments, DMs, assignments, and saved replies.
+- Instagram is modeled but not yet a production OAuth/webhook/messaging integration.
+- Reports need better chart behavior, no horizontal/vertical double scroll, and more useful insight cards.
+- Tracked/ignored build artifacts and cache folders should be audited periodically so repo hygiene stays professional.
 
-### 3.1 Project Objective
+## 4. Product Vision
 
-Design and build a professional, production-ready Persian-first SocialOps web app that allows users to:
+Nahrino should become the most practical Persian-first social operations app for teams that sell, publish, and support customers on Persian-language social channels.
 
-- Connect channels.
-- Create posts and media.
-- Edit images with Persian typography assets.
-- Plan content in a Jalali calendar.
-- Manage campaigns.
-- Publish automatically where APIs allow.
-- Use manual/reminder workflows where APIs do not allow auto-publishing.
-- Monitor queue, attempts, inbox, and notifications.
-- Report performance and operational health.
+The app should feel:
 
-### 3.2 Target Users
+- Professional enough for agencies.
+- Simple enough for store owners.
+- Fast enough for daily operators.
+- Trustworthy enough for real publishing.
+- Native to Persian and Jalali workflows.
 
-1. Store owner  
-   Wants quick publishing, simple scheduling, product campaign visibility, and low setup complexity.
+## 5. Target Users
 
-2. Social media operator  
-   Wants daily queue, calendar, image editing, caption reuse, channel-specific validation, and fast corrections.
+### Store Owner
 
-3. Campaign manager  
-   Wants campaign health, active campaigns, publishing gaps, assets, performance, and exports.
+Needs a simple way to create posts, schedule promotions, receive comment leads, and understand what needs attention without learning a complex enterprise tool.
 
-4. Agency/team lead  
-   Wants workspace control, approvals, audit logs, role permissions, reporting, and multi-brand support.
+### Social Media Operator
 
-### 3.3 Non-Negotiable Product Principles
+Needs a fast daily workspace for posts, media, captions, calendar, queue, comment handling, and error recovery.
 
-- Persian-first, not translated later.
-- Jalali-first dates and calendar.
-- Mobile-friendly every page, not only responsive shrink.
-- No duplicate primary actions.
-- No permanent onboarding progress after setup is complete.
-- Overview first, details/edit on demand.
-- Real content previews over decorative empty boxes.
-- Consistent component system before new feature surfaces.
-- Channel truthfulness: do not claim Instagram personal auto-publish.
-- Every workflow must have empty, loading, success, error, and degraded states.
+### Campaign Manager
 
-## 4. Product Information Architecture
+Needs campaign-level planning, post coverage, media assets, automation rules, performance, and exportable reporting.
 
-### 4.1 Final Navigation
+### Agency / Team Lead
 
-Primary navigation:
+Needs workspaces, roles, approvals, audit trails, client reporting, channel health, and operational accountability.
+
+## 6. Product Principles
+
+- Persian-first: Persian language, RTL, Jalali, local commerce patterns.
+- Honest channel capability: do not promise Instagram personal auto-publish.
+- Mobile-first: every core workflow must be usable on a phone.
+- One primary action per screen.
+- Details on demand, not permanent large forms.
+- Real previews instead of decorative placeholders.
+- Operational safety: retries, audit logs, idempotency, rate limits, permission checks.
+- Design consistency before feature depth.
+- Human override for automation.
+- Compliance-first Instagram automation.
+
+## 7. Information Architecture
+
+### 7.1 Target Primary Navigation
 
 1. داشبورد
 2. ساخت
-3. برنامه ریز
-4. کمپین ها
+3. برنامه‌ریز
+4. کمپین‌ها
 5. محتوا
 6. رسانه
-7. پیام ها
-8. گزارش ها
-9. کانال ها
+7. پیام‌ها
+8. گزارش‌ها
+9. کانال‌ها
 10. تنظیمات
 
-Navigation cleanup rules:
-
-- Remove duplicate top menus that repeat sidebar routes unless they are view tabs inside the same page.
-- Do not show `عملیات` and `کتابخانه` as separate global destinations if they lead to the same workflow.
-- Keep settings pinned at the bottom without creating long empty sidebar space.
-- Use command palette for cross-page jumps, not repeated nav blocks inside each page.
-- On mobile, use a compact bottom navigation or drawer pattern with only the main workflow routes.
-
-### 4.2 Page Ownership
+### 7.2 Route Ownership
 
 Dashboard owns:
 
-- Today command view.
-- Queue health.
-- Next publish.
-- Active campaign signal.
+- Today state.
+- Publishing health.
+- Next scheduled post.
+- Active campaign summary.
 - Channel readiness.
 - Alerts requiring action.
-- Compact trend/donut/gauge summaries.
+- Compact performance/throughput insight.
 
 Dashboard must not own:
 
-- Full campaign detail.
+- Full onboarding progress after setup is complete.
 - Full calendar.
-- Full onboarding progress after setup.
-- Duplicate lists that already exist in content, queue, or campaigns.
+- Full campaign report.
+- Duplicate content lists.
 
 Create owns:
 
-- Caption, media, campaign, channel, schedule, preview, readiness.
-- Three-pane or staged layout depending on viewport.
-- Channel-specific validation.
-- Image editor entry point.
-- Save draft, schedule, publish now.
+- Caption/text creation.
+- Media selection and editor entry.
+- Channel selection.
+- Campaign assignment.
+- Schedule selection.
+- Platform previews.
+- Readiness validation.
+- Draft/ready/schedule action.
 
 Planner owns:
 
-- Month/week/list views.
-- Day selection.
-- Post preview drawer/modal.
-- Drag/reschedule.
+- Month/week/list planning.
+- Day/post selection.
+- Calendar preview modal/drawer.
+- Reschedule actions.
 - Gap detection.
-- Channel/campaign filters.
+- Filter by channel/campaign/status.
 
 Campaigns owns:
 
 - Campaign portfolio.
-- Selected campaign command deck.
-- Campaign workbench tabs: overview, calendar, posts, media, report.
-- Edit/create campaign in modal/drawer only.
-- Post assignment on demand.
+- Campaign detail workbench.
+- Campaign posts/media/report/calendar tabs.
+- Campaign automation rules.
+- Create/edit campaign in drawer.
 
 Content owns:
 
 - Unified content library.
 - Saved views.
-- Filters only once.
-- Bulk actions.
-- Inline status.
+- One filter system.
+- Bulk status/campaign/actions.
 - Open in composer.
 
 Media owns:
 
 - Asset library.
-- Image editor.
-- Brand kits.
-- Persian fonts.
-- Stickers/emojis.
+- Persian image editor.
+- Brand kit assets.
+- Templates.
 - Export variants.
-- Attach to posts/campaigns.
+- Attach to post/campaign.
 
 Inbox owns:
 
-- Channel messages/comments.
-- Notifications.
+- Comments.
+- DMs.
+- Operational notifications.
 - Assignments.
 - Saved replies.
-- Internal notes.
-- Read/unread and priority.
+- Automation event review.
+- Read/unread/priority.
 
 Reports owns:
 
-- Operational health.
-- Channel performance.
-- Campaign performance.
+- Performance analytics.
+- Publishing health.
+- Campaign reports.
+- Automation reports.
 - Exportable reports.
-- Benchmark/competitive modules later.
 
 Channels owns:
 
 - Rubika connection.
-- Instagram professional OAuth path.
-- Instagram personal reminder mode.
-- Capability/limitation matrix.
+- Instagram professional OAuth.
+- Instagram personal reminder/manual mode.
+- Webhook status.
+- Permission/capability matrix.
 - Channel health tests.
 
 Settings owns:
 
-- Workspace profile.
-- Team.
-- Roles.
+- Workspace/store profile.
 - Brand kit.
-- Billing later.
+- Team and roles.
 - Security.
-- API/webhooks later.
+- Billing later.
+- API/webhook settings later.
 
-## 5. UX Journeys
+## 8. PRD
 
-### 5.1 First Run Setup
+### 8.1 Product Goals
 
-Goal: get from empty app to first scheduled post with the least confusion.
+- Reduce time from idea to scheduled post.
+- Make channel state obvious before publishing.
+- Make Instagram automation a lead-generation feature, not a risky bot.
+- Make every page mobile-friendly and lower-scroll.
+- Give teams a clear operational cockpit.
+- Support future channels without rebuilding the product shell.
 
-Steps:
+### 8.2 Success Metrics
 
-1. Create workspace identity.
-2. Connect one channel or choose reminder mode.
-3. Add brand basics.
-4. Create first post.
-5. Schedule or publish.
+- First scheduled post completed in under 5 minutes after setup.
+- 0 horizontal overflow on core pages at 390px, 820px, and 1440px.
+- 90% of publishing failures show actionable recovery hints.
+- Composer save/schedule error rate under 2% in local smoke tests.
+- Instagram automation rule can be created in under 2 minutes.
+- Automation events show delivery state, failure reason, and retryability.
+- Reports page loads without nested chart scroll.
 
-UX rules:
+### 8.3 Non-Goals
 
-- Onboarding is a task flow, not a permanent dashboard section.
-- After completion, show setup only as a small notification or settings checklist.
-- Never keep a large "profile is 100%" card forever.
+- No unofficial Instagram password login.
+- No auto-publishing for Instagram personal accounts.
+- No scraping, spam automation, or cold DM automation.
+- No decorative redesign that does not improve task completion.
+- No new routes unless they have clear ownership.
 
-### 5.2 Daily Operator Journey
+## 9. RFP
 
-1. Open dashboard.
-2. See next publish, queue risk, messages, and campaign health in one viewport.
-3. Click the risky item.
-4. Fix in composer, calendar, or campaign.
-5. Return to dashboard with status updated.
+### 9.1 Scope
 
-### 5.3 Campaign Journey
+Design and build a production-ready Persian-first SocialOps web app with:
 
-1. Create campaign from campaigns page or composer.
-2. Assign posts/media.
-3. See campaign command deck.
-4. Open overview for health.
-5. Open calendar for gaps.
-6. Open posts/media for operational fixes.
-7. Export report.
+- Unified navigation and app shell.
+- Professional design system.
+- Composer Pro.
+- Planner Pro.
+- Campaign Command Center.
+- Media Studio Pro.
+- Inbox and notifications.
+- Reports Pro.
+- Channel Center.
+- Instagram professional OAuth and webhook architecture.
+- Instagram comment-to-DM automation.
+- Production-grade backend, worker, audit, and observability.
 
-### 5.4 Instagram Journey
+### 9.2 Deliverables
 
-Professional account:
+- PRD and UX flows.
+- Design system and component library.
+- Frontend implementation.
+- Backend APIs and migrations.
+- Worker jobs.
+- Webhook handlers.
+- QA checklist.
+- Docker local environment.
+- Admin/operator documentation.
+- Security and compliance notes.
 
-1. Connect Instagram professional account through Meta OAuth.
-2. Validate permissions and account status.
-3. Schedule auto-publishing.
-4. Record publish attempts and errors.
+### 9.3 Acceptance Criteria
 
-Personal account:
+- All pages work on desktop, tablet, and phone.
+- All primary actions have loading, success, and failure states.
+- No duplicate primary CTA on any page.
+- All routes use consistent Button, Tag, Panel, Metric, Input, and DataView systems.
+- Instagram automation is only available when account capability allows it.
+- Webhook events are idempotent.
+- Automation sends at most one private reply per comment.
+- Automation failures are visible in Inbox and Reports.
+- `docker compose exec frontend npm run check` passes.
+- `docker compose exec backend python -m compileall app` passes.
+- Backend tests run when pytest is installed in the backend image.
 
-1. Add username and choose reminder mode.
-2. Schedule reminders.
-3. Receive manual publish task.
-4. Copy caption/open media.
-5. Mark complete.
-
-The app must clearly explain that personal Instagram accounts cannot be auto-published through official APIs.
-
-## 6. Visual Design System
-
-### 6.1 Theme Direction
-
-Theme name: Persian Editorial Glass
-
-Design qualities:
-
-- Modern, calm, operational.
-- Bright glass surfaces with subtle depth.
-- Warm neutral canvas, not black-heavy.
-- Blue/violet/cyan/mint accents used as signals, not page-wide decoration.
-- Real previews and data visualizations carry the page, not generic cards.
-
-### 6.2 Color Roles
-
-Canvas:
-
-- Light neutral base.
-- Very subtle radial art only when it supports hierarchy.
-- No loud full-page colorful background.
-
-Surface:
-
-- Glass panels for command/workbench areas.
-- Solid white for dense tables and forms when readability matters.
-- Muted surface for nested rows only.
-
-Status:
-
-- Success: mint/emerald.
-- Info: blue/cyan.
-- Warning: amber.
-- Alert: rose/red.
-- Neutral: slate.
-
-### 6.3 Radius Rules
-
-- Buttons and tags: 8px.
-- Compact rows/cards: 8-10px.
-- KPI cards and workbench panels: 10-12px.
-- Modals/drawers: 12-16px.
-- Pills only for dots, avatars, progress ends, and true pill statuses.
-
-No page should mix sharp 2px controls with huge 24px cards.
-
-### 6.4 Motion Rules
-
-Motion should make the app feel alive without becoming decorative:
-
-- KPI hover: soft lift, subtle colored glow, animated live edge.
-- Workbench tabs: active surface shift and small transform.
-- Drawers/modals: short enter/exit with blur backdrop.
-- Progress bars: animated fill on load.
-- Calendar post preview: center modal/drawer, not scroll-to-find.
-- Image editor: live color preview must be throttled/debounced to avoid update loops.
-- Respect reduced-motion preferences.
-
-### 6.5 Data Visualization
-
-Use the right visualization for the user question:
-
-- Dashboard: 3-4 KPI cards, one compact trend, one donut/gauge, alert rail.
-- Planner: calendar grid with density dots and preview drawer.
-- Campaigns: health, coverage, delivery, risk, trend, status mix.
-- Reports: time-series, channel comparison, campaign comparison, export tables.
-- Do not use unclear gradients as charts.
-- Do not force both horizontal and vertical scroll inside charts.
-
-### 6.6 Component Standards
-
-Core primitives:
-
-- `Button`: one radius system, one height scale, clear icon+label.
-- `StatusToken`: consistent sizes and colors.
-- `NMetricTile`: all KPI cards across dashboard, calendar, campaigns, reports.
-- `WorkspacePanel`: glass variant and dense solid variant.
-- `DataTable/DataRow`: unified list/table system.
-- `Modal/Drawer`: one accessible overlay system.
-- `DatePicker`: mini Jalali popup, not full calendar.
-- `ChannelBadge`: channel capability and limitation state.
-- `CommandPalette`: navigation and quick actions.
-
-## 7. Technical Architecture
-
-### 7.1 Current App Signals
-
-Frontend routes include:
-
-- `/`
-- `/compose`
-- `/calendar`
-- `/campaigns`
-- `/content`
-- `/media`
-- `/inbox`
-- `/analytics`
-- `/channels`
-- `/instagram`
-- `/rubika`
-- `/store`
-- `/onboarding`
-- `/logs`
-- `/queue`
-
-Backend routes include:
-
-- auth
-- stores
-- rubika
-- instagram
-- channels
-- campaigns
-- posts
-- media
-- publish attempts
-- notifications
-
-Backend services include:
-
-- publisher
-- publishing channel abstraction
-- channel account sync
-- Rubika client and health
-- media storage
-- Celery worker for due posts
-
-### 7.2 Target Architecture
-
-Core domains:
-
-- Workspace
-- ChannelAccount
-- BrandKit
-- Campaign
-- Post
-- MediaAsset
-- PublishAttempt
-- Notification
-- InboxThread
-- ReportSnapshot
-- User/Role
-
-Channel abstraction:
-
-- Every channel exposes capabilities.
-- Capabilities drive UI readiness.
-- Publishing worker dispatches by channel.
-- Unsupported channel actions create clear manual tasks.
-
-Instagram:
-
-- Professional account: OAuth, content publishing permissions, direct publish.
-- Personal account: reminder/manual workflow only.
-- UI must show capability difference before scheduling.
-
-### 7.3 Quality Gates
-
-Every phase must pass:
-
-- `docker compose exec frontend npm run check`
-- backend compile/test where applicable
-- browser smoke test for changed pages
-- no horizontal overflow at desktop and mobile
-- no duplicate primary actions
-- no uncaught runtime errors
-- commit and push after each phase
-
-## 8. 10-Phase Rebuild Roadmap
+## 10. Roadmap
 
 ### Phase 0: Product Reset and Documentation
 
-Objective:
+Status: in progress.
 
-Create one canonical product direction and remove stale docs.
+Outcomes:
 
-Deliverables:
+- Update PRD, RFP, roadmap, backlog, and phase plan.
+- Define Instagram comment-to-DM automation.
+- Align README with actual product direction.
+- Identify route ownership and product debt.
 
-- Master RFP/roadmap/backlog doc.
-- Updated README summary.
-- Source-of-truth route map.
-- Removed duplicate/old docs.
+### Phase 1: Navigation and App Shell Finalization
 
-Acceptance:
+Goal: one clear product shell.
 
-- `docs/` contains one canonical master document.
-- README points to the master document.
-- Roadmap no longer conflicts across files.
+Work:
 
-### Phase 1: Navigation and UX Simplification
-
-Objective:
-
-Remove duplicate menus, duplicate actions, and unclear route groups.
-
-Deliverables:
-
-- Final sidebar.
-- Mobile navigation.
-- Command palette cleanup.
-- Page-level tabs only when they switch views inside the same page.
+- Move Queue and Logs from primary navigation into Planner/Reports views or power-user overflow.
+- Keep settings reachable without scrolling.
+- Keep mobile bottom nav limited to Dashboard, Planner, Create, Campaigns, Content.
+- Add command palette shortcuts for secondary routes.
+- Remove repeated route tabs that duplicate sidebar navigation.
 
 Acceptance:
 
-- No page has duplicate "new post" buttons unless one is contextual and one global.
-- Settings is reachable without scrolling through empty sidebar space.
-- Content/library/operations naming is not duplicated.
+- Users can explain where to create, plan, campaign, report, and connect channels.
+- No duplicated global navigation blocks inside pages.
 
-### Phase 2: Design System Hardening
+### Phase 2: Design System Rollout
 
-Objective:
+Goal: every page feels like one product.
 
-Make all pages obey the same visual primitives.
+Work:
 
-Deliverables:
-
-- Button standard.
-- StatusToken standard.
-- NMetricTile standard.
-- WorkspacePanel glass/solid variants.
-- Data row/list/table standard.
-- Modal/drawer standard.
-- Jalali mini date picker standard.
+- Standardize Button, Tag, StatusToken, Input, Select, Textarea, Panel, MetricTile, DataView, Tabs, Drawer, Modal.
+- Radius standard: 8px for controls/cards unless a specialized component needs otherwise.
+- Glass theme tokens: surface, muted, border, blur, shadow, hover.
+- Motion rules: hover lift, focus ring, selected state, skeletons, no noisy background animation.
+- Audit hardcoded colors and arbitrary Tailwind usage.
 
 Acceptance:
 
-- No page-specific KPI card implementation.
-- Buttons and labels have consistent height/radius.
-- Token audit trends down.
+- No page-specific button systems.
+- Labels/tags/buttons have consistent size families.
+- Mobile and desktop spacing match the design system.
 
-### Phase 3: Dashboard Rebuild
+### Phase 3: Composer Pro Completion
 
-Objective:
+Goal: make creation the best workflow in the product.
 
-Make the dashboard a compact command center, not a long feed of cards.
+Work:
 
-Deliverables:
-
-- One viewport desktop summary.
-- Mobile-first compact stack.
-- Top KPI strip.
-- Next publish card linked to planner.
-- Active campaign card linked to campaigns.
-- Queue health.
-- Alerts requiring action.
-- Compact trend/donut/gauge.
+- Complete current composer rebuild.
+- Add platform preview switch: Rubika, Instagram feed, Instagram reel/story placeholder later.
+- Add mobile guided composer stepper.
+- Add schedule and campaign drawers.
+- Add channel-specific validation.
+- Add automation hook: "attach Instagram comment automation after publish".
+- Add smarter draft recovery and conflict handling.
 
 Acceptance:
 
-- No duplicate campaign/calendar sections below the fold.
-- No permanent onboarding progress after complete.
-- Works well on phone without excessive scroll.
+- Composer has one intelligent primary action.
+- Mobile composer avoids long uncontrolled scroll.
+- User can see exactly what prevents scheduling.
 
-### Phase 4: Composer Pro
+### Phase 4: Instagram Professional Connect
 
-Objective:
+Goal: real Meta foundation.
 
-Make post creation feel like a professional content studio.
+Work:
 
-Deliverables:
-
-- Three-pane desktop: content, media, schedule/preview.
-- Mobile staged flow.
-- Channel-specific validation.
-- Campaign assignment.
-- Image editor entry.
-- Persian font roles.
-- Autosave and readiness.
+- Meta OAuth app setup flow.
+- Store long-lived token metadata securely.
+- Professional account/page linkage.
+- Permission and capability tester.
+- Webhook callback verification endpoint.
+- Webhook subscription status UI.
+- Instagram publishing capability matrix.
 
 Acceptance:
 
-- No messy campaign/date boxes.
-- Mini Jalali date picker opens in place.
-- Current step indicator is clear and consistent.
-- Image editor is reachable from composer and media.
+- Personal account mode remains reminder/manual.
+- Professional account mode shows exact missing permission or webhook state.
 
-### Phase 5: Planner Pro
+### Phase 5: Instagram Comment-to-DM Automation MVP
 
-Objective:
+Goal: turn comments into compliant lead conversations.
 
-Turn calendar into a real publishing planner.
+Work:
 
-Deliverables:
+- Automation rules tied to post/campaign/account.
+- Keyword triggers: exact, contains, number/code, Persian normalization.
+- Action: public comment reply optional.
+- Action: private reply/DM with chosen message.
+- Webhook ingestion for Instagram comments.
+- Worker queue for automation delivery.
+- Event log and Inbox review.
+- Rate limit, idempotency, one-private-reply-per-comment enforcement.
+
+Acceptance:
+
+- User can create a rule: "If someone comments 5, send this DM."
+- User can test a rule before enabling.
+- User can see every matched comment and delivery state.
+
+### Phase 6: Inbox Pro
+
+Goal: make messages/comments operational.
+
+Work:
+
+- Combine operational notifications, comments, DMs, automation events.
+- Filters: channel, type, campaign, assigned, unread, failed automation.
+- Saved replies.
+- Internal notes.
+- Assignments.
+- Manual takeover from automation.
+
+Acceptance:
+
+- A team can process social engagement without leaving Nahrino.
+
+### Phase 7: Planner Pro
+
+Goal: no nested-scroll calendar chaos.
+
+Work:
 
 - Month/week/list modes.
-- Compact calendar grid.
-- Day detail drawer.
-- Post preview modal centered in viewport.
-- Drag/reschedule later.
-- Channel/campaign filters.
-- Jalali mini picker for quick schedule.
+- Mobile agenda mode.
+- Post preview drawer/modal centered in viewport.
+- Drag/reschedule or quick reschedule.
+- Calendar density tuning.
+- Gap and overload detection.
 
 Acceptance:
 
-- No two independent scroll panes fighting each other.
-- Today and selected day are visually distinct.
-- Mobile shows calendar and preview without long confusing scroll.
+- Phone users can find a day, see posts, preview one, and create a new one without long scroll.
 
-### Phase 6: Campaign Command Center
+### Phase 8: Campaign Command Center
 
-Objective:
+Goal: campaign page becomes a professional control room.
 
-Make campaigns operational and modern, without duplicate KPIs and two-side clutter.
+Work:
 
-Deliverables:
-
-- Campaign portfolio deck.
-- Selected campaign command deck.
-- Overview/calendar/posts/media/report tabs.
-- Edit/create modal only on demand.
-- Post assignment modal.
-- Campaign health model.
-- Export report.
+- Campaign portfolio cards using shared KPI system.
+- Selected campaign summary.
+- Workbench tabs: overview, calendar, posts, media, automation, report.
+- Create/edit campaign drawer only.
+- Automation rules per campaign.
+- Exportable campaign summary.
 
 Acceptance:
 
-- Campaign KPI cards use `NMetricTile`.
-- Detail panel does not repeat top KPIs.
-- Active campaign color is calm.
-- Campaign page has no horizontal overflow and less nested scrolling.
+- Campaign page has no permanent two-column scroll trap.
+- KPI cards match dashboard/planner design.
 
-### Phase 7: Media Studio and Image Editor Pro
+### Phase 9: Reports Pro
 
-Objective:
+Goal: make analytics actionable.
 
-Make media editing a real creator tool, not a toy editor.
+Work:
 
-Deliverables:
-
-- Asset library with folders/tags.
-- Image editor with layers.
-- Persian font kits.
-- Stickers/emojis.
-- Brand colors.
-- Templates/compositions.
-- Export sizes.
-- Attach edited assets to posts.
+- Replace chart scroll with responsive charts.
+- Monthly labels readable.
+- Post/channel/campaign/automation reports.
+- Export PDF/CSV later.
+- Insights: best time, top content, failed publish reasons, automation conversion.
 
 Acceptance:
 
-- Color picker live preview is smooth and does not create update loops.
-- Effects can be selected and unselected.
-- Ready compositions are useful, not messy.
-- Mobile layout does not create oversized page height.
+- Reports explain what to do next, not just show numbers.
 
-### Phase 8: Inbox and Notifications
+### Phase 10: Productionization
 
-Objective:
+Goal: reliable, secure, maintainable product.
 
-Make the app feel live and operational.
+Work:
 
-Deliverables:
-
-- Unified notifications.
-- Live in-app push.
-- Inbox threads.
-- Comments/DMs where channel APIs allow.
-- Assignments/internal notes later.
-- Saved replies later.
-
-Acceptance:
-
-- Notifications open/close correctly.
-- Inbox is not just a static list.
-- Errors from publish attempts create actionable notifications.
-
-### Phase 9: Reports and Analytics Pro
-
-Objective:
-
-Make analytics understandable and exportable.
-
-Deliverables:
-
-- Channel performance.
-- Campaign performance.
-- Operational health.
-- Queue reliability.
-- Content format performance.
-- Export CSV/HTML/PDF later.
-- Report scheduling later.
-
-Acceptance:
-
-- Charts do not require horizontal and vertical scroll together.
-- Axis labels are readable.
-- Chart selection can be cleared by clicking outside.
-- Month names are Persian/Jalali where appropriate.
-
-### Phase 10: Productionization and Enterprise Readiness
-
-Objective:
-
-Prepare for real users and paid usage.
-
-Deliverables:
-
-- Roles and permissions.
+- Role-based permissions.
 - Audit logs.
-- Workspace switching.
 - Error monitoring.
-- Backup/export.
-- Rate limit handling.
-- Meta app review readiness.
-- Security hardening.
-- Billing later.
+- Backup and restore.
+- Webhook signature verification.
+- Rate limit monitoring.
+- App review readiness for Meta.
+- CI checks and container health.
 
 Acceptance:
 
-- Channel tokens are stored securely.
-- Publish worker is observable.
-- Failed jobs are recoverable.
-- API errors are user-readable.
+- Product can be demoed and operated as a real SaaS-style app.
 
-## 9. Product Backlog
+## 11. Updated Backlog
 
-### P0: Must Have
+### P0: Must Do Next
 
-1. Clean navigation duplication.
-2. Shared KPI cards across all pages.
-3. Shared buttons/tags/labels.
-4. Campaign deck without duplicate lower KPIs.
-5. Planner mobile redesign.
-6. Composer schedule/campaign fields cleanup.
-7. Media editor stability.
-8. Instagram channel capability matrix.
-9. Rubika publish reliability.
-10. Publish attempt notifications.
-11. Jalali mini date picker standard.
-12. Dashboard one-viewport command center.
-13. Content library filter cleanup.
-14. Reports chart scroll fix.
-15. README and docs source of truth.
+1. Finalize master docs and Instagram automation PRD.
+2. Remove README drift.
+3. Move Queue/Logs out of primary nav or mark them as secondary operations.
+4. Composer Pro phase 2: preview switch, mobile stepper, schedule/campaign drawers.
+5. Instagram professional OAuth/webhook architecture.
+6. Instagram comment-to-DM automation data model.
+7. Webhook event ingestion and idempotency.
+8. Inbox Pro structure for comments/DMs/automation events.
+9. Reports chart scroll fix.
+10. Mobile QA for Dashboard, Compose, Calendar, Campaigns, Content, Media, Inbox, Reports.
 
-### P1: Should Have
+### P1: Important
 
-1. Campaign report export polish.
-2. Post preview drawer from calendar.
-3. Bulk schedule.
-4. Saved content views.
-5. Brand kit management.
-6. Media templates.
-7. Caption snippets.
-8. Channel-specific preview.
-9. Image export variants.
-10. Team assignments.
-11. Saved replies.
-12. Inbox routing.
-13. Analytics comparison periods.
-14. Mobile bottom navigation.
-15. Onboarding completion migration.
+1. Saved replies.
+2. Automation rule testing sandbox.
+3. Campaign automation tab.
+4. Channel capability matrix UI refresh.
+5. Brand kit consolidation.
+6. Media editor template QA.
+7. Content library saved views.
+8. Planner agenda mobile mode.
+9. Exportable campaign report.
+10. Permission-based team roles.
 
-### P2: Could Have
+### P2: Later
 
 1. AI caption assistant.
-2. AI rewrite by channel.
-3. AI image background suggestions.
-4. Competitor benchmarking.
-5. Employee/advocacy sharing.
-6. Approval workflow.
-7. Report scheduling.
-8. Public share links.
-9. Webhooks.
-10. Agency multi-workspace billing.
+2. AI reply suggestions.
+3. Best-time recommendations.
+4. Link-in-bio page for Instagram.
+5. Competitor monitoring.
+6. Multi-workspace client management.
+7. White-label reports.
+8. CRM/contact list from Instagram automation.
+9. Advanced segmentation and lead scoring.
+10. Paid plan and billing.
 
-### P3: Later
+## 12. Module-Level Requirements
 
-1. TikTok.
-2. LinkedIn.
-3. YouTube Shorts.
-4. Facebook Pages.
-5. Social listening.
-6. Sentiment analysis.
-7. Influencer CRM.
-8. Paid campaign ROI.
+### Dashboard
 
-## 10. Detailed Epic Backlog
+- Compact one-screen command center on laptop.
+- Top KPI cards: scheduled, failed/needs action, active campaign, channel readiness.
+- One useful visualization, not many repeated charts.
+- Alert rail for problems.
+- Click KPI to route to the owning module.
 
-### Epic A: Navigation and IA
+### Composer
 
-Stories:
+- Primary canvas plus publish inspector.
+- Platform preview tabs.
+- Mobile step flow.
+- Schedule drawer.
+- Campaign drawer.
+- Automation attachment after Instagram publish.
 
-- As a user, I can understand the product route list without duplicate names.
-- As a mobile user, I can reach the 5 main workflows quickly.
-- As a user, I can open settings without scrolling through empty nav space.
-- As a power user, I can use command palette to jump to routes and actions.
+### Planner
 
-Acceptance:
+- Calendar must not have horizontal scroll.
+- Post click opens modal/drawer in current viewport.
+- Today and selected day use different visual states.
+- Month controls clearly mean month navigation.
 
-- Sidebar has one route per workflow.
-- Page tabs do not duplicate global nav.
-- Mobile nav tested at 390px width.
+### Campaigns
 
-### Epic B: Component System
+- Portfolio first, edit on demand.
+- Campaign detail tabs.
+- Automation rules per campaign.
+- KPI card system shared with dashboard.
 
-Stories:
+### Content
 
-- As a designer/developer, I can use one button system everywhere.
-- As a developer, I can use one status token system everywhere.
-- As a user, KPI cards look and behave the same across dashboard, calendar, campaigns, and reports.
+- One filter system.
+- Saved views.
+- Bulk actions.
+- Open in composer.
+- Avoid duplicate status chips and duplicate filter rows.
 
-Acceptance:
+### Media
 
-- No page-specific KPI CSS unless extending layout only.
-- No old sharp buttons.
-- Tokens documented and enforced.
+- Image editor must feel like a real workspace.
+- Color selection must be smooth and undoable.
+- Persian font kits must visually differ.
+- Templates must be reliable, not random decorative presets.
 
-### Epic C: Dashboard
+### Inbox
 
-Stories:
+- Operational notifications plus social engagement.
+- Automation events and failures visible.
+- Saved replies.
+- Manual takeover.
 
-- As an operator, I see the next publish and queue risk immediately.
-- As a manager, I see campaign health without opening campaigns.
-- As a mobile user, I see the most important status without long scroll.
+### Reports
 
-Acceptance:
+- No chart double scroll.
+- Insight cards with recommended action.
+- Campaign, channel, publishing, automation reports.
 
-- Desktop important summary fits in first viewport.
-- Mobile first screen shows top status and next action.
-- No duplicate calendar/campaign blocks.
+### Channels
 
-### Epic D: Composer
+- Capability matrix.
+- Real connection state.
+- OAuth/webhook state.
+- Test connection.
+- Clear personal-vs-professional Instagram explanation.
 
-Stories:
+## 13. Instagram Automation Product Direction
 
-- As a creator, I can write, attach media, choose campaign, schedule, and preview without messy fields.
-- As an Instagram personal user, I see reminder/manual mode.
-- As a professional Instagram user, I see OAuth readiness.
+Instagram automation should be introduced as `تعامل خودکار اینستاگرام`, not as a generic bot.
 
-Acceptance:
+Core MVP:
 
-- Date picker is mini and anchored.
-- Channel warnings are clear.
-- Image editor opens without losing draft.
+- User selects an Instagram professional account.
+- User selects a post/campaign or all future campaign posts.
+- User defines a trigger keyword, for example `5`.
+- User writes a DM/private reply message.
+- Optional public reply text can be enabled.
+- System listens for comments via Meta webhook.
+- If a comment matches, the system sends one compliant private reply/DM.
+- Event appears in Inbox and Reports.
 
-### Epic E: Planner
+Safety:
 
-Stories:
+- Only official Meta API.
+- No password login.
+- No cold outbound DM.
+- One private reply per comment.
+- Rate limits and retry rules.
+- User can pause/disable rules.
+- All automation actions are logged.
 
-- As an operator, I can see a month at a glance.
-- As an operator, I can click a post and see details in place.
-- As a mobile user, I can switch day/post preview without full-page chaos.
+See [Instagram Comment-to-DM Automation PRD](INSTAGRAM_COMMENT_TO_DM_AUTOMATION_PRD.md).
 
-Acceptance:
+## 14. Technical Architecture Direction
 
+Frontend:
+
+- Next.js app routes.
+- Shared component system.
+- Feature-owned pages.
+- Drawer/modal primitives.
+- Responsive/mobile-first QA.
+
+Backend:
+
+- FastAPI routers by domain.
+- SQLAlchemy models and migrations.
+- Celery workers for publishing and automation.
+- Webhook ingestion endpoint.
+- Idempotency keys for external events.
+- Audit tables for automation and publishing.
+
+Data:
+
+- `instagram_accounts` should evolve with OAuth/webhook metadata.
+- Add automation rules/events/touches.
+- Add social conversation/contact entities later.
+
+Ops:
+
+- Docker Compose local runtime.
+- Health checks.
+- Compile, lint, typecheck, tests, build checks.
+- Webhook signature validation before production.
+
+## 15. QA Checklist
+
+- Desktop 1440px, laptop 1280px, tablet 820px, mobile 390px.
 - No horizontal overflow.
-- Today/selected day states are distinct.
-- Post preview centers or drawers correctly.
+- No nested scroll unless it is an intentional table/list region.
+- Keyboard focus visible.
+- Persian text does not overflow buttons/cards.
+- Empty/loading/error states exist.
+- API errors are shown in Persian with recovery hints.
+- Compose save/schedule works.
+- Calendar post preview opens in current viewport.
+- Campaign edit opens on demand.
+- Instagram automation rule can be tested without sending a real DM.
 
-### Epic F: Campaigns
+## 16. Immediate Next Phase Recommendation
 
-Stories:
+Next implementation phase should be:
 
-- As a manager, I can see all campaigns as a compact portfolio.
-- As a manager, I can inspect one campaign without entering edit mode.
-- As a manager, I can edit only when I ask.
-- As an operator, I can assign content in a modal.
+1. **Composer Pro Phase 2**: platform preview switch, mobile stepper, schedule/campaign drawers.
+2. **Instagram Automation Foundation**: data model and PRD-backed UI skeleton.
+3. **Navigation Finalization**: simplify primary nav and move operational internals.
 
-Acceptance:
-
-- Edit is not always visible.
-- Selected campaign has command deck.
-- KPI duplication removed.
-
-### Epic G: Media Studio
-
-Stories:
-
-- As a creator, I can edit image text with Persian fonts.
-- As a creator, I can use brand colors and stickers.
-- As an operator, I can attach edited images to posts.
-
-Acceptance:
-
-- Layers are selectable/unselectable.
-- Color changes are live and stable.
-- Font dropdown visibly changes typography.
-
-### Epic H: Channels and Publishing
-
-Stories:
-
-- As a user, I can connect Rubika.
-- As a user, I can configure Instagram professional OAuth.
-- As a personal Instagram user, I can choose reminder mode.
-- As an operator, I can see why a channel is not ready.
-
-Acceptance:
-
-- Capability matrix is visible.
-- Worker records per-channel attempts.
-- Personal Instagram never promises auto-publish.
-
-### Epic I: Analytics and Reports
-
-Stories:
-
-- As a manager, I can compare channels.
-- As a manager, I can export campaign reports.
-- As an operator, I can clear chart selection.
-
-Acceptance:
-
-- Charts are readable.
-- No nested chart scroll.
-- Persian/Jalali labels where appropriate.
-
-### Epic J: Production
-
-Stories:
-
-- As an owner, I can trust token storage.
-- As an operator, failed publishes are recoverable.
-- As a team, actions are auditable.
-
-Acceptance:
-
-- Sensitive values are masked.
-- Failed worker jobs create notifications.
-- Audit trail exists for publish/edit actions.
-
-## 11. Definition Of 10/10 Professional
-
-Nahrino reaches 10/10 when:
-
-- A new user can understand the product in 60 seconds.
-- A daily operator can fix the next urgent issue in under 3 clicks.
-- The dashboard is useful without scrolling.
-- The planner feels purpose-built, not a table wrapped in a calendar.
-- The campaign page feels like an operations center, not a form dump.
-- The composer feels like a studio.
-- The media editor can produce usable Persian social graphics.
-- The reports explain what happened and what to do next.
-- Every page works on mobile.
-- The app is honest about channel limitations.
-- The design has a recognizable brand language.
-- The code has one component system, not page-specific reinventions.
-
-## 12. Immediate Next Implementation Order
-
-1. Finish committing the current campaign command deck cleanup.
-2. Update README to point to this master document.
-3. Phase 1: navigation simplification and duplicate menu removal.
-4. Phase 2: component system hardening for buttons, tokens, panels, and data rows.
-5. Phase 3: planner mobile and post preview redesign.
-6. Phase 4: composer field cleanup and schedule/campaign mini picker.
-7. Phase 5: content library filter cleanup.
-8. Phase 6: reports chart scroll and chart interaction fixes.
-9. Phase 7: media editor template/font/color stability.
-10. Phase 8: Instagram professional OAuth production path.
-
-## 13. Risks
-
-- Over-designing before workflow cleanup.
-- Adding animations before layout hierarchy is solved.
-- Treating Instagram personal accounts as auto-publish capable.
-- Creating more docs than the team reads.
-- Continuing page-specific components instead of shared primitives.
-- Building feature depth before mobile is fixed.
-
-## 14. Success Metrics
-
-Product:
-
-- First post scheduled under 5 minutes.
-- Daily dashboard action resolved under 3 clicks.
-- Calendar post preview opens without scroll hunting.
-- Campaign edit hidden until requested.
-- Media editor export completes without runtime error.
-
-Design:
-
-- 0 duplicate primary actions per page.
-- 0 horizontal overflow on mobile.
-- Shared KPI component usage across all KPI strips.
-- Consistent button and status token sizes.
-
-Engineering:
-
-- Frontend check passes every phase.
-- Backend compile/tests pass for backend phases.
-- Publish attempts are auditable per channel.
-- Worker failures are recoverable.
-
-## 15. Documentation Policy
-
-This file is the source of truth.
-
-Do not create new roadmap files unless this file becomes too large to maintain. If split later, split into:
-
-- `01_RFP.md`
-- `02_DESIGN_SYSTEM.md`
-- `03_ROADMAP.md`
-- `04_BACKLOG.md`
-- `05_TECHNICAL_ARCHITECTURE.md`
-
-Until then, keep the docs folder clean and update this file directly.
+This sequence is best because the Instagram automation feature begins at post creation, depends on Instagram channel capability, and ends in Inbox/Reports. Composer must be clean before automation is added to it.

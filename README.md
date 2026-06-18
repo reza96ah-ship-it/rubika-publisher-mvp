@@ -9,6 +9,7 @@ The project started as a Rubika publisher MVP, but the product direction is now 
 - Admin authentication and workspace/store profile.
 - Rubika publishing setup, health checks, worker delivery, retries, and publish attempts.
 - Instagram channel foundation with professional-account API path and personal-account reminder/manual mode.
+- Instagram automation roadmap for compliant comment-to-DM/private-reply workflows on professional accounts.
 - Multi-channel composer with campaign, schedule, readiness, media, and preview flows.
 - Jalali planner/calendar.
 - Campaign command center with portfolio, overview, calendar, posts, media, and report views.
@@ -16,9 +17,13 @@ The project started as a Rubika publisher MVP, but the product direction is now 
 
 ## Canonical Product Plan
 
-The roadmap, RFP, design system direction, backlog, architecture notes, and phase plan now live in one source of truth:
+The PRD, RFP, roadmap, design direction, backlog, architecture notes, and phase plan live in one source of truth:
 
 [docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md)
+
+The Instagram comment-to-DM automation feature has a dedicated product spec:
+
+[docs/INSTAGRAM_COMMENT_TO_DM_AUTOMATION_PRD.md](docs/INSTAGRAM_COMMENT_TO_DM_AUTOMATION_PRD.md)
 
 ## Stack
 
@@ -68,19 +73,19 @@ docker compose exec frontend npm run check
 
 The navigation follows the single-source-of-truth design documented in [docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md).
 
-### Primary Navigation (Desktop + Mobile)
+### Target Primary Navigation
 1. **داشبورد** (`/`) - Dashboard overview
 2. **ساخت** (`/compose`) - Content creation studio
 3. **برنامه‌ریزی** (`/calendar`) - Jalali calendar planner
 4. **کمپین‌ها** (`/campaigns`) - Campaign management
 5. **محتوا** (`/content`) - Content library
-6. **صف انتظار** (`/queue`) - Publishing queue
-7. **رسانه** (`/media`) - Media library & editor
-8. **پیام‌ها** (`/inbox`) - Notifications & operations
-9. **گزارش‌ها** (`/analytics`) - Performance reports
-10. **گزارش انتشار** (`/logs`) - Publishing audit trail
-11. **کانال‌ها** (`/channels`) - Channel management hub
-12. **تنظیمات** (`/store`) - Workspace settings
+6. **رسانه** (`/media`) - Media library & editor
+7. **پیام‌ها** (`/inbox`) - Notifications, comments, DMs, and automation events
+8. **گزارش‌ها** (`/analytics`) - Performance and operations reports
+9. **کانال‌ها** (`/channels`) - Channel management hub
+10. **تنظیمات** (`/store`) - Workspace settings
+
+Operational routes such as `/queue` and `/logs` still exist, but the target product model treats them as secondary views inside Planner/Reports rather than permanent primary navigation items.
 
 ### Navigation Consolidation Status
 ✅ Quick Create FAB removed (eliminated 4th redundant entry point)
@@ -91,10 +96,8 @@ The navigation follows the single-source-of-truth design documented in [docs/NAH
 
 ## Current Phase
 
-Phase 1: Navigation Consolidation (✅ IN PROGRESS)
-- Removed Quick Create FAB duplicate
-- Exposed Queue and Logs as direct navigation items
-- Added breadcrumbs to channel sub-pages
-- Next: Media composer hints, campaign unification, final testing
+Phase 0/1 refresh: Product documentation, navigation finalization, and Composer Pro.
 
-The current branch is focused on professionalizing the multi-channel product shell and campaign workflow before moving into broader navigation simplification, design-system hardening, planner mobile polish, and the Composer Pro rebuild.
+- Latest pushed work: Composer Pro first-pass layout rebuild.
+- Current product planning focus: Instagram professional automation, especially compliant comment-to-DM workflows.
+- Next implementation sequence: Composer Pro phase 2, Instagram automation foundation, navigation finalization, Inbox Pro.
