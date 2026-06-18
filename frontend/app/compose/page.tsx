@@ -763,12 +763,14 @@ function ComposePageContent() {
               onSave={saveEditedComposerImage}
             />
           ) : null}
-          <section className="app-studio-panel rounded-lg px-3 py-2.5 sm:px-4 sm:py-3">
+          <section className="nahrino-card relative overflow-hidden rounded-lg px-3 py-2.5 sm:px-4 sm:py-3">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(20,184,166,0.12),transparent_30%),radial-gradient(circle_at_78%_10%,rgba(59,130,246,0.10),transparent_28%)]" aria-hidden="true" />
+            <div className="relative">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
                 <p className="text-[10px] font-black text-app-primary">ساخت محتوا</p>
                 <h1 className="mt-1 text-xl font-black text-app-text">{isEditing ? "ویرایش پست" : "پست جدید"}</h1>
-                <p className="mt-1 text-xs leading-5 text-app-muted">محتوا را کامل کنید، کانال انتشار را انتخاب کنید و زمان انتشار را از یک مسیر متمرکز تنظیم کنید.</p>
+                <p className="mt-1 max-w-2xl text-xs leading-5 text-app-muted">یک مسیر حرفه‌ای برای ساخت، پیش‌نمایش، زمان‌بندی و انتشار چندکاناله؛ هر کنترل فقط در مرحله مرتبط دیده می‌شود.</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusToken tone={publishTone} className="gap-1">
@@ -791,10 +793,11 @@ function ComposePageContent() {
                 <Button href="/calendar" variant="secondary" size="sm">بازگشت به پلنر</Button>
               </div>
             </div>
+            </div>
           </section>
 
-          <form onSubmit={saveDraft} className="grid gap-3 xl:grid-cols-[280px_minmax(0,1fr)_360px]">
-            <aside className="min-w-0 space-y-3">
+          <form onSubmit={saveDraft} className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_380px]">
+            <section className="grid min-w-0 gap-3 xl:col-span-2 xl:grid-cols-[minmax(0,1fr)_340px]">
               <ComposerStepRail steps={composerSteps} />
 
               <section className="app-studio-panel rounded-lg p-3">
@@ -829,12 +832,12 @@ function ComposePageContent() {
                   })}
                 </div>
               </section>
-            </aside>
+            </section>
 
             <section id="composer-workspace" className="min-w-0 space-y-3">
               <WorkspacePanel
-                title="استودیوی ساخت"
-                description="یک بوم متمرکز برای متن، رسانه و تنظیمات انتشار؛ هر بخش فقط وقتی لازم است باز می‌شود."
+                title="بوم تولید"
+                description="متن، رسانه و مسیر انتشار در یک فضای متمرکز؛ بدون کارت‌های تکراری و فرم‌های مزاحم."
                 action={(
                   <div className="flex flex-wrap items-center gap-2">
                     <ChannelBadges platform={form.platform} compact />
@@ -874,7 +877,7 @@ function ComposePageContent() {
                 <div className="p-3 sm:p-4">
                   {workspaceMode === "content" ? (
                     <div id="composer-content" className="grid gap-3">
-                      <div className="rounded-md border border-app-border bg-white/72 p-3 shadow-hairline backdrop-blur">
+                      <div className="rounded-md border border-white/70 bg-white/75 p-3 shadow-hairline backdrop-blur-xl">
                         <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                           <div>
                             <p className="text-sm font-black text-app-text">متن اصلی پست</p>
@@ -900,7 +903,7 @@ function ComposePageContent() {
                             <Textarea
                               value={form.caption}
                               onChange={(event) => updateField("caption", event.target.value)}
-                              className="min-h-[320px] resize-y border-0 bg-app-canvas/95 px-4 py-3 text-[15px] leading-8 shadow-hairline"
+                              className="min-h-[260px] resize-y border-0 bg-app-canvas/95 px-4 py-3 text-[15px] leading-8 shadow-hairline lg:min-h-[340px]"
                               placeholder="متن پست شبکه‌های اجتماعی را وارد کنید..."
                             />
                           </Field>
@@ -1101,8 +1104,8 @@ function ComposePageContent() {
 
             <aside className="min-w-0 space-y-3 xl:sticky xl:top-24 xl:self-start">
               <WorkspacePanel
-                title="بازرس استودیو"
-                description="پیش‌نمایش، زمان‌بندی و کنترل نهایی در یک نقطه."
+                title="بازرس انتشار"
+                description="پیش‌نمایش، زمان‌بندی و کنترل نهایی در یک پنل ثابت."
                 action={<StatusToken tone={publishTone}>{publishStateLabel}</StatusToken>}
                 bodyClassName="p-0"
               >
@@ -1177,7 +1180,7 @@ function ComposePageContent() {
               </WorkspacePanel>
             </aside>
 
-            <div className="xl:col-span-3">
+            <div className="xl:col-span-2">
               <ComposerActionFooter
                 savingAction={savingAction}
                 canSaveDraft={canSaveDraft}
