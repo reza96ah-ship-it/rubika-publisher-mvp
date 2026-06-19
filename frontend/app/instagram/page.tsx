@@ -4,6 +4,7 @@ import { BadgeCheck, Instagram, KeyRound, RefreshCw, Route, Save, ShieldCheck } 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
+import { InstagramAutomationPanel } from "../../components/instagram-automation-panel";
 import { LoadingPanel } from "../../components/loading-skeleton";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
@@ -244,6 +245,8 @@ export default function InstagramPage() {
                   </div>
                 </form>
               </WorkspacePanel>
+
+              <InstagramAutomationPanel accountType={accountType} channelStatus={saved?.status ?? status} />
 
               <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
                 <WorkspacePanel title={accountType === "personal" ? "مسیر اکانت معمولی" : "مسیر اتصال واقعی"} description={accountType === "personal" ? "بدون پسورد و بدون اتوماسیون ناامن؛ فقط یادآوری و آماده‌سازی دستی." : "این فاز عمداً توکن جعلی ذخیره نمی‌کند."} action={<StatusToken tone={accountType === "personal" ? "success" : "warning"}>{accountType === "personal" ? "Reminder mode" : "OAuth pending"}</StatusToken>}>

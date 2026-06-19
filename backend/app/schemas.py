@@ -316,3 +316,84 @@ class AttachMediaRequest(BaseModel):
 class MediaMetadataRequest(BaseModel):
     folder: str = ""
     tags: str = ""
+
+
+class InstagramAutomationRuleRequest(BaseModel):
+    name: str = ""
+    status: str = "draft"
+    trigger_type: str = "exact"
+    trigger_keywords: list[str]
+    private_reply_message: str
+    public_reply_enabled: bool = False
+    public_reply_message: str = ""
+    campaign_id: int | None = None
+    post_id: int | None = None
+    match_limit_per_hour: int = 60
+    match_limit_total: int = 0
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+
+
+class InstagramAutomationRuleResponse(BaseModel):
+    id: int
+    store_id: int
+    instagram_account_id: int | None
+    campaign_id: int | None
+    post_id: int | None
+    name: str
+    status: str
+    trigger_type: str
+    trigger_keywords: list[str]
+    normalized_keywords: list[str]
+    private_reply_message: str
+    public_reply_enabled: bool
+    public_reply_message: str
+    match_limit_per_hour: int
+    match_limit_total: int
+    starts_at: datetime | None
+    ends_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class InstagramAutomationRuleListResponse(BaseModel):
+    rules: list[InstagramAutomationRuleResponse]
+    total: int
+
+
+class InstagramAutomationRuleTestRequest(BaseModel):
+    comment_text: str
+
+
+class InstagramAutomationRuleTestResponse(BaseModel):
+    matched: bool
+    normalized_comment_text: str
+    normalized_keywords: list[str]
+    reason: str
+
+
+class InstagramAutomationEventResponse(BaseModel):
+    id: int
+    store_id: int
+    rule_id: int | None
+    instagram_account_id: int | None
+    post_id: int | None
+    ig_media_id: str
+    ig_comment_id: str
+    commenter_username: str
+    comment_text: str
+    normalized_comment_text: str
+    event_status: str
+    skip_reason: str
+    failure_reason: str
+    private_reply_message_id: str
+    public_reply_comment_id: str
+    attempt_count: int
+    last_attempt_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class InstagramAutomationEventListResponse(BaseModel):
+    events: list[InstagramAutomationEventResponse]
+    total: int

@@ -170,3 +170,52 @@ class PublishAttempt(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+class InstagramAutomationRule(Base):
+    __tablename__ = "instagram_automation_rules"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False, index=True)
+    instagram_account_id: Mapped[int | None] = mapped_column(ForeignKey("instagram_accounts.id"), nullable=True, index=True)
+    campaign_id: Mapped[int | None] = mapped_column(ForeignKey("campaigns.id"), nullable=True, index=True)
+    post_id: Mapped[int | None] = mapped_column(ForeignKey("posts.id"), nullable=True, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    status: Mapped[str] = mapped_column(String(64), nullable=False, default="draft", index=True)
+    trigger_type: Mapped[str] = mapped_column(String(64), nullable=False, default="exact")
+    trigger_keywords: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    normalized_keywords: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    private_reply_message: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    public_reply_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    public_reply_message: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    match_limit_per_hour: Mapped[int] = mapped_column(Integer, nullable=False, default=60)
+    match_limit_total: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    starts_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+class InstagramAutomationEvent(Base):
+    __tablename__ = "instagram_automation_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id"), nullable=False, index=True)
+    rule_id: Mapped[int | None] = mapped_column(ForeignKey("instagram_automation_rules.id"), nullable=True, index=True)
+    instagram_account_id: Mapped[int | None] = mapped_column(ForeignKey("instagram_accounts.id"), nullable=True, index=True)
+    post_id: Mapped[int | None] = mapped_column(ForeignKey("posts.id"), nullable=True, index=True)
+    ig_media_id: Mapped[str] = mapped_column(String(255), nullable=False, default="", index=True)
+    ig_comment_id: Mapped[str] = mapped_column(String(255), nullable=False, default="", index=True)
+    commenter_username: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    comment_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    normalized_comment_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    event_status: Mapped[str] = mapped_column(String(64), nullable=False, default="received", index=True)
+    skip_reason: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    failure_reason: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    private_reply_message_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    public_reply_comment_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    webhook_payload: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
