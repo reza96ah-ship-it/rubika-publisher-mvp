@@ -21,6 +21,9 @@ type InstagramSettings = {
   publish_mode: string;
   professional_account_id: string;
   page_id: string;
+  has_access_token: boolean;
+  access_token_masked: string;
+  token_expires_at: string | null;
   status: string;
   permissions: string;
   last_error: string;
@@ -59,6 +62,7 @@ export default function InstagramPage() {
   const [accountType, setAccountType] = useState<"personal" | "creator" | "business">("creator");
   const [professionalAccountId, setProfessionalAccountId] = useState("");
   const [pageId, setPageId] = useState("");
+  const [accessToken, setAccessToken] = useState("");
   const [permissions, setPermissions] = useState(DEFAULT_INSTAGRAM_PERMISSIONS);
   const [saved, setSaved] = useState<InstagramSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,6 +82,7 @@ export default function InstagramPage() {
         setAccountType(data.account_type ?? "creator");
         setProfessionalAccountId(data.professional_account_id ?? "");
         setPageId(data.page_id ?? "");
+        setAccessToken("");
         setPermissions(data.permissions || DEFAULT_INSTAGRAM_PERMISSIONS);
       }
       setLoading(false);
@@ -95,8 +100,9 @@ export default function InstagramPage() {
       || accountType !== saved.account_type
       || professionalAccountId !== saved.professional_account_id
       || pageId !== saved.page_id
+      || Boolean(accessToken.trim())
       || permissions !== saved.permissions;
-  }, [accountType, pageId, permissions, professionalAccountId, saved, username]);
+  }, [accessToken, accountType, pageId, permissions, professionalAccountId, saved, username]);
   const status = dirty ? "draft" : saved?.status ?? "not_configured";
   const publishMode = accountType === "personal" ? "reminder" : "direct";
   const hasIdentity = Boolean(username.trim() || professionalAccountId.trim() || pageId.trim());
@@ -122,12 +128,14 @@ export default function InstagramPage() {
           publish_mode: publishMode,
           professional_account_id: professionalAccountId.trim(),
           page_id: pageId.trim(),
+          access_token: accessToken.trim(),
           permissions: permissions.trim()
         })
       });
       if (!response.ok) throw new Error("ذخیره تنظیمات اینستاگرام ناموفق بود");
       const data = (await response.json()) as InstagramSettings;
       setSaved(data);
+      setAccessToken("");
       setMessage(accountType === "personal" ? "اکانت معمولی برای یادآوری انتشار دستی آماده شد" : "پروفایل اینستاگرام برای فاز اتصال واقعی آماده شد");
       showToast({ title: "تنظیمات اینستاگرام ذخیره شد", description: accountType === "personal" ? "زمان‌بندی دستی برای اکانت معمولی فعال شد." : "زمان‌بندی مستقیم بعد از Meta OAuth فعال می‌شود.", tone: "success" });
       notifyWorkspaceUpdated();
@@ -227,6 +235,9 @@ export default function InstagramPage() {
                       <Field label="Facebook Page ID" hint="برای Graph API انتشار محتوا به Page linkage نیاز است.">
                         <Input value={pageId} onChange={(event) => setPageId(event.target.value)} placeholder="page_id" dir="ltr" />
                       </Field>
+                      <Field label="Meta Page Access Token" hint={saved?.has_access_token ? `توکن ذخیره شده: ${saved.access_token_masked}` : "توکن دستی فقط برای توسعه؛ بعداً با OAuth جایگزین می‌شود."}>
+                        <Input value={accessToken} onChange={(event) => setAccessToken(event.target.value)} placeholder={saved?.has_access_token ? "برای تغییر، توکن جدید را وارد کنید" : "EAAB..."} dir="ltr" type="password" autoComplete="off" />
+                      </Field>
                       <Field label="مجوزهای موردنیاز" hint="در فاز OAuth به scopeهای Meta تبدیل می‌شود.">
                         <Textarea value={permissions} onChange={(event) => setPermissions(event.target.value)} className="min-h-24" dir="ltr" />
                       </Field>
@@ -298,4 +309,3 @@ export default function InstagramPage() {
     </AuthGate>
   );
 }
-

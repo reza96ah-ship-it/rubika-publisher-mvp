@@ -15,8 +15,23 @@ type AutomationRule = {
   private_reply_message: string;
 };
 
+type AutomationEvent = {
+  id: number;
+  rule_id: number | null;
+  ig_comment_id: string;
+  commenter_username: string;
+  comment_text: string;
+  event_status: string;
+  skip_reason: string;
+  failure_reason: string;
+  attempt_count: number;
+  created_at: string;
+};
+
 type RuleListResponse = { rules: AutomationRule[]; total: number };
 type RuleTestResponse = { matched: boolean; normalized_comment_text: string; reason: string };
+type EventListResponse = { events: AutomationEvent[]; total: number };
+type SimulationResponse = { received: number; created: number; duplicates: number; matched: number; queued: number; skipped: number; events: AutomationEvent[] };
 
 type InstagramAutomationPanelProps = {
   accountType: "personal" | "creator" | "business";
@@ -31,19 +46,23 @@ const copy = {
   keyword: "\u06a9\u0644\u06cc\u062f\u0648\u0627\u0698\u0647",
   message: "\u067e\u06cc\u0627\u0645 \u062f\u0627\u06cc\u0631\u06a9\u062a",
   save: "\u0630\u062e\u06cc\u0631\u0647 \u0642\u0627\u0646\u0648\u0646",
+  simulate: "\u0634\u0628\u06cc\u0647\u200c\u0633\u0627\u0632\u06cc \u06a9\u0627\u0645\u0646\u062a",
   empty: "\u0647\u0646\u0648\u0632 \u0642\u0627\u0646\u0648\u0646\u06cc \u0633\u0627\u062e\u062a\u0647 \u0646\u0634\u062f\u0647 \u0627\u0633\u062a.",
+  eventsEmpty: "\u0647\u0646\u0648\u0632 \u0631\u0648\u06cc\u062f\u0627\u062f\u06cc \u062b\u0628\u062a \u0646\u0634\u062f\u0647 \u0627\u0633\u062a.",
   matched: "\u062a\u0637\u0628\u06cc\u0642 \u062f\u0627\u0631\u062f",
   notMatched: "\u062a\u0637\u0628\u06cc\u0642 \u0646\u062f\u0627\u0631\u062f"
 };
 
 export function InstagramAutomationPanel({ accountType, channelStatus }: InstagramAutomationPanelProps) {
   const [rules, setRules] = useState<AutomationRule[]>([]);
+  const [events, setEvents] = useState<AutomationEvent[]>([]);
   const [keyword, setKeyword] = useState("5");
   const [message, setMessage] = useState("");
   const [sampleComment, setSampleComment] = useState("5");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [simulationMessage, setSimulationMessage] = useState("");
   const [testResult, setTestResult] = useState<Record<number, RuleTestResponse>>({});
 
   const professionalMode = accountType !== "personal";
@@ -58,6 +77,11 @@ export function InstagramAutomationPanel({ accountType, channelStatus }: Instagr
       if (!response.ok) throw new Error("Automation rules failed to load");
       const data = (await response.json()) as RuleListResponse;
       setRules(data.rules);
+      const eventsResponse = await fetch(`${apiUrl}/instagram/automation/events`, { headers: authHeaders() });
+      if (eventsResponse.ok) {
+        const eventData = (await eventsResponse.json()) as EventListResponse;
+        setEvents(eventData.events);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Automation rules failed to load");
     } finally {
@@ -80,7 +104,7 @@ export function InstagramAutomationPanel({ accountType, channelStatus }: Instagr
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({
           name: `Instagram trigger: ${keywords[0]}`,
-          status: "draft",
+          status: canActivate ? "active" : "draft",
           trigger_type: keywords.length > 1 ? "any_of" : "exact",
           trigger_keywords: keywords,
           private_reply_message: message.trim()
@@ -108,6 +132,24 @@ export function InstagramAutomationPanel({ accountType, channelStatus }: Instagr
     setTestResult((current) => ({ ...current, [rule.id]: result }));
   }
 
+  async function simulateComment() {
+    setError("");
+    setSimulationMessage("");
+    const response = await fetch(`${apiUrl}/instagram/automation/simulate-comment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ comment_text: sampleComment })
+    });
+    if (!response.ok) {
+      setError("Comment simulation failed");
+      return;
+    }
+    const result = (await response.json()) as SimulationResponse;
+    setEvents((current) => [...result.events, ...current].slice(0, 20));
+    setSimulationMessage(`${result.created} created / ${result.matched} matched / ${result.duplicates} duplicate`);
+    await loadRules();
+  }
+
   return (
     <WorkspacePanel title={copy.title} description={copy.description} action={<StatusToken tone={canActivate ? "success" : "warning"}>{canActivate ? "Ready" : "Draft"}</StatusToken>}>
       <div className="grid gap-4">
@@ -131,14 +173,19 @@ export function InstagramAutomationPanel({ accountType, channelStatus }: Instagr
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-black text-app-text">{rules.length} rules</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Input value={sampleComment} onChange={(event) => setSampleComment(event.target.value)} className="max-w-32" />
+            <Button type="button" variant="secondary" size="sm" onClick={simulateComment}>
+              <Bot className="ml-1.5 h-4 w-4" aria-hidden="true" />
+              {copy.simulate}
+            </Button>
             <Button type="button" variant="secondary" size="sm" onClick={loadRules} disabled={loading}>
               <RefreshCw className={`ml-1.5 h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
               Reload
             </Button>
           </div>
         </div>
+        {simulationMessage ? <NoticeBanner tone="success" title="Simulation">{simulationMessage}</NoticeBanner> : null}
 
         {rules.length ? (
           <div className="grid gap-2">
@@ -174,6 +221,31 @@ export function InstagramAutomationPanel({ accountType, channelStatus }: Instagr
             {copy.empty}
           </div>
         )}
+
+        <div className="rounded-md border border-app-border bg-white/70 p-3">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <p className="text-sm font-black text-app-text">Recent automation events</p>
+            <StatusToken tone="neutral">{events.length}</StatusToken>
+          </div>
+          {events.length ? (
+            <div className="grid gap-2">
+              {events.slice(0, 5).map((event) => (
+                <div key={event.id} className="rounded-md border border-app-border bg-app-surfaceMuted/60 px-3 py-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-black text-app-text">{event.comment_text}</p>
+                      <p className="mt-1 text-[11px] text-app-muted">{event.commenter_username || "instagram_user"} · {event.ig_comment_id}</p>
+                    </div>
+                    <StatusToken tone={event.event_status === "sent" || event.event_status === "dry_run" || event.event_status === "queued" ? "success" : event.event_status === "failed" || event.event_status === "blocked" ? "alert" : "neutral"}>{event.event_status}</StatusToken>
+                  </div>
+                  {event.failure_reason || event.skip_reason ? <p className="mt-2 text-[11px] leading-5 text-app-muted">{event.failure_reason || event.skip_reason}</p> : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-app-muted">{copy.eventsEmpty}</p>
+          )}
+        </div>
       </div>
     </WorkspacePanel>
   );

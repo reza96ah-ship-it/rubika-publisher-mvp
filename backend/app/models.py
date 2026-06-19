@@ -65,6 +65,8 @@ class InstagramAccount(Base):
     publish_mode: Mapped[str] = mapped_column(String(64), nullable=False, default="direct")
     professional_account_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     page_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    access_token: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    token_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     status: Mapped[str] = mapped_column(String(64), nullable=False, default="oauth_required", index=True)
     permissions: Mapped[str] = mapped_column(Text, nullable=False, default="")
     last_error: Mapped[str] = mapped_column(Text, nullable=False, default="")

@@ -1,15 +1,17 @@
 import json
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
+from app.config import get_settings
 from app.database import get_db
 from app.dependencies import get_active_store
 from app.models import InstagramAccount, InstagramAutomationEvent, InstagramAutomationRule, Store, User
-from app.schemas import InstagramAccountResponse, InstagramAutomationEventListResponse, InstagramAutomationEventResponse, InstagramAutomationRuleListResponse, InstagramAutomationRuleRequest, InstagramAutomationRuleResponse, InstagramAutomationRuleTestRequest, InstagramAutomationRuleTestResponse, InstagramSettingsRequest, InstagramTestResponse
+from app.schemas import InstagramAccountResponse, InstagramAutomationCommentSimulationRequest, InstagramAutomationEventListResponse, InstagramAutomationEventResponse, InstagramAutomationIngestResponse, InstagramAutomationRuleListResponse, InstagramAutomationRuleRequest, InstagramAutomationRuleResponse, InstagramAutomationRuleTestRequest, InstagramAutomationRuleTestResponse, InstagramSettingsRequest, InstagramTestResponse
+from app.services.instagram_automation import build_simulated_comment_event, clean_keywords, ingest_instagram_comment_events, ingest_instagram_webhook_payload, json_list, normalized_keywords, rule_matches, verify_meta_signature
 from app.services.publishing_channels import get_active_instagram_account
 
 router = APIRouter(prefix="/instagram", tags=["instagram"])
@@ -18,46 +20,6 @@ ACCOUNT_TYPES = {"personal", "creator", "business"}
 PUBLISH_MODES = {"reminder", "direct"}
 TRIGGER_TYPES = {"exact", "contains", "code", "any_of"}
 RULE_STATUSES = {"draft", "active", "paused", "archived"}
-PERSIAN_DIGIT_MAP = str.maketrans("\u06f0\u06f1\u06f2\u06f3\u06f4\u06f5\u06f6\u06f7\u06f8\u06f9\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669", "01234567890123456789")
-
-
-def normalize_trigger_text(value: str) -> str:
-    return " ".join(value.translate(PERSIAN_DIGIT_MAP).strip().lower().split())
-
-
-def clean_keywords(values: list[str]) -> list[str]:
-    keywords: list[str] = []
-    for value in values:
-        keyword = value.strip()
-        if keyword and keyword not in keywords:
-            keywords.append(keyword)
-    return keywords
-
-
-def normalized_keywords(values: list[str]) -> list[str]:
-    return [normalize_trigger_text(value) for value in values if normalize_trigger_text(value)]
-
-
-def json_list(value: str) -> list[str]:
-    try:
-        parsed = json.loads(value or "[]")
-        return parsed if isinstance(parsed, list) else []
-    except json.JSONDecodeError:
-        return []
-
-
-def rule_matches(rule: InstagramAutomationRule, comment_text: str) -> tuple[bool, str, str]:
-    normalized_comment = normalize_trigger_text(comment_text)
-    keywords = json_list(rule.normalized_keywords)
-    if not normalized_comment:
-        return False, normalized_comment, "Comment is empty."
-    if not keywords:
-        return False, normalized_comment, "Rule has no keywords."
-    if rule.trigger_type in {"exact", "code"}:
-        return normalized_comment in keywords, normalized_comment, "Exact match evaluated."
-    if rule.trigger_type in {"contains", "any_of"}:
-        return any(keyword in normalized_comment for keyword in keywords), normalized_comment, "Contains match evaluated."
-    return False, normalized_comment, "Unsupported trigger type."
 
 
 def automation_rule_response(rule: InstagramAutomationRule) -> InstagramAutomationRuleResponse:
@@ -107,6 +69,28 @@ def automation_event_response(event: InstagramAutomationEvent) -> InstagramAutom
         updated_at=event.updated_at,
     )
 
+
+def automation_ingest_response(summary, events: list[InstagramAutomationEvent]) -> InstagramAutomationIngestResponse:
+    return InstagramAutomationIngestResponse(
+        received=summary.received,
+        created=summary.created,
+        duplicates=summary.duplicates,
+        matched=summary.matched,
+        queued=summary.queued,
+        skipped=summary.skipped,
+        event_ids=summary.event_ids,
+        events=[automation_event_response(event) for event in events],
+    )
+
+
+def enqueue_instagram_automation_events(event_ids: list[int]) -> None:
+    if not event_ids:
+        return
+    from app.worker import process_instagram_automation_event
+
+    for event_id in event_ids:
+        process_instagram_automation_event.delay(event_id)
+
 def normalize_account_type(value: str) -> str:
     account_type = value.strip().lower() or "creator"
     return account_type if account_type in ACCOUNT_TYPES else "creator"
@@ -120,6 +104,7 @@ def normalize_publish_mode(account_type: str, value: str) -> str:
 
 
 def instagram_response(account: InstagramAccount) -> InstagramAccountResponse:
+    masked_token = f"{account.access_token[:6]}..." if account.access_token else ""
     return InstagramAccountResponse(
         id=account.id,
         store_id=account.store_id,
@@ -128,12 +113,54 @@ def instagram_response(account: InstagramAccount) -> InstagramAccountResponse:
         publish_mode=account.publish_mode,
         professional_account_id=account.professional_account_id,
         page_id=account.page_id,
+        has_access_token=bool(account.access_token),
+        access_token_masked=masked_token,
+        token_expires_at=account.token_expires_at,
         status=account.status,
         permissions=account.permissions,
         last_error=account.last_error,
         last_test_at=account.last_test_at,
         is_active=account.is_active,
     )
+
+
+@router.get("/webhook")
+def verify_instagram_webhook(
+    mode: str = Query("", alias="hub.mode"),
+    verify_token: str = Query("", alias="hub.verify_token"),
+    challenge: str = Query("", alias="hub.challenge"),
+) -> Response:
+    settings = get_settings()
+    if mode == "subscribe" and settings.instagram_webhook_verify_token and verify_token == settings.instagram_webhook_verify_token:
+        return Response(content=challenge, media_type="text/plain")
+    raise HTTPException(status_code=403, detail="Instagram webhook verification failed")
+
+
+@router.post("/webhook", response_model=InstagramAutomationIngestResponse)
+async def receive_instagram_webhook(
+    request: Request,
+    x_hub_signature_256: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+) -> InstagramAutomationIngestResponse:
+    settings = get_settings()
+    raw_body = await request.body()
+    if not verify_meta_signature(raw_body, x_hub_signature_256, settings.instagram_webhook_app_secret):
+        raise HTTPException(status_code=403, detail="Invalid Meta webhook signature")
+    try:
+        payload = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Invalid webhook JSON") from exc
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Webhook payload must be an object")
+
+    summary = ingest_instagram_webhook_payload(db, payload)
+    enqueue_instagram_automation_events(summary.event_ids)
+    events = db.scalars(
+        select(InstagramAutomationEvent)
+        .where(InstagramAutomationEvent.id.in_(summary.event_ids))
+        .order_by(InstagramAutomationEvent.created_at.desc(), InstagramAutomationEvent.id.desc())
+    ).all() if summary.event_ids else []
+    return automation_ingest_response(summary, events)
 
 
 @router.get("/settings")
@@ -164,9 +191,13 @@ def save_settings(
     account.publish_mode = publish_mode
     account.professional_account_id = payload.professional_account_id.strip()
     account.page_id = payload.page_id.strip()
+    if payload.access_token.strip():
+        account.access_token = payload.access_token.strip()
+    account.token_expires_at = payload.token_expires_at
     account.permissions = payload.permissions.strip()
-    account.status = "reminder_ready" if publish_mode == "reminder" else "oauth_required"
-    account.last_error = "" if publish_mode == "reminder" else "Meta OAuth is not connected yet"
+    direct_ready = bool(account.professional_account_id and account.page_id and account.access_token)
+    account.status = "reminder_ready" if publish_mode == "reminder" else ("connected" if direct_ready else "oauth_required")
+    account.last_error = "" if publish_mode == "reminder" or direct_ready else "Meta OAuth, Page ID, Professional Account ID, and access token are required"
     account.updated_at = datetime.utcnow()
 
     db.commit()
@@ -304,3 +335,34 @@ def list_automation_events(
         .limit(100)
     ).all()
     return InstagramAutomationEventListResponse(events=[automation_event_response(event) for event in events], total=len(events))
+
+
+@router.post("/automation/simulate-comment", response_model=InstagramAutomationIngestResponse)
+def simulate_automation_comment(
+    payload: InstagramAutomationCommentSimulationRequest,
+    store: Store = Depends(get_active_store),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> InstagramAutomationIngestResponse:
+    account = get_active_instagram_account(db, store.id)
+    if account is None:
+        raise HTTPException(status_code=400, detail="Instagram account is not configured")
+    comment_text = payload.comment_text.strip()
+    if not comment_text:
+        raise HTTPException(status_code=400, detail="Comment text is required")
+    comment_id = payload.ig_comment_id.strip() or f"local-{int(datetime.utcnow().timestamp() * 1000)}"
+    event = build_simulated_comment_event(
+        account=account,
+        comment_text=comment_text,
+        comment_id=comment_id,
+        media_id=payload.ig_media_id.strip() or "local-media",
+        username=payload.commenter_username.strip() or "local_tester",
+    )
+    summary = ingest_instagram_comment_events(db, [event])
+    enqueue_instagram_automation_events(summary.event_ids)
+    events = db.scalars(
+        select(InstagramAutomationEvent)
+        .where(InstagramAutomationEvent.id.in_(summary.event_ids))
+        .order_by(InstagramAutomationEvent.created_at.desc(), InstagramAutomationEvent.id.desc())
+    ).all() if summary.event_ids else []
+    return automation_ingest_response(summary, events)

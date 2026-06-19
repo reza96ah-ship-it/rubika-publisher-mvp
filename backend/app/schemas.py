@@ -85,6 +85,8 @@ class InstagramSettingsRequest(BaseModel):
     publish_mode: str = "direct"
     professional_account_id: str = ""
     page_id: str = ""
+    access_token: str = ""
+    token_expires_at: datetime | None = None
     permissions: str = ""
 
 
@@ -96,6 +98,9 @@ class InstagramAccountResponse(BaseModel):
     publish_mode: str
     professional_account_id: str
     page_id: str
+    has_access_token: bool = False
+    access_token_masked: str = ""
+    token_expires_at: datetime | None = None
     status: str
     permissions: str
     last_error: str
@@ -397,3 +402,21 @@ class InstagramAutomationEventResponse(BaseModel):
 class InstagramAutomationEventListResponse(BaseModel):
     events: list[InstagramAutomationEventResponse]
     total: int
+
+
+class InstagramAutomationCommentSimulationRequest(BaseModel):
+    comment_text: str
+    ig_comment_id: str = ""
+    ig_media_id: str = "local-media"
+    commenter_username: str = "local_tester"
+
+
+class InstagramAutomationIngestResponse(BaseModel):
+    received: int
+    created: int
+    duplicates: int
+    matched: int
+    queued: int
+    skipped: int
+    event_ids: list[int]
+    events: list[InstagramAutomationEventResponse]

@@ -20,6 +20,12 @@ class Settings(BaseSettings):
 
     media_dir: str = "/app/storage/media"
     rubika_api_base_url: str = "https://botapi.rubika.ir/v3"
+    meta_graph_base_url: str = "https://graph.facebook.com"
+    instagram_graph_base_url: str = "https://graph.instagram.com"
+    meta_graph_api_version: str = "v25.0"
+    instagram_webhook_verify_token: str = ""
+    instagram_webhook_app_secret: str = ""
+    instagram_automation_dispatch_enabled: bool = False
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
