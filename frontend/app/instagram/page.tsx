@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, Instagram, KeyRound, RefreshCw, Route, Save, ShieldCheck } from "lucide-react";
+import { BadgeCheck, ExternalLink, Instagram, KeyRound, PlugZap, RefreshCw, Route, Save, ShieldCheck } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
@@ -31,7 +31,16 @@ type InstagramSettings = {
   is_active: boolean;
 };
 
-const DEFAULT_INSTAGRAM_PERMISSIONS = "instagram_basic, instagram_content_publish, pages_show_list, pages_read_engagement";
+type InstagramOAuthStart = {
+  configured: boolean;
+  authorization_url: string;
+  redirect_uri: string;
+  scopes: string[];
+  missing: string[];
+  expires_in_minutes: number;
+};
+
+const DEFAULT_INSTAGRAM_PERMISSIONS = "instagram_basic, instagram_content_publish, instagram_manage_comments, instagram_manage_messages, pages_show_list, pages_read_engagement";
 
 function statusLabel(status: string) {
   if (status === "connected") return "اتصال تایید شده";
@@ -68,8 +77,27 @@ export default function InstagramPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [oauth, setOauth] = useState<InstagramOAuthStart | null>(null);
+  const [oauthLoading, setOauthLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauthStatus = params.get("instagram_oauth");
+    const oauthMessage = params.get("message");
+    if (oauthStatus === "success") {
+      const description = oauthMessage || "اتصال Meta با موفقیت کامل شد.";
+      setMessage(description);
+      showToast({ title: "اینستاگرام متصل شد", description, tone: "success" });
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (oauthStatus === "error") {
+      const description = oauthMessage || "اتصال Meta کامل نشد.";
+      setError(description);
+      showToast({ title: "اتصال Meta ناموفق بود", description, tone: "alert" });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [showToast]);
 
   useEffect(() => {
     async function loadSettings() {
@@ -92,6 +120,7 @@ export default function InstagramPage() {
       setError(err instanceof Error ? err.message : "خطا در دریافت تنظیمات اینستاگرام");
       setLoading(false);
     });
+    loadOAuthStart();
   }, []);
 
   const dirty = useMemo(() => {
@@ -112,6 +141,41 @@ export default function InstagramPage() {
     { label: accountType === "personal" ? "قابل زمان‌بندی" : "OAuth واقعی", detail: accountType === "personal" ? "پست در زمان مقرر به وضعیت آماده انتشار دستی می‌رسد." : saved?.status === "connected" ? "توکن معتبر متصل است." : "در فاز بعدی باید جریان OAuth و refresh token اضافه شود.", done: accountType === "personal" || saved?.status === "connected", icon: KeyRound }
   ];
   const readyCount = readiness.filter((item) => item.done).length;
+
+  async function loadOAuthStart() {
+    setOauthLoading(true);
+    try {
+      const response = await fetch(`${apiUrl}/instagram/oauth/start`, { headers: authHeaders() });
+      if (!response.ok) throw new Error("Meta OAuth status failed to load");
+      const data = (await response.json()) as InstagramOAuthStart;
+      setOauth(data);
+    } catch {
+      setOauth(null);
+    } finally {
+      setOauthLoading(false);
+    }
+  }
+
+  async function connectWithMeta() {
+    setError("");
+    setMessage("");
+    setOauthLoading(true);
+    try {
+      const response = await fetch(`${apiUrl}/instagram/oauth/start`, { headers: authHeaders() });
+      if (!response.ok) throw new Error("شروع اتصال Meta ناموفق بود");
+      const data = (await response.json()) as InstagramOAuthStart;
+      setOauth(data);
+      if (!data.configured || !data.authorization_url) {
+        throw new Error(data.missing.length ? `تنظیمات Meta کامل نیست: ${data.missing.join(", ")}` : "Meta OAuth هنوز پیکربندی نشده است");
+      }
+      window.location.href = data.authorization_url;
+    } catch (err) {
+      const nextError = err instanceof Error ? err.message : "خطای شروع اتصال Meta";
+      setError(nextError);
+      showToast({ title: "شروع اتصال Meta ناموفق بود", description: nextError, tone: "alert" });
+      setOauthLoading(false);
+    }
+  }
 
   async function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -229,13 +293,37 @@ export default function InstagramPage() {
                   </Field>
                   {accountType !== "personal" ? (
                     <>
+                      <section className="rounded-md border border-app-border bg-white/75 p-3 shadow-hairline">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                                <PlugZap className="h-4 w-4" aria-hidden="true" />
+                              </span>
+                              <div>
+                                <p className="text-sm font-black text-app-text">اتصال امن Meta</p>
+                                <p className="mt-1 text-xs leading-5 text-app-muted">ورود رسمی Meta، دریافت Page token و شناسایی Instagram Professional Account.</p>
+                              </div>
+                            </div>
+                            {oauth?.configured ? (
+                              <p className="mt-3 text-[11px] leading-5 text-app-muted" dir="ltr">Redirect URI: {oauth.redirect_uri}</p>
+                            ) : (
+                              <p className="mt-3 text-[11px] leading-5 text-amber-700">برای فعال شدن، این envها لازم است: {oauth?.missing?.join(", ") || "META_APP_ID, META_APP_SECRET"}</p>
+                            )}
+                          </div>
+                          <Button type="button" variant={saved?.status === "connected" ? "secondary" : "primary"} size="sm" onClick={connectWithMeta} disabled={oauthLoading}>
+                            <ExternalLink className="ml-2 h-4 w-4" aria-hidden="true" />
+                            {oauthLoading ? "بررسی..." : saved?.status === "connected" ? "اتصال دوباره" : "اتصال با Meta"}
+                          </Button>
+                        </div>
+                      </section>
                       <Field label="Instagram Professional Account ID" hint="بعد از OAuth به صورت خودکار قابل دریافت است.">
                         <Input value={professionalAccountId} onChange={(event) => setProfessionalAccountId(event.target.value)} placeholder="1784..." dir="ltr" />
                       </Field>
                       <Field label="Facebook Page ID" hint="برای Graph API انتشار محتوا به Page linkage نیاز است.">
                         <Input value={pageId} onChange={(event) => setPageId(event.target.value)} placeholder="page_id" dir="ltr" />
                       </Field>
-                      <Field label="Meta Page Access Token" hint={saved?.has_access_token ? `توکن ذخیره شده: ${saved.access_token_masked}` : "توکن دستی فقط برای توسعه؛ بعداً با OAuth جایگزین می‌شود."}>
+                      <Field label="Meta Page Access Token" hint={saved?.has_access_token ? `توکن ذخیره شده: ${saved.access_token_masked}` : "فقط برای توسعه؛ مسیر اصلی از دکمه اتصال امن Meta است."}>
                         <Input value={accessToken} onChange={(event) => setAccessToken(event.target.value)} placeholder={saved?.has_access_token ? "برای تغییر، توکن جدید را وارد کنید" : "EAAB..."} dir="ltr" type="password" autoComplete="off" />
                       </Field>
                       <Field label="مجوزهای موردنیاز" hint="در فاز OAuth به scopeهای Meta تبدیل می‌شود.">

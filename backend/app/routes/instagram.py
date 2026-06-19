@@ -1,7 +1,9 @@
 import json
 from datetime import datetime
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response
+from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -10,8 +12,10 @@ from app.config import get_settings
 from app.database import get_db
 from app.dependencies import get_active_store
 from app.models import InstagramAccount, InstagramAutomationEvent, InstagramAutomationRule, Store, User
-from app.schemas import InstagramAccountResponse, InstagramAutomationCommentSimulationRequest, InstagramAutomationEventListResponse, InstagramAutomationEventResponse, InstagramAutomationIngestResponse, InstagramAutomationRuleListResponse, InstagramAutomationRuleRequest, InstagramAutomationRuleResponse, InstagramAutomationRuleTestRequest, InstagramAutomationRuleTestResponse, InstagramSettingsRequest, InstagramTestResponse
+from app.schemas import InstagramAccountResponse, InstagramAutomationCommentSimulationRequest, InstagramAutomationEventListResponse, InstagramAutomationEventResponse, InstagramAutomationIngestResponse, InstagramAutomationRuleListResponse, InstagramAutomationRuleRequest, InstagramAutomationRuleResponse, InstagramAutomationRuleTestRequest, InstagramAutomationRuleTestResponse, InstagramOAuthStartResponse, InstagramSettingsRequest, InstagramTestResponse
 from app.services.instagram_automation import build_simulated_comment_event, clean_keywords, ingest_instagram_comment_events, ingest_instagram_webhook_payload, json_list, normalized_keywords, rule_matches, verify_meta_signature
+from app.services.instagram_client import InstagramGraphClient
+from app.services.instagram_oauth import build_meta_oauth_url, create_instagram_oauth_state, missing_meta_oauth_config, read_instagram_oauth_state
 from app.services.publishing_channels import get_active_instagram_account
 
 router = APIRouter(prefix="/instagram", tags=["instagram"])
@@ -91,6 +95,14 @@ def enqueue_instagram_automation_events(event_ids: list[int]) -> None:
     for event_id in event_ids:
         process_instagram_automation_event.delay(event_id)
 
+
+def instagram_frontend_redirect(status: str, message: str = "") -> RedirectResponse:
+    settings = get_settings()
+    suffix = f"?instagram_oauth={status}"
+    if message:
+        suffix = f"{suffix}&message={quote(message)}"
+    return RedirectResponse(f"{settings.frontend_public_url.rstrip('/')}/instagram{suffix}", status_code=302)
+
 def normalize_account_type(value: str) -> str:
     account_type = value.strip().lower() or "creator"
     return account_type if account_type in ACCOUNT_TYPES else "creator"
@@ -163,6 +175,89 @@ async def receive_instagram_webhook(
     return automation_ingest_response(summary, events)
 
 
+@router.get("/oauth/start", response_model=InstagramOAuthStartResponse)
+def start_instagram_oauth(
+    store: Store = Depends(get_active_store),
+    current_user: User = Depends(get_current_user),
+) -> InstagramOAuthStartResponse:
+    settings = get_settings()
+    missing = missing_meta_oauth_config()
+    if missing:
+        return InstagramOAuthStartResponse(
+            configured=False,
+            redirect_uri=settings.meta_oauth_redirect_uri,
+            scopes=settings.meta_oauth_scope_list,
+            missing=missing,
+        )
+    state = create_instagram_oauth_state(store.id, current_user.id)
+    return InstagramOAuthStartResponse(
+        configured=True,
+        authorization_url=build_meta_oauth_url(state),
+        redirect_uri=settings.meta_oauth_redirect_uri,
+        scopes=settings.meta_oauth_scope_list,
+        missing=[],
+    )
+
+
+@router.get("/oauth/callback")
+def finish_instagram_oauth(
+    code: str = "",
+    state: str = "",
+    error: str = "",
+    error_description: str = "",
+    db: Session = Depends(get_db),
+):
+    if error:
+        return instagram_frontend_redirect("error", error_description or error)
+    if not code or not state:
+        return instagram_frontend_redirect("error", "Meta OAuth callback is missing code or state")
+    try:
+        state_payload = read_instagram_oauth_state(state)
+    except ValueError as exc:
+        return instagram_frontend_redirect("error", str(exc))
+
+    settings = get_settings()
+    missing = missing_meta_oauth_config()
+    if missing:
+        return instagram_frontend_redirect("error", f"Missing Meta OAuth config: {', '.join(missing)}")
+
+    store_id = int(state_payload.get("store_id") or 0)
+    store = db.get(Store, store_id)
+    if store is None:
+        return instagram_frontend_redirect("error", "Store was not found for Meta OAuth callback")
+
+    client = InstagramGraphClient()
+    short_token = client.exchange_code_for_user_token(settings.meta_app_id, settings.meta_app_secret, settings.meta_oauth_redirect_uri, code)
+    if not short_token.ok or not short_token.access_token:
+        return instagram_frontend_redirect("error", short_token.error or "Meta OAuth code exchange failed")
+    long_token = client.exchange_long_lived_user_token(settings.meta_app_id, settings.meta_app_secret, short_token.access_token)
+    user_access_token = long_token.access_token if long_token.ok and long_token.access_token else short_token.access_token
+    token_expires_at = long_token.expires_at or short_token.expires_at
+
+    connection = client.find_instagram_page_connection(user_access_token)
+    if not connection.ok:
+        return instagram_frontend_redirect("error", connection.error or "No linked Instagram professional account found")
+
+    account = get_active_instagram_account(db, store.id)
+    if account is None:
+        account = InstagramAccount(store_id=store.id)
+        db.add(account)
+    account.username = connection.username
+    account.account_type = "business"
+    account.publish_mode = "direct"
+    account.professional_account_id = connection.professional_account_id
+    account.page_id = connection.page_id
+    account.access_token = connection.page_access_token
+    account.token_expires_at = token_expires_at
+    account.permissions = ",".join(settings.meta_oauth_scope_list)
+    account.status = "connected"
+    account.last_error = ""
+    account.last_test_at = datetime.utcnow()
+    account.updated_at = datetime.utcnow()
+    db.commit()
+    return instagram_frontend_redirect("success", f"Connected Instagram account {connection.username or connection.professional_account_id}")
+
+
 @router.get("/settings")
 def read_settings(store: Store = Depends(get_active_store), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     account = get_active_instagram_account(db, store.id)
@@ -226,15 +321,23 @@ def test_connection(
                 error="Personal Instagram account is ready for manual reminder publishing",
                 last_test_at=now,
             )
-        account.status = "oauth_required"
-        account.last_error = "Meta OAuth, instagram_basic, instagram_content_publish, and page linkage are required"
+        direct_ready = bool(account.professional_account_id and account.page_id and account.access_token)
+        account.status = "connected" if direct_ready else "oauth_required"
+        account.last_error = "" if direct_ready else "Meta OAuth, instagram_basic, instagram_content_publish, page linkage, and token are required"
         account.last_test_at = now
         account.updated_at = now
         db.commit()
+        if direct_ready:
+            return InstagramTestResponse(
+                ok=True,
+                status="connected",
+                error="Instagram professional account has the required local OAuth fields",
+                last_test_at=now,
+            )
     return InstagramTestResponse(
         ok=False,
         status="oauth_required",
-        error="Meta OAuth connection is planned but not implemented in this phase",
+        error="Meta OAuth is not connected yet",
         last_test_at=now,
     )
 
@@ -273,7 +376,7 @@ def create_automation_rule(
     if not payload.private_reply_message.strip():
         raise HTTPException(status_code=400, detail="Private reply message is required")
     account = get_active_instagram_account(db, store.id)
-    if status == "active" and (account is None or account.publish_mode == "reminder"):
+    if status == "active" and (account is None or account.publish_mode == "reminder" or account.status != "connected" or not account.access_token):
         raise HTTPException(status_code=400, detail="Active automation requires an Instagram professional account")
     now = datetime.utcnow()
     rule = InstagramAutomationRule(

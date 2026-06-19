@@ -115,6 +115,15 @@ class InstagramTestResponse(BaseModel):
     last_test_at: datetime | None = None
 
 
+class InstagramOAuthStartResponse(BaseModel):
+    configured: bool
+    authorization_url: str = ""
+    redirect_uri: str = ""
+    scopes: list[str]
+    missing: list[str] = []
+    expires_in_minutes: int = 15
+
+
 class ChannelAccountResponse(BaseModel):
     id: int
     store_id: int
