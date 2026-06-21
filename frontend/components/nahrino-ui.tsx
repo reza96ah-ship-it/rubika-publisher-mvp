@@ -323,7 +323,7 @@ export function NPageHeader({ title, description, eyebrow, meta, action, classNa
 export function NButton(props: NButtonProps) {
   const { children, className = "", variant = "primary", size = "md", icon: Icon, trailingIcon: TrailingIcon, loading = false } = props;
   const classes = [
-    "app-interactive nahrino-control-radius inline-flex items-center justify-center gap-2 whitespace-nowrap border font-bold leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60",
+    "app-interactive nahrino-control-radius inline-flex items-center justify-center gap-2 whitespace-nowrap border font-bold leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60 transition-all duration-200 active:scale-95",
     buttonVariantClasses[variant],
     buttonSizeClasses[size],
     className
@@ -677,7 +677,7 @@ export function NMetricTile({ label, value, detail, icon: Icon, tone = "primary"
       )}
       <div className="flex h-full items-start justify-between gap-2 sm:gap-3 relative z-10">
         <div className="min-w-0">
-          <p className="line-clamp-1 text-[10px] font-bold text-app-muted sm:text-xs">{label}</p>
+          <p className="line-clamp-1 text-[10px] font-semibold text-app-muted sm:text-xs">{label}</p>
           <p className="dashboard-kpi-number mt-1 text-lg font-black text-app-text sm:text-xl">{typeof value === 'number' || typeof value === 'string' ? toPersianDigits(value) : value}</p>
           {detail ? <p className="mt-1 hidden truncate text-[11px] font-bold text-app-muted sm:block">{toPersianDigits(detail)}</p> : null}
         </div>
@@ -690,7 +690,7 @@ export function NMetricTile({ label, value, detail, icon: Icon, tone = "primary"
     </article>
   );
 
-  return href ? <Link href={href} className="app-interactive block rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-100">{content}</Link> : content;
+  return href ? <Link href={href} className="app-interactive block rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-100 transition-all duration-300 hover:-translate-y-1 group">{content}</Link> : <div className="transition-all duration-300 hover:-translate-y-1 group">{content}</div>;
 }
 
 export function NListItem({ title, detail, icon: Icon, tone = "primary", href, meta }: NListItemProps) {
@@ -700,14 +700,14 @@ export function NListItem({ title, detail, icon: Icon, tone = "primary", href, m
         <Icon className="h-3.5 w-3.5" aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[11px] font-black text-app-text">{title}</span>
+        <span className="block truncate text-[11px] font-bold text-app-text">{title}</span>
         {detail ? <span className="mt-0.5 block truncate text-[10px] font-bold text-app-muted">{detail}</span> : null}
       </span>
       {meta ? <span className="max-w-[96px] shrink-0 truncate text-[10px]">{meta}</span> : null}
     </article>
   );
 
-  return href ? <Link href={href} className="block rounded-md focus:outline-none focus:ring-2 focus:ring-teal-100">{content}</Link> : content;
+  return href ? <Link href={href} className="block rounded-md focus:outline-none focus:ring-2 focus:ring-teal-100 transition-all duration-200 hover:-translate-y-[2px]">{content}</Link> : <div className="transition-all duration-200 hover:-translate-y-[2px]">{content}</div>;
 }
 
 export function NEmptyState({ title, detail, icon: Icon }: NEmptyStateProps) {

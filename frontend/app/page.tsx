@@ -507,11 +507,11 @@ export default function HomePage() {
                 <WorkspaceAvatar name={store?.name || productName} size="lg" color={brandColor} imageUrl={brandImageUrl} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="app-section-kicker text-[10px] font-black">داشبورد</p>
+                    <p className="app-section-kicker text-[10px] font-bold">داشبورد</p>
                     <NStatusPill tone={healthTone}>{healthTone === "success" ? "فضای کاری پایدار" : healthTone === "warning" ? "نیازمند تکمیل" : "نیازمند رسیدگی"}</NStatusPill>
                     {lastUpdatedAt ? <NStatusPill tone="neutral" className="font-outfit">{toPersianDigits(lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }))}</NStatusPill> : null}
                   </div>
-                  <h1 className="mt-2 text-[22px] font-black leading-8 text-app-text sm:text-2xl">داشبورد امروز</h1>
+                  <h1 className="mt-2 text-[22px] font-bold leading-8 text-app-text sm:text-2xl">داشبورد امروز</h1>
                   <p className="mt-1 max-w-4xl text-sm leading-7 text-app-muted">{briefing}</p>
                 </div>
               </div>
@@ -521,8 +521,8 @@ export default function HomePage() {
               <div className="flex min-w-0 items-start gap-3">
                 <span className="nahrino-live-signal mt-1 h-3 w-3 shrink-0 rounded-full bg-app-primary" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-black text-app-primary">اقدام بعدی</p>
-                  <h2 className="mt-1 line-clamp-1 text-base font-black text-app-text">{nextAction.label}</h2>
+                  <p className="text-[10px] font-bold text-app-primary">اقدام بعدی</p>
+                  <h2 className="mt-1 line-clamp-1 text-base font-bold text-app-text">{nextAction.label}</h2>
                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
                 </div>
               </div>
@@ -549,15 +549,15 @@ export default function HomePage() {
 
             <article className="col-span-1 sm:col-span-6 lg:col-span-4 dashboard-visual-card nahrino-card p-5 relative overflow-hidden">
               <div className="flex min-w-0 items-center gap-3 relative z-10">
-                <div className="dashboard-donut shrink-0 h-14 w-14 rounded-full flex items-center justify-center font-outfit font-black text-lg" style={{ background: statusMixBackground }}>
-                  <span className="bg-app-surface h-10 w-10 rounded-full flex items-center justify-center shadow-inner">{toPersianDigits(statusMixTotal)}</span>
+                <div className="dashboard-donut shrink-0 h-14 w-14 rounded-full flex items-center justify-center font-outfit font-black text-lg shadow-md ring-1 ring-app-border/50 transition-transform duration-300 group-hover:scale-105" style={{ background: statusMixBackground }}>
+                  <span className="bg-app-surface h-10 w-10 rounded-full flex items-center justify-center shadow-inner ring-1 ring-app-border/10">{toPersianDigits(statusMixTotal)}</span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-black text-app-primary">ترکیب محتوا</p>
-                  <h2 className="mt-1 text-sm font-black text-app-text">وضعیت کل محتوا</h2>
+                  <p className="text-[10px] font-bold text-app-primary">ترکیب محتوا</p>
+                  <h2 className="mt-1 text-sm font-bold text-app-text">وضعیت کل محتوا</h2>
                   <div className="mt-2 grid grid-cols-2 gap-1.5">
                     {statusMixItems.map((item) => (
-                      <span key={item.label} className="flex min-w-0 items-center gap-1.5 text-[10px] font-black text-app-muted">
+                      <span key={item.label} className="flex min-w-0 items-center gap-1.5 text-[10px] font-bold text-app-muted">
                         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
                         <span className="truncate">{item.label}</span>
                         <span className="mr-auto font-outfit font-bold text-app-text">{toPersianDigits(item.value)}</span>
@@ -571,8 +571,8 @@ export default function HomePage() {
             <article className="col-span-1 sm:col-span-6 lg:col-span-4 dashboard-visual-card nahrino-card p-5">
               <div className="flex flex-col justify-between h-full gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black text-app-primary">سلامت عملیات</p>
-                  <h2 className="mt-1 text-sm font-black text-app-text font-outfit flex items-center gap-1">{toPersianDigits(operationsHealth)}٪ <span className="font-vazirmatn text-xs">آماده</span></h2>
+                  <p className="text-[10px] font-bold text-app-primary">سلامت عملیات</p>
+                  <h2 className="mt-1 text-sm font-bold text-app-text font-outfit flex items-center gap-1">{toPersianDigits(operationsHealth)}٪ <span className="font-vazirmatn text-xs">آماده</span></h2>
                   <p className="mt-1 line-clamp-1 text-xs text-app-muted">{blockedWorkCount ? `${toPersianDigits(blockedWorkCount)} مورد نیازمند توجه` : "مسیر انتشار آرام است"}</p>
                 </div>
                 <div className="w-full h-2 bg-app-surface rounded-full overflow-hidden mt-auto">
@@ -584,8 +584,8 @@ export default function HomePage() {
             <article className="col-span-1 md:col-span-12 lg:col-span-4 dashboard-visual-card nahrino-card p-5">
               <div className="flex min-w-0 items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black text-app-primary">ریتم هفته</p>
-                  <h2 className="mt-1 text-sm font-black text-app-text">تراکم فعالیت</h2>
+                  <p className="text-[10px] font-bold text-app-primary">ریتم هفته</p>
+                  <h2 className="mt-1 text-sm font-bold text-app-text">تراکم فعالیت</h2>
                 </div>
                 <NStatusPill tone={weeklyActivity.some(Boolean) ? "primary" : "neutral"} className="font-outfit">{toPersianDigits(weeklyActivity.reduce((sum, value) => sum + value, 0))} <span className="font-vazirmatn px-1">رویداد</span></NStatusPill>
               </div>
@@ -604,8 +604,8 @@ export default function HomePage() {
             <section className="col-span-1 md:col-span-12 lg:col-span-8 dashboard-focus-shell nahrino-card p-5">
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                 <div className="min-w-0 px-1">
-                  <p className="text-[10px] font-black text-app-primary">نمای متمرکز</p>
-                  <h2 className="mt-1 text-sm font-black text-app-text">هر بار فقط یک مسیر تصمیم‌گیری</h2>
+                  <p className="text-[10px] font-bold text-app-primary">نمای متمرکز</p>
+                  <h2 className="mt-1 text-sm font-bold text-app-text">هر بار فقط یک مسیر تصمیم‌گیری</h2>
                 </div>
                 <NTabs tabs={dashboardFocusTabs} activeTab={dashboardView} onTabChange={setDashboardView} className="w-full sm:w-auto" />
               </div>
@@ -617,7 +617,7 @@ export default function HomePage() {
             <section className="col-span-1 md:col-span-12 lg:col-span-4 dashboard-recent-content nahrino-card p-5 flex flex-col">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h2 className="text-sm font-black text-app-text">آخرین محتوا</h2>
+                  <h2 className="text-sm font-bold text-app-text">آخرین محتوا</h2>
                   <p className="text-xs text-app-muted mt-1">میانبر به پست‌های اخیر</p>
                 </div>
                 <NButton href="/content" variant="secondary" size="sm">کتابخانه</NButton>
@@ -628,7 +628,7 @@ export default function HomePage() {
                   {dashboardRecentItems.map((item) => (
                     <Link key={item.id} href={item.href} className="group flex items-center justify-between p-3 rounded-xl border border-app-border bg-app-surface/50 hover:bg-app-surface transition-colors">
                       <div className="min-w-0 flex-1">
-                        <span className="block truncate text-xs font-black text-app-text group-hover:text-app-primary transition-colors">{item.title}</span>
+                        <span className="block truncate text-xs font-bold text-app-text group-hover:text-app-primary transition-colors">{item.title}</span>
                         <span className="block truncate text-[10px] text-app-muted mt-0.5">{item.channel} · <span className="font-outfit">{item.publishTime}</span></span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 mr-3">
