@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toPersianDigits } from "../lib/utils";
 import { AppShell } from "../components/app-shell";
 import { AuthGate } from "../components/auth-gate";
 import { WorkspaceAvatar } from "../components/brand-mark";
@@ -111,12 +112,12 @@ function compactDateTime(value?: string | null) {
   if (!value) return "بدون زمان";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "بدون زمان";
-  return new Intl.DateTimeFormat("fa-IR", {
+  return toPersianDigits(new Intl.DateTimeFormat("fa-IR", {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
     month: "short"
-  }).format(date);
+  }).format(date));
 }
 
 export default function HomePage() {
@@ -204,19 +205,19 @@ export default function HomePage() {
   const nextAction = priorityAlerts[0]
     ? { label: priorityAlerts[0].action_label, href: priorityAlerts[0].action_href, detail: priorityAlerts[0].title }
     : queueCounts.failed
-      ? { label: "بازیابی صف انتشار", href: "/queue", detail: `${queueCounts.failed} انتشار ناموفق منتظر بررسی است` }
+      ? { label: "بازیابی صف انتشار", href: "/queue", detail: `${toPersianDigits(queueCounts.failed)} انتشار ناموفق منتظر بررسی است` }
       : pendingApprovalCount
-        ? { label: "بازبینی محتوا", href: "/content?approval=pending", detail: `${pendingApprovalCount} محتوا پشت گیت تایید مانده است` }
+        ? { label: "بازبینی محتوا", href: "/content?approval=pending", detail: `${toPersianDigits(pendingApprovalCount)} محتوا پشت گیت تایید مانده است` }
         : !workspaceReady
           ? { label: "تکمیل راه‌اندازی", href: "/onboarding", detail: "آماده‌سازی فقط تا زمان تکمیل مسیر نمایش داده می‌شود" }
           : nextPosts[0]
             ? { label: "بررسی انتشار بعدی", href: `/compose?postId=${nextPosts[0].id}`, detail: nextPosts[0].title }
             : draftCount
-              ? { label: "تکمیل پیش‌نویس‌ها", href: "/content?status=draft", detail: `${draftCount} پیش‌نویس آماده تکمیل است` }
+              ? { label: "تکمیل پیش‌نویس‌ها", href: "/content?status=draft", detail: `${toPersianDigits(draftCount)} پیش‌نویس آماده تکمیل است` }
               : { label: "ساخت پست تازه", href: "/compose", detail: "برنامه نزدیک هنوز محتوای کافی ندارد" };
 
   const briefing = priorityAlerts.length
-    ? `${priorityAlerts.length} هشدار عملیاتی قبل از ادامه برنامه انتشار نیازمند رسیدگی است.`
+    ? `${toPersianDigits(priorityAlerts.length)} هشدار عملیاتی قبل از ادامه برنامه انتشار نیازمند رسیدگی است.`
     : queueCounts.failed
       ? "صف انتشار خطای فعال دارد؛ اول بازیابی، بعد تولید محتوای جدید."
       : nextPosts.length
@@ -311,10 +312,10 @@ export default function HomePage() {
     }));
   const riskQueueItems = [
     ...(queueCounts.failed
-      ? [{ id: "failed", icon: AlertTriangle, title: "انتشار ناموفق", detail: `${queueCounts.failed} آیتم نیازمند بازیابی`, tone: "alert" as const, href: "/queue" }]
+      ? [{ id: "failed", icon: AlertTriangle, title: "انتشار ناموفق", detail: `${toPersianDigits(queueCounts.failed)} آیتم نیازمند بازیابی`, tone: "alert" as const, href: "/queue" }]
       : []),
     ...(pendingApprovalCount
-      ? [{ id: "approval", icon: MessageSquare, title: "بازبینی مسدود", detail: `${pendingApprovalCount} محتوا پشت تایید`, tone: "warning" as const, href: "/content?approval=pending" }]
+      ? [{ id: "approval", icon: MessageSquare, title: "بازبینی مسدود", detail: `${toPersianDigits(pendingApprovalCount)} محتوا پشت تایید`, tone: "warning" as const, href: "/content?approval=pending" }]
       : []),
     ...(!rubikaReady
       ? [{ id: "rubika", icon: PlugZap, title: "اتصال کانال", detail: "روبیکا هنوز آماده انتشار نیست", tone: "warning" as const, href: "/channels" }]
@@ -347,15 +348,15 @@ export default function HomePage() {
   const publishMode = rubikaReady ? "API آماده" : "دستی/نیازمند اتصال";
   const publishState = queueCounts.publishing ? "در حال انتشار" : nextPosts[0] ? "زمان‌بندی شده" : queueCounts.ready ? "آماده صف" : "بدون برنامه نزدیک";
   const publishPulseSteps = [
-    { label: "محتوا", detail: contentPreviewItems.length ? `${contentPreviewItems.length} آیتم نزدیک آماده بررسی است` : "هنوز محتوای نزدیک ندارید", ready: Boolean(contentPreviewItems.length), status: contentPreviewItems.length ? "آماده" : "بسازید", action: contentPreviewItems.length ? "بازبینی" : "ساخت پست", href: contentPreviewItems.length ? "/content" : "/compose" },
-    { label: "صف انتشار", detail: queueCounts.failed ? `${queueCounts.failed} job ناموفق باید بازیابی شود` : queueTotal ? `${queueTotal} job در چرخه انتشار است` : "صف هنوز خالی است", ready: queueTotal > 0 && !queueCounts.failed, status: queueCounts.failed ? "ریسک" : queueTotal ? "سالم" : "خالی", action: queueCounts.failed ? "بازیابی" : "دیدن صف", href: "/queue" },
+    { label: "محتوا", detail: contentPreviewItems.length ? `${toPersianDigits(contentPreviewItems.length)} آیتم نزدیک آماده بررسی است` : "هنوز محتوای نزدیک ندارید", ready: Boolean(contentPreviewItems.length), status: contentPreviewItems.length ? "آماده" : "بسازید", action: contentPreviewItems.length ? "بازبینی" : "ساخت پست", href: contentPreviewItems.length ? "/content" : "/compose" },
+    { label: "صف انتشار", detail: queueCounts.failed ? `${toPersianDigits(queueCounts.failed)} job ناموفق باید بازیابی شود` : queueTotal ? `${toPersianDigits(queueTotal)} job در چرخه انتشار است` : "صف هنوز خالی است", ready: queueTotal > 0 && !queueCounts.failed, status: queueCounts.failed ? "ریسک" : queueTotal ? "سالم" : "خالی", action: queueCounts.failed ? "بازیابی" : "دیدن صف", href: "/queue" },
     { label: "کانال", detail: rubikaReady ? "اتصال انتشار آماده است" : "اتصال کانال نیازمند بررسی است", ready: rubikaReady, status: rubikaReady ? "متصل" : "بررسی", action: rubikaReady ? "مدیریت" : "اتصال", href: "/channels" },
     { label: "زمان انتشار", detail: nextPosts[0] ? compactDateTime(nextPosts[0].scheduled_at) : "برای انتشار خودکار زمان انتخاب نشده", ready: Boolean(nextPosts[0]), status: nextPosts[0] ? "زمان‌دار" : "بدون زمان", action: nextPosts[0] ? "تقویم" : "زمان‌بندی", href: nextPosts[0]?.scheduled_at ? `/calendar?date=${dayKey(new Date(nextPosts[0].scheduled_at))}` : "/compose" }
   ];
   const insightTone = failureRate ? "warning" as const : completionRate >= 60 ? "success" as const : "info" as const;
   const reportInsight = failureRate
-    ? { title: "ریسک انتشار بالاست", detail: `${failureRate}% از صف فعال خطا دارد؛ بازیابی صف قبل از تولید تازه ارزشمندتر است.`, href: "/analytics?view=failures", tone: insightTone }
-    : { title: "ریتم انتشار قابل اتکاست", detail: `${completionRate}% تکمیل در داده فعلی؛ برنامه نزدیک را با یک پست زمان‌بندی‌شده تقویت کنید.`, href: "/analytics", tone: insightTone };
+    ? { title: "ریسک انتشار بالاست", detail: `${toPersianDigits(failureRate)}% از صف فعال خطا دارد؛ بازیابی صف قبل از تولید تازه ارزشمندتر است.`, href: "/analytics?view=failures", tone: insightTone }
+    : { title: "ریتم انتشار قابل اتکاست", detail: `${toPersianDigits(completionRate)}% تکمیل در داده فعلی؛ برنامه نزدیک را با یک پست زمان‌بندی‌شده تقویت کنید.`, href: "/analytics", tone: insightTone };
   const campaignMomentumItems = activeCampaigns.length ? activeCampaigns : campaigns.slice(0, 3);
   const dashboardRecentItems = [...posts]
     .sort((first, second) => dateTime(second.updated_at || second.created_at) - dateTime(first.updated_at || first.created_at))
@@ -421,7 +422,7 @@ export default function HomePage() {
         {plannerSnapshot.map((day) => (
           <Link key={day.key} href={day.href} className={`dashboard-day-cell app-interactive rounded-xl p-2 ${day.count ? "dashboard-day-cell-active" : ""}`}>
             <span className="block text-center text-[10px] font-black text-app-muted">{day.label}</span>
-            <span className="dashboard-kpi-number mt-2 block text-center text-lg font-black text-app-text">{day.count}</span>
+            <span className="dashboard-kpi-number mt-2 block text-center text-lg font-black text-app-text">{toPersianDigits(day.count)}</span>
             <span className="mx-auto mt-2 block h-1.5 w-8 rounded-full bg-app-primary/20">
               <span className="block h-full rounded-full bg-app-primary" style={{ width: `${Math.min(100, Math.max(12, day.count * 30))}%` }} />
             </span>
@@ -443,7 +444,7 @@ export default function HomePage() {
   const inboxPanel: ReactNode = (
     <NSection title="تریاژ پیام‌ها" description="تعهد پاسخ، پیام‌های عقب‌افتاده و کارهای من." action={<NButton href="/inbox" variant="secondary" size="sm">Inbox</NButton>} className="dashboard-spec-card dashboard-inbox-card">
       <div className="grid gap-2">
-        <NRow icon={MessageSquare} title="پیام‌های نیازمند اقدام" detail={unreadAlerts ? `${unreadAlerts} اعلان تازه` : "اعلان خوانده‌نشده عملیاتی نیست"} tone={unreadAlerts ? "warning" : "success"} href="/inbox" meta={<NStatusPill tone={unreadAlerts ? "warning" : "success"}>{unreadAlerts}</NStatusPill>} />
+        <NRow icon={MessageSquare} title="پیام‌های نیازمند اقدام" detail={unreadAlerts ? `${toPersianDigits(unreadAlerts)} اعلان تازه` : "اعلان خوانده‌نشده عملیاتی نیست"} tone={unreadAlerts ? "warning" : "success"} href="/inbox" meta={<NStatusPill tone={unreadAlerts ? "warning" : "success"}>{toPersianDigits(unreadAlerts)}</NStatusPill>} />
         <NRow icon={Clock3} title="SLA امروز" detail={blockedWorkCount ? "اولویت با ریسک‌های فعال" : "زمان پاسخ در محدوده امن است"} tone={blockedWorkCount ? "warning" : "success"} href="/inbox" />
       </div>
     </NSection>
@@ -477,8 +478,8 @@ export default function HomePage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <NStatusPill tone={reportInsight.tone}>{completionRate}% تکمیل</NStatusPill>
-          <NStatusPill tone={failureRate ? "warning" : "success"}>{failureRate}% خطا</NStatusPill>
+          <NStatusPill tone={reportInsight.tone}>{toPersianDigits(completionRate)}% تکمیل</NStatusPill>
+          <NStatusPill tone={failureRate ? "warning" : "success"}>{toPersianDigits(failureRate)}% خطا</NStatusPill>
         </div>
       </div>
     </NSection>
@@ -495,14 +496,17 @@ export default function HomePage() {
       <AppShell>
         <NPage className="dashboard-spec-page pb-5">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <section className="col-span-1 md:col-span-12 lg:col-span-8 dashboard-command-brief nahrino-card p-5">
-              <div className="flex min-w-0 items-start gap-4">
+            <section className="col-span-1 md:col-span-12 lg:col-span-8 dashboard-command-brief nahrino-card p-5 relative overflow-hidden">
+              <div className="absolute top-1/2 -translate-y-1/2 left-4 w-48 h-48 pointer-events-none z-0 opacity-80 mix-blend-screen">
+                <img src="/assets/images/minimal_3d_chart.png" alt="" className="w-full h-full object-contain drop-shadow-xl" />
+              </div>
+              <div className="flex min-w-0 items-start gap-4 relative z-10">
                 <WorkspaceAvatar name={store?.name || productName} size="lg" color={brandColor} imageUrl={brandImageUrl} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="app-section-kicker text-[10px] font-black">داشبورد</p>
                     <NStatusPill tone={healthTone}>{healthTone === "success" ? "فضای کاری پایدار" : healthTone === "warning" ? "نیازمند تکمیل" : "نیازمند رسیدگی"}</NStatusPill>
-                    {lastUpdatedAt ? <NStatusPill tone="neutral" className="font-outfit">{lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</NStatusPill> : null}
+                    {lastUpdatedAt ? <NStatusPill tone="neutral" className="font-outfit">{toPersianDigits(lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }))}</NStatusPill> : null}
                   </div>
                   <h1 className="mt-2 text-[22px] font-black leading-8 text-app-text sm:text-2xl">داشبورد امروز</h1>
                   <p className="mt-1 max-w-4xl text-sm leading-7 text-app-muted">{briefing}</p>
@@ -540,10 +544,10 @@ export default function HomePage() {
               </div>
             ))}
 
-            <article className="col-span-1 sm:col-span-6 lg:col-span-4 dashboard-visual-card nahrino-card p-5">
-              <div className="flex min-w-0 items-center gap-3">
+            <article className="col-span-1 sm:col-span-6 lg:col-span-4 dashboard-visual-card nahrino-card p-5 relative overflow-hidden">
+              <div className="flex min-w-0 items-center gap-3 relative z-10">
                 <div className="dashboard-donut shrink-0 h-14 w-14 rounded-full flex items-center justify-center font-outfit font-black text-lg" style={{ background: statusMixBackground }}>
-                  <span className="bg-app-surface h-10 w-10 rounded-full flex items-center justify-center shadow-inner">{statusMixTotal}</span>
+                  <span className="bg-app-surface h-10 w-10 rounded-full flex items-center justify-center shadow-inner">{toPersianDigits(statusMixTotal)}</span>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-black text-app-primary">ترکیب محتوا</p>
@@ -553,7 +557,7 @@ export default function HomePage() {
                       <span key={item.label} className="flex min-w-0 items-center gap-1.5 text-[10px] font-black text-app-muted">
                         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
                         <span className="truncate">{item.label}</span>
-                        <span className="mr-auto font-outfit font-bold text-app-text">{item.value}</span>
+                        <span className="mr-auto font-outfit font-bold text-app-text">{toPersianDigits(item.value)}</span>
                       </span>
                     ))}
                   </div>
@@ -565,8 +569,8 @@ export default function HomePage() {
               <div className="flex flex-col justify-between h-full gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] font-black text-app-primary">سلامت عملیات</p>
-                  <h2 className="mt-1 text-sm font-black text-app-text font-outfit flex items-center gap-1">{operationsHealth}% <span className="font-vazirmatn text-xs">آماده</span></h2>
-                  <p className="mt-1 line-clamp-1 text-xs text-app-muted">{blockedWorkCount ? `${blockedWorkCount} مورد نیازمند توجه` : "مسیر انتشار آرام است"}</p>
+                  <h2 className="mt-1 text-sm font-black text-app-text font-outfit flex items-center gap-1">{toPersianDigits(operationsHealth)}% <span className="font-vazirmatn text-xs">آماده</span></h2>
+                  <p className="mt-1 line-clamp-1 text-xs text-app-muted">{blockedWorkCount ? `${toPersianDigits(blockedWorkCount)} مورد نیازمند توجه` : "مسیر انتشار آرام است"}</p>
                 </div>
                 <div className="w-full h-2 bg-app-surface rounded-full overflow-hidden mt-auto">
                   <div className="h-full bg-app-success" style={{ width: `${operationsHealth}%` }} />
@@ -580,7 +584,7 @@ export default function HomePage() {
                   <p className="text-[10px] font-black text-app-primary">ریتم هفته</p>
                   <h2 className="mt-1 text-sm font-black text-app-text">تراکم فعالیت</h2>
                 </div>
-                <NStatusPill tone={weeklyActivity.some(Boolean) ? "primary" : "neutral"} className="font-outfit">{weeklyActivity.reduce((sum, value) => sum + value, 0)} <span className="font-vazirmatn px-1">رویداد</span></NStatusPill>
+                <NStatusPill tone={weeklyActivity.some(Boolean) ? "primary" : "neutral"} className="font-outfit">{toPersianDigits(weeklyActivity.reduce((sum, value) => sum + value, 0))} <span className="font-vazirmatn px-1">رویداد</span></NStatusPill>
               </div>
               <div className="mt-3 flex h-16 items-end gap-1.5 justify-between">
                 {weeklyActivity.map((value, index) => (
@@ -624,7 +628,7 @@ export default function HomePage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0 mr-3">
                         <NStatusPill tone={item.statusTone} size="sm">{item.status}</NStatusPill>
-                        <span className="font-outfit font-black text-xs text-app-muted bg-app-canvas px-1.5 py-0.5 rounded">{item.score}%</span>
+                        <span className="font-outfit font-black text-xs text-app-muted bg-app-canvas px-1.5 py-0.5 rounded">{toPersianDigits(item.score)}%</span>
                       </div>
                     </Link>
                   ))}

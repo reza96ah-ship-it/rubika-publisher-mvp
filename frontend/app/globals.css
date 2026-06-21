@@ -19,10 +19,9 @@ body {
   margin: 0;
   min-height: 100%;
   background-color: rgb(var(--n-color-canvas));
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(76, 111, 255, 0.04) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(124, 92, 255, 0.05) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(6, 182, 212, 0.03) 0px, transparent 50%);
+  background-image: url('/assets/images/minimal_bg.png');
+  background-size: cover;
+  background-position: center;
   background-attachment: fixed;
   color: rgb(var(--n-color-ink));
   font-family: var(--font-ui-fa, Vazirmatn, "Noto Sans Arabic", Tahoma, sans-serif);
@@ -34,10 +33,7 @@ body {
 [data-theme="dark"] body,
 [data-theme="studio"] body,
 .nahrino-dark-studio {
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(76, 111, 255, 0.12) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(124, 92, 255, 0.14) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
+  background-image: url('/assets/images/minimal_bg.png');
 }
 
 body {
@@ -502,13 +498,11 @@ a {
   }
 
   .nahrino-card {
-    border: 1px solid var(--n-glass-border);
-    background:
-      linear-gradient(135deg, var(--n-glass-surface-strong), rgb(var(--n-color-surface) / 0.78)),
-      radial-gradient(circle at 8% 0%, rgb(var(--n-color-primary) / 0.035), transparent 16rem);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(var(--n-color-surface) / 0.55);
     border-radius: var(--n-radius-lg) !important;
-    box-shadow: var(--n-shadow-soft);
-    backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: 0 4px 32px rgba(0,0,0,0.06);
+    backdrop-filter: blur(24px) saturate(120%);
     transform: translateZ(0); /* Hardware Acceleration */
   }
 
