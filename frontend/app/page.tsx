@@ -594,11 +594,13 @@ export default function HomePage() {
                 </div>
                 <NStatusPill tone={weeklyActivity.some(Boolean) ? "primary" : "neutral"} className="font-outfit">{toPersianDigits(weeklyActivity.reduce((sum, value) => sum + value, 0))} <span className="font-vazirmatn px-1">رویداد</span></NStatusPill>
               </div>
-              <div className="mt-3 flex h-16 items-end gap-1.5 justify-between">
+              <div className="mt-3 flex h-24 items-end justify-between gap-1.5">
                 {weeklyActivity.map((value, index) => (
-                  <div key={weekKeys[index]} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-                    <span className="w-full rounded-t-sm bg-app-primary/80 transition-all hover:bg-app-primary" style={{ height: `${Math.max(8, (value / maxWeeklyActivity) * 48)}px` }} />
-                    <span className="text-[9px] font-bold text-app-muted">{weeklyLabels[index]}</span>
+                  <div key={weekKeys[index]} className="flex flex-1 flex-col items-center justify-end gap-2 h-full group">
+                    <div className="relative flex w-full max-w-[14px] flex-1 flex-col justify-end bg-app-surfaceMuted/50 rounded-full overflow-hidden border border-app-border/30 shadow-inner">
+                      <span className="w-full rounded-full bg-gradient-to-t from-app-primary to-app-primary/40 transition-all duration-700 ease-out group-hover:opacity-80" style={{ height: `${Math.max(12, (value / maxWeeklyActivity) * 100)}%` }} />
+                    </div>
+                    <span className="text-[10px] font-bold text-app-muted/80">{weeklyLabels[index]}</span>
                   </div>
                 ))}
               </div>
