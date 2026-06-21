@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_active_store
-from app.models import Post, RubikaAccount, Store
+from app.models import Post, RubikaAccount, Store, InstagramAutomationEvent
 from app.schemas import OperationalNotificationListResponse, OperationalNotificationResponse, OperationalNotificationSummaryResponse
 from app.services.rubika_health import is_rubika_account_ready
 
@@ -49,6 +49,32 @@ def build_operational_notifications(db: Session, store: Store, now: datetime | N
     connection_notification = rubika_notification(get_active_rubika_account(db), current_time)
     if connection_notification:
         notifications.append(connection_notification)
+
+    # Fetch direct message takeover events
+    takeover_events = db.scalars(
+        select(InstagramAutomationEvent)
+        .where(
+            InstagramAutomationEvent.store_id == store.id,
+            InstagramAutomationEvent.conversation_status == "waiting_operator"
+        )
+        .order_by(InstagramAutomationEvent.updated_at.desc())
+    ).all()
+    for ev in takeover_events:
+        notifications.append(
+            OperationalNotificationResponse(
+                id=f"takeover-{ev.id}",
+                category="instagram_takeover",
+                severity="warning",
+                title="در انتظار پاسخ اپراتور (اینستاگرام)",
+                description=f"کاربر @{ev.commenter_username} به پیام خودکار پاسخ داد: «{ev.comment_text[:50]}...»",
+                recovery_hint="برای ادامه گفتگو با کاربر، وارد بخش پیام‌ها شوید.",
+                action_label="مشاهده گفتگو",
+                action_href=f"/inbox?thread={ev.commenter_ig_scoped_id or ev.commenter_username}",
+                post_id=ev.post_id,
+                created_at=ev.updated_at,
+                action_required=True,
+            )
+        )
 
     posts = db.scalars(select(Post).where(Post.store_id == store.id).order_by(Post.updated_at.desc(), Post.id.desc())).all()
     stale_cutoff = current_time - timedelta(minutes=15)

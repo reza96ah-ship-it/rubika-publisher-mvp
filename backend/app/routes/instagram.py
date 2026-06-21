@@ -45,6 +45,9 @@ def automation_rule_response(rule: InstagramAutomationRule) -> InstagramAutomati
         match_limit_total=rule.match_limit_total,
         starts_at=rule.starts_at,
         ends_at=rule.ends_at,
+        is_template=rule.is_template,
+        on_customer_reply=rule.on_customer_reply,
+        waiting_reply_message=rule.waiting_reply_message,
         created_at=rule.created_at,
         updated_at=rule.updated_at,
     )
@@ -60,9 +63,12 @@ def automation_event_response(event: InstagramAutomationEvent) -> InstagramAutom
         ig_media_id=event.ig_media_id,
         ig_comment_id=event.ig_comment_id,
         commenter_username=event.commenter_username,
+        commenter_ig_scoped_id=event.commenter_ig_scoped_id,
         comment_text=event.comment_text,
         normalized_comment_text=event.normalized_comment_text,
         event_status=event.event_status,
+        conversation_status=event.conversation_status or "automated",
+        automation_paused_until=event.automation_paused_until,
         skip_reason=event.skip_reason,
         failure_reason=event.failure_reason,
         private_reply_message_id=event.private_reply_message_id,
@@ -396,6 +402,9 @@ def create_automation_rule(
         match_limit_total=max(0, payload.match_limit_total),
         starts_at=payload.starts_at,
         ends_at=payload.ends_at,
+        is_template=payload.is_template,
+        on_customer_reply=payload.on_customer_reply.strip().lower() or "hand_off",
+        waiting_reply_message=payload.waiting_reply_message.strip() if payload.waiting_reply_message else None,
         created_at=now,
         updated_at=now,
     )
@@ -403,6 +412,97 @@ def create_automation_rule(
     db.commit()
     db.refresh(rule)
     return automation_rule_response(rule)
+
+
+@router.get("/automation/rules/{rule_id}", response_model=InstagramAutomationRuleResponse)
+def get_automation_rule(
+    rule_id: int,
+    store: Store = Depends(get_active_store),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> InstagramAutomationRuleResponse:
+    rule = db.scalar(select(InstagramAutomationRule).where(
+        InstagramAutomationRule.id == rule_id,
+        InstagramAutomationRule.store_id == store.id
+    ))
+    if rule is None:
+        raise HTTPException(status_code=404, detail="Automation rule not found")
+    return automation_rule_response(rule)
+
+
+@router.put("/automation/rules/{rule_id}", response_model=InstagramAutomationRuleResponse)
+def update_automation_rule(
+    rule_id: int,
+    payload: InstagramAutomationRuleRequest,
+    store: Store = Depends(get_active_store),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> InstagramAutomationRuleResponse:
+    rule = db.scalar(select(InstagramAutomationRule).where(
+        InstagramAutomationRule.id == rule_id,
+        InstagramAutomationRule.store_id == store.id
+    ))
+    if rule is None:
+        raise HTTPException(status_code=404, detail="Automation rule not found")
+
+    trigger_type = payload.trigger_type.strip().lower() or "exact"
+    if trigger_type not in TRIGGER_TYPES:
+        raise HTTPException(status_code=400, detail="Unsupported trigger type")
+    status = payload.status.strip().lower() or "draft"
+    if status not in RULE_STATUSES:
+        raise HTTPException(status_code=400, detail="Unsupported rule status")
+    keywords = clean_keywords(payload.trigger_keywords)
+    normalized = normalized_keywords(keywords)
+    if not normalized:
+        raise HTTPException(status_code=400, detail="At least one trigger keyword is required")
+    if not payload.private_reply_message.strip():
+        raise HTTPException(status_code=400, detail="Private reply message is required")
+
+    account = get_active_instagram_account(db, store.id)
+    if status == "active" and (account is None or account.publish_mode == "reminder" or account.status != "connected" or not account.access_token):
+        raise HTTPException(status_code=400, detail="Active automation requires an Instagram professional account")
+
+    rule.campaign_id = payload.campaign_id
+    rule.post_id = payload.post_id
+    rule.name = payload.name.strip() or f"Instagram trigger: {keywords[0]}"
+    rule.status = status
+    rule.trigger_type = trigger_type
+    rule.trigger_keywords = json.dumps(keywords, ensure_ascii=False)
+    rule.normalized_keywords = json.dumps(normalized, ensure_ascii=False)
+    rule.private_reply_message = payload.private_reply_message.strip()
+    rule.public_reply_enabled = payload.public_reply_enabled
+    rule.public_reply_message = payload.public_reply_message.strip()
+    rule.match_limit_per_hour = max(1, min(payload.match_limit_per_hour, 750))
+    rule.match_limit_total = max(0, payload.match_limit_total)
+    rule.starts_at = payload.starts_at
+    rule.ends_at = payload.ends_at
+    rule.is_template = payload.is_template
+    rule.on_customer_reply = payload.on_customer_reply.strip().lower() or "hand_off"
+    rule.waiting_reply_message = payload.waiting_reply_message.strip() if payload.waiting_reply_message else None
+    rule.updated_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(rule)
+    return automation_rule_response(rule)
+
+
+@router.delete("/automation/rules/{rule_id}")
+def delete_automation_rule(
+    rule_id: int,
+    store: Store = Depends(get_active_store),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    rule = db.scalar(select(InstagramAutomationRule).where(
+        InstagramAutomationRule.id == rule_id,
+        InstagramAutomationRule.store_id == store.id
+    ))
+    if rule is None:
+        raise HTTPException(status_code=404, detail="Automation rule not found")
+    
+    db.delete(rule)
+    db.commit()
+    return {"ok": True, "message": "Automation rule deleted successfully"}
 
 
 @router.post("/automation/rules/{rule_id}/test", response_model=InstagramAutomationRuleTestResponse)

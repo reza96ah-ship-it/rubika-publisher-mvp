@@ -60,3 +60,11 @@ def publish_due_posts(limit: int = 10) -> dict:
 def process_instagram_automation_event(event_id: int) -> dict:
     with SessionLocal() as db:
         return process_instagram_automation_event_service(db, event_id)
+
+
+@celery_app.task(name="instagram.send_direct_message")
+def send_instagram_direct_message(page_id: str, access_token: str, recipient_id: str, text: str) -> dict:
+    from app.services.instagram_client import InstagramGraphClient
+    client = InstagramGraphClient()
+    result = client.send_direct_message(page_id, access_token, recipient_id, text)
+    return {"ok": result.ok, "message_id": result.message_id, "error": result.error}

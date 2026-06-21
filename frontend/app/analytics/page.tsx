@@ -2,6 +2,7 @@
 
 import { Activity, AlertTriangle, ArrowDownUp, ArrowUpLeft, CalendarClock, CheckCircle2, Clock3, FileImage, ImageIcon, Layers3, LineChart, MessageSquareText, Search, ShieldCheck, Sparkles, Target, TrendingDown, TrendingUp, X, Zap } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { WorkspaceAvatar } from "../../components/brand-mark";
@@ -528,6 +529,17 @@ export default function AnalyticsPage() {
     <AuthGate>
       <AppShell>
         <NPage className="analytics-pro-page pb-6">
+          <nav className="flex items-center gap-1 rounded-lg border border-app-border bg-app-surface/70 px-1.5 py-1.5 shadow-hairline backdrop-blur-sm" aria-label="زیرمنوی گزارش‌ها">
+            <Link href="/analytics" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-black bg-white text-app-primary shadow-hairline border border-app-border/80 transition">
+              <Activity className="h-3.5 w-3.5" aria-hidden="true" />
+              تحلیل عملکرد
+            </Link>
+            <Link href="/logs" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-bold text-app-muted hover:bg-white hover:text-app-text hover:shadow-hairline transition">
+              <FileImage className="h-3.5 w-3.5" aria-hidden="true" />
+              سابقه انتشار
+            </Link>
+          </nav>
+
           <NPageHeader
             eyebrow="مرکز تحلیل چندکاناله"
             title="تحلیل عملکرد"

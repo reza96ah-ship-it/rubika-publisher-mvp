@@ -1,7 +1,8 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Clock3, FileUp, ListChecks, MessageSquareText, RefreshCw, RotateCcw, Search, UploadCloud } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, Clock3, FileUp, ListChecks, MessageSquareText, RefreshCw, RotateCcw, Search, UploadCloud } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ChannelBadges } from "../../components/channel-badges";
@@ -328,6 +329,17 @@ export default function LogsPage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage>
+          <nav className="flex items-center gap-1 rounded-lg border border-app-border bg-app-surface/70 px-1.5 py-1.5 shadow-hairline backdrop-blur-sm" aria-label="زیرمنوی گزارش‌ها">
+            <Link href="/analytics" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-bold text-app-muted hover:bg-white hover:text-app-text hover:shadow-hairline transition">
+              <Activity className="h-3.5 w-3.5" aria-hidden="true" />
+              تحلیل عملکرد
+            </Link>
+            <Link href="/logs" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-black bg-white text-app-primary shadow-hairline border border-app-border/80 transition">
+              <UploadCloud className="h-3.5 w-3.5" aria-hidden="true" />
+              سابقه انتشار
+            </Link>
+          </nav>
+
           <section className="app-studio-panel rounded-lg px-4 py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
@@ -344,7 +356,6 @@ export default function LogsPage() {
                   <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
                   به‌روزرسانی
                 </Button>
-                <Button href="/queue" variant="secondary" size="sm">بازگشت به صف</Button>
               </div>
             </div>
           </section>

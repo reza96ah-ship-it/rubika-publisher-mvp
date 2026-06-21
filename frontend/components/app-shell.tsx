@@ -1,4 +1,4 @@
-﻿"use client";import {
+"use client";import {
   AlertCircle,
   BellRing,
   ChevronDown,
@@ -175,7 +175,7 @@ import { productName } from "../lib/product";export function AppShell({ children
                 <Link href="/" className="lg:hidden" aria-label={productName}>
                   <ProductMark />
                 </Link>
-                <span className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border border-app-border bg-app-surface text-app-primary shadow-hairline lg:flex" style={brandColor ? { color: brandColor } : undefined}>       
+                <span className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-app-border bg-app-surface text-app-primary shadow-hairline lg:flex" style={brandColor ? { color: brandColor } : undefined}>       
                   <ActiveNavIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
@@ -192,7 +192,7 @@ import { productName } from "../lib/product";export function AppShell({ children
                 <button
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
-                  className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-md border border-app-border bg-app-surface/90 px-3 text-xs text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary md:flex md:w-56 xl:w-72"
+                  className="app-interactive hidden h-9 min-w-0 items-center gap-2 rounded-lg border border-app-border bg-app-surface/90 px-3 text-xs text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary md:flex md:w-56 xl:w-72"
                   aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -203,7 +203,7 @@ import { productName } from "../lib/product";export function AppShell({ children
                 <button
                   type="button"
                   onClick={() => setCommandPaletteOpen(true)}
-                  className="app-interactive flex h-9 w-9 items-center justify-center rounded-md border border-app-border bg-app-surface/90 text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary md:hidden"
+                  className="app-interactive flex h-9 w-9 items-center justify-center rounded-lg border border-app-border bg-app-surface/90 text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary md:hidden"
                   aria-label="باز کردن جست‌وجو و دسترسی سریع"
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
@@ -212,7 +212,7 @@ import { productName } from "../lib/product";export function AppShell({ children
                 {showAttentionAction ? (
                   <Link
                     href={attentionHref}
-                    className="app-interactive hidden h-9 items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 text-xs font-bold text-amber-800 shadow-hairline hover:bg-amber-100 lg:flex"
+                    className="app-interactive hidden h-9 items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-xs font-bold text-amber-800 shadow-hairline hover:bg-amber-100 lg:flex"
                   >
                     {!rubikaReady && storeReady ? <Network className="h-3.5 w-3.5" aria-hidden="true" /> : <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />}
                     {attentionLabel}
@@ -221,7 +221,7 @@ import { productName } from "../lib/product";export function AppShell({ children
 
                 <Link
                   href="/inbox"
-                  className="app-interactive relative flex h-9 w-9 items-center justify-center rounded-md border border-app-border bg-app-surface/90 text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-coral"
+                  className="app-interactive relative flex h-9 w-9 items-center justify-center rounded-lg border border-app-border bg-app-surface/90 text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-coral"
                   aria-label={notificationCount ? `${notificationCount} اعلان عملیاتی خوانده‌نشده` : "صندوق عملیات انتشار"}
                 >
                   <BellRing className="h-4 w-4" aria-hidden="true" />
@@ -237,7 +237,7 @@ import { productName } from "../lib/product";export function AppShell({ children
                   <button
                     type="button"
                     onClick={() => setAccountMenuOpen((current) => !current)}
-                    className="app-interactive flex h-9 items-center gap-2 rounded-md border border-app-border bg-app-surface/90 px-2 text-xs font-bold text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary"
+                    className="app-interactive flex h-9 items-center gap-2 rounded-lg border border-app-border bg-app-surface/90 px-2 text-xs font-bold text-app-muted shadow-hairline hover:bg-app-surface hover:text-app-primary"
                     aria-label="منوی حساب کاربری"
                     aria-expanded={accountMenuOpen}
                   >

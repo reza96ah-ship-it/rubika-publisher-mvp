@@ -1,9 +1,9 @@
 # Instagram Comment-to-DM Automation PRD
 
-Last updated: 2026-06-18  
+Last updated: 2026-06-21  
 Feature name: Instagram Comment-to-DM Automation  
 Persian product label: تعامل خودکار اینستاگرام  
-Status: proposed P0 feature  
+Status: In Progress (Foundations Complete)  
 Parent roadmap: [Nahrino 2026 Master PRD, RFP, Roadmap, Phases, and Backlog](NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md)
 
 ## 1. Summary
@@ -128,15 +128,15 @@ Wants: "See which DMs were automated and take over if the user replies."
 - Campaign posts.
 - All future posts from a channel, later.
 
-### Trigger Matching
+### Trigger Matching & Suggestions
 
 - Exact match: `5`.
 - Contains: comment includes `قیمت`.
 - Multiple keywords: `قیمت`, `price`, `۵`.
 - Persian/Arabic digit normalization: `5`, `۵`, `٥`.
-- Trim spaces.
-- Case-insensitive Latin matching.
-- Optional emoji-insensitive matching later.
+- Trim spaces and case-insensitive Latin matching.
+- **Caption-Based Suggestions:** When composing a post, the system automatically parses the caption text for common Persian call-to-action phrases (e.g. `عدد 5 را کامنت کنید`, `بنویسید قیمت`, `کامنت کاتالوگ`) and suggests relevant trigger keywords (`5`, `قیمت`, `کاتالوگ`) to the user.
+- **Template Library:** Users can save rules to a "Template Library" (کتابخانه الگوها) to easily load pre-configured trigger-and-reply combinations in the Composer without rewriting them.
 
 ### Actions
 
@@ -146,14 +146,21 @@ Wants: "See which DMs were automated and take over if the user replies."
 - Add tag to automation event.
 - Notify Inbox on failure or high-value match.
 
+### Customer Reply & Operator Hand-off (loops prevention)
+
+- **Operator Takeover Flag:** If a customer replies to the automated private message (DM) in direct, the thread is flagged as `در انتظار پاسخ اپراتور` (Waiting for operator response).
+- **Automation Pausing:** The system temporarily pauses automated matching or messages for this user/comment thread to avoid infinite auto-reply loops.
+- **Waiting Response Options:** The user can configure what happens when a customer replies:
+  1. *Silence / Hand-off:* Do not send anything, just flag the thread and wait for the operator.
+  2. *Auto-Response:* Send a custom "waiting message" (e.g., "پیام شما دریافت شد؛ به زودی اپراتور به شما پاسخ خواهد داد.") and then freeze automation for the thread.
+
 ### Guardrails
 
 - Rule must be paused by default until Instagram capability is verified.
 - Rule must show estimated risk if message looks spammy.
 - Rule must prevent duplicate private reply to the same comment.
 - Rule must enforce one active rule per exact same post+trigger unless explicitly ordered.
-- Rule must include pause/resume.
-- Rule must include test mode.
+- Rule must include pause/resume and test mode.
 
 ## 9. Data Model Proposal
 
@@ -173,6 +180,9 @@ Wants: "See which DMs were automated and take over if the user replies."
 - `private_reply_message`
 - `public_reply_enabled`
 - `public_reply_message`
+- `is_template` boolean (default false, to indicate if stored in the rule/message template library)
+- `on_customer_reply` string (default `hand_off`, can be `hand_off` or `send_waiting_message`)
+- `waiting_reply_message` text (nullable, custom reply sent to customer before operator takes over)
 - `match_limit_per_hour`
 - `match_limit_total`
 - `starts_at`
@@ -195,6 +205,8 @@ Wants: "See which DMs were automated and take over if the user replies."
 - `comment_text`
 - `normalized_comment_text`
 - `event_status`: received, matched, queued, sent, skipped, failed, manual_required
+- `conversation_status` string (nullable, e.g. `automated`, `waiting_operator`, `responded_by_operator` to track hand-off status)
+- `automation_paused_until` datetime (nullable, timestamp indicating until when automated replies are frozen for this user/thread to prevent loops)
 - `skip_reason`
 - `failure_reason`
 - `private_reply_message_id` nullable
@@ -293,11 +305,11 @@ This prevents duplicate replies if Meta retries a webhook or the worker retries 
 
 Add compact section in publish inspector:
 
-- `تعامل خودکار اینستاگرام`
-- Active/inactive status.
-- Trigger summary: `وقتی کامنت شامل 5 بود`
-- Message summary.
-- Button: `افزودن قانون`
+- **Toggle Option:** `فعال‌سازی پاسخ خودکار کامنت` (Enable auto comment reply).
+- **Caption Suggestions:** Real-time analysis of caption text. If it detects key strings (e.g. `عدد 5 را کامنت کنید` or `قیمت`), shows a banner: `💡 پیشنهاد کلیدواژه: ۵` or `💡 پیشنهاد کلیدواژه: قیمت`. Clicking it auto-fills the trigger field.
+- **Template Library Selector:** Button `📋 انتخاب از کتابخانه` to view pre-saved rule templates, allowing operators to choose standard replies instantly.
+- **Rule Fields:** Keyword trigger, private DM message, and optional public comment reply.
+- Once scheduled or published, the system automatically hooks this post ID to the rule.
 
 ### Campaigns
 
@@ -318,6 +330,9 @@ Add filters:
 - Automation matched.
 - Automation failed.
 - Manual required.
+- **Takeover Status Indicator:** Show badge `در انتظار پاسخ اپراتور` (Waiting for operator response) on threads where the customer replied.
+- **Control Banner:** Display a alert box: `اتوماسیون برای این گفتگو متوقف شده است` (Automation paused for this thread) with a button `🔄 فعال‌سازی مجدد اتوماسیون` (Resume automation) to allow clearing the hand-off flag and resuming auto-replies.
+- Show automated messages with a `🤖 ارسال خودکار` tag in the message history.
 
 ### Reports
 
@@ -384,51 +399,58 @@ MVP is accepted when:
 
 ## 16. Phase Plan
 
-### IG-A1: Product and Data Foundation
+### IG-A1: Product and Data Foundation (✅ COMPLETE)
 
 - Add docs.
 - Add models/migration.
 - Add APIs for rules/events.
 - Add UI skeleton.
 
-### IG-A2: Webhook Foundation
+### IG-A2: Webhook Foundation (✅ COMPLETE)
 
 - Add Meta webhook verification endpoint.
 - Persist webhook payloads.
 - Add signature validation placeholder and production task.
 - Add comment event parser.
 
-### IG-A3: Matching Engine
+### IG-A3: Matching Engine (✅ COMPLETE)
 
-- Normalize Persian/Arabic digits.
+- Normalize Persian/Arabic digits (e.g. `۵` or `٥` to `5`).
 - Match exact/contains/code triggers.
 - Create automation event records.
 - Add test endpoint.
 
-### IG-A4: Private Reply Sender
+### IG-A4: Private Reply Sender (✅ COMPLETE)
 
-- Implement API client for private replies.
+- Implement API client for private replies (`send_private_reply` via Meta Messaging API).
 - Add rate-limit bookkeeping.
-- Enforce idempotency.
+- Enforce idempotency (prevent duplicate replies to same comment).
 - Add worker retries.
 
-### IG-A5: Inbox and Reports
+### IG-A5: Inbox and Reports (🚧 IN PROGRESS)
 
-- Show automation events in Inbox.
+- Show automation events in Inbox (in progress).
 - Add automation report cards.
 - Add campaign automation summary.
+- **New Task**: Integrate comment automation setup directly inside Composer Pro so rules can be attached to posts during creation.
 
-### IG-A6: Meta App Review Readiness
+### IG-A6: Meta App Review Readiness (🚧 NOT STARTED)
 
 - Document permission use.
 - Add demo mode.
 - Add compliance screens.
 - Add logs and export for review.
 
-## 17. Open Questions
+## 17. Open Questions & Resolutions
 
-- Which Meta app and Business Manager will own the production OAuth app?
-- Which Instagram account type will be used for first live testing?
-- Should automation be allowed only after a post is published, or can it be scheduled with the post?
-- Should public reply be enabled in MVP or delayed until private replies are stable?
-- Should contacts/leads be part of MVP or Phase 2?
+- **Which Meta app and Business Manager will own the production OAuth app?**
+  - *Resolution:* To be determined by the client during staging/production deployment. Dev keys are currently used in the local environment.
+- **Which Instagram account type will be used for first live testing?**
+  - *Resolution:* Instagram Professional Creator or Business accounts (personal accounts are restricted to manual reminder mode).
+- **Should automation be allowed only after a post is published, or can it be scheduled with the post?**
+  - *Resolution:* Yes, it must be scheduled *with* the post. The Composer UI must have an expandable panel letting users configure keyword triggers (e.g. "5") and the DM reply text at the time of composing. When published, the system binds the media ID to this rule automatically.
+- **Should public reply be enabled in MVP or delayed until private replies are stable?**
+  - *Resolution:* It is already fully supported in the backend client (`send_public_comment_reply`) and database model. It should be presented as an optional checkbox in the user interface (both on the Instagram Automation tab and inside Composer).
+- **Should contacts/leads be part of MVP or Phase 2?**
+  - *Resolution:* Leads data model is ready, but CRM integration and lead scoring are deferred to Phase 2.
+

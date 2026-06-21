@@ -166,6 +166,35 @@ class InstagramGraphClient:
         except httpx.HTTPError as exc:
             return InstagramSendResult(ok=False, error=str(exc))
 
+    def send_direct_message(self, page_id: str, access_token: str, recipient_id: str, text: str) -> InstagramSendResult:
+        if not page_id:
+            return InstagramSendResult(ok=False, error="Facebook Page ID is required for Instagram direct messages")
+        if not access_token:
+            return InstagramSendResult(ok=False, error="Meta access token is required for Instagram direct messages")
+        if not recipient_id:
+            return InstagramSendResult(ok=False, error="Recipient ID is required for direct messages")
+        if not text.strip():
+            return InstagramSendResult(ok=False, error="Direct message text is empty")
+
+        url = f"{self.graph_base_url}/{self.api_version}/{page_id}/messages"
+        payload = {
+            "recipient": {"id": recipient_id},
+            "message": {"text": text.strip()},
+        }
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                response = client.post(url, json=payload, params={"access_token": access_token})
+                data = response.json() if response.content else {}
+                if response.is_error:
+                    error = data.get("error", {}).get("message") if isinstance(data, dict) else ""
+                    return InstagramSendResult(ok=False, error=error or response.text or "Meta direct message failed", raw=data)
+                message_id = ""
+                if isinstance(data, dict):
+                    message_id = str(data.get("message_id") or data.get("recipient_id") or data.get("id") or "")
+                return InstagramSendResult(ok=True, message_id=message_id, raw=data if isinstance(data, dict) else {})
+        except httpx.HTTPError as exc:
+            return InstagramSendResult(ok=False, error=str(exc))
+
     def send_public_comment_reply(self, access_token: str, comment_id: str, text: str) -> InstagramSendResult:
         if not access_token:
             return InstagramSendResult(ok=False, error="Meta access token is required for public comment replies")

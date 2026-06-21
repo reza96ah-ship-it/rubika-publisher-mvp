@@ -1,7 +1,8 @@
 "use client";
 
-import { AlertTriangle, CalendarClock, CheckCircle2, Clipboard, ExternalLink, ImageIcon, ListChecks, RefreshCw, RotateCcw, TimerReset, XCircle } from "lucide-react";
+import { AlertTriangle, CalendarClock, CalendarDays, CheckCircle2, Clipboard, ExternalLink, ImageIcon, ListChecks, RefreshCw, RotateCcw, TimerReset, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ApprovalBadge } from "../../components/approval-badge";
@@ -384,6 +385,17 @@ export default function QueuePage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-4">
+          <nav className="flex items-center gap-1 rounded-lg border border-app-border bg-app-surface/70 px-1.5 py-1.5 shadow-hairline backdrop-blur-sm" aria-label="زیرمنوی برنامه‌ریز">
+            <Link href="/calendar" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-bold text-app-muted hover:bg-white hover:text-app-text hover:shadow-hairline transition">
+              <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
+              تقویم انتشار
+            </Link>
+            <Link href="/queue" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-black bg-white text-app-primary shadow-hairline border border-app-border/80 transition">
+              <ListChecks className="h-3.5 w-3.5" aria-hidden="true" />
+              صف انتشار
+            </Link>
+          </nav>
+
           <PublishingWorkspaceHeader
             activeTab="queue"
             title="صف انتشار"

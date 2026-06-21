@@ -124,3 +124,92 @@ def test_instagram_automation_processes_private_reply_when_dispatch_enabled(monk
         assert stored is not None
         assert stored.event_status == "sent"
         assert stored.private_reply_message_id == "dm-1"
+
+
+def test_instagram_automation_messaging_takeover(monkeypatch) -> None:
+    session_factory = make_session()
+    now = datetime.utcnow()
+    calls = []
+    
+    class FakeInstagramClient:
+        def send_direct_message(self, page_id: str, access_token: str, recipient_id: str, text: str) -> InstagramSendResult:
+            calls.append((page_id, access_token, recipient_id, text))
+            return InstagramSendResult(ok=True, message_id="dm-waiting-response")
+            
+    with session_factory() as db:
+        account, rule = create_connected_account_with_rule(db, now)
+        rule.on_customer_reply = "send_waiting_message"
+        rule.waiting_reply_message = "Please wait for our operator."
+        db.commit()
+        
+        event = InstagramAutomationEvent(
+            store_id=account.store_id,
+            instagram_account_id=account.id,
+            rule_id=rule.id,
+            ig_media_id="media-1",
+            ig_comment_id="comment-1",
+            commenter_username="buyer",
+            commenter_ig_scoped_id="scoped-buyer",
+            comment_text="5",
+            normalized_comment_text="5",
+            event_status="sent",
+            private_reply_message_id="dm-1",
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(event)
+        db.commit()
+        
+        payload = {
+            "entry": [
+                {
+                    "id": "page-1",
+                    "messaging": [
+                        {
+                            "sender": {"id": "scoped-buyer"},
+                            "recipient": {"id": "page-1"},
+                            "timestamp": 123456789,
+                            "message": {
+                                "mid": "msg-reply",
+                                "text": "How much?",
+                                "reply_to": {
+                                    "mid": "dm-1"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+        
+        class FakeDelay:
+            @staticmethod
+            def delay(page_id, access_token, sender_id, message_text):
+                client = FakeInstagramClient()
+                client.send_direct_message(page_id, access_token, sender_id, message_text)
+                
+        monkeypatch.setattr("app.worker.send_instagram_direct_message", FakeDelay)
+        
+        from app.services.instagram_automation import process_messaging_reply
+        updated = process_messaging_reply(db, payload)
+        
+        db.refresh(event)
+        
+        assert updated == 1
+        assert event.conversation_status == "waiting_operator"
+        assert event.automation_paused_until is not None
+        assert event.automation_paused_until > now
+        assert calls == [("page-1", "token-1", "scoped-buyer", "Please wait for our operator.")]
+        
+        from app.services.instagram_automation import active_rules_for_event, InstagramCommentEvent
+        comment_event = InstagramCommentEvent(
+            account_ref="page-1",
+            ig_media_id="media-1",
+            ig_comment_id="comment-2",
+            commenter_username="buyer",
+            commenter_ig_scoped_id="scoped-buyer",
+            comment_text="5",
+            raw={}
+        )
+        eligible_rules = active_rules_for_event(db, account, comment_event, now)
+        assert len(eligible_rules) == 0

@@ -26,6 +26,7 @@ class InstagramCommentEvent:
     ig_media_id: str
     ig_comment_id: str
     commenter_username: str
+    commenter_ig_scoped_id: str
     comment_text: str
     raw: dict[str, Any]
 
@@ -115,7 +116,8 @@ def extract_comment_from_change(entry_id: str, change: dict[str, Any]) -> Instag
     media_id = find_nested_text(value, ("media_id", "ig_media_id", "post_id")) or find_nested_text(media, ("id", "media_id"))
     text = find_nested_text(value, ("text", "message", "body", "comment_text"))
     from_data = value.get("from") if isinstance(value.get("from"), dict) else {}
-    username = find_nested_text(from_data, ("username", "name", "id")) or find_nested_text(value, ("username", "commenter_username", "user_id"))
+    username = find_nested_text(from_data, ("username", "name")) or find_nested_text(value, ("username", "commenter_username"))
+    user_id = find_nested_text(from_data, ("id",)) or find_nested_text(value, ("user_id",))
     account_ref = find_nested_text(value, ("recipient_id", "account_id", "ig_user_id", "page_id")) or entry_id
 
     if not comment_id or not text:
@@ -124,7 +126,8 @@ def extract_comment_from_change(entry_id: str, change: dict[str, Any]) -> Instag
         account_ref=account_ref,
         ig_media_id=media_id,
         ig_comment_id=comment_id,
-        commenter_username=username,
+        commenter_username=username or user_id or "unknown",
+        commenter_ig_scoped_id=user_id or "",
         comment_text=text,
         raw=change,
     )
@@ -139,7 +142,8 @@ def extract_comment_from_messaging(entry_id: str, messaging: dict[str, Any]) -> 
     sender = messaging.get("sender") if isinstance(messaging.get("sender"), dict) else {}
     recipient = messaging.get("recipient") if isinstance(messaging.get("recipient"), dict) else {}
     account_ref = find_nested_text(recipient, ("id",)) or entry_id
-    username = find_nested_text(sender, ("username", "id"))
+    user_id = find_nested_text(sender, ("id",))
+    username = find_nested_text(sender, ("username",))
 
     if not comment_id or not text:
         return None
@@ -147,7 +151,8 @@ def extract_comment_from_messaging(entry_id: str, messaging: dict[str, Any]) -> 
         account_ref=account_ref,
         ig_media_id=find_nested_text(referral, ("post_id", "media_id")),
         ig_comment_id=comment_id,
-        commenter_username=username,
+        commenter_username=username or user_id or "unknown",
+        commenter_ig_scoped_id=user_id or "",
         comment_text=text,
         raw=messaging,
     )
@@ -173,6 +178,22 @@ def extract_instagram_comment_events(payload: dict[str, Any]) -> list[InstagramC
 
 
 def active_rules_for_event(db: Session, account: InstagramAccount, event: InstagramCommentEvent, now: datetime) -> list[InstagramAutomationRule]:
+    # Check if commenter has automation paused to prevent infinite loop / operator takeover
+    if event.commenter_ig_scoped_id or event.commenter_username:
+        paused = db.scalar(
+            select(InstagramAutomationEvent.id)
+            .where(
+                InstagramAutomationEvent.store_id == account.store_id,
+                (InstagramAutomationEvent.commenter_ig_scoped_id == event.commenter_ig_scoped_id) |
+                (InstagramAutomationEvent.commenter_username == event.commenter_username),
+                InstagramAutomationEvent.automation_paused_until > now
+            )
+            .limit(1)
+        )
+        if paused:
+            # Commenter has paused automation, return no rules
+            return []
+
     rules = db.scalars(
         select(InstagramAutomationRule)
         .where(
@@ -268,6 +289,7 @@ def ingest_instagram_comment_events(db: Session, events: list[InstagramCommentEv
             ig_media_id=event.ig_media_id,
             ig_comment_id=event.ig_comment_id,
             commenter_username=event.commenter_username,
+            commenter_ig_scoped_id=event.commenter_ig_scoped_id,
             comment_text=event.comment_text,
             normalized_comment_text=normalized_comment,
             event_status="no_match",
@@ -311,7 +333,101 @@ def ingest_instagram_comment_events(db: Session, events: list[InstagramCommentEv
     )
 
 
+def process_messaging_reply(db: Session, payload: dict[str, Any]) -> int:
+    """
+    Parses direct messaging events to check if a customer replied to an automated DM.
+    If so, flags the thread as waiting for operator, pauses automation, and optionally
+    sends a waiting message or triggers a notification.
+    Returns the number of threads/events updated.
+    """
+    now = datetime.utcnow()
+    updated_count = 0
+    
+    for entry in payload.get("entry", []):
+        if not isinstance(entry, dict):
+            continue
+        page_id = str(entry.get("id") or "")
+        for messaging in entry.get("messaging", []):
+            if not isinstance(messaging, dict):
+                continue
+            
+            message = messaging.get("message")
+            if not isinstance(message, dict):
+                continue
+            
+            # Check if this message was sent by a customer (sender.id != page_id)
+            sender = messaging.get("sender") or {}
+            sender_id = str(sender.get("id") or "")
+            if not sender_id or sender_id == page_id:
+                continue
+                
+            text = message.get("text") or ""
+            reply_to = message.get("reply_to") or {}
+            reply_to_mid = str(reply_to.get("mid") or "")
+            
+            # Find a matching automation event. 
+            event = None
+            if reply_to_mid:
+                event = db.scalar(
+                    select(InstagramAutomationEvent)
+                    .where(
+                        InstagramAutomationEvent.private_reply_message_id == reply_to_mid,
+                        InstagramAutomationEvent.event_status == "sent"
+                    )
+                )
+            
+            if event is None and sender_id:
+                # fallback: find the most recent sent event for this commenter scoping id or username
+                event = db.scalar(
+                    select(InstagramAutomationEvent)
+                    .where(
+                        (InstagramAutomationEvent.commenter_ig_scoped_id == sender_id) | 
+                        (InstagramAutomationEvent.commenter_username == sender_id),
+                        InstagramAutomationEvent.event_status == "sent",
+                        InstagramAutomationEvent.created_at >= now - timedelta(hours=24)
+                    )
+                    .order_by(InstagramAutomationEvent.created_at.desc())
+                )
+                
+            if event is not None:
+                if event.conversation_status != "waiting_operator":
+                    event.conversation_status = "waiting_operator"
+                    event.automation_paused_until = now + timedelta(days=7)
+                    event.updated_at = now
+                    
+                    if not event.commenter_ig_scoped_id:
+                        event.commenter_ig_scoped_id = sender_id
+                        
+                    db.flush()
+                    
+                    # Trigger an operational notification dynamically (handled in routes/notifications.py)
+                    # We just save the event status and update the comment text to log the reply
+                    event.comment_text = text if text else event.comment_text
+                        
+                    # Check if the rule has a waiting reply message configured
+                    rule = db.get(InstagramAutomationRule, event.rule_id) if event.rule_id else None
+                    if rule and rule.on_customer_reply == "send_waiting_message" and rule.waiting_reply_message:
+                        account = db.get(InstagramAccount, event.instagram_account_id) if event.instagram_account_id else None
+                        if account and account.access_token:
+                            from app.worker import send_instagram_direct_message
+                            send_instagram_direct_message.delay(
+                                account.page_id,
+                                account.access_token,
+                                sender_id,
+                                rule.waiting_reply_message
+                            )
+                    
+                    updated_count += 1
+                    
+    if updated_count > 0:
+        db.commit()
+    return updated_count
+
+
 def ingest_instagram_webhook_payload(db: Session, payload: dict[str, Any]) -> InstagramAutomationIngestSummary:
+    # First, process messaging replies for operator takeover
+    process_messaging_reply(db, payload)
+    # Then ingest standard comment events
     return ingest_instagram_comment_events(db, extract_instagram_comment_events(payload))
 
 
@@ -333,6 +449,7 @@ def build_simulated_comment_event(account: InstagramAccount, comment_text: str, 
         ig_media_id=media_id,
         ig_comment_id=comment_id,
         commenter_username=username,
+        commenter_ig_scoped_id=f"scoped-{username}",
         comment_text=comment_text,
         raw=raw,
     )

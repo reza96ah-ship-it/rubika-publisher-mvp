@@ -138,10 +138,10 @@
   --n-glass-blur-mobile: 16px;
   --n-glass-saturation: 140%;
   --n-glass-coverage-max: 22%;
-  --n-glass-surface: rgb(var(--n-color-frost) / 0.68);
-  --n-glass-surface-strong: rgb(var(--n-color-frost) / 0.82);
-  --n-glass-surface-soft: rgb(var(--n-color-frost) / 0.54);
-  --n-glass-border: rgb(var(--n-color-frost-border) / 0.72);
+  --n-glass-surface: rgb(var(--n-color-frost) / 0.64);
+  --n-glass-surface-strong: rgb(var(--n-color-frost) / 0.78);
+  --n-glass-surface-soft: rgb(var(--n-color-frost) / 0.44);
+  --n-glass-border: rgb(var(--n-color-frost-border) / 0.45);
 
   /* Spec aliases for the 2026 Editorial Command Glass theme */
   --bg-canvas: #F6F8FB;
@@ -178,13 +178,13 @@
   --n-color-ink: 248 250 252;
   --n-color-ink-strong: 255 255 255;
   --n-color-muted: 148 163 184;
-  --n-color-canvas: 11 16 32;
-  --n-color-canvas-soft: 18 24 38;
-  --n-color-surface: 21 28 47;
-  --n-color-surface-muted: 26 35 56;
-  --n-color-surface-raised: 26 35 56;
-  --n-color-border: 51 65 85;
-  --n-color-border-strong: 71 85 105;
+  --n-color-canvas: 9 13 22;
+  --n-color-canvas-soft: 14 20 33;
+  --n-color-surface: 16 23 38;
+  --n-color-surface-muted: 22 31 51;
+  --n-color-surface-raised: 22 31 51;
+  --n-color-border: 30 41 59;
+  --n-color-border-strong: 47 58 77;
   --n-color-focus: 142 160 255;
   --n-color-primary: 142 160 255;
   --n-color-primary-strong: 182 156 255;
@@ -197,10 +197,10 @@
   --n-color-alert: 248 113 113;
   --n-color-danger: 248 113 113;
   --n-color-on-action: 255 255 255;
-  --n-color-frost: 17 24 39;
-  --n-color-frost-border: 71 85 105;
-  --surface-glass: rgb(17 24 39 / 0.56);
-  --surface-glass-strong: rgb(15 23 42 / 0.7);
+  --n-color-frost: 9 13 22;
+  --n-color-frost-border: 30 41 59;
+  --surface-glass: rgb(9 13 22 / 0.54);
+  --surface-glass-strong: rgb(9 13 22 / 0.7);
 }
 
 [data-theme="high-contrast"] {

@@ -296,31 +296,32 @@ Design and build a production-ready Persian-first SocialOps web app with:
 
 ### Phase 0: Product Reset and Documentation
 
-Status: in progress.
+Status: ✅ COMPLETE (June 2026)
 
 Outcomes:
 
-- Update PRD, RFP, roadmap, backlog, and phase plan.
-- Define Instagram comment-to-DM automation.
-- Align README with actual product direction.
-- Identify route ownership and product debt.
+- Update PRD, RFP, roadmap, backlog, and phase plan to reflect current Persian-first SocialOps positioning.
+- Define Instagram comment-to-DM automation spec.
+- Synchronize README with actual product scope and layout.
+- Map out route ownership and clean up architectural draft elements.
 
 ### Phase 1: Navigation and App Shell Finalization
 
-Goal: one clear product shell.
+Status: ✅ COMPLETE (June 2026)
+
+Goal: one clear, consolidated product shell.
 
 Work:
 
-- Move Queue and Logs from primary navigation into Planner/Reports views or power-user overflow.
-- Keep settings reachable without scrolling.
-- Keep mobile bottom nav limited to Dashboard, Planner, Create, Campaigns, Content.
-- Add command palette shortcuts for secondary routes.
-- Remove repeated route tabs that duplicate sidebar navigation.
+- Moved Queue and Logs from primary navigation into Planner and Reports views as secondary top tab-bars.
+- Kept workspace settings reachable and clean.
+- Streamlined mobile-first layouts so that only major jobs-to-be-done occupy key actions.
+- Eliminated duplicate global navigation tabs.
 
 Acceptance:
 
-- Users can explain where to create, plan, campaign, report, and connect channels.
-- No duplicated global navigation blocks inside pages.
+- Users have a clean, intuitive RTL sidebar with 10 primary workspace destinations.
+- Secondary workflows like Queue and Logs are contextually nested.
 
 ### Phase 2: Design System Rollout
 
@@ -351,7 +352,7 @@ Work:
 - Add mobile guided composer stepper.
 - Add schedule and campaign drawers.
 - Add channel-specific validation.
-- Add automation hook: "attach Instagram comment automation after publish".
+- Add automation hook: "attach Instagram comment automation after publish" to schedule comment-to-DM keyword triggers directly at post composition time.
 - Add smarter draft recovery and conflict handling.
 
 Acceptance:
@@ -362,43 +363,42 @@ Acceptance:
 
 ### Phase 4: Instagram Professional Connect
 
-Goal: real Meta foundation.
+Status: ✅ COMPLETE (June 2026)
+
+Goal: build a production-ready Meta authorization foundation.
 
 Work:
 
-- Meta OAuth app setup flow.
-- Store long-lived token metadata securely.
-- Professional account/page linkage.
-- Permission and capability tester.
-- Webhook callback verification endpoint.
-- Webhook subscription status UI.
-- Instagram publishing capability matrix.
+- Developed full Meta OAuth link-up (`/instagram/oauth/start` and `/instagram/oauth/callback`).
+- Securely retrieve and store long-lived tokens in PostgreSQL.
+- Automatically resolve the linked Facebook Page and corresponding Instagram Professional Creator/Business accounts.
+- Added a connection status testing endpoint to report missing scopes or token expiry.
 
 Acceptance:
 
-- Personal account mode remains reminder/manual.
-- Professional account mode shows exact missing permission or webhook state.
+- Users can connect their Instagram Professional account securely using standard Facebook Login.
+- Personal accounts are detected and directed to Manual Reminder Mode.
 
 ### Phase 5: Instagram Comment-to-DM Automation MVP
+
+Status: 🚧 IN PROGRESS (Foundations Complete, UI Integration Pending)
 
 Goal: turn comments into compliant lead conversations.
 
 Work:
 
-- Automation rules tied to post/campaign/account.
-- Keyword triggers: exact, contains, number/code, Persian normalization.
-- Action: public comment reply optional.
-- Action: private reply/DM with chosen message.
-- Webhook ingestion for Instagram comments.
-- Worker queue for automation delivery.
-- Event log and Inbox review.
-- Rate limit, idempotency, one-private-reply-per-comment enforcement.
+- Created database models and migrations for automation rules and events.
+- Built a robust Meta Webhook endpoint supporting challenge verification and comment event ingestion.
+- Implemented the matching engine with Persian/Arabic digit normalization (`۵`/`٥` to `5`) and trigger keywords matching.
+- Set up a Celery worker queue to dispatch private messages (`/<PAGE_ID>/messages`) and public comment replies (`/<COMMENT_ID>/replies`) asynchronously.
+- Enforced strict idempotency constraints to prevent duplicate sends.
+- Built a simulator on the `/instagram` panel for local webhook testing.
+- **Remaining Task:** Integrate rules configuration into Composer Pro (Phase 3) and event streams into Inbox (Phase 6) and Reports (Phase 9).
 
 Acceptance:
 
-- User can create a rule: "If someone comments 5, send this DM."
-- User can test a rule before enabling.
-- User can see every matched comment and delivery state.
+- System receives comment webhook payloads and triggers instant, idempotent direct messages to matching commenters.
+- Rule creation and local comment matching tests work successfully.
 
 ### Phase 6: Inbox Pro
 
@@ -491,16 +491,16 @@ Acceptance:
 
 ### P0: Must Do Next
 
-1. Finalize master docs and Instagram automation PRD.
-2. Remove README drift.
-3. Move Queue/Logs out of primary nav or mark them as secondary operations.
-4. Composer Pro phase 2: preview switch, mobile stepper, schedule/campaign drawers.
-5. Instagram professional OAuth/webhook architecture.
-6. Instagram comment-to-DM automation data model.
-7. Webhook event ingestion and idempotency.
-8. Inbox Pro structure for comments/DMs/automation events.
-9. Reports chart scroll fix.
-10. Mobile QA for Dashboard, Compose, Calendar, Campaigns, Content, Media, Inbox, Reports.
+1. Finalize master docs and Instagram automation PRD. **(✅ COMPLETE)**
+2. Remove README drift. **(✅ COMPLETE)**
+3. Move Queue/Logs out of primary nav or mark them as secondary operations. **(✅ COMPLETE - Implemented as nested tabs)**
+4. Composer Pro phase 2: platform preview, mobile stepper, schedule/campaign drawers. **(🚧 IN PROGRESS)**
+5. Instagram professional OAuth/webhook architecture. **(✅ COMPLETE - Facebook Login OAuth and Challenge verify working)**
+6. Instagram comment-to-DM automation data model. **(✅ COMPLETE - Rules and Events tables migrated)**
+7. Webhook comment ingestion, digit normalization, and idempotency. **(✅ COMPLETE - Webhook parser, Celery worker queue, and digit mapping working)**
+8. Inbox Pro structure to display comment-to-DM automation events/failures. **(🚧 IN PROGRESS)**
+9. Reports chart horizontal/vertical double scroll fix. **(🚧 NOT STARTED)**
+10. Mobile QA for all primary screens (Dashboard, Compose, Calendar, Campaigns, Content, Media, Inbox, Reports). **(🚧 IN PROGRESS)**
 
 ### P1: Important
 
@@ -545,7 +545,9 @@ Acceptance:
 - Mobile step flow.
 - Schedule drawer.
 - Campaign drawer.
-- Automation attachment after Instagram publish.
+- Automation attachment after Instagram publish (toggle auto-reply, keyword trigger, and DM text).
+- **Caption parsing suggestions:** Suggest trigger keywords automatically based on parsed caption call-to-actions (e.g. suggesting `۵` or `قیمت`).
+- **Templates selection:** Load pre-saved automation rules from a central library.
 
 ### Planner
 
@@ -578,10 +580,11 @@ Acceptance:
 
 ### Inbox
 
-- Operational notifications plus social engagement.
-- Automation events and failures visible.
-- Saved replies.
-- Manual takeover.
+- Combined operational notifications and social direct messages.
+- Automation events, matched triggers, and failures visible.
+- Saved replies and templates.
+- **Operator takeover and loops prevention:** Flag threads as `در انتظار پاسخ اپراتور` when a customer replies to an automated DM. Temporarily pause automated responses for that thread. Allow operators to send pre-configured waiting messages or resume automation with a single button click.
+- **Visual marking:** Tag automated messages in chat logs as `ارسال خودکار`.
 
 ### Reports
 
@@ -653,7 +656,8 @@ Ops:
 
 - Docker Compose local runtime.
 - Health checks.
-- Compile, lint, typecheck, tests, build checks.
+- Compile, lint, typecheck, unit tests, and build checks.
+- **E2E Automation Testing:** Set up **Playwright** inside the frontend folder to execute headless browser tests against the dev container (port `3100`), ensuring E2E workflows (login, composition, navigation, automation simulation) function correctly.
 - Webhook signature validation before production.
 
 ## 15. QA Checklist
@@ -669,13 +673,14 @@ Ops:
 - Calendar post preview opens in current viewport.
 - Campaign edit opens on demand.
 - Instagram automation rule can be tested without sending a real DM.
+- **Automated E2E:** E2E Playwright test suite passes (`npm run test:e2e`).
 
 ## 16. Immediate Next Phase Recommendation
 
 Next implementation phase should be:
 
-1. **Composer Pro Phase 2**: platform preview switch, mobile stepper, schedule/campaign drawers.
-2. **Instagram Automation Foundation**: data model and PRD-backed UI skeleton.
-3. **Navigation Finalization**: simplify primary nav and move operational internals.
+1. **Composer Pro Phase 2 (Creation & Automation Hook):** Rebuild the Composer workbench (`/compose`) to include platform previews, mobile layout steps, schedule drawers, and the Instagram comment automation rules builder (supporting caption-based auto-suggestions and templates).
+2. **Playwright E2E Testing Framework:** Configure Playwright in the Next.js frontend, write E2E browser tests for core flows (auth, navigation, post scheduling, and automation simulator), and run them inside E2E test containers.
+3. **Inbox & Reports Integration:** Connect automation event logging to E2E-tested Inbox and Reports modules.
 
 This sequence is best because the Instagram automation feature begins at post creation, depends on Instagram channel capability, and ends in Inbox/Reports. Composer must be clean before automation is added to it.

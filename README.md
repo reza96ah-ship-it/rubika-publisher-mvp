@@ -1,4 +1,4 @@
-﻿# Nahrino SocialOps Studio
+# Nahrino SocialOps Studio
 
 Persian-first, RTL-native, Jalali-native social operations platform for planning, creating, scheduling, publishing, monitoring, and reporting content across Rubika, Instagram, and future channels.
 
@@ -96,8 +96,10 @@ Operational routes such as `/queue` and `/logs` still exist, but the target prod
 
 ## Current Phase
 
-Phase 0/1 refresh: Product documentation, navigation finalization, and Composer Pro.
+Phase 5: Instagram Comment-to-DM Automation MVP (🚧 In Progress - Foundations Complete).
 
-- Latest pushed work: Composer Pro first-pass layout rebuild.
-- Current product planning focus: Instagram professional automation, especially compliant comment-to-DM workflows.
-- Next implementation sequence: Composer Pro phase 2, Instagram automation foundation, navigation finalization, Inbox Pro.
+- **Latest Completed Work:** Navigation Finalization (Phase 1), Meta OAuth & linked accounts discovery (Phase 4), and Instagram Webhook & Celery automation worker (Phase 5 - Backend logic, Persian/Arabic digit normalization, idempotency, and local test simulator).
+- **Next Steps:**
+  1. **Composer Pro Phase 2:** Integrate comment automation settings directly inside the creation workbench so rules can be configured and attached when scheduling/publishing posts.
+  2. **Instagram Publishing Adapter:** Support automatic direct publishing of scheduled media/carousels to connected professional Instagram accounts.
+  3. **Inbox & Reports Pro:** Stream automation matched events/errors to the inbox and display analytics widgets in reports.

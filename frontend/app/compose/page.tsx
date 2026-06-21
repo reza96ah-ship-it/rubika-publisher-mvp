@@ -70,6 +70,21 @@ type Post = {
   reviewed_by: string;
 };
 
+type InstagramAutomationRule = {
+  id: number;
+  name: string;
+  post_id: number | null;
+  is_template: boolean;
+  status: string;
+  trigger_keywords: string[];
+  trigger_type: string;
+  private_reply_message: string;
+  public_reply_enabled: boolean;
+  public_reply_message: string;
+  on_customer_reply: string;
+  waiting_reply_message: string | null;
+};
+
 const emptyForm = {
   title: "",
   caption: "",
@@ -117,6 +132,18 @@ function ComposePageContent() {
   const [error, setError] = useState("");
   const uploadInputRef = useRef<HTMLInputElement>(null);
 
+  // Instagram Comment Automation Rule Builder State
+  const [autoReplyEnabled, setAutoReplyEnabled] = useState(false);
+  const [automationRuleId, setAutomationRuleId] = useState<number | null>(null);
+  const [triggerKeywords, setTriggerKeywords] = useState("");
+  const [triggerType, setTriggerType] = useState("exact");
+  const [privateReplyMessage, setPrivateReplyMessage] = useState("");
+  const [publicReplyEnabled, setPublicReplyEnabled] = useState(false);
+  const [publicReplyMessage, setPublicReplyMessage] = useState("");
+  const [onCustomerReply, setOnCustomerReply] = useState("hand_off");
+  const [waitingReplyMessage, setWaitingReplyMessage] = useState("");
+  const [templates, setTemplates] = useState<InstagramAutomationRule[]>([]);
+
   const selectedMedia = useMemo(() => {
     if (!selectedMediaId) return null;
     return mediaAssets.find((asset) => String(asset.id) === selectedMediaId) ?? null;
@@ -135,6 +162,29 @@ function ComposePageContent() {
       .filter(Boolean)
       .join("\n\n");
   }, [form.caption, form.hashtags, previewImageUrl, store?.caption_footer, store?.default_cta]);
+
+  const captionSuggestions = useMemo(() => {
+    if (!form.caption) return [];
+    const suggestions: string[] = [];
+    const numberMatches = form.caption.match(/(?:عدد|کلمه)\s*([0-9\u06f0-\u06f9]+)/i);
+    if (numberMatches && numberMatches[1]) {
+      suggestions.push(numberMatches[1]);
+    }
+    if (form.caption.includes("قیمت") || form.caption.includes("price")) {
+      suggestions.push("قیمت");
+    }
+    if (form.caption.includes("کاتالوگ") || form.caption.includes("catalog")) {
+      suggestions.push("کاتالوگ");
+    }
+    if (form.caption.includes("لینک") || form.caption.includes("link")) {
+      suggestions.push("لینک");
+    }
+    const digits = form.caption.match(/\b([0-9\u06f0-\u06f9]+)\b/);
+    if (digits && digits[1] && !suggestions.includes(digits[1])) {
+      suggestions.push(digits[1]);
+    }
+    return suggestions;
+  }, [form.caption]);
 
   const captionLength = form.caption.length;
   const hashtagCount = form.hashtags.split(/\s+/).filter((item) => item.startsWith("#")).length;
@@ -311,6 +361,41 @@ function ComposePageContent() {
 
       const attachedAsset = loadedMediaAssets.find((asset) => asset.post_id === post.id);
       setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
+
+      // Load automation rules and templates
+      try {
+        const rulesResponse = await fetch(`${apiUrl}/instagram/automation/rules`, { headers });
+        if (rulesResponse.ok) {
+          const rulesData = await rulesResponse.json();
+          const loadedTemplates = rulesData.rules?.filter((r: InstagramAutomationRule) => r.is_template) ?? [];
+          setTemplates(loadedTemplates);
+          
+          const existingRule = rulesData.rules?.find((r: InstagramAutomationRule) => String(r.post_id) === editingPostId) ?? null;
+          if (existingRule) {
+            setAutoReplyEnabled(existingRule.status === "active");
+            setAutomationRuleId(existingRule.id);
+            setTriggerKeywords(existingRule.trigger_keywords.join(", "));
+            setTriggerType(existingRule.trigger_type);
+            setPrivateReplyMessage(existingRule.private_reply_message);
+            setPublicReplyEnabled(existingRule.public_reply_enabled);
+            setPublicReplyMessage(existingRule.public_reply_message);
+            setOnCustomerReply(existingRule.on_customer_reply);
+            setWaitingReplyMessage(existingRule.waiting_reply_message ?? "");
+          } else {
+            setAutoReplyEnabled(false);
+            setAutomationRuleId(null);
+            setTriggerKeywords("");
+            setTriggerType("exact");
+            setPrivateReplyMessage("");
+            setPublicReplyEnabled(false);
+            setPublicReplyMessage("");
+            setOnCustomerReply("hand_off");
+            setWaitingReplyMessage("");
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load automation rule", e);
+      }
     } else {
       const presetCampaign = presetCampaignId ? loadedCampaigns.find((campaign) => String(campaign.id) === presetCampaignId) ?? null : null;
       let restoredDraft: { form: typeof emptyForm; selectedMediaId: string; savedAt: string } | null = null;
@@ -335,6 +420,28 @@ function ComposePageContent() {
       if (restoredDraft?.savedAt) {
         setAutosaveState("restored");
         setAutosaveAt(restoredDraft.savedAt);
+      }
+
+      // Reset automation fields for new post, but load templates
+      setAutoReplyEnabled(false);
+      setAutomationRuleId(null);
+      setTriggerKeywords("");
+      setTriggerType("exact");
+      setPrivateReplyMessage("");
+      setPublicReplyEnabled(false);
+      setPublicReplyMessage("");
+      setOnCustomerReply("hand_off");
+      setWaitingReplyMessage("");
+
+      try {
+        const rulesResponse = await fetch(`${apiUrl}/instagram/automation/rules`, { headers });
+        if (rulesResponse.ok) {
+          const rulesData = await rulesResponse.json();
+          const loadedTemplates = rulesData.rules?.filter((r: InstagramAutomationRule) => r.is_template) ?? [];
+          setTemplates(loadedTemplates);
+        }
+      } catch (e) {
+        console.error("Failed to load automation templates", e);
       }
     }
 
@@ -711,6 +818,58 @@ function ComposePageContent() {
       const savedPost = (await response.json()) as Post;
 
       await syncSelectedMedia(savedPost.id);
+
+      // Link or unlink Instagram Comment Automation Rule
+      if (instagramSelected && autoReplyEnabled) {
+        const keywordsArray = triggerKeywords.split(",").map(k => k.trim()).filter(Boolean);
+        if (keywordsArray.length === 0) {
+          throw new Error("برای فعال‌سازی تعامل خودکار، حداقل یک کلیدواژه لازم است.");
+        }
+        if (!privateReplyMessage.trim()) {
+          throw new Error("برای فعال‌سازی تعامل خودکار، متن پاسخ دایرکت لازم است.");
+        }
+
+        const rulePayload = {
+          name: `تعامل خودکار پست: ${savedPost.title}`,
+          status: "active",
+          trigger_type: triggerType,
+          trigger_keywords: keywordsArray,
+          private_reply_message: privateReplyMessage,
+          public_reply_enabled: publicReplyEnabled,
+          public_reply_message: publicReplyMessage,
+          campaign_id: form.campaign_id,
+          post_id: savedPost.id,
+          match_limit_per_hour: 60,
+          match_limit_total: 0,
+          is_template: false,
+          on_customer_reply: onCustomerReply,
+          waiting_reply_message: onCustomerReply === "send_waiting_message" ? waitingReplyMessage : ""
+        };
+
+        const ruleUrl = automationRuleId
+          ? `${apiUrl}/instagram/automation/rules/${automationRuleId}`
+          : `${apiUrl}/instagram/automation/rules`;
+
+        const ruleResponse = await fetch(ruleUrl, {
+          method: automationRuleId ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token()}`
+          },
+          body: JSON.stringify(rulePayload)
+        });
+
+        if (!ruleResponse.ok) {
+          const errData = await ruleResponse.json();
+          throw new Error(errData.detail || "ذخیره قانون تعامل خودکار اینستاگرام ناموفق بود");
+        }
+      } else if (automationRuleId) {
+        const ruleUrl = `${apiUrl}/instagram/automation/rules/${automationRuleId}`;
+        await fetch(ruleUrl, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token()}` }
+        });
+      }
 
       if (action === "schedule" && form.scheduled_at) {
         await schedulePost(savedPost.id, form.scheduled_at);
@@ -1093,6 +1252,186 @@ function ComposePageContent() {
                           </div>
                         </div>
                       </section>
+
+                      {instagramSelected ? (
+                        <section className="rounded-md border border-app-border bg-white/72 p-3 shadow-hairline backdrop-blur space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-black text-app-text">تعامل خودکار اینستاگرام (کامنت به دایرکت)</p>
+                              <p className="mt-1 text-xs leading-5 text-app-muted">ارسال خودکار پیام دایرکت و پاسخ به کامنت در صورت دریافت کلمه کلیدی.</p>
+                            </div>
+                            <label className="relative inline-flex cursor-pointer items-center">
+                              <input
+                                type="checkbox"
+                                checked={autoReplyEnabled}
+                                onChange={(e) => setAutoReplyEnabled(e.target.checked)}
+                                className="peer sr-only"
+                              />
+                              <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-app-primary peer-checked:after:translate-x-full peer-focus:outline-none" />
+                            </label>
+                          </div>
+
+                          {autoReplyEnabled ? (
+                            <div className="mt-3 grid gap-3 border-t border-app-border pt-3">
+                              {templates.length > 0 ? (
+                                <div className="grid gap-2">
+                                  <label className="text-xs font-black text-app-text">انتخاب قالب آماده تعامل خودکار</label>
+                                  <select
+                                    className="app-input-style rounded-md border border-app-border bg-white px-3 py-2 text-xs"
+                                    onChange={async (e) => {
+                                      const val = e.target.value;
+                                      if (val) {
+                                        const rule = templates.find((t) => String(t.id) === val);
+                                        if (rule) {
+                                          setTriggerKeywords(rule.trigger_keywords.join(", "));
+                                          setTriggerType(rule.trigger_type);
+                                          setPrivateReplyMessage(rule.private_reply_message);
+                                          setPublicReplyEnabled(rule.public_reply_enabled);
+                                          setPublicReplyMessage(rule.public_reply_message);
+                                          setOnCustomerReply(rule.on_customer_reply);
+                                          setWaitingReplyMessage(rule.waiting_reply_message ?? "");
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    <option value="">-- انتخاب از کتابخانه الگوها --</option>
+                                    {templates.map((tpl) => (
+                                      <option key={tpl.id} value={tpl.id}>
+                                        {tpl.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              ) : null}
+
+                              <div className="grid gap-3 lg:grid-cols-2">
+                                <Field label="کلمه کلیدی (کلیدواژه‌ها با کاما جدا شوند)" required hint="مثلاً: 5, قیمت, راهنمایی">
+                                  <Input
+                                    value={triggerKeywords}
+                                    onChange={(e) => setTriggerKeywords(e.target.value)}
+                                    placeholder="۵، قیمت، تخفیف"
+                                    required
+                                  />
+                                  {captionSuggestions.length > 0 ? (
+                                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-app-muted">
+                                      <span>💡 پیشنهادها بر اساس کپشن:</span>
+                                      {captionSuggestions.map((sug) => (
+                                        <button
+                                          key={sug}
+                                          type="button"
+                                          onClick={() => {
+                                            const current = triggerKeywords.trim();
+                                            const added = current ? `${current}, ${sug}` : sug;
+                                            const unique = Array.from(new Set(added.split(",").map(k => k.trim()).filter(Boolean))).join(", ");
+                                            setTriggerKeywords(unique);
+                                          }}
+                                          className="rounded-full bg-app-soft px-2 py-0.5 text-[10px] font-bold text-app-primary hover:bg-app-primary hover:text-white transition"
+                                        >
+                                          {sug} +
+                                        </button>
+                                      ))}
+                                    </div>
+                                  ) : null}
+                                </Field>
+
+                                <Field label="نوع تطابق کلیدواژه">
+                                  <Select value={triggerType} onChange={(e) => setTriggerType(e.target.value)}>
+                                    <option value="exact">تطابق دقیق کلمه</option>
+                                    <option value="contains">شامل کلمه</option>
+                                    <option value="any_of">هر کدام از کلمات</option>
+                                  </Select>
+                                </Field>
+                              </div>
+
+                              <Field label="پیام پاسخ خودکار دایرکت (DM)" required hint="این پیام به صورت خصوصی به دایرکت کاربر فرستاده می‌شود.">
+                                <Textarea
+                                  value={privateReplyMessage}
+                                  onChange={(e) => setPrivateReplyMessage(e.target.value)}
+                                  className="min-h-16"
+                                  placeholder="سلام! لینک خرید خدمت شما: https://example.com"
+                                  required
+                                />
+                              </Field>
+
+                              <div className="rounded-md border border-app-border bg-app-surfaceMuted/50 p-2.5 space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    id="publicReplyEnabled"
+                                    checked={publicReplyEnabled}
+                                    onChange={(e) => setPublicReplyEnabled(e.target.checked)}
+                                    className="rounded border-gray-300 text-app-primary focus:ring-app-primary h-4 w-4"
+                                  />
+                                  <label htmlFor="publicReplyEnabled" className="text-xs font-black text-app-text cursor-pointer">
+                                    پاسخ عمومی به کامنت کاربر فعال شود؟
+                                  </label>
+                                </div>
+                                {publicReplyEnabled ? (
+                                  <Input
+                                    value={publicReplyMessage}
+                                    onChange={(e) => setPublicReplyMessage(e.target.value)}
+                                    placeholder="ارسال شد؛ لطفاً دایرکت خود را چک کنید 🌹"
+                                    className="text-xs"
+                                  />
+                                ) : null}
+                              </div>
+
+                              {/* Takeover Control Settings */}
+                              <div className="border-t border-app-border pt-3 space-y-3">
+                                <div>
+                                  <p className="text-xs font-black text-app-text">رفتار در صورت پاسخ مشتری (Operator Takeover)</p>
+                                  <p className="mt-0.5 text-[10px] text-app-muted">زمانی که کاربر به پیام خودکار شما پاسخ دهد، اتوماسیون متوقف شده و این گفتگو به اپراتور واگذار می‌شود.</p>
+                                </div>
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                  <label className={`app-interactive flex items-start gap-2.5 rounded-md border p-2.5 text-right cursor-pointer transition ${
+                                    onCustomerReply === "hand_off" ? "border-app-primary bg-white shadow-soft" : "border-app-border bg-white/70"
+                                  }`}>
+                                    <input
+                                      type="radio"
+                                      name="onCustomerReply"
+                                      value="hand_off"
+                                      checked={onCustomerReply === "hand_off"}
+                                      onChange={() => setOnCustomerReply("hand_off")}
+                                      className="mt-0.5 h-3.5 w-3.5 text-app-primary focus:ring-app-primary"
+                                    />
+                                    <span>
+                                      <span className="block text-xs font-black text-app-text">سکوت و واگذاری گفتگو</span>
+                                      <span className="mt-0.5 block text-[10px] text-app-muted">بدون پیام اضافه، وضعیت گفتگو را به «در انتظار پاسخ اپراتور» تغییر دهید.</span>
+                                    </span>
+                                  </label>
+
+                                  <label className={`app-interactive flex items-start gap-2.5 rounded-md border p-2.5 text-right cursor-pointer transition ${
+                                    onCustomerReply === "send_waiting_message" ? "border-app-primary bg-white shadow-soft" : "border-app-border bg-white/70"
+                                  }`}>
+                                    <input
+                                      type="radio"
+                                      name="onCustomerReply"
+                                      value="send_waiting_message"
+                                      checked={onCustomerReply === "send_waiting_message"}
+                                      onChange={() => setOnCustomerReply("send_waiting_message")}
+                                      className="mt-0.5 h-3.5 w-3.5 text-app-primary focus:ring-app-primary"
+                                    />
+                                    <span>
+                                      <span className="block text-xs font-black text-app-text">ارسال پیام انتظار خودکار</span>
+                                      <span className="mt-0.5 block text-[10px] text-app-muted">یک پیام پیش‌فرض برای مشتری بفرستید و سپس گفتگو را به اپراتور واگذار کنید.</span>
+                                    </span>
+                                  </label>
+                                </div>
+                                {onCustomerReply === "send_waiting_message" ? (
+                                  <Field label="متن پیام انتظار خودکار" required hint="این پیام قبل از توقف اتوماسیون به دایرکت کاربر فرستاده می‌شود.">
+                                    <Input
+                                      value={waitingReplyMessage}
+                                      onChange={(e) => setWaitingReplyMessage(e.target.value)}
+                                      placeholder="پیام شما دریافت شد؛ به زودی اپراتور به شما پاسخ خواهد داد."
+                                      required
+                                    />
+                                  </Field>
+                                ) : null}
+                              </div>
+                            </div>
+                          ) : null}
+                        </section>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>

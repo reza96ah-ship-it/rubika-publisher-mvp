@@ -346,6 +346,9 @@ class InstagramAutomationRuleRequest(BaseModel):
     match_limit_total: int = 0
     starts_at: datetime | None = None
     ends_at: datetime | None = None
+    is_template: bool = False
+    on_customer_reply: str = "hand_off"
+    waiting_reply_message: str = ""
 
 
 class InstagramAutomationRuleResponse(BaseModel):
@@ -366,6 +369,9 @@ class InstagramAutomationRuleResponse(BaseModel):
     match_limit_total: int
     starts_at: datetime | None
     ends_at: datetime | None
+    is_template: bool
+    on_customer_reply: str
+    waiting_reply_message: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -395,9 +401,12 @@ class InstagramAutomationEventResponse(BaseModel):
     ig_media_id: str
     ig_comment_id: str
     commenter_username: str
+    commenter_ig_scoped_id: str | None = None
     comment_text: str
     normalized_comment_text: str
     event_status: str
+    conversation_status: str | None = "automated"
+    automation_paused_until: datetime | None = None
     skip_reason: str
     failure_reason: str
     private_reply_message_id: str
