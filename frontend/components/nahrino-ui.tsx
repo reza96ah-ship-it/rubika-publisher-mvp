@@ -667,17 +667,22 @@ export function NActionTile({ label, value, detail, icon: Icon, tone = "primary"
   return href ? <Link href={href} className="app-interactive block rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-100">{content}</Link> : content;
 }
 
-export function NMetricTile({ label, value, detail, icon: Icon, tone = "primary", href }: NMetricTileProps) {
+export function NMetricTile({ label, value, detail, icon: Icon, tone = "primary", href, bgImage }: NMetricTileProps) {
   const content = (
-    <article className="app-row nahrino-metric-card min-h-[76px] rounded-lg p-2.5 sm:min-h-[88px] sm:p-3" style={toneVars(tone)}>
-      <div className="flex h-full items-start justify-between gap-2 sm:gap-3">
+    <article className="app-row nahrino-metric-card min-h-[76px] rounded-lg p-2.5 sm:min-h-[88px] sm:p-3 relative overflow-hidden" style={toneVars(tone)}>
+      {bgImage && (
+        <div className="absolute top-1/2 -translate-y-1/2 left-[-15%] w-28 h-28 pointer-events-none z-0 opacity-25 mix-blend-multiply transition-transform duration-500 hover:scale-110">
+          <img src={bgImage} alt="" className="w-full h-full object-contain drop-shadow-xl" />
+        </div>
+      )}
+      <div className="flex h-full items-start justify-between gap-2 sm:gap-3 relative z-10">
         <div className="min-w-0">
           <p className="line-clamp-1 text-[10px] font-bold text-app-muted sm:text-xs">{label}</p>
           <p className="dashboard-kpi-number mt-1 text-lg font-black text-app-text sm:text-xl">{typeof value === 'number' || typeof value === 'string' ? toPersianDigits(value) : value}</p>
-          {detail ? <p className="mt-1 hidden truncate text-[11px] font-bold text-app-muted sm:block">{detail}</p> : null}
+          {detail ? <p className="mt-1 hidden truncate text-[11px] font-bold text-app-muted sm:block">{toPersianDigits(detail)}</p> : null}
         </div>
         {Icon ? (
-          <span className="nahrino-token-icon hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border sm:flex">
+          <span className="nahrino-token-icon hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border sm:flex shadow-sm">
             <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
         ) : null}
@@ -772,15 +777,17 @@ export function NTrendBars({ values, labels }: NTrendBarsProps) {
   const max = Math.max(...values, 1);
 
   return (
-    <div className="flex h-28 items-end gap-1.5 rounded-lg bg-app-surfaceMuted px-3 py-3">
+    <div className="flex h-28 items-end justify-between gap-1.5 rounded-xl bg-transparent px-1 py-1">
       {values.map((value, index) => (
-        <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-          <span
-            className="nahrino-trend-bar w-full rounded-t-md transition-all"
-            style={{ height: `${Math.max(10, (value / max) * 88)}px` }}
-            aria-label={`${toPersianDigits(value)} items`}
-          />
-          <span className="text-[9px] font-bold text-slate-400">{toPersianDigits(labels?.[index] || index + 1)}</span>
+        <div key={index} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-2 h-full group cursor-pointer">
+          <div className="relative flex w-full max-w-[16px] flex-1 flex-col justify-end bg-app-surfaceMuted/50 rounded-full overflow-hidden border border-app-border/30">
+            <span
+              className="w-full rounded-full bg-gradient-to-t from-app-primary to-app-primary/40 transition-all duration-700 ease-out group-hover:opacity-80"
+              style={{ height: `${Math.max(12, (value / max) * 100)}%` }}
+              aria-label={`${toPersianDigits(value)} items`}
+            />
+          </div>
+          <span className="text-[10px] font-bold text-app-muted/80 whitespace-nowrap">{toPersianDigits(labels?.[index] || index + 1)}</span>
         </div>
       ))}
     </div>

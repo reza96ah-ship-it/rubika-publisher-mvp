@@ -247,6 +247,7 @@ export default function HomePage() {
   ];
   const statusMixTotal = statusMixItems.reduce((sum, item) => sum + item.value, 0);
   const statusMixBackground = conicGradient(statusMixItems, statusMixTotal);
+  
   const topMetrics = [
     {
       label: "زمان‌بندی امروز",
@@ -254,7 +255,8 @@ export default function HomePage() {
       detail: nextPosts[0]?.scheduled_at ? `بعدی ${compactDateTime(nextPosts[0].scheduled_at)}` : "امروز چیزی در برنامه نیست",
       icon: CalendarClock,
       tone: "warning" as const,
-      href: "/calendar"
+      href: "/calendar",
+      bgImage: "/assets/images/empty_calendar.png"
     },
     {
       label: "در معرض ریسک",
@@ -262,7 +264,8 @@ export default function HomePage() {
       detail: "خطا، تایید، اتصال یا راه‌اندازی",
       icon: AlertTriangle,
       tone: blockedWorkCount ? "alert" as const : "success" as const,
-      href: blockedWorkCount ? "/queue" : "/inbox"
+      href: blockedWorkCount ? "/queue" : "/inbox",
+      bgImage: "/assets/images/empty_shield.png"
     },
     {
       label: "پیام‌های موعددار",
@@ -497,7 +500,10 @@ export default function HomePage() {
         <NPage className="dashboard-spec-page pb-5">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             <section className="col-span-1 md:col-span-12 lg:col-span-8 dashboard-command-brief nahrino-card p-5 relative overflow-hidden">
-              <div className={`absolute -top-12 -left-12 w-64 h-64 rounded-full blur-3xl pointer-events-none z-0 animate-pulse ${healthTone === 'success' ? 'bg-app-success/10' : healthTone === 'warning' ? 'bg-app-warning/10' : 'bg-app-alert/10'}`} />
+              <div className="absolute top-1/2 -translate-y-1/2 left-[-2%] w-64 h-64 pointer-events-none z-0 opacity-40 mix-blend-multiply drop-shadow-2xl">
+                <img src="/assets/images/empty_shield.png" alt="" className="w-full h-full object-contain" />
+              </div>
+              <div className={`absolute -top-12 -left-12 w-64 h-64 rounded-full blur-3xl pointer-events-none z-0 animate-pulse ${healthTone === 'success' ? 'bg-app-success/15' : healthTone === 'warning' ? 'bg-app-warning/15' : 'bg-app-alert/15'}`} />
               <div className="absolute top-8 left-8 flex items-center justify-center pointer-events-none z-0">
                 <div className={`absolute w-5 h-5 rounded-full animate-ping opacity-75 ${healthTone === 'success' ? 'bg-app-success' : healthTone === 'warning' ? 'bg-app-warning' : 'bg-app-alert'}`} />
                 <div className={`relative w-2.5 h-2.5 rounded-full shadow-lg ${healthTone === 'success' ? 'bg-app-success' : healthTone === 'warning' ? 'bg-app-warning' : 'bg-app-alert'}`} />
