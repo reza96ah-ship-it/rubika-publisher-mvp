@@ -12,6 +12,7 @@ import type {
 } from "react";
 import { useMemo, useState } from "react";
 import { X, type LucideIcon } from "lucide-react";
+import { toPersianDigits } from "../lib/utils";
 
 type Tone = "neutral" | "primary" | "success" | "warning" | "alert" | "info";
 type ButtonVariant = "primary" | "secondary" | "quiet" | "danger";
@@ -483,7 +484,7 @@ export function NSavedViewToolbar({
                 aria-pressed={active}
               >
                 {view.label}
-                {typeof view.count === "number" ? <span className="rounded bg-app-surfaceMuted px-1.5 py-0.5 text-[10px] text-app-muted">{view.count}</span> : null}
+                {typeof view.count === "number" ? <span className="rounded bg-app-surfaceMuted px-1.5 py-0.5 text-[10px] text-app-muted">{toPersianDigits(view.count)}</span> : null}
               </button>
             );
           })}
@@ -520,7 +521,7 @@ export function NTabs({ tabs, activeTab, onTabChange, className = "" }: NTabsPro
         const content = (
           <>
             <span>{tab.label}</span>
-            {typeof tab.count === "number" ? <span className="rounded bg-app-surfaceMuted px-1.5 py-0.5 text-[10px] text-app-muted">{tab.count}</span> : null}
+            {typeof tab.count === "number" ? <span className="rounded bg-app-surfaceMuted px-1.5 py-0.5 text-[10px] text-app-muted">{toPersianDigits(tab.count)}</span> : null}
           </>
         );
 
@@ -652,7 +653,7 @@ export function NActionTile({ label, value, detail, icon: Icon, tone = "primary"
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-bold text-app-muted">{label}</p>
-            <p className={`mt-2 font-black leading-6 text-app-text ${compact ? "line-clamp-1 text-sm" : "line-clamp-2 text-base"}`}>{value}</p>
+            <p className={`mt-2 font-black leading-6 text-app-text ${compact ? "line-clamp-1 text-sm" : "line-clamp-2 text-base"}`}>{typeof value === 'number' || typeof value === 'string' ? toPersianDigits(value) : value}</p>
           </div>
           <span className={`nahrino-token-icon flex ${compact ? "h-8 w-8" : "h-9 w-9"} shrink-0 items-center justify-center rounded-md border`}>
             <Icon className="h-4 w-4" aria-hidden="true" />
@@ -672,7 +673,7 @@ export function NMetricTile({ label, value, detail, icon: Icon, tone = "primary"
       <div className="flex h-full items-start justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
           <p className="line-clamp-1 text-[10px] font-bold text-app-muted sm:text-xs">{label}</p>
-          <p className="dashboard-kpi-number mt-1 text-lg font-black text-app-text sm:text-xl">{value}</p>
+          <p className="dashboard-kpi-number mt-1 text-lg font-black text-app-text sm:text-xl">{typeof value === 'number' || typeof value === 'string' ? toPersianDigits(value) : value}</p>
           {detail ? <p className="mt-1 hidden truncate text-[11px] font-bold text-app-muted sm:block">{detail}</p> : null}
         </div>
         {Icon ? (
@@ -740,7 +741,7 @@ export function NDonutChart({ items, total, label = "کل" }: NDonutChartProps) 
     <div className="flex flex-col items-center justify-center gap-3">
       <div className="nahrino-donut-chart relative h-32 w-32 rounded-full shadow-hairline sm:h-40 sm:w-40" style={{ background: `conic-gradient(${background})` } as CSSProperties}>
         <div className="absolute inset-4 flex flex-col items-center justify-center rounded-full bg-app-surface shadow-inner sm:inset-5">
-          <span className="text-xl font-black text-app-text sm:text-2xl">{activeItem?.value ?? total}</span>
+          <span className="text-xl font-black text-app-text sm:text-2xl">{toPersianDigits(activeItem?.value ?? total)}</span>
           <span className="mt-1 max-w-20 truncate text-[10px] font-bold text-app-muted">{activeItem?.label ?? label}</span>
         </div>
       </div>
@@ -759,7 +760,7 @@ export function NDonutChart({ items, total, label = "کل" }: NDonutChartProps) 
               <span className="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-white" style={{ backgroundColor: item.color, opacity: item.value ? 1 : 0.48 }} />
               <span className="min-w-0 truncate">{item.label}</span>
             </span>
-            <span className="min-w-5 shrink-0 text-left font-black tabular-nums text-app-text">{item.value}</span>
+            <span className="min-w-5 shrink-0 text-left font-black tabular-nums text-app-text">{toPersianDigits(item.value)}</span>
           </button>
         ))}
       </div>
@@ -777,9 +778,9 @@ export function NTrendBars({ values, labels }: NTrendBarsProps) {
           <span
             className="nahrino-trend-bar w-full rounded-t-md transition-all"
             style={{ height: `${Math.max(10, (value / max) * 88)}px` }}
-            aria-label={`${value} items`}
+            aria-label={`${toPersianDigits(value)} items`}
           />
-          <span className="text-[9px] font-bold text-slate-400">{labels?.[index] || index + 1}</span>
+          <span className="text-[9px] font-bold text-slate-400">{toPersianDigits(labels?.[index] || index + 1)}</span>
         </div>
       ))}
     </div>

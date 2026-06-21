@@ -355,8 +355,8 @@ export default function HomePage() {
   ];
   const insightTone = failureRate ? "warning" as const : completionRate >= 60 ? "success" as const : "info" as const;
   const reportInsight = failureRate
-    ? { title: "ریسک انتشار بالاست", detail: `${toPersianDigits(failureRate)}% از صف فعال خطا دارد؛ بازیابی صف قبل از تولید تازه ارزشمندتر است.`, href: "/analytics?view=failures", tone: insightTone }
-    : { title: "ریتم انتشار قابل اتکاست", detail: `${toPersianDigits(completionRate)}% تکمیل در داده فعلی؛ برنامه نزدیک را با یک پست زمان‌بندی‌شده تقویت کنید.`, href: "/analytics", tone: insightTone };
+    ? { title: "ریسک انتشار بالاست", detail: `${toPersianDigits(failureRate)}٪ از صف فعال خطا دارد؛ بازیابی صف قبل از تولید تازه ارزشمندتر است.`, href: "/analytics?view=failures", tone: insightTone }
+    : { title: "ریتم انتشار قابل اتکاست", detail: `${toPersianDigits(completionRate)}٪ تکمیل در داده فعلی؛ برنامه نزدیک را با یک پست زمان‌بندی‌شده تقویت کنید.`, href: "/analytics", tone: insightTone };
   const campaignMomentumItems = activeCampaigns.length ? activeCampaigns : campaigns.slice(0, 3);
   const dashboardRecentItems = [...posts]
     .sort((first, second) => dateTime(second.updated_at || second.created_at) - dateTime(first.updated_at || first.created_at))
@@ -397,7 +397,7 @@ export default function HomePage() {
           {publishPulseSteps.map((step, index) => (
             <Link key={step.label} href={step.href} className={`dashboard-publish-step app-interactive ${step.ready ? "dashboard-publish-step-ready" : "dashboard-publish-step-waiting"}`}>
               <span className="dashboard-publish-step-index" aria-hidden="true">
-                {step.ready ? <CheckCircle2 className="dashboard-publish-step-icon" /> : index + 1}
+                {step.ready ? <CheckCircle2 className="dashboard-publish-step-icon" /> : toPersianDigits(index + 1)}
               </span>
               <span className="dashboard-publish-step-copy min-w-0">
                 <span className="dashboard-publish-step-top">
@@ -478,8 +478,8 @@ export default function HomePage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <NStatusPill tone={reportInsight.tone}>{toPersianDigits(completionRate)}% تکمیل</NStatusPill>
-          <NStatusPill tone={failureRate ? "warning" : "success"}>{toPersianDigits(failureRate)}% خطا</NStatusPill>
+          <NStatusPill tone={reportInsight.tone}>{toPersianDigits(completionRate)}٪ تکمیل</NStatusPill>
+          <NStatusPill tone={failureRate ? "warning" : "success"}>{toPersianDigits(failureRate)}٪ خطا</NStatusPill>
         </div>
       </div>
     </NSection>
@@ -497,8 +497,10 @@ export default function HomePage() {
         <NPage className="dashboard-spec-page pb-5">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             <section className="col-span-1 md:col-span-12 lg:col-span-8 dashboard-command-brief nahrino-card p-5 relative overflow-hidden">
-              <div className="absolute top-1/2 -translate-y-1/2 left-4 w-48 h-48 pointer-events-none z-0 opacity-80 mix-blend-screen">
-                <img src="/assets/images/minimal_3d_chart.png" alt="" className="w-full h-full object-contain drop-shadow-xl" />
+              <div className={`absolute -top-12 -left-12 w-64 h-64 rounded-full blur-3xl pointer-events-none z-0 animate-pulse ${healthTone === 'success' ? 'bg-app-success/10' : healthTone === 'warning' ? 'bg-app-warning/10' : 'bg-app-alert/10'}`} />
+              <div className="absolute top-8 left-8 flex items-center justify-center pointer-events-none z-0">
+                <div className={`absolute w-5 h-5 rounded-full animate-ping opacity-75 ${healthTone === 'success' ? 'bg-app-success' : healthTone === 'warning' ? 'bg-app-warning' : 'bg-app-alert'}`} />
+                <div className={`relative w-2.5 h-2.5 rounded-full shadow-lg ${healthTone === 'success' ? 'bg-app-success' : healthTone === 'warning' ? 'bg-app-warning' : 'bg-app-alert'}`} />
               </div>
               <div className="flex min-w-0 items-start gap-4 relative z-10">
                 <WorkspaceAvatar name={store?.name || productName} size="lg" color={brandColor} imageUrl={brandImageUrl} />
@@ -569,7 +571,7 @@ export default function HomePage() {
               <div className="flex flex-col justify-between h-full gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] font-black text-app-primary">سلامت عملیات</p>
-                  <h2 className="mt-1 text-sm font-black text-app-text font-outfit flex items-center gap-1">{toPersianDigits(operationsHealth)}% <span className="font-vazirmatn text-xs">آماده</span></h2>
+                  <h2 className="mt-1 text-sm font-black text-app-text font-outfit flex items-center gap-1">{toPersianDigits(operationsHealth)}٪ <span className="font-vazirmatn text-xs">آماده</span></h2>
                   <p className="mt-1 line-clamp-1 text-xs text-app-muted">{blockedWorkCount ? `${toPersianDigits(blockedWorkCount)} مورد نیازمند توجه` : "مسیر انتشار آرام است"}</p>
                 </div>
                 <div className="w-full h-2 bg-app-surface rounded-full overflow-hidden mt-auto">
@@ -628,7 +630,7 @@ export default function HomePage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0 mr-3">
                         <NStatusPill tone={item.statusTone} size="sm">{item.status}</NStatusPill>
-                        <span className="font-outfit font-black text-xs text-app-muted bg-app-canvas px-1.5 py-0.5 rounded">{toPersianDigits(item.score)}%</span>
+                        <span className="font-outfit font-black text-xs text-app-muted bg-app-canvas px-1.5 py-0.5 rounded">{toPersianDigits(item.score)}٪</span>
                       </div>
                     </Link>
                   ))}
