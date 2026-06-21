@@ -541,14 +541,7 @@ a {
     transition: border-color var(--n-motion-base) var(--n-ease-standard), box-shadow var(--n-motion-base) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard);
   }
 
-  .nahrino-metric-card::before {
-    position: absolute;
-    inset-block: 0;
-    inset-inline-start: 0;
-    width: 0.2rem;
-    background: linear-gradient(180deg, rgb(var(--metric-accent, var(--n-color-primary)) / 0.95), rgb(var(--metric-accent, var(--n-color-primary)) / 0.36));
-    content: "";
-  }
+
 
   .nahrino-metric-card::after {
     position: absolute;
@@ -1069,16 +1062,6 @@ a {
       linear-gradient(135deg, rgb(var(--n-color-frost) / 0.74), rgb(var(--n-color-surface) / 0.84)),
       radial-gradient(circle at 86% 12%, rgb(var(--n-color-primary) / 0.09), transparent 18rem);
     backdrop-filter: blur(20px) saturate(145%);
-  }
-
-  .dashboard-command-brief::before {
-    position: absolute;
-    inset-inline: 18px;
-    top: 0;
-    height: 3px;
-    border-radius: 0 0 999px 999px;
-    background: rgb(var(--n-color-primary));
-    content: "";
   }
 
   .dashboard-next-action {
