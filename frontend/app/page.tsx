@@ -494,54 +494,56 @@ export default function HomePage() {
     <AuthGate>
       <AppShell>
         <NPage className="dashboard-spec-page pb-5">
-          <section className="dashboard-command-brief">
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-              <div className="flex min-w-0 items-start gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <section className="col-span-1 md:col-span-12 lg:col-span-8 dashboard-command-brief nahrino-card p-5">
+              <div className="flex min-w-0 items-start gap-4">
                 <WorkspaceAvatar name={store?.name || productName} size="lg" color={brandColor} imageUrl={brandImageUrl} />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="app-section-kicker text-[10px] font-black">داشبورد</p>
                     <NStatusPill tone={healthTone}>{healthTone === "success" ? "فضای کاری پایدار" : healthTone === "warning" ? "نیازمند تکمیل" : "نیازمند رسیدگی"}</NStatusPill>
-                    {lastUpdatedAt ? <NStatusPill tone="neutral">{lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</NStatusPill> : null}
+                    {lastUpdatedAt ? <NStatusPill tone="neutral" className="font-outfit">{lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</NStatusPill> : null}
                   </div>
                   <h1 className="mt-2 text-[22px] font-black leading-8 text-app-text sm:text-2xl">داشبورد امروز</h1>
                   <p className="mt-1 max-w-4xl text-sm leading-7 text-app-muted">{briefing}</p>
                 </div>
               </div>
+            </section>
 
-              <div className="dashboard-next-action min-w-0 rounded-xl p-3 lg:w-[360px]">
-                <div className="flex min-w-0 items-start gap-3">
-                  <span className="nahrino-live-signal mt-1 h-3 w-3 shrink-0 rounded-full bg-app-primary" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-black text-app-primary">اقدام بعدی</p>
-                    <h2 className="mt-1 line-clamp-1 text-base font-black text-app-text">{nextAction.label}</h2>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <NButton href={nextAction.href} trailingIcon={ArrowUpLeft}>ادامه</NButton>
-                  <NButton type="button" variant="secondary" size="sm" icon={RefreshCw} loading={refreshing} onClick={() => loadDashboard(true)}>
-                    تازه‌سازی
-                  </NButton>
+            <section className="col-span-1 md:col-span-12 lg:col-span-4 dashboard-next-action nahrino-card p-5 flex flex-col justify-between">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="nahrino-live-signal mt-1 h-3 w-3 shrink-0 rounded-full bg-app-primary" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-black text-app-primary">اقدام بعدی</p>
+                  <h2 className="mt-1 line-clamp-1 text-base font-black text-app-text">{nextAction.label}</h2>
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
                 </div>
               </div>
-            </div>
-          </section>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <NButton href={nextAction.href} trailingIcon={ArrowUpLeft}>ادامه</NButton>
+                <NButton type="button" variant="secondary" size="sm" icon={RefreshCw} loading={refreshing} onClick={() => loadDashboard(true)}>
+                  تازه‌سازی
+                </NButton>
+              </div>
+            </section>
 
-          {error ? <NNotice tone="alert">{error}</NNotice> : null}
-          {loading ? <Skeleton className="h-4 w-44" /> : null}
+            {(error || loading) && (
+              <div className="col-span-1 md:col-span-12">
+                {error ? <NNotice tone="alert">{error}</NNotice> : null}
+                {loading ? <Skeleton className="h-4 w-44" /> : null}
+              </div>
+            )}
 
-          <section className="dashboard-kpi-strip grid grid-cols-2 gap-3 lg:grid-cols-4">
             {topMetrics.map((metric) => (
-              <NMetricTile key={metric.label} {...metric} />
+              <div key={metric.label} className="col-span-1 sm:col-span-6 lg:col-span-3">
+                <NMetricTile {...metric} />
+              </div>
             ))}
-          </section>
 
-          <section className="dashboard-visual-strip grid gap-3 lg:grid-cols-[0.9fr_0.9fr_1.2fr]" aria-label="نمای تصویری داشبورد">
-            <article className="dashboard-visual-card">
+            <article className="col-span-1 sm:col-span-6 lg:col-span-4 dashboard-visual-card nahrino-card p-5">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="dashboard-donut" style={{ background: statusMixBackground }}>
-                  <span>{statusMixTotal}</span>
+                <div className="dashboard-donut shrink-0 h-14 w-14 rounded-full flex items-center justify-center font-outfit font-black text-lg" style={{ background: statusMixBackground }}>
+                  <span className="bg-app-surface h-10 w-10 rounded-full flex items-center justify-center shadow-inner">{statusMixTotal}</span>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-black text-app-primary">ترکیب محتوا</p>
@@ -551,7 +553,7 @@ export default function HomePage() {
                       <span key={item.label} className="flex min-w-0 items-center gap-1.5 text-[10px] font-black text-app-muted">
                         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
                         <span className="truncate">{item.label}</span>
-                        <span className="mr-auto text-app-text">{item.value}</span>
+                        <span className="mr-auto font-outfit font-bold text-app-text">{item.value}</span>
                       </span>
                     ))}
                   </div>
@@ -559,80 +561,79 @@ export default function HomePage() {
               </div>
             </article>
 
-            <article className="dashboard-visual-card">
-              <div className="flex min-w-0 items-center justify-between gap-3">
+            <article className="col-span-1 sm:col-span-6 lg:col-span-4 dashboard-visual-card nahrino-card p-5">
+              <div className="flex flex-col justify-between h-full gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] font-black text-app-primary">سلامت عملیات</p>
-                  <h2 className="mt-1 text-sm font-black text-app-text">{operationsHealth}% آماده</h2>
+                  <h2 className="mt-1 text-sm font-black text-app-text font-outfit flex items-center gap-1">{operationsHealth}% <span className="font-vazirmatn text-xs">آماده</span></h2>
                   <p className="mt-1 line-clamp-1 text-xs text-app-muted">{blockedWorkCount ? `${blockedWorkCount} مورد نیازمند توجه` : "مسیر انتشار آرام است"}</p>
                 </div>
-                <div className="dashboard-gauge" style={{ "--gauge-value": `${operationsHealth}%` } as CSSProperties}>
-                  <span>{operationsHealth}</span>
+                <div className="w-full h-2 bg-app-surface rounded-full overflow-hidden mt-auto">
+                  <div className="h-full bg-app-success" style={{ width: `${operationsHealth}%` }} />
                 </div>
               </div>
             </article>
 
-            <article className="dashboard-visual-card">
+            <article className="col-span-1 md:col-span-12 lg:col-span-4 dashboard-visual-card nahrino-card p-5">
               <div className="flex min-w-0 items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] font-black text-app-primary">ریتم هفته</p>
                   <h2 className="mt-1 text-sm font-black text-app-text">تراکم فعالیت</h2>
                 </div>
-                <NStatusPill tone={weeklyActivity.some(Boolean) ? "primary" : "neutral"}>{weeklyActivity.reduce((sum, value) => sum + value, 0)} رویداد</NStatusPill>
+                <NStatusPill tone={weeklyActivity.some(Boolean) ? "primary" : "neutral"} className="font-outfit">{weeklyActivity.reduce((sum, value) => sum + value, 0)} <span className="font-vazirmatn px-1">رویداد</span></NStatusPill>
               </div>
-              <div className="mt-3 flex h-16 items-end gap-1.5">
+              <div className="mt-3 flex h-16 items-end gap-1.5 justify-between">
                 {weeklyActivity.map((value, index) => (
                   <div key={weekKeys[index]} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-                    <span className="dashboard-rhythm-bar" style={{ height: `${Math.max(8, (value / maxWeeklyActivity) * 48)}px` }} />
+                    <span className="w-full rounded-t-sm bg-app-primary/80 transition-all hover:bg-app-primary" style={{ height: `${Math.max(8, (value / maxWeeklyActivity) * 48)}px` }} />
                     <span className="text-[9px] font-bold text-app-muted">{weeklyLabels[index]}</span>
                   </div>
                 ))}
               </div>
             </article>
-          </section>
 
-          <section className="dashboard-focus-shell rounded-2xl p-2.5 sm:p-3">
-            <div className="flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
-              <div className="min-w-0 px-1">
-                <p className="text-[10px] font-black text-app-primary">نمای متمرکز</p>
-                <h2 className="mt-1 text-sm font-black text-app-text">هر بار فقط یک مسیر تصمیم‌گیری</h2>
+            <section className="col-span-1 md:col-span-12 lg:col-span-8 dashboard-focus-shell nahrino-card p-5">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div className="min-w-0 px-1">
+                  <p className="text-[10px] font-black text-app-primary">نمای متمرکز</p>
+                  <h2 className="mt-1 text-sm font-black text-app-text">هر بار فقط یک مسیر تصمیم‌گیری</h2>
+                </div>
+                <NTabs tabs={dashboardFocusTabs} activeTab={dashboardView} onTabChange={setDashboardView} className="w-full sm:w-auto" />
               </div>
-              <NTabs tabs={dashboardFocusTabs} activeTab={dashboardView} onTabChange={setDashboardView} className="w-full lg:w-auto" />
-            </div>
-            <div className="mt-3 dashboard-focus-panel">
-              {dashboardFocusLayouts[dashboardView] ?? dashboardFocusLayouts.overview}
-            </div>
-          </section>
+              <div className="mt-5 dashboard-focus-panel">
+                {dashboardFocusLayouts[dashboardView] ?? dashboardFocusLayouts.overview}
+              </div>
+            </section>
 
-          <NSection
-            title="آخرین محتوا"
-            description="یک نگاه کوتاه به آیتم‌هایی که احتمالاً امروز دوباره باز می‌کنید."
-            action={<NButton href="/content" variant="secondary" size="sm">کتابخانه محتوا</NButton>}
-            className="dashboard-spec-card dashboard-recent-content"
-          >
-            {dashboardRecentItems.length ? (
-              <div className="dashboard-recent-content-grid" aria-label="آخرین محتوای داشبورد">
-                {dashboardRecentItems.map((item) => (
-                  <Link key={item.id} href={item.href} className="dashboard-recent-content-item app-interactive">
-                    <span className="dashboard-recent-content-main min-w-0">
-                      <span className="dashboard-recent-content-title truncate">{item.title}</span>
-                      <span className="dashboard-recent-content-meta truncate">{item.channel} · {item.publishTime}</span>
-                    </span>
-                    <span className="dashboard-recent-content-state">
-                      <NStatusPill tone={item.statusTone}>{item.status}</NStatusPill>
-                      <NStatusPill tone={item.approvalTone}>{item.approval}</NStatusPill>
-                    </span>
-                    <span className="dashboard-recent-content-score" aria-label={`آمادگی ${item.score} درصد`}>
-                      <span className="dashboard-kpi-number">{item.score}%</span>
-                    </span>
-                    <ArrowUpLeft className="dashboard-recent-content-icon" aria-hidden="true" />
-                  </Link>
-                ))}
+            <section className="col-span-1 md:col-span-12 lg:col-span-4 dashboard-recent-content nahrino-card p-5 flex flex-col">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h2 className="text-sm font-black text-app-text">آخرین محتوا</h2>
+                  <p className="text-xs text-app-muted mt-1">میانبر به پست‌های اخیر</p>
+                </div>
+                <NButton href="/content" variant="secondary" size="sm">کتابخانه</NButton>
               </div>
-            ) : (
-              <NEmptyState icon={FileText} title="هنوز محتوایی برای نمایش نیست" detail="بعد از ساخت اولین پست، این بخش به میانبر آخرین محتوا تبدیل می‌شود." />
-            )}
-          </NSection>
+              
+              {dashboardRecentItems.length ? (
+                <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-1">
+                  {dashboardRecentItems.map((item) => (
+                    <Link key={item.id} href={item.href} className="group flex items-center justify-between p-3 rounded-xl border border-app-border bg-app-surface/50 hover:bg-app-surface transition-colors">
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-xs font-black text-app-text group-hover:text-app-primary transition-colors">{item.title}</span>
+                        <span className="block truncate text-[10px] text-app-muted mt-0.5">{item.channel} · <span className="font-outfit">{item.publishTime}</span></span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 mr-3">
+                        <NStatusPill tone={item.statusTone} size="sm">{item.status}</NStatusPill>
+                        <span className="font-outfit font-black text-xs text-app-muted bg-app-canvas px-1.5 py-0.5 rounded">{item.score}%</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <NEmptyState icon={FileText} title="محتوایی نیست" detail="اولین پست را بسازید" />
+              )}
+            </section>
+          </div>
         </NPage>
       </AppShell>
     </AuthGate>
