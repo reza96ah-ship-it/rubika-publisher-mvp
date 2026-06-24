@@ -1,7 +1,7 @@
-# Nahrino SocialOps — Workspace Agent Rules
+﻿# Nashrino SocialOps — Workspace Agent Rules
 
 ## Project Identity
-- Product name: **نشرینو** (Nahrino)
+- Product name: **نشرینو** (Nashrino)
 - Root path (WSL): `/home/reza/projects/rubika-publisher-mvp`
 - Windows WSL path: `\\wsl.localhost\Ubuntu\home\reza\projects\rubika-publisher-mvp`
 - Frontend runs on: `http://localhost:3100`
@@ -15,7 +15,7 @@
 - **Runtime**: Docker Compose (`docker compose up -d --build` from WSL)
 
 ## Key Files
-- Master roadmap: `docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md`
+- Master roadmap: `docs/Nashrino_2026_MASTER_RFP_ROADMAP_BACKLOG.md`
 - Instagram automation PRD: `docs/INSTAGRAM_COMMENT_TO_DM_AUTOMATION_PRD.md`
 - Sidebar nav: `frontend/components/sidebar.tsx`
 - App shell: `frontend/components/app-shell.tsx`
@@ -53,8 +53,9 @@ inside `/calendar` (برنامه‌ریز section) and `/analytics` (گزارش�
 
 ## Conventions
 - RTL layout: all pages use RTL, Persian text, Jalali dates
-- Tailwind class design tokens: use `app-*` and `nahrino-*` classes from globals.css
+- Tailwind class design tokens: use `app-*` and `Nashrino-*` classes from globals.css
 - No hardcoded inline colors unless inside `media-image-editor.tsx` (allowed exception)
 - All new backend routes must be registered in `backend/app/main.py`
 - All new DB models must have an Alembic migration
 - Instagram automation only works for professional accounts; personal = reminder mode only
+

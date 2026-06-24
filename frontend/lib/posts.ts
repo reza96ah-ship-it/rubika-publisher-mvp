@@ -161,3 +161,4 @@ export function recoveryGuidance(error?: string | null) {
   }
   return "جزئیات خطا را بررسی کنید. پس از اصلاح علت، پست را دوباره وارد صف انتشار کنید.";
 }
+

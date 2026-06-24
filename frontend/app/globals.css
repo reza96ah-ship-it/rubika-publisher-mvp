@@ -4,7 +4,7 @@
 @import "@fontsource/vazirmatn/700.css";
 @import "@fontsource/lalezar/400.css";
 @import "./p30-persian-fonts.css";
-@import "../design-tokens/nahrino.css";
+@import "../design-tokens/nashrino.css";
 
 @tailwind base;
 @tailwind components;
@@ -33,7 +33,7 @@ body {
 
 [data-theme="dark"] body,
 [data-theme="studio"] body,
-.nahrino-dark-studio {
+.nashrino-dark-studio {
   background-image: 
     radial-gradient(at 0% 0%, rgb(var(--n-color-primary) / 0.12) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgb(var(--n-color-secondary) / 0.12) 0px, transparent 50%),
@@ -157,7 +157,7 @@ a {
   }
 }
 
-@keyframes nahrino-art-float {
+@keyframes nashrino-art-float {
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1);
@@ -168,7 +168,7 @@ a {
   }
 }
 
-@keyframes nahrino-scan {
+@keyframes nashrino-scan {
   0% {
     transform: translateX(110%);
     opacity: 0;
@@ -185,7 +185,7 @@ a {
   }
 }
 
-@keyframes nahrino-signal {
+@keyframes nashrino-signal {
   0%,
   100% {
     box-shadow: 0 0 0 4px rgb(var(--n-color-primary) / 0.1);
@@ -233,7 +233,7 @@ a {
   }
 }
 
-@keyframes nahrino-chart-rise {
+@keyframes nashrino-chart-rise {
   from {
     opacity: 0.65;
     transform: scaleY(0.35);
@@ -245,7 +245,7 @@ a {
   }
 }
 
-@keyframes nahrino-donut-reveal {
+@keyframes nashrino-donut-reveal {
   from {
     opacity: 0;
     transform: scale(0.92) rotate(-10deg);
@@ -257,7 +257,7 @@ a {
   }
 }
 
-@keyframes nahrino-card-awake {
+@keyframes nashrino-card-awake {
   from {
     opacity: 0;
     transform: scale(0.985);
@@ -269,7 +269,7 @@ a {
   }
 }
 
-@keyframes nahrino-card-breathe {
+@keyframes nashrino-card-breathe {
   0%,
   100% {
     opacity: 0.5;
@@ -350,7 +350,7 @@ a {
     border-radius: var(--n-radius-lg) !important;
   }
 
-  .nahrino-control-radius,
+  .nashrino-control-radius,
   button.app-interactive,
   a.app-interactive.inline-flex {
     border-radius: var(--n-radius-control) !important;
@@ -361,8 +361,8 @@ a {
   button.app-interactive[class*="bg-app-surface"],
   a.app-interactive.inline-flex[class*="bg-white"],
   a.app-interactive.inline-flex[class*="bg-app-surface"],
-  .nahrino-control-radius[class*="bg-app-surface"],
-  .nahrino-control-radius[class*="bg-white"] {
+  .nashrino-control-radius[class*="bg-app-surface"],
+  .nashrino-control-radius[class*="bg-white"] {
     border-color: var(--n-glass-border);
     background: var(--n-glass-surface-strong) !important;
     box-shadow: var(--n-shadow-hairline), 0 8px 20px rgb(var(--n-color-ink) / 0.04);
@@ -441,14 +441,14 @@ a {
     transform: translateY(0) scale(0.985);
   }
 
-  .nahrino-primary-cta {
+  .nashrino-primary-cta {
     border-color: rgb(var(--n-color-primary-strong));
     background: rgb(var(--n-color-primary-strong));
     color: rgb(var(--n-color-on-action));
     box-shadow: 0 10px 22px rgb(var(--n-color-primary) / 0.18);
   }
 
-  .nahrino-primary-cta:hover {
+  .nashrino-primary-cta:hover {
     border-color: rgb(var(--n-color-primary));
     background: rgb(var(--n-color-primary));
   }
@@ -463,7 +463,7 @@ a {
     transform: translateY(-0.5px);
   }
 
-  .nahrino-shell {
+  .nashrino-shell {
     position: relative;
     overflow: visible;
     background:
@@ -472,7 +472,7 @@ a {
       repeating-linear-gradient(90deg, rgb(var(--n-color-ink) / 0.009) 0 1px, transparent 1px 72px);
   }
 
-  .nahrino-shell::before {
+  .nashrino-shell::before {
     position: absolute;
     inset: 0;
     pointer-events: none;
@@ -483,7 +483,7 @@ a {
     content: "";
   }
 
-  .nahrino-sidebar {
+  .nashrino-sidebar {
     border-inline-start: 1px solid var(--n-glass-border);
     background:
       linear-gradient(180deg, var(--n-glass-surface-strong), var(--n-glass-surface)),
@@ -493,7 +493,7 @@ a {
     transform: translateZ(0); /* Hardware Acceleration */
   }
 
-  .nahrino-topbar {
+  .nashrino-topbar {
     background: var(--n-glass-surface);
     border-bottom: 1px solid rgb(var(--n-color-ink) / 0.06);
     box-shadow: 0 12px 30px rgb(var(--n-color-ink) / 0.04);
@@ -501,7 +501,7 @@ a {
     transform: translateZ(0); /* Hardware Acceleration */
   }
 
-  .nahrino-card {
+  .nashrino-card {
     border: 1px solid rgba(255, 255, 255, 0.15);
     background: rgba(255, 255, 255, 0.6);
     border-radius: var(--n-radius-lg) !important;
@@ -510,7 +510,7 @@ a {
     transform: translateZ(0); /* Hardware Acceleration */
   }
 
-  .nahrino-section-card {
+  .nashrino-section-card {
     border: 1px solid var(--n-glass-border);
     background: var(--n-glass-surface);
     border-radius: var(--n-radius-lg) !important;
@@ -519,7 +519,7 @@ a {
     transform: translateZ(0); /* Hardware Acceleration */
   }
 
-  .nahrino-card-muted {
+  .nashrino-card-muted {
     border: 1px solid var(--n-glass-border);
     background: var(--n-glass-surface-soft);
     border-radius: var(--n-radius-md) !important;
@@ -527,7 +527,7 @@ a {
     backdrop-filter: blur(14px) saturate(134%);
   }
 
-  .nahrino-metric-card {
+  .nashrino-metric-card {
     position: relative;
     overflow: hidden;
     border: 1px solid var(--n-glass-border);
@@ -537,13 +537,13 @@ a {
       var(--n-glass-surface-strong);
     box-shadow: var(--n-shadow-soft);
     backdrop-filter: blur(18px) saturate(140%);
-    animation: nahrino-card-awake var(--n-motion-section) var(--n-ease-standard) both;
+    animation: nashrino-card-awake var(--n-motion-section) var(--n-ease-standard) both;
     transition: border-color var(--n-motion-base) var(--n-ease-standard), box-shadow var(--n-motion-base) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard);
   }
 
 
 
-  .nahrino-metric-card::after {
+  .nashrino-metric-card::after {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -555,26 +555,26 @@ a {
     pointer-events: none;
     transform: translate(-50%, -50%);
     z-index: 0;
-    animation: nahrino-card-breathe 3.8s ease-in-out infinite;
+    animation: nashrino-card-breathe 3.8s ease-in-out infinite;
   }
 
-  .nahrino-metric-card > * {
+  .nashrino-metric-card > * {
     position: relative;
     z-index: 1;
   }
 
-  .nahrino-metric-card:hover {
+  .nashrino-metric-card:hover {
     border-color: rgb(var(--metric-accent, var(--n-color-primary)) / 0.24);
     box-shadow: 0 0 0 1px rgb(var(--metric-accent, var(--n-color-primary)) / 0.08), 0 18px 40px rgb(var(--metric-accent, var(--n-color-primary)) / 0.09), var(--n-shadow-soft);
     transform: translateY(-2px);
   }
 
-  .nahrino-data-row {
+  .nashrino-data-row {
     position: relative;
     overflow: hidden;
   }
 
-  .nahrino-data-row::before {
+  .nashrino-data-row::before {
     position: absolute;
     inset-block: 0.7rem;
     inset-inline-start: 0.55rem;
@@ -587,18 +587,18 @@ a {
     transition: opacity var(--n-motion-base) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard);
   }
 
-  .nahrino-data-row:hover::before {
+  .nashrino-data-row:hover::before {
     opacity: 1;
     transform: scaleY(1);
   }
 
-  .nahrino-token-icon {
+  .nashrino-token-icon {
     background: rgb(var(--token-accent, var(--n-color-primary)) / 0.1);
     border-color: rgb(var(--token-accent, var(--n-color-primary)) / 0.18);
     color: rgb(var(--token-accent, var(--n-color-primary)) / 1);
   }
 
-  .nahrino-nav-active {
+  .nashrino-nav-active {
     background: linear-gradient(135deg, rgb(var(--n-color-primary-soft)), rgb(var(--n-color-primary-soft) / 0.7));
     color: rgb(var(--n-color-primary-strong));
     box-shadow: 
@@ -608,24 +608,24 @@ a {
     transition: all 220ms var(--n-ease-standard);
   }
 
-  .nahrino-nav-idle {
+  .nashrino-nav-idle {
     color: rgb(var(--n-color-muted));
     border-radius: 0.5rem;
     transition: all 220ms var(--n-ease-standard);
   }
 
-  .nahrino-nav-idle:hover {
+  .nashrino-nav-idle:hover {
     background: rgb(var(--n-color-primary-soft) / 0.38);
     color: rgb(var(--n-color-primary-strong));
     box-shadow: 0 4px 12px rgb(var(--n-color-ink) / 0.015);
   }
 
-  .nahrino-sidebar nav[aria-label="ناوبری اصلی"] {
+  .nashrino-sidebar nav[aria-label="ناوبری اصلی"] {
     overflow: hidden;
   }
 
-  .nahrino-home-hero,
-  .nahrino-product-hero {
+  .nashrino-home-hero,
+  .nashrino-product-hero {
     position: relative;
     isolation: isolate;
     border: 1px solid rgb(var(--n-color-border-strong) / 0.7);
@@ -635,7 +635,7 @@ a {
     box-shadow: 0 20px 48px rgb(var(--n-color-ink) / 0.075);
   }
 
-  .nahrino-product-hero::before {
+  .nashrino-product-hero::before {
     position: absolute;
     inset: 0;
     background-image:
@@ -649,39 +649,39 @@ a {
     z-index: -1;
   }
 
-  .nahrino-home-hero {
+  .nashrino-home-hero {
     background:
       linear-gradient(135deg, rgb(var(--n-color-surface) / 0.98), rgb(var(--n-color-canvas-soft) / 0.92) 48%, rgb(var(--n-color-primary-soft) / 0.72)),
       radial-gradient(circle at 82% 12%, rgb(var(--n-color-primary) / 0.08), transparent 20rem);
   }
 
-  .nahrino-command-art {
+  .nashrino-command-art {
     transform-origin: center;
-    animation: nahrino-art-float 7s ease-in-out infinite;
+    animation: nashrino-art-float 7s ease-in-out infinite;
   }
 
-  .nahrino-art-stage {
+  .nashrino-art-stage {
     position: relative;
     overflow: hidden;
     border-radius: 1rem;
     background: linear-gradient(145deg, rgb(var(--n-color-primary-strong) / 0.08), rgb(var(--n-color-surface) / 0.92));
   }
 
-  .nahrino-art-stage::after {
+  .nashrino-art-stage::after {
     position: absolute;
     inset: 0;
     background: linear-gradient(90deg, transparent, rgb(var(--n-color-frost) / 0.54), transparent);
     content: "";
     pointer-events: none;
     transform: translateX(110%);
-    animation: nahrino-scan 5.8s ease-in-out infinite;
+    animation: nashrino-scan 5.8s ease-in-out infinite;
   }
 
-  .nahrino-live-signal {
-    animation: nahrino-signal 2.1s ease-in-out infinite;
+  .nashrino-live-signal {
+    animation: nashrino-signal 2.1s ease-in-out infinite;
   }
 
-  .nahrino-product-visual {
+  .nashrino-product-visual {
     position: relative;
     overflow: hidden;
     border-radius: 1rem;
@@ -692,7 +692,7 @@ a {
     box-shadow: 0 18px 40px rgb(var(--n-color-ink) / 0.1);
   }
 
-  .nahrino-product-visual::before {
+  .nashrino-product-visual::before {
     position: absolute;
     inset: 0;
     background-image:
@@ -704,7 +704,7 @@ a {
     pointer-events: none;
   }
 
-  .nahrino-visual-chip {
+  .nashrino-visual-chip {
     border: 1px solid rgb(var(--n-color-frost-border) / 0.56);
     background: rgb(var(--n-color-frost) / 0.88);
     box-shadow: 0 12px 28px rgb(var(--n-color-ink) / 0.12);
@@ -785,28 +785,28 @@ a {
     animation: dashboard-panel-rise var(--n-motion-section) var(--n-ease-standard) both;
   }
 
-  .nahrino-trend-bar {
+  .nashrino-trend-bar {
     background: linear-gradient(180deg, rgb(var(--n-chart-ready)), rgb(var(--n-color-primary-strong)));
     box-shadow: 0 8px 18px rgb(var(--n-chart-ready) / 0.2);
     transform-origin: bottom center;
-    animation: nahrino-chart-rise var(--n-motion-section) var(--n-ease-standard) both;
+    animation: nashrino-chart-rise var(--n-motion-section) var(--n-ease-standard) both;
   }
 
-  .nahrino-donut-chart {
-    animation: nahrino-donut-reveal var(--n-motion-section) var(--n-ease-standard) both;
+  .nashrino-donut-chart {
+    animation: nashrino-donut-reveal var(--n-motion-section) var(--n-ease-standard) both;
   }
 
-  .nahrino-chart-legend-row {
+  .nashrino-chart-legend-row {
     transition: background-color var(--n-motion-fast) var(--n-ease-standard), transform var(--n-motion-fast) var(--n-ease-standard), box-shadow var(--n-motion-fast) var(--n-ease-standard);
   }
 
-  .nahrino-chart-legend-row:hover {
+  .nashrino-chart-legend-row:hover {
     background: rgb(var(--n-color-surface));
     box-shadow: var(--n-shadow-hairline);
     transform: translateY(-1px);
   }
 
-  .nahrino-chart-legend-active {
+  .nashrino-chart-legend-active {
     background: rgb(var(--n-color-surface));
     box-shadow: 0 0 0 1px rgb(var(--n-color-primary) / 0.08), 0 10px 24px rgb(var(--n-color-ink) / 0.055);
     transform: translateY(-1px);
@@ -974,7 +974,7 @@ a {
       linear-gradient(180deg, rgb(var(--n-color-canvas)) 0%, rgb(var(--n-color-canvas-soft)) 100%);
   }
 
-  .nahrino-shell {
+  .nashrino-shell {
     position: relative;
     overflow: visible;
     background:
@@ -983,7 +983,7 @@ a {
       repeating-linear-gradient(90deg, rgb(var(--n-color-ink) / 0.009) 0 1px, transparent 1px 72px);
   }
 
-  .nahrino-sidebar {
+  .nashrino-sidebar {
     border-inline-start: 1px solid var(--n-glass-border);
     background:
       linear-gradient(180deg, var(--n-glass-surface-strong), var(--n-glass-surface)),
@@ -992,14 +992,14 @@ a {
     backdrop-filter: blur(var(--n-glass-blur-desktop)) saturate(var(--n-glass-saturation));
   }
 
-  .nahrino-topbar {
+  .nashrino-topbar {
     background: rgb(var(--n-color-frost) / 0.72);
     border-bottom: 1px solid rgb(var(--n-color-ink) / 0.06);
     box-shadow: 0 12px 30px rgb(var(--n-color-ink) / 0.04);
     backdrop-filter: blur(var(--n-glass-blur-desktop)) saturate(var(--n-glass-saturation));
   }
 
-  .nahrino-quick-create-panel {
+  .nashrino-quick-create-panel {
     border: 1px solid rgb(var(--n-color-frost-border) / 0.72);
     background: rgb(var(--n-color-frost) / 0.72);
     box-shadow: 0 12px 30px rgb(var(--n-color-ink) / 0.1);
@@ -1010,30 +1010,30 @@ a {
     transition: opacity var(--n-motion-base) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard);
   }
 
-  .nahrino-quick-create-fab {
+  .nashrino-quick-create-fab {
     border: 1px solid rgb(var(--n-color-primary-strong) / 0.88);
     background: rgb(var(--n-color-primary-strong));
     box-shadow: 0 12px 30px rgb(var(--n-color-primary) / 0.22);
     pointer-events: auto;
   }
 
-  .nahrino-quick-create-fab:hover {
+  .nashrino-quick-create-fab:hover {
     background: rgb(var(--n-color-primary));
     box-shadow: 0 16px 34px rgb(var(--n-color-primary) / 0.28);
   }
 
-  .nahrino-quick-create {
+  .nashrino-quick-create {
     padding-bottom: max(0px, env(safe-area-inset-bottom));
     pointer-events: none;
   }
 
-  .nahrino-quick-create-panel-open {
+  .nashrino-quick-create-panel-open {
     opacity: 1;
     pointer-events: auto;
     transform: translateY(0) scale(1);
   }
 
-  .nahrino-quick-create-fab-open {
+  .nashrino-quick-create-fab-open {
     background: rgb(var(--n-color-ink-strong));
     border-color: rgb(var(--n-color-ink-strong));
     transform: rotate(45deg);
@@ -1077,11 +1077,11 @@ a {
     border-radius: var(--n-radius-lg);
   }
 
-  .dashboard-spec-card.nahrino-section-card {
+  .dashboard-spec-card.nashrino-section-card {
     padding: 16px;
   }
 
-  .dashboard-spec-card.nahrino-section-card {
+  .dashboard-spec-card.nashrino-section-card {
     border-color: rgb(var(--n-color-frost-border) / 0.68);
     background: rgb(var(--n-color-frost) / 0.66);
     box-shadow: var(--n-shadow-soft);
@@ -1101,7 +1101,7 @@ a {
     animation: dashboard-preview-enter var(--n-motion-emphasized) var(--n-ease-standard) both;
   }
 
-  .dashboard-kpi-strip .nahrino-metric-card {
+  .dashboard-kpi-strip .nashrino-metric-card {
     min-height: 82px;
     border-color: var(--n-glass-border);
     border-radius: var(--n-radius-xs) !important;
@@ -1114,7 +1114,7 @@ a {
     transition: border-color var(--n-motion-base) var(--n-ease-standard), box-shadow var(--n-motion-base) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard), background-color var(--n-motion-base) var(--n-ease-standard);
   }
 
-  .dashboard-kpi-strip .nahrino-metric-card::after {
+  .dashboard-kpi-strip .nashrino-metric-card::after {
     display: block;
     inset: auto 0 0 0;
     width: 100%;
@@ -1126,7 +1126,7 @@ a {
     animation: dashboard-live-edge 3.2s var(--n-ease-standard) infinite;
   }
 
-  .dashboard-kpi-strip .nahrino-metric-card:hover {
+  .dashboard-kpi-strip .nashrino-metric-card:hover {
     border-color: rgb(var(--metric-accent, var(--n-color-primary)) / 0.24);
     background:
       radial-gradient(circle at 82% 0%, rgb(var(--metric-accent, var(--n-color-primary)) / 0.18), transparent 7.5rem),
@@ -1215,7 +1215,7 @@ a {
     transition: height var(--n-motion-emphasized) var(--n-ease-standard), transform var(--n-motion-base) var(--n-ease-standard);
   }
 
-  .nahrino-metric-card::after {
+  .nashrino-metric-card::after {
     display: none;
   }
 
@@ -1390,7 +1390,7 @@ a {
     padding-inline-start: 0.65rem;
   }
 
-  .dashboard-risk-card .nahrino-data-row::before {
+  .dashboard-risk-card .nashrino-data-row::before {
     opacity: 1;
     transform: scaleY(1);
   }
@@ -1522,7 +1522,7 @@ a {
     gap: 0.5rem;
   }
 
-  .calendar-kpi-strip .nahrino-metric-card {
+  .calendar-kpi-strip .nashrino-metric-card {
     min-height: 84px;
     border-radius: var(--n-radius-xs) !important;
   }
@@ -1569,6 +1569,13 @@ a {
   .calendar-pro-workspace {
     display: grid;
     gap: 0.85rem;
+  }
+
+  @media (min-width: 1280px) {
+    .calendar-pro-workspace {
+      grid-template-columns: minmax(0, 1fr) 360px;
+      align-items: start;
+    }
   }
 
   .calendar-pro-planner {
@@ -2682,7 +2689,7 @@ a {
 
   .calendar-post-chip-saving {
     opacity: 0.72;
-    animation: nahrino-card-breathe 1.4s ease-in-out infinite;
+    animation: nashrino-card-breathe 1.4s ease-in-out infinite;
   }
 
   .calendar-post-chip-rail {
@@ -3220,7 +3227,7 @@ a {
     min-width: 0;
   }
 
-  .campaign-command-metrics .nahrino-metric-card {
+  .campaign-command-metrics .nashrino-metric-card {
     min-height: 82px;
   }
 
@@ -3248,8 +3255,8 @@ a {
     backdrop-filter: blur(24px) saturate(152%);
   }
 
-  .campaign-manager-shell > .nahrino-card,
-  .campaign-management-stack > .nahrino-card {
+  .campaign-manager-shell > .nashrino-card,
+  .campaign-management-stack > .nashrino-card {
     overflow: hidden;
     border-color: rgb(var(--n-color-frost-border) / 0.6);
     border-radius: var(--n-radius-xs) !important;
@@ -3258,8 +3265,8 @@ a {
     backdrop-filter: blur(18px) saturate(142%);
   }
 
-  .campaign-manager-shell > .nahrino-card > div:first-child,
-  .campaign-management-stack > .nahrino-card > div:first-child {
+  .campaign-manager-shell > .nashrino-card > div:first-child,
+  .campaign-management-stack > .nashrino-card > div:first-child {
     border-color: rgb(var(--n-color-border) / 0.64);
     background: rgb(var(--n-color-frost) / 0.3);
   }
@@ -3902,8 +3909,10 @@ a {
     .calendar-action-rail {
       order: 3;
       margin: 0.5rem;
-      padding: 0.65rem;
-      border-radius: var(--n-radius-xs);
+      padding: 0.75rem;
+      border-radius: var(--n-radius-sm);
+      max-height: min(68vh, 32rem);
+      overflow-y: auto;
     }
 
     .calendar-action-rail::after {
@@ -4112,8 +4121,21 @@ a {
 
     .calendar-day-agenda-actions {
       grid-column: 1 / -1;
-      justify-content: flex-start;
-      padding-inline-start: 0.4rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      width: 100%;
+      margin-top: 0.65rem;
+      padding-top: 0.65rem;
+      border-top: 1px dashed rgb(var(--n-color-border) / 0.6);
+    }
+
+    .calendar-day-agenda-actions :is(button, a) {
+      flex: 1;
+      min-width: 75px;
+      justify-content: center;
+      padding: 0.6rem 0.8rem !important;
+      font-size: 0.75rem !important;
     }
 
     .calendar-post-preview-backdrop {
@@ -4223,10 +4245,10 @@ a {
   }
 
   .analytics-live-orb {
-    animation: nahrino-signal 2.8s var(--n-ease-standard) infinite;
+    animation: nashrino-signal 2.8s var(--n-ease-standard) infinite;
   }
 
-  .analytics-kpi-wrap .nahrino-metric-card {
+  .analytics-kpi-wrap .nashrino-metric-card {
     min-height: 92px;
   }
 
@@ -4261,7 +4283,7 @@ a {
   }
 
   .dashboard-command-brief,
-  .dashboard-spec-card.nahrino-section-card {
+  .dashboard-spec-card.nashrino-section-card {
     border-radius: 16px;
     padding: 12px;
   }
@@ -4275,7 +4297,7 @@ a {
     gap: 0.5rem;
   }
 
-  .dashboard-kpi-strip .nahrino-metric-card {
+  .dashboard-kpi-strip .nashrino-metric-card {
     min-height: 76px;
   }
 
@@ -4288,9 +4310,9 @@ a {
   }
 }
 
-[data-theme="high-contrast"] .nahrino-topbar,
-[data-theme="high-contrast"] .nahrino-sidebar,
-[data-theme="high-contrast"] .nahrino-quick-create-panel,
+[data-theme="high-contrast"] .nashrino-topbar,
+[data-theme="high-contrast"] .nashrino-sidebar,
+[data-theme="high-contrast"] .nashrino-quick-create-panel,
 [data-theme="high-contrast"] nav[aria-label="ناوبری اصلی"].fixed {
   background: rgb(var(--n-color-surface));
   backdrop-filter: none;
@@ -4307,3 +4329,74 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* NInspectorDrawer Custom Transitions and Mobile Slide-up styling */
+@keyframes n-drawer-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes n-drawer-slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes n-drawer-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes n-drawer-slide-in-bottom {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.n-inspector-drawer-backdrop {
+  animation: n-drawer-fade-in 200ms ease-out both;
+}
+
+.n-inspector-drawer-aside {
+  animation: n-drawer-slide-in-left 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.n-inspector-drawer-aside.right-0 {
+  animation: n-drawer-slide-in-right 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (max-width: 1023px) {
+  .n-inspector-drawer-aside {
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 85vh !important;
+    border-top-left-radius: var(--n-radius-xl) !important;
+    border-top-right-radius: var(--n-radius-xl) !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-top: 1px solid rgb(var(--n-color-border)) !important;
+    animation: n-drawer-slide-in-bottom 320ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
+    box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.1), 0 -8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  }
+}
+
+

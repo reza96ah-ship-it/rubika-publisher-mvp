@@ -12,3 +12,4 @@ export function ApprovalBadge({ status, compact = false }: { status?: string | n
     </StatusToken>
   );
 }
+

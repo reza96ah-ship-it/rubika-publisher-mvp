@@ -24,3 +24,4 @@ test.describe("Sanity & Authentication E2E Flow", () => {
     await expect(page.locator("aside")).toBeVisible();
   });
 });
+

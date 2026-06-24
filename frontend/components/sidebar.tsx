@@ -141,8 +141,8 @@ function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
       href={item.href}
       className={`app-interactive group relative flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 text-sm ${
           active
-            ? "nahrino-nav-active font-black"
-            : "nahrino-nav-idle"
+            ? "nashrino-nav-active font-black"
+            : "nashrino-nav-idle"
       }`}
     >
       {active ? <span className="absolute inset-y-2 right-0 w-0.5 rounded-l-full bg-app-primary" /> : null}
@@ -156,7 +156,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
   const pathname = usePathname();
 
   return (
-    <aside className="nahrino-sidebar hidden w-[238px] shrink-0 border-l border-app-border/80 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:self-start lg:flex-col lg:overflow-hidden">
+    <aside className="nashrino-sidebar hidden w-[238px] shrink-0 border-l border-app-border/80 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:self-start lg:flex-col lg:overflow-hidden">
       <div className="shrink-0 border-b border-app-border/80 px-3 py-3">
         <Link href="/" className="flex items-center gap-2.5 rounded-lg px-1 py-1">
           <ProductMark />
@@ -168,7 +168,7 @@ export function Sidebar({ storeName = "فضای کاری", ready = false, brandC
 
         <Link
           href="/store"
-          className="app-interactive nahrino-card-muted mt-3 flex items-center gap-2 rounded-lg px-2.5 py-2.5 hover:bg-white"
+          className="app-interactive nashrino-card-muted mt-3 flex items-center gap-2 rounded-lg px-2.5 py-2.5 hover:bg-white"
         >
           <WorkspaceAvatar name={storeName} size="sm" color={brandColor} imageUrl={avatarUrl} />
           <span className="min-w-0 flex-1">
@@ -248,3 +248,4 @@ export function MobileNav() {
     </nav>
   );
 }
+

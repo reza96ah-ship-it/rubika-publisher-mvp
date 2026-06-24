@@ -1,4 +1,4 @@
-# Nahrino SocialOps Studio
+﻿# Nashrino SocialOps Studio
 
 Persian-first, RTL-native, Jalali-native social operations platform for planning, creating, scheduling, publishing, monitoring, and reporting content across Rubika, Instagram, and future channels.
 
@@ -19,7 +19,7 @@ The project started as a Rubika publisher MVP, but the product direction is now 
 
 The PRD, RFP, roadmap, design direction, backlog, architecture notes, and phase plan live in one source of truth:
 
-[docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md)
+[docs/Nashrino_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/Nashrino_2026_MASTER_RFP_ROADMAP_BACKLOG.md)
 
 The Instagram comment-to-DM automation feature has a dedicated product spec:
 
@@ -71,7 +71,7 @@ docker compose exec frontend npm run check
 
 ## Canonical Navigation Structure
 
-The navigation follows the single-source-of-truth design documented in [docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md).
+The navigation follows the single-source-of-truth design documented in [docs/Nashrino_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/Nashrino_2026_MASTER_RFP_ROADMAP_BACKLOG.md).
 
 ### Target Primary Navigation
 1. **داشبورد** (`/`) - Dashboard overview
@@ -103,3 +103,4 @@ Phase 5: Instagram Comment-to-DM Automation MVP (🚧 In Progress - Foundations 
   1. **Composer Pro Phase 2:** Integrate comment automation settings directly inside the creation workbench so rules can be configured and attached when scheduling/publishing posts.
   2. **Instagram Publishing Adapter:** Support automatic direct publishing of scheduled media/carousels to connected professional Instagram accounts.
   3. **Inbox & Reports Pro:** Stream automation matched events/errors to the inbox and display analytics widgets in reports.
+

@@ -29,7 +29,7 @@ import { PlannerComposerDrawer } from "../../components/planner-composer-drawer"
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
-import { NMetricTile } from "../../components/nahrino-ui";
+import { NMetricTile, NInspectorDrawer } from "../../components/nashrino-ui";
 import { DetailGrid, EmptyState, NoticeBanner, StatusToken, Timeline, WorkspacePage } from "../../components/workspace-ui";
 import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { apiUrl, authHeaders, type Post } from "../../lib/posts";
@@ -204,6 +204,25 @@ export default function CalendarPage() {
   const { showToast } = useToast();
   const agendaRef = useRef<HTMLElement | null>(null);
   const [presetCampaignId, setPresetCampaignId] = useState("");
+  const [mobileView, setMobileView] = useState<"grid" | "agenda">("grid");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const hasDayConflicts = useCallback((dayPosts: Post[]) => {
+    if (dayPosts.length < 2) return false;
+    const sorted = sortByScheduleAsc(dayPosts);
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const gap = minutesBetween(sorted[i].scheduled_at, sorted[i + 1].scheduled_at);
+      if (gap !== null && gap < 90) return true;
+    }
+    return false;
+  }, []);
   const [posts, setPosts] = useState<Post[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
@@ -387,8 +406,7 @@ export default function CalendarPage() {
   const visibleRangeCount = filteredPosts.filter((post) => post.scheduled_at && activeRangeDayKeys.has(jalaliDateKey(post.scheduled_at))).length;
   const visiblePostLimit = viewMode === "week" ? (densityMode === "compact" ? 4 : 6) : densityMode === "compact" ? 2 : 3;
   const calendarCellHeight = densityMode === "compact" ? "min-h-24" : "min-h-36";
-  const quickPreviewAsset = quickPreviewPost ? assetByPostId.get(quickPreviewPost.id) : null;
-  const quickPreviewUrl = quickPreviewAsset ? mediaPreviewUrls[quickPreviewAsset.id] : "";
+
   const rescheduleDraftIso = useMemo(() => {
     if (!rescheduleDraftPost || !rescheduleDraftDay) return null;
     return jalaliDateToIsoAtTime(rescheduleDraftDay, rescheduleDraftHour, rescheduleDraftMinute, scheduleTimezone);
@@ -450,12 +468,7 @@ export default function CalendarPage() {
       .map((hour) => ({ hour, label: `${String(hour).padStart(2, "0")}:00` }));
     return { conflicts, missingMedia, failed, publishablePosts, rubikaBlocked, suggestedSlots };
   }, [assetByPostId, rubikaSettings, selectedDayPosts]);
-  const selectedDayStatusSummary = useMemo(() => ({
-    scheduled: selectedDayPosts.filter((post) => post.status === "scheduled").length,
-    publishing: selectedDayPosts.filter((post) => post.status === "publishing").length,
-    published: selectedDayPosts.filter((post) => post.status === "published").length,
-    failed: selectedDayPosts.filter((post) => post.status === "failed" || post.last_error).length
-  }), [selectedDayPosts]);
+
   const selectedDayNextAction = useMemo(() => {
     if (selectedDayInsights.rubikaBlocked) return { tone: "alert" as const, title: "اتصال کانال را بررسی کنید", detail: rubikaStatusLabel(rubikaSettings) };
     if (selectedDayInsights.failed.length) return { tone: "alert" as const, title: "پست خطادار را اصلاح کنید", detail: `${selectedDayInsights.failed.length} پست نیازمند بررسی است` };
@@ -823,6 +836,179 @@ export default function CalendarPage() {
     );
   }
 
+  function renderPostPreviewContent(post: Post) {
+    const asset = assetByPostId.get(post.id);
+    const previewUrl = asset ? mediaPreviewUrls[asset.id] : "";
+    return (
+      <div className="flex flex-col gap-4 overflow-y-auto max-h-[80vh] md:max-h-none p-1">
+        <div className="calendar-post-preview-media">
+          {previewUrl ? (
+            <img src={previewUrl} alt={asset?.original_filename ?? ""} className="calendar-post-preview-image rounded-lg w-full max-h-48 object-cover border border-app-border" />
+          ) : (
+            <span className="calendar-post-preview-image calendar-post-preview-image-empty flex flex-col items-center justify-center bg-slate-50 border border-dashed border-app-border py-8 rounded-lg text-app-muted">
+              <ImageIcon className="h-6 w-6 mb-1.5" aria-hidden="true" />
+              بدون رسانه
+            </span>
+          )}
+        </div>
+
+        <div className="calendar-post-preview-details calendar-post-detail-summary flex flex-col gap-2">
+          <div className="calendar-post-preview-status flex flex-wrap gap-1.5 items-center">
+            <StatusBadge status={post.status} />
+            <ChannelBadges platform={post.platform} compact />
+            <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
+            <span className="calendar-post-preview-campaign text-xs font-black inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-app-border bg-white" style={{ "--campaign-accent": campaignColorForPost(post, campaigns) } as CSSProperties}>
+              <span className="h-2 w-2 rounded-full bg-[var(--campaign-accent)]" aria-hidden="true" />
+              {campaignLabelForPost(post, campaigns)}
+            </span>
+          </div>
+          <DetailGrid
+            items={[
+              { label: "زمان انتشار", value: formatJalaliDateTime(post.scheduled_at) },
+              { label: "کانال", value: post.platform || "Rubika" },
+              { label: "کمپین", value: campaignLabelForPost(post, campaigns) },
+              { label: "تلاش انتشار", value: `${post.attempt_count}` }
+            ]}
+          />
+          <div className="calendar-post-readiness-grid grid grid-cols-2 gap-2 mt-2">
+            {quickPreviewReadiness.map((item) => (
+              <div key={item.label} className="calendar-post-readiness-item flex flex-col p-2 rounded-md border border-app-border bg-slate-50" data-tone={item.tone}>
+                <span className="text-[10px] text-app-muted font-bold">{item.label}</span>
+                <strong className="text-xs font-black mt-0.5">{item.value}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="calendar-post-detail-grid flex flex-col gap-3 mt-2">
+          <section className="calendar-post-detail-card p-3 rounded-lg border border-app-border bg-slate-50">
+            <p className="app-section-kicker text-[10px] font-black mb-1">کپشن</p>
+            <p className="calendar-post-preview-caption text-xs leading-relaxed text-app-text whitespace-pre-wrap">{post.caption || "کپشن برای این پست ثبت نشده است."}</p>
+          </section>
+          <section className="calendar-post-detail-card p-3 rounded-lg border border-app-border bg-slate-50">
+            <p className="app-section-kicker text-[10px] font-black mb-1.5">مسیر انتشار</p>
+            <Timeline
+              items={[
+                {
+                  title: "ساخت محتوا",
+                  description: "پست در فضای کاری ثبت شده است.",
+                  meta: formatJalaliDateTime(post.created_at),
+                  tone: "primary"
+                },
+                {
+                  title: "ورود به برنامه انتشار",
+                  description: formatJalaliDateTime(post.scheduled_at),
+                  meta: campaignLabelForPost(post, campaigns),
+                  tone: "warning"
+                },
+                {
+                  title: "وضعیت فعلی",
+                  description: post.last_error || postStatusLabel(post.status),
+                  meta: formatJalaliDateTime(post.updated_at),
+                  tone: postTimelineTone(post.status)
+                }
+              ]}
+            />
+          </section>
+        </div>
+
+        {post.last_error ? <NoticeBanner tone="alert">{post.last_error}</NoticeBanner> : null}
+      </div>
+    );
+  }
+
+  function renderPostPreviewFooter(post: Post) {
+    return (
+      <div className="flex flex-wrap gap-2 justify-end w-full border-t border-app-border p-3 bg-slate-50">
+        <Button href={`/compose?postId=${post.id}`} size="sm">ویرایش پست</Button>
+        {canReschedule(post) ? (
+          <Button type="button" variant="secondary" size="sm" onClick={() => openRescheduleDraft(post, post.scheduled_at ?? selectedDayValue)}>تغییر زمان</Button>
+        ) : null}
+        <Button href="/queue" variant="secondary" size="sm">صف انتشار</Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => setQuickPreviewPostId(null)}>بستن</Button>
+      </div>
+    );
+  }
+
+  function renderRescheduleContent(post: Post) {
+    return (
+      <div className="flex flex-col gap-4 p-2 overflow-y-auto h-full">
+        <div className="calendar-reschedule-body flex flex-col gap-3">
+          <div className="calendar-reschedule-day-card p-3 rounded-lg border border-app-border bg-slate-50">
+            <p className="text-[10px] font-black text-app-muted">روز انتشار</p>
+            <div className="calendar-reschedule-day-value flex items-center gap-2 mt-1.5 text-sm font-black text-app-text">
+              <CalendarDays className="h-4 w-4 text-app-primary" aria-hidden="true" />
+              <span>{rescheduleDraftDay ? formatJalaliDate(rescheduleDraftDay) : "روز انتخاب نشده"}</span>
+            </div>
+            <div className="calendar-reschedule-day-actions flex gap-2 mt-2.5">
+              <Button type="button" variant="secondary" size="sm" onClick={() => setRescheduleDraftDay(selectedDayValue)}>
+                روز فعال تقویم
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setRescheduleDraftDay(addDays(post.scheduled_at ?? selectedDayValue, 1).toISOString())}>
+                فردا
+              </Button>
+            </div>
+          </div>
+
+          <div className="calendar-reschedule-time-card p-3 rounded-lg border border-app-border bg-slate-50">
+            <p className="text-[10px] font-black text-app-muted">ساعت انتشار</p>
+            <div className="calendar-reschedule-selectors grid grid-cols-2 gap-3 mt-2">
+              <label className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold text-app-muted">ساعت</span>
+                <select value={rescheduleDraftHour} onChange={(event) => setRescheduleDraftHour(Number(event.target.value))} className="w-full border border-app-border bg-white rounded-md p-1.5 text-xs outline-none">
+                  {Array.from({ length: 24 }, (_, hour) => <option key={hour} value={hour}>{String(hour).padStart(2, "0")}</option>)}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold text-app-muted">دقیقه</span>
+                <select value={rescheduleDraftMinute} onChange={(event) => setRescheduleDraftMinute(Number(event.target.value))} className="w-full border border-app-border bg-white rounded-md p-1.5 text-xs outline-none">
+                  {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => <option key={minute} value={minute}>{String(minute).padStart(2, "0")}</option>)}
+                </select>
+              </label>
+            </div>
+            <div className="calendar-reschedule-slots flex flex-wrap gap-1.5 mt-3">
+              {suggestedSlotsForDay(rescheduleDraftDay || selectedDayValue, post.id).slice(0, 5).map((slot) => (
+                <Button
+                  key={slot.hour}
+                  type="button"
+                  variant={rescheduleDraftHour === slot.hour && rescheduleDraftMinute === slot.minute ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => {
+                    setRescheduleDraftHour(slot.hour);
+                    setRescheduleDraftMinute(slot.minute);
+                  }}
+                >
+                  {slot.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {rescheduleDraftConflicts.length ? (
+          <NoticeBanner tone="alert" title="تداخل زمانی">
+            این زمان با {rescheduleDraftConflicts.length} پست دیگر کمتر از ۹۰ دقیقه فاصله دارد. یک ساعت پیشنهادی دیگر انتخاب کنید.
+          </NoticeBanner>
+        ) : (
+          <NoticeBanner tone="success" title="زمان امن">
+            این زمان برای انتشار پشت‌سرهم مناسب است و تداخل نزدیک ندارد.
+          </NoticeBanner>
+        )}
+      </div>
+    );
+  }
+
+  function renderRescheduleFooter(post: Post) {
+    return (
+      <div className="flex gap-2 justify-end w-full border-t border-app-border p-3 bg-slate-50">
+        <Button type="button" onClick={() => void saveRescheduleDraft()} disabled={!rescheduleDraftIso || rescheduleDraftConflicts.length > 0 || reschedulingPostId === post.id} size="sm">
+          {reschedulingPostId === post.id ? "در حال ذخیره" : "ذخیره زمان جدید"}
+        </Button>
+        <Button type="button" variant="secondary" onClick={() => setRescheduleDraftPostId(null)} size="sm">انصراف</Button>
+      </div>
+    );
+  }
+
   return (
     <AuthGate>
       <AppShell>
@@ -866,8 +1052,30 @@ export default function CalendarPage() {
 
           {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
 
-          <section className="calendar-pro-workspace">
-            <section className="app-studio-panel calendar-pro-planner min-w-0 overflow-hidden rounded-lg">
+          <div className="flex xl:hidden items-center justify-center p-1 mb-3 bg-app-surface/60 backdrop-blur-md border border-app-border rounded-lg shadow-hairline gap-1.5 max-w-md mx-auto w-full">
+            <button
+              type="button"
+              onClick={() => setMobileView("grid")}
+              className={`flex-1 py-3 px-3 rounded-md text-xs font-black text-center transition ${mobileView === "grid" ? "bg-white text-app-primary shadow-hairline border border-app-border/80" : "text-app-muted hover:text-app-text"}`}
+            >
+              <Grid3X3 className="inline-block ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              نمای تقویم
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMobileView("agenda");
+                focusSelectedDayAgenda(activeDayKey);
+              }}
+              className={`flex-1 py-3 px-3 rounded-md text-xs font-black text-center transition ${mobileView === "agenda" ? "bg-white text-app-primary shadow-hairline border border-app-border/80" : "text-app-muted hover:text-app-text"}`}
+            >
+              <List className="inline-block ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              برنامه روز ({selectedDayPosts.length})
+            </button>
+          </div>
+
+          <section className="calendar-pro-workspace grid xl:grid-cols-[minmax(0,1fr)_360px] gap-4">
+            <section className={`app-studio-panel calendar-pro-planner min-w-0 overflow-hidden rounded-lg ${mobileView === "grid" ? "block" : "hidden xl:block"}`}>
               <div className="calendar-pro-toolbar border-b border-app-border px-3 py-2.5 sm:py-3">
                 <div className="calendar-toolbar-main">
                   <div className="calendar-toolbar-title-row flex flex-wrap items-center gap-2">
@@ -997,99 +1205,6 @@ export default function CalendarPage() {
                 ) : null}
               </div>
 
-              {!loading ? (
-                <section ref={agendaRef} className={`calendar-day-agenda ${agendaPulseKey ? "calendar-day-agenda-pulse" : ""}`} aria-label="برنامه روز انتخاب‌شده">
-                  <div className="calendar-day-agenda-head">
-                    <div className="min-w-0">
-                      <p className="app-section-kicker text-[10px] font-black">نمای روز</p>
-                      <h2>{selectedDayLabel}</h2>
-                      <p>{selectedDayPosts.length ? `${selectedDayPosts.length} پست زمان‌دار برای این روز` : "روز آزاد برای ساخت برنامه جدید"}</p>
-                    </div>
-                    <div className="calendar-day-agenda-head-actions">
-                      <div className="calendar-day-agenda-summary" aria-label="خلاصه وضعیت روز">
-                        <StatusToken tone="warning">{selectedDayStatusSummary.scheduled} زمان‌بندی</StatusToken>
-                        <StatusToken tone="primary">{selectedDayStatusSummary.publishing} در انتشار</StatusToken>
-                        <StatusToken tone="success">{selectedDayStatusSummary.published} منتشر</StatusToken>
-                        <StatusToken tone={selectedDayStatusSummary.failed ? "alert" : "success"}>{selectedDayStatusSummary.failed} ریسک</StatusToken>
-                      </div>
-                      <Button type="button" size="sm" onClick={() => openQuickCreate(selectedDayValue)}>
-                        <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                        ساخت پست
-                      </Button>
-                      {selectedCampaignIdForRoute ? (
-                        <Button href={`/compose?scheduledAt=${encodeURIComponent(selectedDayValue)}&campaignId=${selectedCampaignIdForRoute}`} variant="secondary" size="sm">
-                          پست برای کمپین
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="calendar-day-command-panel">
-                    <div className="calendar-day-next-action" data-tone={selectedDayNextAction.tone}>
-                      <span className="calendar-day-next-action-icon" aria-hidden="true">
-                        {selectedDayNextAction.tone === "alert" ? <AlertCircle className="h-4 w-4" /> : selectedDayNextAction.tone === "success" ? <CheckCircle2 className="h-4 w-4" /> : <Clock3 className="h-4 w-4" />}
-                      </span>
-                      <span className="min-w-0">
-                        <strong>{selectedDayNextAction.title}</strong>
-                        <small>{selectedDayNextAction.detail}</small>
-                      </span>
-                    </div>
-
-                    <div className="calendar-day-slot-studio" aria-label="مسیر زمانی روز انتخاب‌شده">
-                      <div className="calendar-day-slot-studio-head">
-                        <p className="text-xs font-black text-app-text">مسیر روز</p>
-                        <span>{selectedDayTimeline.length ? `${selectedDayTimeline.length} نقطه` : "بدون برنامه"}</span>
-                      </div>
-                      <div className="calendar-day-slot-rail">
-                        {selectedDayTimeline.length ? selectedDayTimeline.map((item) => (
-                          item.type === "post" ? (
-                            <button
-                              key={`post-${item.post.id}`}
-                              type="button"
-                              className="calendar-day-slot-pill calendar-day-slot-pill-post"
-                              style={{ "--campaign-accent": item.accent } as CSSProperties}
-                              onClick={() => {
-                                selectPost(item.post);
-                                setQuickPreviewPostId(item.post.id);
-                              }}
-                            >
-                              <span>{item.label}</span>
-                              <strong>{item.post.title}</strong>
-                            </button>
-                          ) : (
-                            <button
-                              key={`slot-${item.hour}`}
-                              type="button"
-                              className="calendar-day-slot-pill calendar-day-slot-pill-free"
-                              onClick={() => openQuickCreateAt(selectedDayValue, item.hour, 0)}
-                            >
-                              <span>{item.label}</span>
-                              <strong>زمان خالی</strong>
-                            </button>
-                          )
-                        )) : (
-                          <button type="button" className="calendar-day-slot-pill calendar-day-slot-pill-free" onClick={() => openQuickCreate(selectedDayValue)}>
-                            <span>۰۹:۰۰</span>
-                            <strong>شروع برنامه</strong>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="calendar-day-agenda-list">
-                    {selectedDayPosts.length ? selectedDayPosts.map((post) => renderAgendaPost(post)) : (
-                      <EmptyState
-                        icon={<CalendarDays className="h-5 w-5" aria-hidden="true" />}
-                        title="برای این روز هنوز برنامه‌ای نیست"
-                        description="یک زمان پیشنهادی انتخاب کنید یا پست تازه بسازید."
-                        action={<Button type="button" onClick={() => openQuickCreate(selectedDayValue)}>ساخت پست برای این روز</Button>}
-                      />
-                    )}
-                  </div>
-                </section>
-              ) : null}
-
               {loading ? <LoadingRows rows={5} /> : null}
 
               {!loading && viewMode !== "list" ? (
@@ -1110,6 +1225,8 @@ export default function CalendarPage() {
                         const weekdayLabel = day ? weekDays[weekOffset(new Date(day.date))] : "";
                         const dayStateLabel = dayRisk ? "ریسک" : dayPosts.length ? `${dayPosts.length} پست` : "خالی";
 
+                        const hasConflict = day ? hasDayConflicts(dayPosts) : false;
+
                         return (
                           <div
                             key={day?.key ?? `empty-${index}`}
@@ -1124,6 +1241,9 @@ export default function CalendarPage() {
                                   <span className="calendar-day-date">
                                     <span className="calendar-day-weekday">{weekdayLabel}</span>
                                     <span className="calendar-day-number">{day.day}</span>
+                                    {hasConflict ? (
+                                      <span className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" title="تداخل فاصله انتشار کمتر از ۹۰ دقیقه" />
+                                    ) : null}
                                   </span>
                                   <div className="calendar-day-actions">
                                     <span className="calendar-day-state">{dayStateLabel}</span>
@@ -1229,247 +1349,199 @@ export default function CalendarPage() {
                   />
                 </div>
               ) : null}
-
             </section>
 
-            <aside className="calendar-action-rail" aria-label="عملیات برنامه‌ریز">
+            <aside ref={agendaRef} className={`calendar-action-rail overflow-y-auto max-h-[85vh] xl:max-h-none ${agendaPulseKey ? "calendar-day-agenda-pulse" : ""} ${mobileView === "agenda" ? "block" : "hidden xl:block"}`} aria-label="عملیات برنامه‌ریز">
               <div className="calendar-action-rail-head">
                 <div className="min-w-0">
                   <p className="app-section-kicker text-[10px] font-black">مرکز کنترل</p>
-                  <h2>کنترل انتشار</h2>
-                  <p>{selectedDayLabel} · {selectedDayPosts.length ? `${selectedDayPosts.length} پست برنامه‌ریزی‌شده` : "روز آزاد برای ساخت برنامه"}</p>
+                  <h2>برنامه روز {selectedDayLabel}</h2>
+                  <p>{selectedDayPosts.length ? `${selectedDayPosts.length} پست زمان‌دار برای این روز` : "روز آزاد برای ساخت برنامه جدید"}</p>
                 </div>
-                <div className="calendar-action-rail-context">
+                <div className="calendar-action-rail-context flex flex-col gap-1 items-end">
                   <StatusToken tone={selectedDayInsights.conflicts.length || selectedDayInsights.failed.length || selectedDayInsights.rubikaBlocked ? "alert" : selectedDayInsights.missingMedia.length ? "warning" : "success"}>
                     {selectedDayInsights.conflicts.length || selectedDayInsights.failed.length || selectedDayInsights.rubikaBlocked ? "نیازمند رسیدگی" : selectedDayInsights.missingMedia.length ? "قابل بهبود" : "آماده انتشار"}
                   </StatusToken>
-                  <StatusToken tone="neutral">{visibleRangeCount} پست در بازه</StatusToken>
+                  <StatusToken tone="neutral">{selectedDayPosts.length} پست</StatusToken>
                 </div>
               </div>
-              <div className="calendar-action-rail-stack">
-                <Button type="button" onClick={() => openQuickCreate(selectedDayValue)} className="calendar-action-primary" size="sm">
+
+              {/* Next Action Banner */}
+              <div className="calendar-day-next-action mt-3" data-tone={selectedDayNextAction.tone}>
+                <span className="calendar-day-next-action-icon" aria-hidden="true">
+                  {selectedDayNextAction.tone === "alert" ? <AlertCircle className="h-4 w-4" /> : selectedDayNextAction.tone === "success" ? <CheckCircle2 className="h-4 w-4" /> : <Clock3 className="h-4 w-4" />}
+                </span>
+                <span className="min-w-0">
+                  <strong className="block text-xs font-black">{selectedDayNextAction.title}</strong>
+                  <small className="block text-[10px] text-app-muted mt-0.5">{selectedDayNextAction.detail}</small>
+                </span>
+              </div>
+
+              {/* Slot Timeline */}
+              <div className="calendar-day-slot-studio mt-3" aria-label="مسیر زمانی روز انتخاب‌شده">
+                <div className="calendar-day-slot-studio-head flex justify-between items-center text-xs mb-1.5">
+                  <p className="font-black text-app-text">مسیر زمانی روز</p>
+                  <span className="text-[10px] text-app-muted">{selectedDayTimeline.length ? `${selectedDayTimeline.length} نقطه زمانی` : "بدون برنامه"}</span>
+                </div>
+                <div className="calendar-day-slot-rail flex gap-1.5 overflow-x-auto pb-1">
+                  {selectedDayTimeline.length ? selectedDayTimeline.map((item) => (
+                    item.type === "post" ? (
+                      <button
+                        key={`post-${item.post.id}`}
+                        type="button"
+                        className="calendar-day-slot-pill calendar-day-slot-pill-post flex-shrink-0 text-right p-1.5 rounded border border-app-border text-[10px] bg-white min-w-[100px]"
+                        style={{ "--campaign-accent": item.accent } as CSSProperties}
+                        onClick={() => {
+                          selectPost(item.post);
+                          setQuickPreviewPostId(item.post.id);
+                        }}
+                      >
+                        <span className="text-app-muted block font-semibold">{item.label}</span>
+                        <strong className="text-app-text block truncate font-black mt-0.5">{item.post.title}</strong>
+                      </button>
+                    ) : (
+                      <button
+                        key={`slot-${item.hour}`}
+                        type="button"
+                        className="calendar-day-slot-pill calendar-day-slot-pill-free flex-shrink-0 text-right p-1.5 rounded border border-dashed border-app-border text-[10px] bg-slate-50 min-w-[100px]"
+                        onClick={() => openQuickCreateAt(selectedDayValue, item.hour, 0)}
+                      >
+                        <span className="text-app-muted block font-semibold">{item.label}</span>
+                        <strong className="text-app-primary block font-black mt-0.5">زمان خالی</strong>
+                      </button>
+                    )
+                  )) : (
+                    <button type="button" className="calendar-day-slot-pill calendar-day-slot-pill-free flex-shrink-0 text-right p-1.5 rounded border border-dashed border-app-border text-[10px] bg-slate-50 w-full" onClick={() => openQuickCreate(selectedDayValue)}>
+                      <span className="text-app-muted block">۰۹:۰۰</span>
+                      <strong className="text-app-primary block font-black">شروع برنامه</strong>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Day Agenda Posts List */}
+              <div className="calendar-day-agenda-list mt-3 flex flex-col gap-2">
+                {selectedDayPosts.length ? selectedDayPosts.map((post) => renderAgendaPost(post)) : (
+                  <EmptyState
+                    icon={<CalendarDays className="h-5 w-5" aria-hidden="true" />}
+                    title="برای این روز هنوز برنامه‌ای نیست"
+                    description="یک زمان پیشنهادی انتخاب کنید یا پست تازه بسازید."
+                    action={<Button type="button" onClick={() => openQuickCreate(selectedDayValue)}>ساخت پست برای این روز</Button>}
+                  />
+                )}
+              </div>
+
+              {/* Actions Stack */}
+              <div className="calendar-action-rail-stack flex flex-col gap-2 mt-4 pt-3 border-t border-app-border">
+                <Button type="button" onClick={() => openQuickCreate(selectedDayValue)} className="calendar-action-primary w-full justify-center" size="sm">
                   <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
                   پست جدید برای این روز
                 </Button>
                 {selectedPost ? (
                   <>
-                    <Button type="button" variant="secondary" size="sm" onClick={() => setQuickPreviewPostId(selectedPost.id)}>
+                    <Button type="button" variant="secondary" size="sm" className="w-full justify-center" onClick={() => setQuickPreviewPostId(selectedPost.id)}>
                       پیش‌نمایش پست انتخابی
                     </Button>
                     {canReschedule(selectedPost) ? (
-                      <Button type="button" variant="secondary" size="sm" onClick={() => openRescheduleDraft(selectedPost, selectedDayValue)}>
+                      <Button type="button" variant="secondary" size="sm" className="w-full justify-center" onClick={() => openRescheduleDraft(selectedPost, selectedDayValue)}>
                         تغییر زمان پست
                       </Button>
                     ) : null}
-                    <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary" size="sm">
+                    <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary" className="w-full justify-center" size="sm">
                       ویرایش پست انتخابی
                     </Button>
                   </>
                 ) : null}
-                <Button href="/queue" variant="ghost" className="calendar-action-route" size="sm">صف انتشار</Button>
-                <Button href="/campaigns" variant="ghost" className="calendar-action-route" size="sm">مدیر کمپین</Button>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  <Button href="/queue" variant="ghost" className="w-full justify-center shadow-hairline border border-app-border/80 text-xs" size="sm">صف انتشار</Button>
+                  <Button href="/campaigns" variant="ghost" className="w-full justify-center shadow-hairline border border-app-border/80 text-xs" size="sm">مدیر کمپین</Button>
+                </div>
               </div>
-              <div className="calendar-action-rail-status">
+
+              <div className="calendar-action-rail-status mt-3 pt-3 border-t border-app-border text-center">
                 {attentionPosts.length ? (
-                  <Link href="/content?status=failed" className="calendar-action-rail-alert">
-                    <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                  <Link href="/content?status=failed" className="calendar-action-rail-alert inline-flex w-full justify-center">
+                    <AlertCircle className="h-4 w-4 ml-1.5" aria-hidden="true" />
                     {attentionPosts.length} مورد نیازمند رسیدگی
                   </Link>
                 ) : (
-                  <p className="calendar-action-rail-ok">
-                    <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                  <p className="calendar-action-rail-ok inline-flex w-full justify-center">
+                    <CheckCircle2 className="h-4 w-4 ml-1.5" aria-hidden="true" />
                     برنامه انتشار پایدار است
                   </p>
                 )}
               </div>
             </aside>
           </section>
-          {quickPreviewPost && typeof document !== "undefined" ? createPortal(
-            <div className="calendar-post-preview-backdrop" role="presentation" onClick={() => setQuickPreviewPostId(null)}>
-              <section className="calendar-post-preview-modal calendar-post-detail-sheet" role="dialog" aria-modal="true" aria-label={`جزئیات ${quickPreviewPost.title}`} onClick={(event) => event.stopPropagation()}>
-                <div className="calendar-post-preview-head">
-                  <div className="min-w-0">
-                    <p className="app-section-kicker text-[10px] font-black">جزئیات انتشار</p>
-                    <h2>{quickPreviewPost.title}</h2>
-                    <p>{formatJalaliDateTime(quickPreviewPost.scheduled_at)} · {campaignLabelForPost(quickPreviewPost, campaigns)}</p>
-                  </div>
-                  <button type="button" className="calendar-post-preview-close" onClick={() => setQuickPreviewPostId(null)} aria-label="بستن پیش‌نمایش">
-                    <X className="calendar-post-preview-close-icon" aria-hidden="true" />
-                  </button>
-                </div>
 
-                <div className="calendar-post-detail-hero">
-                  <div className="calendar-post-preview-media">
-                    {quickPreviewUrl ? (
-                      <img src={quickPreviewUrl} alt={quickPreviewAsset?.original_filename ?? ""} className="calendar-post-preview-image" />
-                    ) : (
-                      <span className="calendar-post-preview-image calendar-post-preview-image-empty">
-                        <ImageIcon className="h-6 w-6" aria-hidden="true" />
-                        بدون رسانه
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="calendar-post-preview-details calendar-post-detail-summary">
-                    <div className="calendar-post-preview-status">
-                      <StatusBadge status={quickPreviewPost.status} />
-                      <ChannelBadges platform={quickPreviewPost.platform} compact />
-                      <CountdownBadge status={quickPreviewPost.status} scheduledAt={quickPreviewPost.scheduled_at} />
-                      <span className="calendar-post-preview-campaign" style={{ "--campaign-accent": campaignColorForPost(quickPreviewPost, campaigns) } as CSSProperties}>
-                        <span aria-hidden="true" />
-                        {campaignLabelForPost(quickPreviewPost, campaigns)}
-                      </span>
+          {quickPreviewPost ? (
+            isMobile ? (
+              <NInspectorDrawer
+                open={Boolean(quickPreviewPost)}
+                title="جزئیات انتشار"
+                description={quickPreviewPost.title}
+                onClose={() => setQuickPreviewPostId(null)}
+                side="left"
+                footer={renderPostPreviewFooter(quickPreviewPost)}
+              >
+                {renderPostPreviewContent(quickPreviewPost)}
+              </NInspectorDrawer>
+            ) : typeof document !== "undefined" ? (
+              createPortal(
+                <div className="calendar-post-preview-backdrop" role="presentation" onClick={() => setQuickPreviewPostId(null)}>
+                  <section className="calendar-post-preview-modal calendar-post-detail-sheet animate-nashville-in" role="dialog" aria-modal="true" aria-label={`جزئیات ${quickPreviewPost.title}`} onClick={(event) => event.stopPropagation()}>
+                    <div className="calendar-post-preview-head border-b border-app-border pb-3 mb-3">
+                      <div className="min-w-0">
+                        <p className="app-section-kicker text-[10px] font-black">جزئیات انتشار</p>
+                        <h2 className="text-sm font-black text-app-text mt-1">{quickPreviewPost.title}</h2>
+                        <p className="text-[10px] text-app-muted mt-0.5">{formatJalaliDateTime(quickPreviewPost.scheduled_at)} · {campaignLabelForPost(quickPreviewPost, campaigns)}</p>
+                      </div>
+                      <button type="button" className="calendar-post-preview-close" onClick={() => setQuickPreviewPostId(null)} aria-label="بستن پیش‌نمایش">
+                        <X className="calendar-post-preview-close-icon" aria-hidden="true" />
+                      </button>
                     </div>
-                    <DetailGrid
-                      items={[
-                        { label: "زمان انتشار", value: formatJalaliDateTime(quickPreviewPost.scheduled_at) },
-                        { label: "کانال", value: quickPreviewPost.platform || "Rubika" },
-                        { label: "کمپین", value: campaignLabelForPost(quickPreviewPost, campaigns) },
-                        { label: "تلاش انتشار", value: `${quickPreviewPost.attempt_count}` }
-                      ]}
-                    />
-                    <div className="calendar-post-readiness-grid">
-                      {quickPreviewReadiness.map((item) => (
-                        <div key={item.label} className="calendar-post-readiness-item" data-tone={item.tone}>
-                          <span>{item.label}</span>
-                          <strong>{item.value}</strong>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="calendar-post-detail-grid">
-                  <section className="calendar-post-detail-card">
-                    <p className="app-section-kicker text-[10px] font-black">کپشن</p>
-                    <p className="calendar-post-preview-caption">{quickPreviewPost.caption || "کپشن برای این پست ثبت نشده است."}</p>
+                    {renderPostPreviewContent(quickPreviewPost)}
+                    {renderPostPreviewFooter(quickPreviewPost)}
                   </section>
-                  <section className="calendar-post-detail-card">
-                    <p className="app-section-kicker text-[10px] font-black">مسیر انتشار</p>
-                    <Timeline
-                      items={[
-                        {
-                          title: "ساخت محتوا",
-                          description: "پست در فضای کاری ثبت شده است.",
-                          meta: formatJalaliDateTime(quickPreviewPost.created_at),
-                          tone: "primary"
-                        },
-                        {
-                          title: "ورود به برنامه انتشار",
-                          description: formatJalaliDateTime(quickPreviewPost.scheduled_at),
-                          meta: campaignLabelForPost(quickPreviewPost, campaigns),
-                          tone: "warning"
-                        },
-                        {
-                          title: "وضعیت فعلی",
-                          description: quickPreviewPost.last_error || postStatusLabel(quickPreviewPost.status),
-                          meta: formatJalaliDateTime(quickPreviewPost.updated_at),
-                          tone: postTimelineTone(quickPreviewPost.status)
-                        }
-                      ]}
-                    />
-                  </section>
-                </div>
-
-                {quickPreviewPost.last_error ? <NoticeBanner tone="alert">{quickPreviewPost.last_error}</NoticeBanner> : null}
-
-                <div className="calendar-post-preview-actions">
-                  <Button href={`/compose?postId=${quickPreviewPost.id}`}>ویرایش پست</Button>
-                  {canReschedule(quickPreviewPost) ? (
-                    <Button type="button" variant="secondary" onClick={() => openRescheduleDraft(quickPreviewPost, quickPreviewPost.scheduled_at ?? selectedDayValue)}>تغییر زمان</Button>
-                  ) : null}
-                  <Button href="/queue" variant="secondary">صف انتشار</Button>
-                  <Button type="button" variant="ghost" onClick={() => setQuickPreviewPostId(null)}>بستن</Button>
-                </div>
-              </section>
-            </div>,
-            document.body
+                </div>,
+                document.body
+              )
+            ) : null
           ) : null}
-          {rescheduleDraftPost && typeof document !== "undefined" ? createPortal(
-            <div className="calendar-post-preview-backdrop" role="presentation" onClick={() => setRescheduleDraftPostId(null)}>
-              <section className="calendar-reschedule-modal" role="dialog" aria-modal="true" aria-label={`تغییر زمان ${rescheduleDraftPost.title}`} onClick={(event) => event.stopPropagation()}>
-                <div className="calendar-post-preview-head">
-                  <div className="min-w-0">
-                    <p className="app-section-kicker text-[10px] font-black">زمان‌بندی سریع</p>
-                    <h2>{rescheduleDraftPost.title}</h2>
-                    <p>روز مقصد: {rescheduleDraftDay ? formatJalaliDate(rescheduleDraftDay) : "انتخاب نشده"} · زمان فعلی: {formatJalaliDateTime(rescheduleDraftPost.scheduled_at)}</p>
-                  </div>
-                  <button type="button" className="calendar-post-preview-close" onClick={() => setRescheduleDraftPostId(null)} aria-label="بستن تغییر زمان">
-                    <X className="calendar-post-preview-close-icon" aria-hidden="true" />
-                  </button>
-                </div>
 
-                <div className="calendar-reschedule-body">
-                  <div className="calendar-reschedule-day-card">
-                    <p className="text-xs font-black text-app-text">روز انتشار</p>
-                    <div className="calendar-reschedule-day-value">
-                      <CalendarDays className="h-4 w-4" aria-hidden="true" />
-                      <span>{rescheduleDraftDay ? formatJalaliDate(rescheduleDraftDay) : "روز انتخاب نشده"}</span>
+          {rescheduleDraftPost ? (
+            isMobile ? (
+              <NInspectorDrawer
+                open={Boolean(rescheduleDraftPost)}
+                title="زمان‌بندی سریع"
+                description={rescheduleDraftPost.title}
+                onClose={() => setRescheduleDraftPostId(null)}
+                side="left"
+                footer={renderRescheduleFooter(rescheduleDraftPost)}
+              >
+                {renderRescheduleContent(rescheduleDraftPost)}
+              </NInspectorDrawer>
+            ) : typeof document !== "undefined" ? (
+              createPortal(
+                <div className="calendar-post-preview-backdrop" role="presentation" onClick={() => setRescheduleDraftPostId(null)}>
+                  <section className="calendar-reschedule-modal animate-nashville-in" role="dialog" aria-modal="true" aria-label={`تغییر زمان ${rescheduleDraftPost.title}`} onClick={(event) => event.stopPropagation()}>
+                    <div className="calendar-post-preview-head border-b border-app-border pb-3 mb-3">
+                      <div className="min-w-0">
+                        <p className="app-section-kicker text-[10px] font-black">زمان‌بندی سریع</p>
+                        <h2 className="text-sm font-black text-app-text mt-1">{rescheduleDraftPost.title}</h2>
+                        <p className="text-[10px] text-app-muted mt-0.5">روز مقصد: {rescheduleDraftDay ? formatJalaliDate(rescheduleDraftDay) : "انتخاب نشده"} · زمان فعلی: {formatJalaliDateTime(rescheduleDraftPost.scheduled_at)}</p>
+                      </div>
+                      <button type="button" className="calendar-post-preview-close" onClick={() => setRescheduleDraftPostId(null)} aria-label="بستن تغییر زمان">
+                        <X className="calendar-post-preview-close-icon" aria-hidden="true" />
+                      </button>
                     </div>
-                    <div className="calendar-reschedule-day-actions">
-                      <Button type="button" variant="secondary" size="sm" onClick={() => setRescheduleDraftDay(selectedDayValue)}>
-                        روز فعال تقویم
-                      </Button>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setRescheduleDraftDay(addDays(rescheduleDraftPost.scheduled_at ?? selectedDayValue, 1).toISOString())}>
-                        فردا
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="calendar-reschedule-time-card">
-                    <p className="text-xs font-black text-app-text">ساعت انتشار</p>
-                    <div className="calendar-reschedule-selectors">
-                      <label>
-                        <span>ساعت</span>
-                        <select value={rescheduleDraftHour} onChange={(event) => setRescheduleDraftHour(Number(event.target.value))}>
-                          {Array.from({ length: 24 }, (_, hour) => <option key={hour} value={hour}>{String(hour).padStart(2, "0")}</option>)}
-                        </select>
-                      </label>
-                      <label>
-                        <span>دقیقه</span>
-                        <select value={rescheduleDraftMinute} onChange={(event) => setRescheduleDraftMinute(Number(event.target.value))}>
-                          {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => <option key={minute} value={minute}>{String(minute).padStart(2, "0")}</option>)}
-                        </select>
-                      </label>
-                    </div>
-                    <div className="calendar-reschedule-slots">
-                      {suggestedSlotsForDay(rescheduleDraftDay || selectedDayValue, rescheduleDraftPost.id).slice(0, 5).map((slot) => (
-                        <Button
-                          key={slot.hour}
-                          type="button"
-                          variant={rescheduleDraftHour === slot.hour && rescheduleDraftMinute === slot.minute ? "primary" : "secondary"}
-                          size="sm"
-                          onClick={() => {
-                            setRescheduleDraftHour(slot.hour);
-                            setRescheduleDraftMinute(slot.minute);
-                          }}
-                        >
-                          {slot.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {rescheduleDraftConflicts.length ? (
-                  <NoticeBanner tone="alert" title="تداخل زمانی">
-                    این زمان با {rescheduleDraftConflicts.length} پست دیگر کمتر از ۹۰ دقیقه فاصله دارد. یک ساعت پیشنهادی دیگر انتخاب کنید.
-                  </NoticeBanner>
-                ) : (
-                  <NoticeBanner tone="success" title="زمان امن">
-                    این زمان برای انتشار پشت‌سرهم مناسب است و تداخل نزدیک ندارد.
-                  </NoticeBanner>
-                )}
-
-                <div className="calendar-post-preview-actions">
-                  <Button type="button" onClick={() => void saveRescheduleDraft()} disabled={!rescheduleDraftIso || rescheduleDraftConflicts.length > 0 || reschedulingPostId === rescheduleDraftPost.id}>
-                    {reschedulingPostId === rescheduleDraftPost.id ? "در حال ذخیره" : "ذخیره زمان جدید"}
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={() => setRescheduleDraftPostId(null)}>انصراف</Button>
-                </div>
-              </section>
-            </div>,
-            document.body
+                    {renderRescheduleContent(rescheduleDraftPost)}
+                    {renderRescheduleFooter(rescheduleDraftPost)}
+                  </section>
+                </div>,
+                document.body
+              )
+            ) : null
           ) : null}
           <PlannerComposerDrawer scheduledAt={quickCreateAt} defaultCampaign={selectedCampaignOption?.label ?? ""} onClose={() => setQuickCreateAt(null)} onCreated={() => loadPosts(true)} />
         </WorkspacePage>
@@ -1477,3 +1549,4 @@ export default function CalendarPage() {
     </AuthGate>
   );
 }
+

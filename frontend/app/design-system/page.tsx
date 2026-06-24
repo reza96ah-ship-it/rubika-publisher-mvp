@@ -33,7 +33,7 @@ import {
   NTag,
   NTabs,
   NTextarea
-} from "../../components/nahrino-ui";
+} from "../../components/nashrino-ui";
 
 const tabs = [
   { label: "همه", value: "all", count: 24 },
@@ -134,7 +134,7 @@ export default function DesignSystemPage() {
             <aside className="space-y-3 xl:self-start">
               <NSurface variant="raised" padding="lg">
                 <div className="flex items-start gap-3">
-                  <span className="nahrino-token-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border">
+                  <span className="nashrino-token-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border">
                     <Wand2 className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
@@ -168,3 +168,4 @@ export default function DesignSystemPage() {
     </AuthGate>
   );
 }
+

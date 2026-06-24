@@ -1,4 +1,4 @@
-# Nahrino 2026 Master PRD, RFP, Roadmap, Phases, and Backlog
+﻿# Nashrino 2026 Master PRD, RFP, Roadmap, Phases, and Backlog
 
 Last updated: 2026-06-18  
 Product direction: Persian-first multi-channel SocialOps platform  
@@ -7,9 +7,9 @@ Companion spec: [Instagram Comment-to-DM Automation PRD](INSTAGRAM_COMMENT_TO_DM
 
 ## 1. Executive Summary
 
-Nahrino must move from a Rubika publisher MVP into a professional Persian-first SocialOps platform for small businesses, creators, commerce teams, and agencies. The product should help users plan, create, schedule, publish, monitor, automate, and report content across Rubika, Instagram, and future channels.
+Nashrino must move from a Rubika publisher MVP into a professional Persian-first SocialOps platform for small businesses, creators, commerce teams, and agencies. The product should help users plan, create, schedule, publish, monitor, automate, and report content across Rubika, Instagram, and future channels.
 
-The product should compete on workflow clarity, not visual noise. The strongest benchmark products separate creation, planning, engagement, analytics, and channel administration into clear workspaces. Nahrino's advantage is Persian-first UX, RTL-native layout, Jalali-first planning, Rubika support, Instagram professional-account workflows, and practical automation for commerce use cases.
+The product should compete on workflow clarity, not visual noise. The strongest benchmark products separate creation, planning, engagement, analytics, and channel administration into clear workspaces. Nashrino's advantage is Persian-first UX, RTL-native layout, Jalali-first planning, Rubika support, Instagram professional-account workflows, and practical automation for commerce use cases.
 
 The current app has useful raw capability: authentication, store profile, Rubika publishing, Instagram account modeling, multi-channel composer, Jalali planner, campaign manager, content library, media/image editor, queue/logs, notifications, reports, and channel settings. The main gap is product coherence: too many pages still feel like feature prototypes, actions repeat across surfaces, some navigation routes are operational internals rather than user-facing jobs, and several pages need mobile-first redesign.
 
@@ -61,7 +61,7 @@ Reviewed signals on 2026-06-18:
 
 ## 4. Product Vision
 
-Nahrino should become the most practical Persian-first social operations app for teams that sell, publish, and support customers on Persian-language social channels.
+Nashrino should become the most practical Persian-first social operations app for teams that sell, publish, and support customers on Persian-language social channels.
 
 The app should feel:
 
@@ -415,7 +415,7 @@ Work:
 
 Acceptance:
 
-- A team can process social engagement without leaving Nahrino.
+- A team can process social engagement without leaving Nashrino.
 
 ### Phase 7: Planner Pro
 
@@ -684,3 +684,4 @@ Next implementation phase should be:
 3. **Inbox & Reports Integration:** Connect automation event logging to E2E-tested Inbox and Reports modules.
 
 This sequence is best because the Instagram automation feature begins at post creation, depends on Instagram channel capability, and ends in Inbox/Reports. Composer must be clean before automation is added to it.
+

@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.models import InstagramAccount, InstagramAutomationEvent, InstagramAutomationRule
+from app.models import InstagramAccount, InstagramAutomationEvent, InstagramAutomationRule, PublishAttempt
 from app.services.instagram_client import InstagramGraphClient
 
 PERSIAN_DIGIT_MAP = str.maketrans(
@@ -210,6 +210,30 @@ def active_rules_for_event(db: Session, account: InstagramAccount, event: Instag
             continue
         if rule.ends_at is not None and rule.ends_at < now:
             continue
+        
+        # Post-specific rule matching via PublishAttempt response_payload
+        if rule.post_id is not None:
+            attempts = db.scalars(
+                select(PublishAttempt)
+                .where(
+                    PublishAttempt.post_id == rule.post_id,
+                    PublishAttempt.channel == "instagram",
+                    PublishAttempt.status.in_(["success", "reminder"])
+                )
+            ).all()
+            matched_media = False
+            for attempt in attempts:
+                try:
+                    payload = json.loads(attempt.response_payload or "{}")
+                    media_id = str(payload.get("media_id") or payload.get("ig_media_id") or payload.get("id") or payload.get("media_fbid") or "")
+                    if media_id and event.ig_media_id and media_id == str(event.ig_media_id):
+                        matched_media = True
+                        break
+                except Exception:
+                    continue
+            if not matched_media:
+                continue
+
         eligible.append(rule)
     return eligible
 

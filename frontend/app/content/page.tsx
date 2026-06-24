@@ -34,7 +34,7 @@ import {
   NSavedViewToolbar,
   NSection,
   NStatusPill
-} from "../../components/nahrino-ui";
+} from "../../components/nashrino-ui";
 import { ContentOperationCard } from "../../components/pro-product-ui";
 import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
@@ -788,3 +788,4 @@ export default function ContentWorkspacePage() {
     </AuthGate>
   );
 }
+

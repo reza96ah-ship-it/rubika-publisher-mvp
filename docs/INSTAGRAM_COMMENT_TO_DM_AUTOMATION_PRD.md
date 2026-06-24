@@ -1,16 +1,16 @@
-# Instagram Comment-to-DM Automation PRD
+﻿# Instagram Comment-to-DM Automation PRD
 
 Last updated: 2026-06-21  
 Feature name: Instagram Comment-to-DM Automation  
 Persian product label: تعامل خودکار اینستاگرام  
 Status: In Progress (Foundations Complete)  
-Parent roadmap: [Nahrino 2026 Master PRD, RFP, Roadmap, Phases, and Backlog](NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md)
+Parent roadmap: [Nashrino 2026 Master PRD, RFP, Roadmap, Phases, and Backlog](Nashrino_2026_MASTER_RFP_ROADMAP_BACKLOG.md)
 
 ## 1. Summary
 
-Nahrino should let a user attach an automation rule to an Instagram post or campaign:
+Nashrino should let a user attach an automation rule to an Instagram post or campaign:
 
-> If a user comments a keyword such as `5`, Nahrino automatically sends that commenter a selected private reply/DM message and optionally posts a public reply.
+> If a user comments a keyword such as `5`, Nashrino automatically sends that commenter a selected private reply/DM message and optionally posts a public reply.
 
 This turns Instagram comments into lead capture, coupon delivery, catalog delivery, event registration, and customer support workflows.
 
@@ -111,7 +111,7 @@ Wants: "See which DMs were automated and take over if the user replies."
 
 1. A follower comments `5`.
 2. Meta sends comment webhook.
-3. Nahrino matches the rule.
+3. Nashrino matches the rule.
 4. Worker sends private reply/DM.
 5. Inbox receives an event:
    - matched
@@ -453,4 +453,5 @@ MVP is accepted when:
   - *Resolution:* It is already fully supported in the backend client (`send_public_comment_reply`) and database model. It should be presented as an optional checkbox in the user interface (both on the Instagram Automation tab and inside Composer).
 - **Should contacts/leads be part of MVP or Phase 2?**
   - *Resolution:* Leads data model is ready, but CRM integration and lead scoring are deferred to Phase 2.
+
 

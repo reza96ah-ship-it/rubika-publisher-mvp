@@ -165,11 +165,11 @@ import { productName } from "../lib/product";export function AppShell({ children
   }
 
   return (
-    <main className="app-workspace-bg h-screen overflow-hidden text-app-text">
+    <main className="app-workspace-bg h-[100dvh] overflow-hidden text-app-text">
       <div ref={scrollRootRef} data-app-scroll-root className="flex h-full min-h-0 overflow-y-auto overscroll-contain scroll-smooth">
         <Sidebar storeName={workspaceName} ready={shellReady} brandColor={brandColor} avatarUrl={brandImageUrl} />      
-        <section className="nahrino-shell flex min-h-full min-w-0 flex-1 flex-col">
-          <header className="nahrino-topbar sticky top-0 z-20 shrink-0">
+        <section className="nashrino-shell flex min-h-full min-w-0 flex-1 flex-col">
+          <header className="nashrino-topbar sticky top-0 z-20 shrink-0">
             <div className="flex min-h-[58px] items-center justify-between gap-3 px-3 py-2 lg:px-5">
               <div className="flex min-w-0 items-center gap-3">
                 <Link href="/" className="lg:hidden" aria-label={productName}>
@@ -289,3 +289,4 @@ import { productName } from "../lib/product";export function AppShell({ children
     </main>
   );
 }
+

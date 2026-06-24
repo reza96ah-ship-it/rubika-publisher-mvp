@@ -137,6 +137,7 @@ const svg = `<?xml version="1.0" encoding="UTF-8"?>
 
 await sharp(Buffer.from(svg))
   .png({ compressionLevel: 9, adaptiveFiltering: true })
-  .toFile(path.join(outDir, "nahrino-command-visual.png"));
+  .toFile(path.join(outDir, "nashrino-command-visual.png"));
 
-console.log("Generated public/brand/nahrino-command-visual.png");
+console.log("Generated public/brand/nashrino-command-visual.png");
+

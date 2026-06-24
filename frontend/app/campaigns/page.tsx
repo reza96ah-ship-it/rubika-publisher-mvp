@@ -12,7 +12,7 @@ import { StatusBadge } from "../../components/status-badge";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
 import { Field, Input, Select, Textarea } from "../../components/ui/form";
-import { NMetricTile } from "../../components/nahrino-ui";
+import { NMetricTile } from "../../components/nashrino-ui";
 import { EmptyState, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
 import { assignPostsToCampaign, campaignColorForPost, campaignLabelForPost, createCampaign, loadCampaigns, updateCampaign, type Campaign, type CampaignStatus } from "../../lib/campaigns";
 import { getJalaliMonthLength, getJalaliMonthStartOffset, getJalaliPickerParts, jalaliMonthNames, jalaliPickerPartsToIso, persianWeekdays, type JalaliPickerParts } from "../../lib/jalali-picker";
@@ -210,7 +210,7 @@ function CampaignJalaliDateField({
           <span className="block text-xs font-black text-app-text">{label}</span>
           <span className="mt-1 block truncate text-[11px] font-bold text-app-muted">{formatJalaliSelection(value)}</span>
         </span>
-        <span className={`nahrino-control-radius inline-flex min-h-8 items-center px-3 text-[11px] font-black ${value ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-app-primary"}`}>
+        <span className={`nashrino-control-radius inline-flex min-h-8 items-center px-3 text-[11px] font-black ${value ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-app-primary"}`}>
           {value ? "تغییر" : "انتخاب"}
         </span>
       </button>
@@ -1605,3 +1605,4 @@ export default function CampaignsPage() {
     </AuthGate>
   );
 }
+

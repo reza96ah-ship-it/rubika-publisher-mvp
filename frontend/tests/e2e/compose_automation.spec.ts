@@ -19,7 +19,7 @@ test.describe("Composer Instagram Comment Automation E2E Flow", () => {
     await page.fill("textarea[placeholder='متن پست شبکه‌های اجتماعی را وارد کنید...']", "برای دریافت تخفیف عدد 5 را کامنت کنید.");
 
     // 4. Go to Campaign and Channel setup (workflow Mode)
-    await page.click("button:has-text('کمپین و کانال')");
+    await page.click("button:has-text('کانال و کمپین')");
 
     // 5. Toggle Instagram platform (ensure Instagram is selected)
     // First check if Instagram is active, if not click to toggle
@@ -71,3 +71,4 @@ test.describe("Composer Instagram Comment Automation E2E Flow", () => {
     await expect(successBanner).toBeVisible();
   });
 });
+

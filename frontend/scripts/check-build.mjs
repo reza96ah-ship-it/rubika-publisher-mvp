@@ -14,3 +14,4 @@ const result = spawnSync("next", ["build"], {
 rmSync(distDir, { recursive: true, force: true });
 
 process.exit(result.status ?? 1);
+

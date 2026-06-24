@@ -1,7 +1,7 @@
-Professional Visual Design System and Dashboard Specification for Nahrino
+Professional Visual Design System and Dashboard Specification for Nashrino
 Executive summary
-Your own product documents already identify the core truth: Nahrino is not held back by a lack of color. It is held back by product structure, duplicated patterns, nested scroll, generic cards, and a visual language that still feels like an MVP admin dashboard instead of a world-class Persian-first SocialOps product. The current internal baseline is roughly 4.2/10 overall and 3.2/10 for design and user-journey maturity, and the internal target is a workflow-first product built around Dashboard, Create, Planner, Content, Media, Inbox, Reports, Settings with real product objects rather than repeated boxes. fileciteturn0file10 fileciteturn0file11 fileciteturn0file6 fileciteturn0file12
-The strongest 2026 answer for your app is not full glassmorphism. The strongest answer is a hybrid editorial-glass system: solid, readable work surfaces for data-heavy content; selective “Liquid Glass”-style translucency only on chrome, overlays, navigation, floating controls, drawers, and bottom sheets. Apple’s current iOS 26 design language explicitly frames Liquid Glass as a material for controls, navigation, dynamic tab bars, alerts, search, and icons; meanwhile the leading social-management apps still foreground practical high-density work areas such as queues, calendars, compose flows, inboxes, and reports. That combination makes a hybrid system the most modern and the most professional for Nahrino. [1]
+Your own product documents already identify the core truth: Nashrino is not held back by a lack of color. It is held back by product structure, duplicated patterns, nested scroll, generic cards, and a visual language that still feels like an MVP admin dashboard instead of a world-class Persian-first SocialOps product. The current internal baseline is roughly 4.2/10 overall and 3.2/10 for design and user-journey maturity, and the internal target is a workflow-first product built around Dashboard, Create, Planner, Content, Media, Inbox, Reports, Settings with real product objects rather than repeated boxes. fileciteturn0file10 fileciteturn0file11 fileciteturn0file6 fileciteturn0file12
+The strongest 2026 answer for your app is not full glassmorphism. The strongest answer is a hybrid editorial-glass system: solid, readable work surfaces for data-heavy content; selective “Liquid Glass”-style translucency only on chrome, overlays, navigation, floating controls, drawers, and bottom sheets. Apple’s current iOS 26 design language explicitly frames Liquid Glass as a material for controls, navigation, dynamic tab bars, alerts, search, and icons; meanwhile the leading social-management apps still foreground practical high-density work areas such as queues, calendars, compose flows, inboxes, and reports. That combination makes a hybrid system the most modern and the most professional for Nashrino. [1]
 The exact recommendation is this: keep the internal “calm editorial operations” direction, but upgrade it into a light-first, premium, neutral, material-rich system with Vazirmatn as the default Persian UI font, Estedad as the compact/dense numeric and display companion, a restrained mineral-teal brand accent, spring-based micro-motion, and a one-page-scroll dashboard that uses real thumbnails, channel rails, campaign lanes, response queues, and report surfaces as its beauty layer. That is much closer to what top global products and current platform systems actually reward than a fully frosted “Telegram everywhere” look. fileciteturn0file7 fileciteturn0file5 fileciteturn0file12 [2]
 Decision area
 Recommended choice
@@ -28,7 +28,7 @@ The official product pages of the strongest global benchmarks point in the same 
 That benchmark evidence matters because it shows that the best products do not win by painting the app with louder color. They win through workflow clarity, real product surfaces, variant-aware composition, operational inboxes, reports that feel client-ready, and visual density that remains calm. This is exactly the direction your internal design documents have already been pushing: fewer repeated boxes, no permanent setup noise, one-page scroll, campaign and queue folded into broader workflows, and a visual system built around channel, content, campaign, inbox, and report objects rather than generic dashboard cards. fileciteturn0file7 fileciteturn0file6 fileciteturn0file10 fileciteturn0file12
 Benchmark
 Official evidence
-Design implication for Nahrino
+Design implication for Nashrino
 Buffer
 Queue/calendar publish space, Create space for ideas, Community dashboard for comments, Analyze framed as “Answers, not just analytics,” plus approvals/permissions and reliability language. [4]
 Your dashboard and content ops should feel simple, friendly, and obvious, not like enterprise clutter.
@@ -47,7 +47,7 @@ Your product needs channel variants, approvals beside content, and edit history 
 Apple’s iOS 26 documentation is the strongest current platform-level visual signal. Apple describes Liquid Glass as a foundation that “reflects and refracts” underlying content in real time, and explicitly applies it to controls, navigation, dynamic toolbars, dynamic tab bars, in-place alerts, bottom-reach search, and icon treatments. That scope strongly suggests a material used for interactive chrome and contextual surfaces, not for every dense panel in a dashboard. On the Android side, Material 3 Expressive emphasizes tokenized color roles, three accent layers plus two neutral surface layers, and spring-based motion that preserves continuity when values change. Together, these sources point to a modern answer that is material-rich but function-first. [9]
 Theme option
 Feels current in 2026
-Fit for Nahrino
+Fit for Nashrino
 Risk
 Verdict
 Full glassmorphism everywhere
@@ -419,7 +419,7 @@ no sideways scroll
 no sideways scroll
 WCAG 2.2 also requires content to reflow without loss of information or function at 320 CSS px width for vertical scrolling content, which means your mobile adaptation must simplify and restack rather than horizontally compress. [14]
 Motion system
-Android’s official guidance is clear that spring motion is better for interrupted, stateful UI because it preserves continuity of velocity when targets change. The official spring primitives expose damping ratio and stiffness, and Apple’s current platform direction similarly emphasizes fluid, morphing navigation and living controls. For Nahrino, that means motion should communicate selection, save, publish, retry, assignment, and route change, not decoration. [15]
+Android’s official guidance is clear that spring motion is better for interrupted, stateful UI because it preserves continuity of velocity when targets change. The official spring primitives expose damping ratio and stiffness, and Apple’s current platform direction similarly emphasizes fluid, morphing navigation and living controls. For Nashrino, that means motion should communicate selection, save, publish, retry, assignment, and route change, not decoration. [15]
 Interaction
 Timing target
 Spring / easing

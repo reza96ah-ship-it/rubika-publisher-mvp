@@ -11,3 +11,4 @@ export function toPersianDigits(value: string | number): string {
   if (value === null || value === undefined) return "";
   return String(value).replace(/[0-9]/g, (w) => PERSIAN_DIGITS[+w]);
 }
+

@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 
 export interface PanelProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -13,9 +13,9 @@ export function Panel({
   ...props
 }: PanelProps) {
   const variantClasses = {
-    glass: "bg-white/30 backdrop-blur-xl border border-white/20",
-    solid: "bg-white border border-app-border",
-    muted: "bg-app-surface border border-app-border/50",
+    glass: "app-studio-panel",
+    solid: "bg-app-surface border border-app-border",
+    muted: "bg-app-surfaceMuted border border-app-border/50",
   };
 
   return (
@@ -31,4 +31,5 @@ export function Panel({
     </div>
   );
 }
+
 

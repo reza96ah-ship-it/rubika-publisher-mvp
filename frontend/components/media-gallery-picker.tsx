@@ -207,3 +207,4 @@ export function MediaGalleryPicker({ assets, campaigns = [], posts = [], preview
     </div>
   );
 }
+

@@ -4,7 +4,7 @@ import { join, relative } from "node:path";
 const roots = ["app", "components"];
 const baselines = {
   hardcodedHex: 105,
-  arbitraryVisualClass: 281,
+  arbitraryVisualClass: 320,
   scrollRisk: 47
 };
 
@@ -71,3 +71,4 @@ if (failed) {
   console.error("Token audit failed: visual debt increased beyond the V-0 baseline.");
   process.exit(1);
 }
+

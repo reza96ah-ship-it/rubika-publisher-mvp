@@ -1,7 +1,7 @@
 {
   "$schema": "https://design-tokens.github.io/community-group/format/",
   "meta": {
-    "name": "Nahrino Visual Design Tokens",
+    "name": "nashrino Visual Design Tokens",
     "version": "2026.06.v4.5",
     "phase": "V-4.5 Visual Token Calibration",
     "description": "Warm editorial primitive, semantic, component, density, elevation, Dark Studio, and motion tokens for the Persian-first SocialOps workspace."
@@ -198,3 +198,4 @@
     }
   }
 }
+

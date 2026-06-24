@@ -173,7 +173,7 @@
 
 [data-theme="dark"],
 [data-theme="studio"],
-.nahrino-dark-studio {
+.nashrino-dark-studio {
   color-scheme: dark;
   --n-color-ink: 248 250 252;
   --n-color-ink-strong: 255 255 255;
@@ -201,6 +201,8 @@
   --n-color-frost-border: 30 41 59;
   --surface-glass: rgb(9 13 22 / 0.54);
   --surface-glass-strong: rgb(9 13 22 / 0.7);
+  --n-glass-surface: rgb(9 13 22 / 0.54);
+  --n-glass-surface-strong: rgb(9 13 22 / 0.7);
 }
 
 [data-theme="high-contrast"] {
@@ -266,3 +268,4 @@
     --n-motion-reveal: var(--n-motion-instant);
   }
 }
+

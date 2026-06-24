@@ -1,4 +1,4 @@
-services:
+﻿services:
   postgres:
     image: postgres:16-alpine
     container_name: rubika_publisher_postgres
@@ -103,3 +103,4 @@ volumes:
   postgres_data:
   frontend_node_modules:
   frontend_next:
+

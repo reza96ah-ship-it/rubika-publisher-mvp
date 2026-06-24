@@ -1,21 +1,26 @@
 "use client";
 
-import { Activity, AlertTriangle, ArrowDownUp, ArrowUpLeft, CalendarClock, CheckCircle2, Clock3, FileImage, ImageIcon, Layers3, LineChart, MessageSquareText, Search, ShieldCheck, Sparkles, Target, TrendingDown, TrendingUp, X, Zap } from "lucide-react";
+import { Activity, AlertTriangle, ArrowDown, ArrowLeft, ArrowDownUp, ArrowUpLeft, CalendarClock, CheckCircle2, Clock3, FileImage, ImageIcon, Layers3, LineChart, Link2 as LinkIcon, MessageSquareText, Search, ShieldCheck, Sparkles, Target, TrendingDown, TrendingUp, X, Zap } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AppShell } from "../../components/app-shell";
 import { AuthGate } from "../../components/auth-gate";
 import { WorkspaceAvatar } from "../../components/brand-mark";
 import { LoadingPanel } from "../../components/loading-skeleton";
-import { NButton, NMetricTile, NNotice, NPage, NPageHeader, NSavedViewToolbar, NStatusPill } from "../../components/nahrino-ui";
+import { NNotice, NPage, NPageHeader, NSavedViewToolbar } from "../../components/nashrino-ui";
 import { StatusBadge } from "../../components/status-badge";
 import { Button } from "../../components/ui/button";
-import { DataRow, DataTable } from "../../components/data-view";
-import { DetailGrid, EmptyState, StatusToken, WorkspacePanel } from "../../components/workspace-ui";
+import { Panel } from "../../components/ui/panel";
+import { MetricTile } from "../../components/ui/metric-tile";
+import { Tag } from "../../components/ui/tag";
+import { DataRow, DataTable } from "../../components/ui/data-row";
+import { DetailGrid, EmptyState, StatusToken } from "../../components/workspace-ui";
 import { buildCampaignFilterOptions, campaignColorForPost, campaignKeyForPost, campaignLabelForPost, loadCampaigns, type Campaign } from "../../lib/campaigns";
 import { useMediaPreviewUrl } from "../../lib/media-preview";
 import { apiUrl, authHeaders, formatDateTime, type Post } from "../../lib/posts";
 import { loadWorkspaceOverview, type StoreProfile } from "../../lib/workspace";
+import { loadAutomationEvents, loadLinkMetrics, type InstagramAutomationEvent, type LinkClickStats } from "../../lib/automation";
+
 
 type PublishAttempt = {
   id: number;
@@ -189,12 +194,47 @@ function hourLabel(hour: number | null) {
   return new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit" }).format(date);
 }
 
+function AnalyticsPanel({
+  title,
+  description,
+  action,
+  children,
+  className = "",
+  bodyClassName = "mt-4",
+  variant = "glass"
+}: {
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+  bodyClassName?: string;
+  variant?: "glass" | "solid" | "muted";
+}) {
+  return (
+    <Panel variant={variant} className={`flex flex-col ${className}`}>
+      <div className="flex flex-col justify-between gap-2 border-b border-app-border/40 pb-3 mb-4 lg:flex-row lg:items-center">
+        <div className="min-w-0">
+          <h2 className="text-sm font-black text-app-text">{title}</h2>
+          {description ? <p className="mt-1 text-xs leading-5 text-app-muted">{description}</p> : null}
+        </div>
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
+      <div className={bodyClassName}>
+        {children}
+      </div>
+    </Panel>
+  );
+}
+
 export default function AnalyticsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [attempts, setAttempts] = useState<PublishAttempt[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [store, setStore] = useState<StoreProfile | null>(null);
+  const [automationEvents, setAutomationEvents] = useState<InstagramAutomationEvent[]>([]);
+  const [linkMetrics, setLinkMetrics] = useState<LinkClickStats[]>([]);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [campaignFilter, setCampaignFilter] = useState("all");
@@ -205,16 +245,19 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+
   const loadAnalytics = useCallback(async () => {
     setLoading(true);
     setError("");
     const headers = authHeaders();
-    const [postsResponse, attemptsResponse, campaignsResponse, mediaResponse, overview] = await Promise.all([
+    const [postsResponse, attemptsResponse, campaignsResponse, mediaResponse, overview, events, links] = await Promise.all([
       fetch(`${apiUrl}/posts`, { headers }),
       fetch(`${apiUrl}/publish-attempts`, { headers }),
       loadCampaigns(),
       fetch(`${apiUrl}/media`, { headers }),
-      loadWorkspaceOverview()
+      loadWorkspaceOverview(),
+      loadAutomationEvents().catch(() => []),
+      loadLinkMetrics().catch(() => [])
     ]);
 
     if (!postsResponse.ok) throw new Error("دریافت پست‌ها برای تحلیل ناموفق بود");
@@ -225,6 +268,8 @@ export default function AnalyticsPage() {
     setCampaigns(campaignsResponse);
     setMediaAssets(mediaResponse.ok ? await mediaResponse.json() : []);
     setStore(overview.store);
+    setAutomationEvents(events);
+    setLinkMetrics(links);
     setLoading(false);
   }, []);
 
@@ -460,10 +505,17 @@ export default function AnalyticsPage() {
   const brandAvatarUrl = useMediaPreviewUrl(store?.avatar_asset_id ?? store?.logo_asset_id);
   const brandLogoUrl = useMediaPreviewUrl(store?.logo_asset_id);
   const previousPublishedCount = previousStatusCounts.published ?? 0;
-  const previousFailedCount = (previousStatusCounts.failed ?? 0) + previousAttemptSummary.failed;
   const previousQueuedCount = (previousStatusCounts.ready ?? 0) + (previousStatusCounts.scheduled ?? 0) + (previousStatusCounts.publishing ?? 0);
   const successRateDelta = attemptSummary.successRate - previousAttemptSummary.successRate;
   const hasComparison = timeRange !== "all";
+  
+  const autoRepliesCount = automationEvents.filter(e => e.event_status === "sent").length;
+  const operatorTakeoversCount = automationEvents.filter(e => e.conversation_status === "operator_takeover").length;
+  const autoRepliesDelta = 0; // Stub for delta
+  
+  const totalAutomationTriggers = automationEvents.filter(e => e.event_status !== "no_match").length;
+  const totalLinkClicks = linkMetrics.reduce((acc, link) => acc + link.total_clicks, 0);
+  const topLinks = [...linkMetrics].sort((a, b) => b.total_clicks - a.total_clicks).slice(0, 5);
   const drilldownPosts = useMemo(() => {
     const normalizedSearch = postSearch.trim().toLowerCase();
     const queuedStatuses = ["ready", "scheduled", "publishing"];
@@ -486,7 +538,7 @@ export default function AnalyticsPage() {
   const dashboardMetrics = [
     { label: "منتشرشده", value: publishedCount, detail: "خروجی موفق در بازه", icon: CheckCircle2, tone: "text-emerald-700", tileTone: "success" as const, delta: deltaPercent(publishedCount, previousPublishedCount), positiveIsGood: true, href: "/content?status=published" },
     { label: "موفقیت ارسال", value: `${attemptSummary.successRate}%`, detail: `${attemptSummary.success} از ${attemptSummary.completed} تلاش کامل`, icon: Target, tone: attemptSummary.successRate >= 80 ? "text-emerald-700" : "text-amber-700", tileTone: attemptSummary.successRate >= 80 ? "success" as const : "warning" as const, delta: successRateDelta, positiveIsGood: true, href: "/logs" },
-    { label: "نیازمند توجه", value: failedCount, detail: "پست یا تلاش ناموفق", icon: AlertTriangle, tone: failedCount ? "text-rose-700" : "text-slate-500", tileTone: failedCount ? "alert" as const : "neutral" as const, delta: deltaPercent(failedCount, previousFailedCount), positiveIsGood: false, href: "/logs" },
+    { label: "دایرکت خودکار", value: autoRepliesCount, detail: `${operatorTakeoversCount} ارجاع به اپراتور`, icon: Zap, tone: "text-purple-700", tileTone: "neutral" as const, delta: autoRepliesDelta, positiveIsGood: true, href: "/inbox" },
     { label: "در جریان", value: queuedCount, detail: "آماده، زمان‌بندی یا ارسال", icon: CalendarClock, tone: "text-app-primary", tileTone: "primary" as const, delta: deltaPercent(queuedCount, previousQueuedCount), positiveIsGood: true, href: "/queue" }
   ];
   const insightCards = [
@@ -546,11 +598,11 @@ export default function AnalyticsPage() {
             description="نمای تصمیم‌ساز برای روند انتشار، سلامت کمپین‌ها، آمادگی رسانه‌ای و پست‌هایی که نیاز به اقدام دارند."
             meta={(
               <>
-                <NStatusPill tone={attemptSummary.failed ? "alert" : "success"}>{attemptSummary.failed ? `${attemptSummary.failed} تلاش ناموفق` : "ارسال پایدار"}</NStatusPill>
-                <NStatusPill tone="primary">{scopedPosts.length} پست مرتبط</NStatusPill>
+                <Tag tone={attemptSummary.failed ? "alert" : "success"}>{attemptSummary.failed ? `${attemptSummary.failed} تلاش ناموفق` : "ارسال پایدار"}</Tag>
+                <Tag tone="primary">{scopedPosts.length} پست مرتبط</Tag>
               </>
             )}
-            action={<NButton href="/logs" variant="secondary" size="sm">سلامت انتشار</NButton>}
+            action={<Button href="/logs" variant="secondary" size="sm">سلامت انتشار</Button>}
             className="analytics-pro-header"
           />
 
@@ -564,7 +616,7 @@ export default function AnalyticsPage() {
                       <span className={`analytics-insight-icon flex h-9 w-9 items-center justify-center rounded-md ${insight.tone}`}>
                         <Icon className="h-4 w-4" aria-hidden="true" />
                       </span>
-                      <NStatusPill tone="neutral" className="text-[10px]">{insight.token}</NStatusPill>
+                      <Tag tone="neutral" className="text-[10px]">{insight.token}</Tag>
                     </div>
                     <p className="mt-3 text-[11px] font-black text-app-muted">{insight.title}</p>
                     <p className={`mt-1 truncate text-base font-black ${insight.tone}`}>{insight.value}</p>
@@ -609,9 +661,9 @@ export default function AnalyticsPage() {
             )}
             meta={(
               <>
-                <NStatusPill tone="neutral">{scopedAttempts.length} تلاش</NStatusPill>
-                {campaignFilter !== "all" ? <NStatusPill tone="primary">فیلتر کمپین</NStatusPill> : null}
-                {hasComparison ? <NStatusPill tone="info">مقایسه فعال</NStatusPill> : <NStatusPill tone="neutral">بدون مقایسه</NStatusPill>}
+                <Tag tone="neutral">{scopedAttempts.length} تلاش</Tag>
+                {campaignFilter !== "all" ? <Tag tone="primary">فیلتر کمپین</Tag> : null}
+                {hasComparison ? <Tag tone="info">مقایسه فعال</Tag> : <Tag tone="neutral">بدون مقایسه</Tag>}
               </>
             )}
           />
@@ -623,11 +675,11 @@ export default function AnalyticsPage() {
               const deltaIsGood = metric.delta === 0 ? null : metric.positiveIsGood === false ? metric.delta < 0 : metric.delta > 0;
               return (
                 <div key={metric.label} className="analytics-kpi-wrap">
-                  <NMetricTile label={metric.label} value={metric.value} detail={metric.detail} icon={metric.icon} tone={metric.tileTone} href={metric.href} />
+                  <MetricTile label={metric.label} value={metric.value} icon={metric.icon} href={metric.href} />
                   {hasComparison && metric.delta !== null ? (
                     <p className={`analytics-kpi-delta mt-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-black ${deltaIsGood === true ? "text-emerald-700" : deltaIsGood === false ? "text-rose-700" : "text-slate-500"}`}>
                       {metric.delta > 0 ? <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" /> : metric.delta < 0 ? <TrendingDown className="h-3.5 w-3.5" aria-hidden="true" /> : null}
-                      {metric.delta > 0 ? "+" : ""}{metric.delta}% نسبت به بازه قبل
+                      <span className="font-outfit">{metric.delta > 0 ? "+" : ""}{metric.delta}%</span> نسبت به بازه قبل
                     </p>
                   ) : null}
                 </div>
@@ -635,9 +687,67 @@ export default function AnalyticsPage() {
             })}
           </section>
 
+          <section className="analytics-funnel-grid grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <AnalyticsPanel title="قیف تبدیل اتوماسیون" description="عملکرد اتوماسیون پاسخ‌گویی از کامنت تا کلیک روی لینک.">
+              {loading ? <LoadingPanel /> : (
+                <div className="flex flex-col gap-4 mt-4">
+                  <div className="flex flex-col md:flex-row items-center gap-4">
+                    <div className="flex-1 w-full relative h-24 bg-app-surface border border-app-border rounded-xl flex flex-col justify-center items-center overflow-hidden">
+                      <div className="absolute inset-0 bg-blue-500/10"></div>
+                      <p className="text-2xl font-black text-blue-700 font-outfit">{totalAutomationTriggers}</p>
+                      <p className="text-xs font-bold text-app-muted mt-1">تطابق کلیدواژه</p>
+                    </div>
+                    <ArrowLeft className="hidden md:block h-6 w-6 text-app-border shrink-0" />
+                    <ArrowDown className="md:hidden h-6 w-6 text-app-border shrink-0" />
+                    <div className="flex-1 w-full relative h-24 bg-app-surface border border-app-border rounded-xl flex flex-col justify-center items-center overflow-hidden">
+                      <div className="absolute inset-0 bg-indigo-500/10" style={{ right: 0, width: `${totalAutomationTriggers ? (autoRepliesCount / totalAutomationTriggers) * 100 : 0}%` }}></div>
+                      <p className="text-2xl font-black text-indigo-700 font-outfit">{autoRepliesCount}</p>
+                      <p className="text-xs font-bold text-app-muted mt-1">دایرکت ارسال شده</p>
+                    </div>
+                    <ArrowLeft className="hidden md:block h-6 w-6 text-app-border shrink-0" />
+                    <ArrowDown className="md:hidden h-6 w-6 text-app-border shrink-0" />
+                    <div className="flex-1 w-full relative h-24 bg-app-surface border border-app-border rounded-xl flex flex-col justify-center items-center overflow-hidden">
+                      <div className="absolute inset-0 bg-emerald-500/10" style={{ right: 0, width: `${autoRepliesCount ? (totalLinkClicks / autoRepliesCount) * 100 : 0}%` }}></div>
+                      <p className="text-2xl font-black text-emerald-700 font-outfit">{totalLinkClicks}</p>
+                      <p className="text-xs font-bold text-app-muted mt-1">کلیک روی لینک</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-xs font-bold text-app-muted mt-2 px-4">
+                    <span>نرخ تحویل: <span className="font-outfit">{totalAutomationTriggers ? Math.round((autoRepliesCount / totalAutomationTriggers) * 100) : 0}%</span></span>
+                    <span>نرخ تبدیل (CTR): <span className="font-outfit">{autoRepliesCount ? Math.round((totalLinkClicks / autoRepliesCount) * 100) : 0}%</span></span>
+                  </div>
+                </div>
+              )}
+            </AnalyticsPanel>
+            
+            <AnalyticsPanel title="لینک‌های پربازدید" description="لینک‌های کوتاه شده با بیشترین کلیک">
+              {loading ? <LoadingPanel /> : topLinks.length === 0 ? (
+                <EmptyState icon={<LinkIcon className="h-5 w-5" />} title="آماری ثبت نشده" description="هنوز هیچ کلیکی روی لینک‌ها ثبت نشده است." />
+              ) : (
+                <ul className="space-y-3 mt-4">
+                  {topLinks.map((link) => (
+                    <li key={link.short_link_id} className="flex justify-between items-center border-b border-app-border/50 pb-2 last:border-0 last:pb-0">
+                      <div className="min-w-0 flex-1 ml-3">
+                        <p className="text-xs font-bold text-app-text truncate text-left" dir="ltr">{link.original_url}</p>
+                        <p className="text-[10px] text-app-muted mt-1 flex items-center gap-1 font-outfit">
+                          <LinkIcon className="h-3 w-3" />
+                          /r/{link.short_code}
+                        </p>
+                      </div>
+                      <div className="text-left shrink-0">
+                        <p className="text-sm font-black text-emerald-700 font-outfit">{link.total_clicks}</p>
+                        <p className="text-[9px] text-app-muted">کلیک</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </AnalyticsPanel>
+          </section>
+
           <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="min-w-0 space-y-3">
-              <WorkspacePanel
+              <AnalyticsPanel
                 title="روند تلاش‌های انتشار"
                 description="مقایسه تلاش‌های موفق، ناموفق و در حال اجرا در بازه انتخاب‌شده."
                 action={(
@@ -652,7 +762,7 @@ export default function AnalyticsPage() {
                         لغو انتخاب
                       </button>
                     ) : null}
-                    <StatusToken tone="neutral">{trend.length} نقطه زمانی</StatusToken>
+                    <StatusToken tone="neutral"><span className="font-outfit">{trend.length}</span> نقطه زمانی</StatusToken>
                   </div>
                 )}
               >
@@ -684,7 +794,7 @@ export default function AnalyticsPage() {
                         className={`analytics-trend-bucket relative flex h-full min-w-0 flex-col justify-end overflow-visible rounded-t pb-6 text-center transition ${selectedTrend?.key === item.key ? "analytics-trend-bucket-active ring-1 ring-inset ring-blue-100" : ""}`}
                         title={`${item.label}: ${item.total} تلاش`}
                       >
-                        <p className="mb-2 text-[10px] font-black text-app-muted">{item.total || ""}</p>
+                        <p className="mb-2 text-[10px] font-black text-app-muted font-outfit">{item.total || ""}</p>
                         <div className="flex h-40 items-end justify-center">
                           <div
                             className={`flex w-5 flex-col-reverse overflow-hidden rounded-t bg-slate-100 transition ${selectedTrend?.key === item.key ? "ring-2 ring-app-primary ring-offset-2" : ""}`}
@@ -703,9 +813,9 @@ export default function AnalyticsPage() {
                     ))}
                   </div>
                 </div>
-              </WorkspacePanel>
+              </AnalyticsPanel>
 
-              <WorkspacePanel
+              <AnalyticsPanel
                 title="ترکیب عملیات محتوا"
                 description="وضعیت چرخه پست‌ها و نوع ارسال در یک نمای فشرده."
               >
@@ -715,14 +825,14 @@ export default function AnalyticsPage() {
                       <MessageSquareText className="h-4 w-4 text-app-primary" aria-hidden="true" />
                       <span className="text-sm font-black text-app-text">ارسال متنی</span>
                     </span>
-                    <span className="text-sm font-black text-app-text">{attemptSummary.text} <span className="text-xs text-app-muted">({percent(attemptSummary.text, scopedAttempts.length)}%)</span></span>
+                    <span className="text-sm font-black text-app-text font-outfit">{attemptSummary.text} <span className="text-xs text-app-muted">({percent(attemptSummary.text, scopedAttempts.length)}%)</span></span>
                   </div>
                   <div className="flex items-center justify-between gap-3 rounded-md bg-app-surfaceMuted p-3 shadow-hairline">
                     <span className="flex items-center gap-2">
                       <FileImage className="h-4 w-4 text-app-primary" aria-hidden="true" />
                       <span className="text-sm font-black text-app-text">ارسال رسانه‌ای</span>
                     </span>
-                    <span className="text-sm font-black text-app-text">{attemptSummary.media} <span className="text-xs text-app-muted">({percent(attemptSummary.media, scopedAttempts.length)}%)</span></span>
+                    <span className="text-sm font-black text-app-text font-outfit">{attemptSummary.media} <span className="text-xs text-app-muted">({percent(attemptSummary.media, scopedAttempts.length)}%)</span></span>
                   </div>
                 </div>
                 <div className="mt-2 divide-y divide-app-border">
@@ -738,17 +848,17 @@ export default function AnalyticsPage() {
                         <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                           <div className={`h-full rounded-full ${statusProgressClasses[status] ?? "bg-app-primary"}`} style={{ width: `${ratio}%` }} />
                         </div>
-                        <span className="text-left text-xs font-black text-app-text">{count}</span>
+                        <span className="text-left text-xs font-black text-app-text font-outfit">{count}</span>
                       </div>
                     );
                   })}
                 </div>
-              </WorkspacePanel>
+              </AnalyticsPanel>
 
-              <WorkspacePanel
+              <AnalyticsPanel
                 title="جزئیات عملکرد پست‌ها"
                 description="پست‌های بازه را جست‌وجو، مرتب و برای بررسی عملیاتی باز کنید."
-                action={<StatusToken tone="neutral">{drilldownPosts.length} نتیجه</StatusToken>}
+                action={<StatusToken tone="neutral"><span className="font-outfit">{drilldownPosts.length}</span> نتیجه</StatusToken>}
                 bodyClassName="p-3"
               >
                 <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_170px]">
@@ -776,7 +886,7 @@ export default function AnalyticsPage() {
                       key={option.value}
                       type="button"
                       onClick={() => setPostFilter(option.value)}
-                        className={`app-interactive nahrino-control-radius inline-flex min-h-8 items-center px-3 text-xs font-bold transition ${postFilter === option.value ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"}`}
+                        className={`app-interactive nashrino-control-radius inline-flex min-h-8 items-center px-3 text-xs font-bold transition ${postFilter === option.value ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"}`}
                     >
                       {option.label}
                     </button>
@@ -807,10 +917,10 @@ export default function AnalyticsPage() {
                       </div>
                       <div><StatusBadge status={post.status} /></div>
                       <div>
-                        <p className="text-xs font-black text-app-text">{post.attempt_count}</p>
+                        <p className="text-xs font-black text-app-text font-outfit">{post.attempt_count}</p>
                         <p className="mt-1 text-[11px] text-app-muted">بار ارسال</p>
                       </div>
-                      <p className="text-xs leading-5 text-app-muted">{formatDateTime(postActivityDate(post))}</p>
+                      <p className="text-xs leading-5 text-app-muted font-outfit">{formatDateTime(postActivityDate(post))}</p>
                       <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm" className="w-full">
                         <ArrowUpLeft className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
                         باز کردن
@@ -818,11 +928,11 @@ export default function AnalyticsPage() {
                     </DataRow>
                   ))}
                 </DataTable>
-              </WorkspacePanel>
+              </AnalyticsPanel>
             </div>
 
             <aside className="grid gap-3 lg:grid-cols-2 xl:block xl:space-y-3 xl:self-start">
-              <WorkspacePanel title="هویت گزارش" description="برندی که این تحلیل با آن آماده می‌شود." bodyClassName="p-4">
+              <AnalyticsPanel title="هویت گزارش" description="برندی که این تحلیل با آن آماده می‌شود." bodyClassName="p-4">
                 <div className="flex items-center gap-3">
                   <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandAvatarUrl} />
                   <div className="min-w-0">
@@ -841,29 +951,29 @@ export default function AnalyticsPage() {
                     <p className="text-[10px] font-black text-app-muted">رنگ اصلی</p>
                     <div className="mt-2 flex items-center gap-2">
                       <span className="h-5 w-5 rounded shadow-hairline" style={{ backgroundColor: brandColor }} />
-                      <span className="text-xs font-black text-app-text" dir="ltr">{brandColor}</span>
+                      <span className="text-xs font-black text-app-text font-outfit" dir="ltr">{brandColor}</span>
                     </div>
                   </div>
                   <div className="rounded-md bg-app-surfaceMuted p-2">
                     <p className="text-[10px] font-black text-app-muted">رنگ مکمل</p>
                     <div className="mt-2 flex items-center gap-2">
                       <span className="h-5 w-5 rounded shadow-hairline" style={{ backgroundColor: brandAccentColor }} />
-                      <span className="text-xs font-black text-app-text" dir="ltr">{brandAccentColor}</span>
+                      <span className="text-xs font-black text-app-text font-outfit" dir="ltr">{brandAccentColor}</span>
                     </div>
                   </div>
                 </div>
                 <p className="mt-3 line-clamp-2 text-xs leading-5 text-app-muted">{store?.default_cta || "CTA پیش‌فرض برای گزارش‌های بعدی هنوز ثبت نشده است."}</p>
-              </WorkspacePanel>
+              </AnalyticsPanel>
 
               {selectedTrend ? (
-                <WorkspacePanel
+                <AnalyticsPanel
                   title="بازرس روز انتخاب‌شده"
                   description={selectedTrend.label}
                   action={(
                     <button
                       type="button"
                       onClick={() => setSelectedTrendKey("")}
-                      className="app-interactive nahrino-control-radius flex h-8 w-8 items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-app-text"
+                      className="app-interactive nashrino-control-radius flex h-8 w-8 items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-app-text"
                       aria-label="بستن جزئیات روز"
                       title="بستن جزئیات روز"
                     >
@@ -874,10 +984,10 @@ export default function AnalyticsPage() {
                 >
                   <div data-trend-inspector>
                     <div className="grid grid-cols-4 divide-x divide-x-reverse divide-app-border overflow-hidden rounded-md bg-app-surfaceMuted text-center shadow-hairline">
-                      <div className="p-2"><p className="text-sm font-black text-app-text">{selectedTrend.total}</p><p className="mt-1 text-[10px] text-app-muted">کل تلاش</p></div>
-                      <div className="p-2"><p className="text-sm font-black text-emerald-700">{selectedTrend.success}</p><p className="mt-1 text-[10px] text-app-muted">موفق</p></div>
-                      <div className="p-2"><p className="text-sm font-black text-rose-700">{selectedTrend.failed}</p><p className="mt-1 text-[10px] text-app-muted">ناموفق</p></div>
-                      <div className="p-2"><p className="text-sm font-black text-sky-700">{selectedTrend.started}</p><p className="mt-1 text-[10px] text-app-muted">در اجرا</p></div>
+                      <div className="p-2"><p className="text-sm font-black text-app-text font-outfit">{selectedTrend.total}</p><p className="mt-1 text-[10px] text-app-muted">کل تلاش</p></div>
+                      <div className="p-2"><p className="text-sm font-black text-emerald-700 font-outfit">{selectedTrend.success}</p><p className="mt-1 text-[10px] text-app-muted">موفق</p></div>
+                      <div className="p-2"><p className="text-sm font-black text-rose-700 font-outfit">{selectedTrend.failed}</p><p className="mt-1 text-[10px] text-app-muted">ناموفق</p></div>
+                      <div className="p-2"><p className="text-sm font-black text-sky-700 font-outfit">{selectedTrend.started}</p><p className="mt-1 text-[10px] text-app-muted">در اجرا</p></div>
                     </div>
                     <div className="mt-4 flex items-center gap-2">
                       <Activity className="h-4 w-4 text-app-primary" aria-hidden="true" />
@@ -893,7 +1003,7 @@ export default function AnalyticsPage() {
                                 {attempt.status === "success" ? "موفق" : attempt.status === "failed" ? "ناموفق" : "در اجرا"}
                               </StatusToken>
                             </div>
-                            <p className="mt-1 text-[11px] text-app-muted">{formatDateTime(attempt.created_at)}</p>
+                            <p className="mt-1 text-[11px] text-app-muted font-outfit">{formatDateTime(attempt.created_at)}</p>
                           </article>
                         ))}
                       </div>
@@ -901,12 +1011,12 @@ export default function AnalyticsPage() {
                       <p className="mt-3 text-xs leading-5 text-app-muted">برای این روز تلاش انتشاری ثبت نشده است.</p>
                     )}
                   </div>
-                </WorkspacePanel>
+                </AnalyticsPanel>
               ) : null}
-              <WorkspacePanel
+              <AnalyticsPanel
                 title="پست‌های پیشرو"
                 description="محتواهایی که از نظر وضعیت، رسانه و تلاش ارسال آماده‌تر هستند."
-                action={<StatusToken tone="primary">{topOperationalPosts.length} مورد</StatusToken>}
+                action={<StatusToken tone="primary"><span className="font-outfit">{topOperationalPosts.length}</span> مورد</StatusToken>}
                 bodyClassName="p-3"
               >
                 {topOperationalPosts.length === 0 ? (
@@ -932,7 +1042,7 @@ export default function AnalyticsPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-2">
                               <p className="line-clamp-2 text-xs font-black leading-5 text-app-text">{post.title}</p>
-                              <StatusToken tone={score >= 75 ? "success" : score >= 50 ? "warning" : "alert"}>{score}</StatusToken>
+                              <StatusToken tone={score >= 75 ? "success" : score >= 50 ? "warning" : "alert"}><span className="font-outfit">{score}</span></StatusToken>
                             </div>
                             <div className="mt-2 flex flex-wrap items-center gap-1.5">
                               <StatusBadge status={post.status} />
@@ -947,12 +1057,12 @@ export default function AnalyticsPage() {
                     );
                   })}
                 </div>
-              </WorkspacePanel>
+              </AnalyticsPanel>
 
-              <WorkspacePanel
+              <AnalyticsPanel
                 title="اقدام‌های پیشنهادی"
                 description="مواردی که بهتر است اول بررسی شوند."
-                action={<StatusToken tone={failedPosts.length ? "alert" : "success"}>{failedPosts.length ? "رسیدگی" : "پایدار"}</StatusToken>}
+                action={<StatusToken tone={failedPosts.length ? "alert" : "success"}><span className="font-outfit">{failedPosts.length}</span> رسیدگی</StatusToken>}
               >
                 {failedPosts.length === 0 ? (
                   <EmptyState
@@ -975,7 +1085,7 @@ export default function AnalyticsPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge status={post.status} />
-                            <span className="text-xs text-app-muted">تلاش: {post.attempt_count}</span>
+                            <span className="text-xs text-app-muted">تلاش: <span className="font-outfit">{post.attempt_count}</span></span>
                           </div>
                           <h3 className="mt-2 truncate text-sm font-black text-app-text">{post.title}</h3>
                         </div>
@@ -988,15 +1098,15 @@ export default function AnalyticsPage() {
                     </article>
                   ))}
                 </div>
-              </WorkspacePanel>
+              </AnalyticsPanel>
 
-              <WorkspacePanel title="خلاصه عملیاتی" description="سیگنال‌های قابل اتکا برای تصمیم بعدی.">
+              <AnalyticsPanel title="خلاصه عملیاتی" description="سیگنال‌های قابل اتکا برای تصمیم بعدی.">
                 <DetailGrid
                   items={[
-                    { label: "تلاش کامل‌شده", value: attemptSummary.completed, hint: "موفق + ناموفق" },
-                    { label: "در حال اجرا", value: attemptSummary.started, hint: "تلاش شروع‌شده" },
-                    { label: "پست در جریان", value: queuedCount, hint: "آماده یا زمان‌بندی‌شده" },
-                    { label: "کل تلاش‌ها", value: scopedAttempts.length, hint: "ثبت‌شده در بازه" }
+                    { label: "تلاش کامل‌شده", value: <span className="font-outfit">{attemptSummary.completed}</span>, hint: "موفق + ناموفق" },
+                    { label: "در حال اجرا", value: <span className="font-outfit">{attemptSummary.started}</span>, hint: "تلاش شروع‌شده" },
+                    { label: "پست در جریان", value: <span className="font-outfit">{queuedCount}</span>, hint: "آماده یا زمان‌بندی‌شده" },
+                    { label: "کل تلاش‌ها", value: <span className="font-outfit">{scopedAttempts.length}</span>, hint: "ثبت‌شده در بازه" }
                   ]}
                 />
                 {campaignPerformance.length ? (
@@ -1013,12 +1123,12 @@ export default function AnalyticsPage() {
                               <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: campaign.color }} />
                               {campaign.label}
                             </p>
-                            <span className="text-[11px] font-black text-app-primary">{campaign.total} پست</span>
+                            <span className="text-[11px] font-black text-app-primary"><span className="font-outfit">{campaign.total}</span> پست</span>
                           </div>
                           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
                             <div className="h-full rounded-full bg-app-primary" style={{ width: `${percent(campaign.published + campaign.queued, Math.max(1, campaign.total))}%` }} />
                           </div>
-                          <p className="mt-1 text-[11px] text-app-muted">{campaign.published} منتشرشده · {campaign.queued} در جریان · {campaign.media} دارای رسانه</p>
+                          <p className="mt-1 text-[11px] text-app-muted"><span className="font-outfit">{campaign.published}</span> منتشرشده · <span className="font-outfit">{campaign.queued}</span> در جریان · <span className="font-outfit">{campaign.media}</span> دارای رسانه</p>
                         </div>
                       ))}
                     </div>
@@ -1027,7 +1137,7 @@ export default function AnalyticsPage() {
                 <div className="mt-4 divide-y divide-app-border border-t border-app-border">
                   <div className="py-3">
                     <p className="text-[11px] font-black text-app-muted">آخرین تلاش ثبت‌شده</p>
-                    <p className="mt-1 text-sm font-black text-app-text">{lastAttempt ? formatDateTime(lastAttempt.created_at) : "—"}</p>
+                    <p className="mt-1 text-sm font-black text-app-text font-outfit">{lastAttempt ? formatDateTime(lastAttempt.created_at) : "—"}</p>
                   </div>
                   <div className="py-3">
                     <p className="text-[11px] font-black text-app-muted">نزدیک‌ترین پست در جریان</p>
@@ -1035,27 +1145,27 @@ export default function AnalyticsPage() {
                       <>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           <StatusBadge status={queuedPosts[0].status} />
-                          <span className="text-xs text-app-muted">{formatDateTime(queuedPosts[0].scheduled_at)}</span>
+                          <span className="text-xs text-app-muted font-outfit">{formatDateTime(queuedPosts[0].scheduled_at)}</span>
                         </div>
                         <p className="mt-2 truncate text-sm font-black text-app-text">{queuedPosts[0].title}</p>
                       </>
-                    ) : <p className="mt-1 text-sm text-app-muted">پست فعالی در صف نیست.</p>}
+                    ) : <p className="mt-1 text-sm text-app-muted font-outfit">پست فعالی در صف نیست.</p>}
                   </div>
                   <div className="py-3">
                     <p className="text-[11px] font-black text-app-muted">بیشترین تلاش انتشار</p>
                     {highAttemptPosts[0] ? (
                       <div className="mt-2 flex items-center justify-between gap-3">
                         <p className="truncate text-sm font-black text-app-text">{highAttemptPosts[0].title}</p>
-                        <StatusToken tone={highAttemptPosts[0].attempt_count > 1 ? "warning" : "neutral"}>{highAttemptPosts[0].attempt_count} تلاش</StatusToken>
+                        <StatusToken tone={highAttemptPosts[0].attempt_count > 1 ? "warning" : "neutral"}><span className="font-outfit">{highAttemptPosts[0].attempt_count}</span> تلاش</StatusToken>
                       </div>
-                    ) : <p className="mt-1 text-sm text-app-muted">داده‌ای برای رتبه‌بندی وجود ندارد.</p>}
+                    ) : <p className="mt-1 text-sm text-app-muted font-outfit">داده‌ای برای رتبه‌بندی وجود ندارد.</p>}
                   </div>
                 </div>
                 <div className="mt-4 grid gap-2">
                   <Button href="/queue" variant="secondary">باز کردن صف انتشار</Button>
                   <Button href="/content" variant="secondary">میز محتوا</Button>
                 </div>
-              </WorkspacePanel>
+              </AnalyticsPanel>
             </aside>
           </section>
         </NPage>
@@ -1063,3 +1173,4 @@ export default function AnalyticsPage() {
     </AuthGate>
   );
 }
+

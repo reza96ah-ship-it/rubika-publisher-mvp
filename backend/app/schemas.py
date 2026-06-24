@@ -413,6 +413,8 @@ class InstagramAutomationEventResponse(BaseModel):
     public_reply_comment_id: str
     attempt_count: int
     last_attempt_at: datetime | None
+    assigned_to: str = ""
+    internal_note: str = ""
     created_at: datetime
     updated_at: datetime
 
@@ -438,3 +440,36 @@ class InstagramAutomationIngestResponse(BaseModel):
     skipped: int
     event_ids: list[int]
     events: list[InstagramAutomationEventResponse]
+
+
+class SavedReplyRequest(BaseModel):
+    title: str
+    content: str
+
+
+class SavedReplyResponse(BaseModel):
+    id: int
+    store_id: int
+    title: str
+    content: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class SavedReplyListResponse(BaseModel):
+    replies: list[SavedReplyResponse]
+    total: int
+
+
+class ConversationAssignRequest(BaseModel):
+    assigned_to: str
+
+
+class ConversationNoteRequest(BaseModel):
+    internal_note: str
+
+
+class ConversationStatusRequest(BaseModel):
+    conversation_status: str
+    automation_paused_until: datetime | None = None
+

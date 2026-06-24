@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
-from app.models import InstagramAccount, InstagramAutomationEvent, InstagramAutomationRule, Store
+from app.models import InstagramAccount, InstagramAutomationEvent, InstagramAutomationRule, Store, PublishAttempt, Post
 from app.services.instagram_automation import build_simulated_comment_event, ingest_instagram_comment_events, process_instagram_automation_event
 from app.services.instagram_client import InstagramSendResult
 
@@ -213,3 +213,95 @@ def test_instagram_automation_messaging_takeover(monkeypatch) -> None:
         )
         eligible_rules = active_rules_for_event(db, account, comment_event, now)
         assert len(eligible_rules) == 0
+
+
+def test_instagram_automation_post_specific_matching() -> None:
+    session_factory = make_session()
+    now = datetime.utcnow()
+
+    with session_factory() as db:
+        store = Store(name="Store 2", created_at=now, updated_at=now)
+        db.add(store)
+        db.flush()
+
+        account = InstagramAccount(
+            store_id=store.id,
+            username="shop2",
+            account_type="business",
+            publish_mode="direct",
+            professional_account_id="ig-2",
+            page_id="page-2",
+            access_token="token-2",
+            status="connected",
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(account)
+        db.flush()
+
+        post = Post(
+            store_id=store.id,
+            title="Target Post",
+            caption="Sample caption",
+            hashtags="",
+            platform="instagram",
+            status="published",
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(post)
+        db.flush()
+
+        rule = InstagramAutomationRule(
+            store_id=store.id,
+            instagram_account_id=None,
+            post_id=post.id,
+            name="Post specific rule",
+            status="active",
+            trigger_type="exact",
+            trigger_keywords=json.dumps(["price"], ensure_ascii=False),
+            normalized_keywords=json.dumps(["price"], ensure_ascii=False),
+            private_reply_message="Direct reply message",
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(rule)
+        db.flush()
+
+        from app.services.instagram_automation import active_rules_for_event, InstagramCommentEvent
+        comment_non_matching = InstagramCommentEvent(
+            account_ref="page-2",
+            ig_media_id="wrong-media-id",
+            ig_comment_id="comment-10",
+            commenter_username="user1",
+            commenter_ig_scoped_id="scoped-user1",
+            comment_text="price",
+            raw={}
+        )
+
+        eligible = active_rules_for_event(db, account, comment_non_matching, now)
+        assert len(eligible) == 0
+
+        attempt = PublishAttempt(
+            post_id=post.id,
+            channel="instagram",
+            status="success",
+            response_payload=json.dumps({"media_id": "correct-media-id"}),
+            created_at=now
+        )
+        db.add(attempt)
+        db.flush()
+
+        comment_matching = InstagramCommentEvent(
+            account_ref="page-2",
+            ig_media_id="correct-media-id",
+            ig_comment_id="comment-11",
+            commenter_username="user1",
+            commenter_ig_scoped_id="scoped-user1",
+            comment_text="price",
+            raw={}
+        )
+
+        eligible = active_rules_for_event(db, account, comment_matching, now)
+        assert len(eligible) == 1
+        assert eligible[0].id == rule.id

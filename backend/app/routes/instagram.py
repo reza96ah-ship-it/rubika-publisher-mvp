@@ -11,8 +11,8 @@ from app.auth import get_current_user
 from app.config import get_settings
 from app.database import get_db
 from app.dependencies import get_active_store
-from app.models import InstagramAccount, InstagramAutomationEvent, InstagramAutomationRule, Store, User
-from app.schemas import InstagramAccountResponse, InstagramAutomationCommentSimulationRequest, InstagramAutomationEventListResponse, InstagramAutomationEventResponse, InstagramAutomationIngestResponse, InstagramAutomationRuleListResponse, InstagramAutomationRuleRequest, InstagramAutomationRuleResponse, InstagramAutomationRuleTestRequest, InstagramAutomationRuleTestResponse, InstagramOAuthStartResponse, InstagramSettingsRequest, InstagramTestResponse
+from app.models import InstagramAccount, InstagramAutomationEvent, InstagramAutomationRule, SavedReply, Store, User
+from app.schemas import ConversationAssignRequest, ConversationNoteRequest, ConversationStatusRequest, InstagramAccountResponse, InstagramAutomationCommentSimulationRequest, InstagramAutomationEventListResponse, InstagramAutomationEventResponse, InstagramAutomationIngestResponse, InstagramAutomationRuleListResponse, InstagramAutomationRuleRequest, InstagramAutomationRuleResponse, InstagramAutomationRuleTestRequest, InstagramAutomationRuleTestResponse, InstagramOAuthStartResponse, InstagramSettingsRequest, InstagramTestResponse, SavedReplyListResponse, SavedReplyRequest, SavedReplyResponse
 from app.services.instagram_automation import build_simulated_comment_event, clean_keywords, ingest_instagram_comment_events, ingest_instagram_webhook_payload, json_list, normalized_keywords, rule_matches, verify_meta_signature
 from app.services.instagram_client import InstagramGraphClient
 from app.services.instagram_oauth import build_meta_oauth_url, create_instagram_oauth_state, missing_meta_oauth_config, read_instagram_oauth_state
@@ -569,3 +569,144 @@ def simulate_automation_comment(
         .order_by(InstagramAutomationEvent.created_at.desc(), InstagramAutomationEvent.id.desc())
     ).all() if summary.event_ids else []
     return automation_ingest_response(summary, events)
+
+
+@router.put("/automation/events/{event_id}/assign", response_model=InstagramAutomationEventResponse)
+def assign_automation_event(
+    event_id: int,
+    payload: ConversationAssignRequest,
+    store: Store = Depends(get_active_store),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> InstagramAutomationEventResponse:
+    event = db.scalar(select(InstagramAutomationEvent).where(
+        InstagramAutomationEvent.id == event_id,
+        InstagramAutomationEvent.store_id == store.id
+    ))
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    event.assigned_to = payload.assigned_to
+    event.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(event)
+    return automation_event_response(event)
+
+
+@router.put("/automation/events/{event_id}/note", response_model=InstagramAutomationEventResponse)
+def update_automation_event_note(
+    event_id: int,
+    payload: ConversationNoteRequest,
+    store: Store = Depends(get_active_store),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> InstagramAutomationEventResponse:
+    event = db.scalar(select(InstagramAutomationEvent).where(
+        InstagramAutomationEvent.id == event_id,
+        InstagramAutomationEvent.store_id == store.id
+    ))
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    event.internal_note = payload.internal_note
+    event.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(event)
+    return automation_event_response(event)
+
+
+@router.put("/automation/events/{event_id}/status", response_model=InstagramAutomationEventResponse)
+def update_automation_event_status(
+    event_id: int,
+    payload: ConversationStatusRequest,
+    store: Store = Depends(get_active_store),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> InstagramAutomationEventResponse:
+    event = db.scalar(select(InstagramAutomationEvent).where(
+        InstagramAutomationEvent.id == event_id,
+        InstagramAutomationEvent.store_id == store.id
+    ))
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    event.conversation_status = payload.conversation_status
+    event.automation_paused_until = payload.automation_paused_until
+    event.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(event)
+    return automation_event_response(event)
+
+
+@router.get("/automation/saved-replies", response_model=SavedReplyListResponse)
+def list_saved_replies(
+    store: Store = Depends(get_active_store),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> SavedReplyListResponse:
+    replies = db.scalars(
+        select(SavedReply)
+        .where(SavedReply.store_id == store.id)
+        .order_by(SavedReply.created_at.desc())
+    ).all()
+    
+    return SavedReplyListResponse(
+        replies=[
+            SavedReplyResponse(
+                id=r.id,
+                store_id=r.store_id,
+                title=r.title,
+                content=r.content,
+                created_at=r.created_at,
+                updated_at=r.updated_at
+            ) for r in replies
+        ],
+        total=len(replies)
+    )
+
+
+@router.post("/automation/saved-replies", response_model=SavedReplyResponse)
+def create_saved_reply(
+    payload: SavedReplyRequest,
+    store: Store = Depends(get_active_store),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> SavedReplyResponse:
+    reply = SavedReply(
+        store_id=store.id,
+        title=payload.title,
+        content=payload.content,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
+    db.add(reply)
+    db.commit()
+    db.refresh(reply)
+    
+    return SavedReplyResponse(
+        id=reply.id,
+        store_id=reply.store_id,
+        title=reply.title,
+        content=reply.content,
+        created_at=reply.created_at,
+        updated_at=reply.updated_at
+    )
+
+
+@router.delete("/automation/saved-replies/{reply_id}")
+def delete_saved_reply(
+    reply_id: int,
+    store: Store = Depends(get_active_store),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    reply = db.scalar(select(SavedReply).where(
+        SavedReply.id == reply_id,
+        SavedReply.store_id == store.id
+    ))
+    if reply is None:
+        raise HTTPException(status_code=404, detail="Saved reply not found")
+    
+    db.delete(reply)
+    db.commit()
+    return {"ok": True, "message": "Saved reply deleted successfully"}
