@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Campaign } from "./campaigns";
 import {
   deriveDashboardModel,
+  loadDashboardSnapshot,
   type ChannelAccount,
   type DashboardSnapshot,
   type PublishAttempt
@@ -214,5 +215,32 @@ describe("deriveDashboardModel", () => {
     expect(model.degradedSources).toEqual(["attempts", "channels"]);
     expect(model.isOperationallyEmpty).toBe(false);
     expect(model.tone).toBe("warning");
+  });
+});
+
+describe("loadDashboardSnapshot", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("treats a missing active store as an empty onboarding state", async () => {
+    vi.stubGlobal("window", {
+      localStorage: {
+        getItem: vi.fn().mockReturnValue("test-session")
+      }
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => null
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await loadDashboardSnapshot();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result.workspace).toEqual({ store: null, rubika: null });
+    expect(result.posts).toEqual([]);
+    expect(result.channels.accounts).toEqual([]);
+    expect(result.errors).toEqual({});
   });
 });

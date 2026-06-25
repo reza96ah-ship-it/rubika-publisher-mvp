@@ -11,29 +11,39 @@ permissions:
 
 jobs:
   screenshots:
-    # Dashboard-specific responsive acceptance against the real local stack.
-    # This test-only branch commit refreshes visual diagnostics for PR review.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Start real application stack
+      - name: Prepare visual review environment
         run: |
-          cp .env.example .env
-          docker compose up -d --build
-          for attempt in $(seq 1 90); do
+          cp .env.production.example .env.production
+          sed -i 's#^APP_SECRET_KEY=.*#APP_SECRET_KEY=dashboard_visual_review_secret_key_2026#' .env.production
+          sed -i 's#^ADMIN_PASSWORD=.*#ADMIN_PASSWORD=dashboard_visual_review_password#' .env.production
+          sed -i 's#^FRONTEND_PUBLIC_URL=.*#FRONTEND_PUBLIC_URL=http://127.0.0.1:3100#' .env.production
+          sed -i 's#^NEXT_PUBLIC_API_URL=.*#NEXT_PUBLIC_API_URL=http://127.0.0.1:8000#' .env.production
+          sed -i 's#^CORS_ORIGINS=.*#CORS_ORIGINS=http://127.0.0.1:3100#' .env.production
+          sed -i 's#^META_OAUTH_REDIRECT_URI=.*#META_OAUTH_REDIRECT_URI=http://127.0.0.1:8000/instagram/oauth/callback#' .env.production
+          sed -i 's#^POSTGRES_PASSWORD=.*#POSTGRES_PASSWORD=dashboard_visual_review_database#' .env.production
+          sed -i 's#REQUIRED_DATABASE_VALUE#dashboard_visual_review_database#g' .env.production
+          sed -i 's#^INSTAGRAM_WEBHOOK_VERIFY_TOKEN=.*#INSTAGRAM_WEBHOOK_VERIFY_TOKEN=dashboard_visual_review_webhook#' .env.production
+
+      - name: Start immutable application stack
+        run: |
+          docker compose --env-file .env.production -f compose.production.yaml up -d --build postgres redis migrate backend frontend
+          for attempt in $(seq 1 120); do
             if curl -fsS http://127.0.0.1:8000/health >/dev/null && curl -fsS http://127.0.0.1:3100/login >/dev/null; then
               exit 0
             fi
             sleep 2
           done
-          docker compose ps
-          docker compose logs --tail=200 backend frontend
+          docker compose --env-file .env.production -f compose.production.yaml ps
+          docker compose --env-file .env.production -f compose.production.yaml logs --tail=250 backend frontend
           exit 1
 
       - name: Seed representative operational data
-        run: docker compose exec -T backend python - < .github/scripts/seed-dashboard-review.py
+        run: docker compose --env-file .env.production -f compose.production.yaml exec -T backend python - < .github/scripts/seed-dashboard-review.py
 
       - name: Install browser client
         run: python -m pip install --disable-pip-version-check selenium
@@ -41,12 +51,13 @@ jobs:
       - name: Capture responsive light and dark dashboards
         run: |
           mkdir -p visual-review
-          visual_session=$(docker compose exec -T backend python -c 'from app.config import get_settings; from app.security import create_access_token; print(create_access_token(get_settings().admin_email))')
+          visual_session=$(docker compose --env-file .env.production -f compose.production.yaml exec -T backend python -c 'from app.config import get_settings; from app.security import create_access_token; print(create_access_token(get_settings().admin_email))')
           browser_bin=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
           chromedriver_bin=$(command -v chromedriver)
           test -n "$visual_session"
           test -n "$browser_bin"
           test -n "$chromedriver_bin"
+          curl -fsS -H "Authorization: Bearer $visual_session" http://127.0.0.1:8000/auth/me >/dev/null
           VISUAL_SESSION="$visual_session" BROWSER_BIN="$browser_bin" CHROMEDRIVER_BIN="$chromedriver_bin" python .github/scripts/render-dashboard-review.py
 
       - name: Upload dashboard review screenshots
@@ -60,4 +71,4 @@ jobs:
 
       - name: Show service logs on failure
         if: failure()
-        run: docker compose logs --tail=250 backend frontend
+        run: docker compose --env-file .env.production -f compose.production.yaml logs --tail=250 backend frontend

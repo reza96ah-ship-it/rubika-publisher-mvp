@@ -3,8 +3,8 @@ project: Nashrino SocialOps Studio
 repository: reza96ah-ship-it/rubika-publisher-mvp
 canonical_branch: main
 status_date: 2026-06-25
-active_program: Dashboard V2 preparation and production deployment operational acceptance
-next_recommended_branch: feat/dashboard-v2
+active_program: Composer and publishing V2; production deployment operational acceptance
+next_recommended_branch: feat/composer-v2
 ---
 
 # Current Project Status
@@ -19,6 +19,8 @@ Read this file after `AGENTS.md`. Update it whenever a pull request changes the 
 - Compose healthcheck validation was corrected through PR #28.
 - Repository-level production CI and image-build acceptance are complete.
 - Shared workspace shell cleanup is completed through PR #30.
+- Dashboard V2 implementation and acceptance are completed through PRs #32 and #36.
+- Next 16 TypeScript configuration normalization is completed through PR #35.
 - Generated browser reports and temporary output artifacts are excluded.
 - The active `main` ruleset still requires manual verification in GitHub Settings.
 
@@ -32,7 +34,9 @@ Read this file after `AGENTS.md`. Update it whenever a pull request changes the 
 - one layout-owned `AuthGate` and one layout-owned `AppShell`;
 - no page-level compatibility shell wrappers;
 - structural `shell:audit` regression guard in Frontend CI;
-- durable repository continuity and contribution guidance.
+- durable repository continuity and contribution guidance;
+- real-data Dashboard V2 with publishing pulse, channel readiness, action backlog, campaign summary, operational alerts, and rolling throughput;
+- production-browser visual acceptance at 390 × 844 and 1440 × 900 in light and dark modes.
 
 ## Production deployment implementation
 
@@ -82,27 +86,15 @@ Remaining evidence:
 - successful restore and application rollback drills;
 - development Compose regression check on the target host.
 
-### 2. Dashboard V2
+### 2. Composer and publishing V2
 
-Recommended branch: `feat/dashboard-v2`
+Recommended branch: `feat/composer-v2`
 
-Use real backend data for:
+Preserve create/edit, autosave and restore, campaign assignment, media selection and editing, Rubika and Instagram capability/readiness, previews, approval, scheduling, automation rules, retry, cancel, recovery, and manual publication.
 
-- publishing health;
-- next scheduled publication;
-- active campaign summary;
-- channel readiness;
-- approval and failure backlogs;
-- operational alerts;
-- compact throughput and performance insight.
+Split the current route into typed domain, repository, query/mutation, form-state, capability-adapter, media, preview, readiness, and submission-state modules without changing backend contracts.
 
-Do not add full onboarding progress, the full calendar, full campaign reports, duplicate content lists, or permanent queue/log tables to Dashboard.
-
-### 3. Composer and publishing V2
-
-Preserve create/edit, autosave, media, campaigns, readiness, approval, scheduling, previews, automation rules, queue actions, retry, cancel, and manual publication.
-
-### 4. Planner and Jalali calendar V2
+### 3. Planner and Jalali calendar V2
 
 Preserve month/week/list modes, filtering, day/post inspection, rescheduling, gap detection, queue secondary view, and agenda-first mobile behavior.
 

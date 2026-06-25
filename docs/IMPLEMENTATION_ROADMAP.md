@@ -24,8 +24,8 @@ Roadmap status vocabulary: `done`, `in progress`, `next`, `planned`, `blocked`, 
 | Shared workspace route layout | done | Protected routes share one App Router layout without URL changes |
 | Production Compose and deployment | in progress | Repository implementation validated; operational staging drill remains |
 | Remove legacy page shell wrappers | done | One layout-owned auth boundary and application shell |
-| Dashboard V2 | next | First complete real-data product vertical slice |
-| Composer and publishing V2 | planned | Professional creation, preview, approval, scheduling, and recovery |
+| Dashboard V2 | done | Real-data operational dashboard with production visual acceptance |
+| Composer and publishing V2 | next | Professional creation, preview, approval, scheduling, and recovery |
 | Planner and Jalali calendar V2 | planned | Month/week/list planning and mobile agenda flow |
 | Campaigns, content, and media V2 | planned | Coherent campaign and asset operations |
 | Inbox and reports V2 | planned | Social engagement, operational recovery, and insights |
@@ -165,9 +165,9 @@ Completed through PR #30.
 
 ## M4 — Dashboard V2
 
-Status: `next`
+Status: `done`
 
-Recommended branch: `feat/dashboard-v2`
+Completed through PR #32 with final acceptance through PR #36.
 
 ### Route ownership
 
@@ -211,19 +211,23 @@ Dashboard does not own:
 - no horizontal overflow at 390 px;
 - no decorative charts without operational meaning.
 
-### Acceptance
+### Delivered and accepted
 
-- no final fixture-only business state;
-- backend/API failures show recovery guidance;
-- mobile, desktop, RTL, dark, high-contrast, keyboard, and screen-reader review complete;
-- automated unit/integration coverage;
-- before/after screenshots included in PR.
+- real posts, publishing attempts, campaigns, channel accounts, workspace state, and operational notifications;
+- partial-source degradation with recovery guidance;
+- publishing pulse, next action, channel readiness, approval/failure backlog, active campaigns, alerts, and rolling seven-day throughput;
+- no duplicate Planner, Content, Campaign report, Queue, or Logs ownership;
+- fresh-workspace onboarding state without unnecessary store-scoped requests;
+- unit coverage for scheduling, attempts, backlogs, throughput, degradation, and missing-store behavior;
+- Frontend, Backend, and Deployment CI passed;
+- immutable production-browser screenshots passed at 390 × 844 and 1440 × 900 in light and dark modes;
+- RTL order, single-column mobile hierarchy, contrast, readability, and horizontal overflow reviewed.
 
 ---
 
 ## M5 — Composer and publishing workflow V2
 
-Status: `planned`
+Status: `next`
 
 Recommended branch: `feat/composer-v2`
 
