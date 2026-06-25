@@ -2,7 +2,7 @@
 
 The shared `frontend/app/(workspace)/layout.tsx` is the sole owner of `AuthGate` and `AppShell`.
 
-Removed compatibility wrappers from 16 route implementation files:
+Compatibility wrappers were removed from 16 route implementation files:
 
 - `frontend/app/_workspace-page.tsx`
 - `frontend/app/analytics/_page.tsx`
@@ -21,4 +21,6 @@ Removed compatibility wrappers from 16 route implementation files:
 - `frontend/app/rubika/_page.tsx`
 - `frontend/app/store/_page.tsx`
 
-The `shell:audit` check prevents page-level shell imports or JSX wrappers from returning.
+The route-group layout keeps public URLs unchanged while centralizing authentication, notification polling, command-palette shortcuts, mobile haptics, and workspace scrolling.
+
+The `shell:audit` command rejects any future protected page that imports or renders `AuthGate` or `AppShell` outside the shared workspace layout.
