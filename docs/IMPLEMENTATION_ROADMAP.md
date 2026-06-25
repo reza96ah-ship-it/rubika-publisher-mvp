@@ -22,7 +22,7 @@ Roadmap status vocabulary: `done`, `in progress`, `next`, `planned`, `blocked`, 
 | Liquid Glass token bridge | done | Controlled material, geometry, theme, and accessibility tokens |
 | AppShell V2 | done | Shared navigation, top bar, mobile drawer, fixed canvas, single main scroll |
 | Shared workspace route layout | done | Protected routes share one App Router layout without URL changes |
-| Production Compose and deployment | in progress | Immutable production runtime, operations runbook, and rollback path |
+| Production Compose and deployment | in progress | Repository implementation validated; operational staging drill remains |
 | Remove legacy page shell wrappers | planned | Eliminate duplicate compatibility wrappers and listeners |
 | Dashboard V2 | planned | First complete real-data product vertical slice |
 | Composer and publishing V2 | planned | Professional creation, preview, approval, scheduling, and recovery |
@@ -86,7 +86,7 @@ Follow-up technical cleanup:
 
 Status: `in progress`
 
-Current branch: `chore/production-compose`
+Implementation merged through PR #27. Compose validation was corrected through PR #28.
 
 ### Goals
 
@@ -95,7 +95,7 @@ Current branch: `chore/production-compose`
 - provide repeatable backup, migration, health, deployment, and rollback procedures;
 - prepare for HTTPS reverse proxy without coupling to one hosting provider.
 
-### Implemented on the milestone branch
+### Repository implementation and validation complete
 
 - `compose.production.yaml` with separate edge and internal networks;
 - standalone multi-stage Next.js production image;
@@ -111,25 +111,25 @@ Current branch: `chore/production-compose`
 - image-tag rollback script;
 - PostgreSQL backup, checksum, and guarded restore scripts;
 - `docs/PRODUCTION_DEPLOYMENT.md`;
-- Deployment CI job for shell syntax, Compose rendering, and production image builds.
+- Deployment CI for shell syntax, Compose rendering, and production image builds;
+- final Frontend, Backend, and Deployment CI passed;
+- clean backend and frontend production image builds passed;
+- frontend healthcheck YAML parsing defect fixed by quoting the complete Node command.
 
-### Acceptance still required
+### Operational acceptance still required
 
-- Frontend, Backend, and Deployment CI pass on the pull request;
-- production stack builds from a clean checkout;
-- frontend runs from standalone output;
-- backend runs without `--reload`;
-- no application source bind mounts;
-- PostgreSQL data and media persist across recreation;
-- Alembic migrations apply before app traffic;
-- backend, database, worker, and frontend health checks pass;
-- HTTPS reverse proxy behavior is verified;
-- database backup and restore are tested outside production;
-- application rollback is tested outside production;
-- no deployment credentials or real backups are committed;
-- current development Compose remains usable locally.
+- deploy the merged `main` branch to a non-production host;
+- verify PostgreSQL and media persistence across service recreation;
+- verify Alembic migrations complete before application traffic;
+- verify backend, database, worker, and frontend runtime health checks;
+- verify HTTPS reverse proxy, CORS, and OAuth callback routing;
+- create and verify a database backup and checksum;
+- complete a database restore drill outside production;
+- complete an application image rollback drill outside production;
+- verify the development Compose workflow remains usable on the target environment;
+- record the drill results without committing credentials or real backups.
 
-M2 becomes `done` only after repository CI and a documented non-production operational drill pass.
+M2 becomes `done` after the documented non-production operational drill passes. Repository CI and image-build acceptance are already complete.
 
 ---
 
