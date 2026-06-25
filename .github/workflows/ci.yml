@@ -129,7 +129,7 @@ jobs:
         run: bash -o pipefail -c 'docker compose --env-file .env.production -f compose.production.yaml config 2>&1 | tee compose-config.log'
 
       - name: Upload Compose diagnostics
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: production-compose-config
