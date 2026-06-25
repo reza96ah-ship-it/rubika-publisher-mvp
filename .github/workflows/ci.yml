@@ -139,8 +139,8 @@ jobs:
       - name: Build production images
         run: docker compose --env-file .env.production -f compose.production.yaml build backend frontend
 
-  format-generated-pages:
-    name: Format generated pages
+  repair-wrapper-diff:
+    name: Repair wrapper diff
     if: github.event_name == 'pull_request' && github.head_ref == 'refactor/remove-legacy-page-shell-wrappers'
     runs-on: ubuntu-latest
     permissions:
@@ -152,60 +152,49 @@ jobs:
           ref: refactor/remove-legacy-page-shell-wrappers
           fetch-depth: 0
 
-      - name: Normalize outer JSX indentation
+      - name: Restore original formatting and remove wrappers only
+        shell: bash
         run: |
-          python - <<'PY'
-          from pathlib import Path
+          paths=(
+            frontend/app/_workspace-page.tsx
+            frontend/app/analytics/_page.tsx
+            frontend/app/calendar/_page.tsx
+            frontend/app/campaigns/_page.tsx
+            frontend/app/channels/_page.tsx
+            frontend/app/compose/_page.tsx
+            frontend/app/content/_page.tsx
+            frontend/app/design-system/_page.tsx
+            frontend/app/inbox/_page.tsx
+            frontend/app/instagram/_page.tsx
+            frontend/app/logs/_page.tsx
+            frontend/app/media/_page.tsx
+            frontend/app/onboarding/_page.tsx
+            frontend/app/queue/_page.tsx
+            frontend/app/rubika/_page.tsx
+            frontend/app/store/_page.tsx
+          )
+          git checkout origin/main -- "${paths[@]}"
+          for path in "${paths[@]}"; do
+            sed -i \
+              -e '/components\/auth-gate/d' \
+              -e '/components\/app-shell/d' \
+              -e '/^[[:space:]]*<AuthGate>[[:space:]]*$/d' \
+              -e '/^[[:space:]]*<AppShell>[[:space:]]*$/d' \
+              -e '/^[[:space:]]*<\/AppShell>[[:space:]]*$/d' \
+              -e '/^[[:space:]]*<\/AuthGate>[[:space:]]*$/d' \
+              "$path"
+          done
+          rm -f tools/test.txt
 
-          paths = [
-              "frontend/app/_workspace-page.tsx",
-              "frontend/app/analytics/_page.tsx",
-              "frontend/app/calendar/_page.tsx",
-              "frontend/app/campaigns/_page.tsx",
-              "frontend/app/channels/_page.tsx",
-              "frontend/app/compose/_page.tsx",
-              "frontend/app/content/_page.tsx",
-              "frontend/app/design-system/_page.tsx",
-              "frontend/app/inbox/_page.tsx",
-              "frontend/app/instagram/_page.tsx",
-              "frontend/app/logs/_page.tsx",
-              "frontend/app/media/_page.tsx",
-              "frontend/app/onboarding/_page.tsx",
-              "frontend/app/queue/_page.tsx",
-              "frontend/app/rubika/_page.tsx",
-              "frontend/app/store/_page.tsx",
-          ]
-
-          marker = "\n  return (\n<"
-          closing = "\n);\n}"
-          for value in paths:
-              path = Path(value)
-              text = path.read_text(encoding="utf-8")
-              start = text.rfind(marker)
-              end = text.rfind(closing)
-              if start < 0 or end < start:
-                  raise SystemExit(f"Unexpected generated indentation in {value}")
-              body_start = start + len("\n  return (\n")
-              lines = text[body_start:end].splitlines()
-              lines[0] = "    " + lines[0]
-              for index in range(1, len(lines)):
-                  if lines[index].startswith("    "):
-                      lines[index] = lines[index][4:]
-              text = text[:body_start] + "\n".join(lines) + "\n  );\n}" + text[end + len(closing):]
-              path.write_text(text, encoding="utf-8")
-
-          Path("tools/test.txt").unlink(missing_ok=True)
-          PY
-
-      - name: Commit formatting cleanup
+      - name: Commit minimal page changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git restore --source=HEAD -- .github/workflows/ci.yml
           git add -A
           if git diff --cached --quiet; then
-            echo "No formatting cleanup remains."
+            echo "Page changes are already minimal."
             exit 0
           fi
-          git commit -m "style(frontend): normalize workspace page indentation"
+          git commit -m "refactor(frontend): preserve page formatting"
           git push origin HEAD:refactor/remove-legacy-page-shell-wrappers
