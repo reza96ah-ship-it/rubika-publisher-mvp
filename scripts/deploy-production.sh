@@ -32,7 +32,7 @@ production_compose build --pull backend frontend
 production_compose rm --stop --force migrate >/dev/null 2>&1 || true
 production_compose up -d --no-build --remove-orphans
 
-PRODUCTION_ENV_FILE="${ENV_FILE}" "${SCRIPT_DIR}/smoke-check-production.sh"
+PRODUCTION_ENV_FILE="${ENV_FILE}" bash "${SCRIPT_DIR}/smoke-check-production.sh"
 record_release_state "${release_tag}" "${previous_tag}"
 
 echo "Deployment completed with image tag: ${release_tag}"
