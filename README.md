@@ -1,4 +1,4 @@
-﻿# Nashrino SocialOps Studio
+# Nashrino SocialOps Studio
 
 Persian-first, RTL-native, Jalali-native social operations platform for planning, creating, scheduling, publishing, monitoring, and reporting content across Rubika, Instagram, and future channels.
 
@@ -19,11 +19,16 @@ The project started as a Rubika publisher MVP, but the product direction is now 
 
 The PRD, RFP, roadmap, design direction, backlog, architecture notes, and phase plan live in one source of truth:
 
-[docs/Nashrino_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/Nashrino_2026_MASTER_RFP_ROADMAP_BACKLOG.md)
+[docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md)
 
 The Instagram comment-to-DM automation feature has a dedicated product spec:
 
 [docs/INSTAGRAM_COMMENT_TO_DM_AUTOMATION_PRD.md](docs/INSTAGRAM_COMMENT_TO_DM_AUTOMATION_PRD.md)
+
+The active UI modernization plan and regression checklist are documented here:
+
+- [UI foundation implementation plan](docs/UI_FOUNDATION_IMPLEMENTATION_PLAN.md)
+- [UI regression baseline](docs/UI_REGRESSION_BASELINE.md)
 
 ## Stack
 
@@ -71,9 +76,10 @@ docker compose exec frontend npm run check
 
 ## Canonical Navigation Structure
 
-The navigation follows the single-source-of-truth design documented in [docs/Nashrino_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/Nashrino_2026_MASTER_RFP_ROADMAP_BACKLOG.md).
+The navigation follows the single-source-of-truth design documented in [docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md).
 
 ### Target Primary Navigation
+
 1. **داشبورد** (`/`) - Dashboard overview
 2. **ساخت** (`/compose`) - Content creation studio
 3. **برنامه‌ریزی** (`/calendar`) - Jalali calendar planner
@@ -88,19 +94,15 @@ The navigation follows the single-source-of-truth design documented in [docs/Nas
 Operational routes such as `/queue` and `/logs` still exist, but the target product model treats them as secondary views inside Planner/Reports rather than permanent primary navigation items.
 
 ### Navigation Consolidation Status
-✅ Quick Create FAB removed (eliminated 4th redundant entry point)
-✅ Queue & Logs as direct nav items (no hidden multiplexing)
-✅ Channel pages show breadcrumbs (کانال‌ها > Rubika/Instagram)
-✅ Single entry point per major feature
-✅ Mobile-first responsive navigation
+
+- Quick Create FAB removed to eliminate the fourth redundant entry point.
+- Queue and Logs remain reachable as operational routes.
+- Channel pages show breadcrumbs.
+- One primary entry point exists for every major feature.
+- Mobile-first responsive navigation is available.
 
 ## Current Phase
 
-Phase 5: Instagram Comment-to-DM Automation MVP (🚧 In Progress - Foundations Complete).
+The product backend and publishing foundations remain active while the frontend enters the shared **Liquid Glass UI foundation** phase tracked in issue #7.
 
-- **Latest Completed Work:** Navigation Finalization (Phase 1), Meta OAuth & linked accounts discovery (Phase 4), and Instagram Webhook & Celery automation worker (Phase 5 - Backend logic, Persian/Arabic digit normalization, idempotency, and local test simulator).
-- **Next Steps:**
-  1. **Composer Pro Phase 2:** Integrate comment automation settings directly inside the creation workbench so rules can be configured and attached when scheduling/publishing posts.
-  2. **Instagram Publishing Adapter:** Support automatic direct publishing of scheduled media/carousels to connected professional Instagram accounts.
-  3. **Inbox & Reports Pro:** Stream automation matched events/errors to the inbox and display analytics widgets in reports.
-
+The first three UI pull requests stabilize the repository, bridge the design tokens, and replace the repeated page-level shell with one accessible protected workspace layout. Backend schemas, publishing workers, adapters, automation processing, and API contracts remain unchanged during this foundation work.
