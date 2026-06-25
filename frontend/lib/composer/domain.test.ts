@@ -127,6 +127,55 @@ describe("Composer domain", () => {
     expect(blocked.canSchedule).toBe(false);
   });
 
+  it.each(["ready", "scheduled"])(
+    "allows a %s post to be scheduled again without making it mark-ready eligible",
+    (status) => {
+      const readiness = deriveComposerReadiness({
+        form: form({
+          title: "عنوان",
+          caption: "متن",
+          scheduled_at: "2026-06-27T10:00:00.000Z"
+        }),
+        channelAccounts: [channel()],
+        editingPost: post({ status }),
+        hasMedia: false
+      });
+
+      expect(readiness.canMoveToReady).toBe(false);
+      expect(readiness.canMoveToSchedule).toBe(true);
+      expect(readiness.canMarkReady).toBe(false);
+      expect(readiness.canSchedule).toBe(true);
+      expect(getComposerValidationMessage({
+        action: "schedule",
+        readiness,
+        instagramSelected: false,
+        instagramReady: false
+      })).toBe("");
+    }
+  );
+
+  it("blocks scheduling from a terminal published state", () => {
+    const readiness = deriveComposerReadiness({
+      form: form({
+        title: "عنوان",
+        caption: "متن",
+        scheduled_at: "2026-06-27T10:00:00.000Z"
+      }),
+      channelAccounts: [channel()],
+      editingPost: post({ status: "published" }),
+      hasMedia: false
+    });
+
+    expect(readiness.canMoveToSchedule).toBe(false);
+    expect(readiness.canSchedule).toBe(false);
+    expect(getComposerValidationMessage({
+      action: "schedule",
+      readiness,
+      instagramSelected: false,
+      instagramReady: false
+    })).toBe("وضعیت فعلی پست برای زمان‌بندی یا زمان‌بندی مجدد قابل تغییر نیست.");
+  });
+
   it("reports missing channel readiness before missing schedule time", () => {
     const readiness = deriveComposerReadiness({
       form: form({ title: "عنوان", caption: "متن" }),
