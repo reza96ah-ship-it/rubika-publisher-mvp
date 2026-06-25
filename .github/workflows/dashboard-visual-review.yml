@@ -36,10 +36,13 @@ jobs:
       - name: Install isolated browser client
         working-directory: frontend
         run: |
+          rm -rf /tmp/dashboard-browser
           mkdir -p /tmp/dashboard-browser
-          npm install --prefix /tmp/dashboard-browser --no-audit --no-fund playwright-core@1.52.0
-          mkdir -p node_modules
-          ln -s /tmp/dashboard-browser/node_modules/playwright-core node_modules/playwright-core
+          cd /tmp/dashboard-browser
+          npm init -y
+          npm install --no-audit --no-fund playwright-core@1.52.0
+          mkdir -p "$GITHUB_WORKSPACE/frontend/node_modules"
+          ln -s /tmp/dashboard-browser/node_modules/playwright-core "$GITHUB_WORKSPACE/frontend/node_modules/playwright-core"
 
       - name: Capture responsive light and dark dashboards
         working-directory: frontend
