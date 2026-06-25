@@ -41,6 +41,9 @@ jobs:
       - name: Token audit
         run: npm run token:audit
 
+      - name: Workspace shell audit
+        run: npm run shell:audit
+
       - name: Typecheck
         run: bash -o pipefail -c 'npm run typecheck 2>&1 | tee typecheck-report.txt'
 
@@ -138,63 +141,3 @@ jobs:
 
       - name: Build production images
         run: docker compose --env-file .env.production -f compose.production.yaml build backend frontend
-
-  repair-wrapper-diff:
-    name: Repair wrapper diff
-    if: github.event_name == 'pull_request' && github.head_ref == 'refactor/remove-legacy-page-shell-wrappers'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout refactor branch
-        uses: actions/checkout@v4
-        with:
-          ref: refactor/remove-legacy-page-shell-wrappers
-          fetch-depth: 0
-
-      - name: Restore original formatting and remove wrappers only
-        shell: bash
-        run: |
-          paths=(
-            frontend/app/_workspace-page.tsx
-            frontend/app/analytics/_page.tsx
-            frontend/app/calendar/_page.tsx
-            frontend/app/campaigns/_page.tsx
-            frontend/app/channels/_page.tsx
-            frontend/app/compose/_page.tsx
-            frontend/app/content/_page.tsx
-            frontend/app/design-system/_page.tsx
-            frontend/app/inbox/_page.tsx
-            frontend/app/instagram/_page.tsx
-            frontend/app/logs/_page.tsx
-            frontend/app/media/_page.tsx
-            frontend/app/onboarding/_page.tsx
-            frontend/app/queue/_page.tsx
-            frontend/app/rubika/_page.tsx
-            frontend/app/store/_page.tsx
-          )
-          git checkout origin/main -- "${paths[@]}"
-          for path in "${paths[@]}"; do
-            sed -i \
-              -e '/components\/auth-gate/d' \
-              -e '/components\/app-shell/d' \
-              -e '/^[[:space:]]*<AuthGate>[[:space:]]*$/d' \
-              -e '/^[[:space:]]*<AppShell>[[:space:]]*$/d' \
-              -e '/^[[:space:]]*<\/AppShell>[[:space:]]*$/d' \
-              -e '/^[[:space:]]*<\/AuthGate>[[:space:]]*$/d' \
-              "$path"
-          done
-          rm -f tools/test.txt
-
-      - name: Commit minimal page changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git restore --source=HEAD -- .github/workflows/ci.yml
-          git add -A
-          if git diff --cached --quiet; then
-            echo "Page changes are already minimal."
-            exit 0
-          fi
-          git commit -m "refactor(frontend): preserve page formatting"
-          git push origin HEAD:refactor/remove-legacy-page-shell-wrappers
