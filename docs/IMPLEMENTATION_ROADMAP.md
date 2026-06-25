@@ -25,7 +25,7 @@ Roadmap status vocabulary: `done`, `in progress`, `next`, `planned`, `blocked`, 
 | Production Compose and deployment | in progress | Repository implementation validated; operational staging drill remains |
 | Remove legacy page shell wrappers | done | One layout-owned auth boundary and application shell |
 | Dashboard V2 | done | Real-data operational dashboard with production visual acceptance |
-| Composer and publishing V2 | next | Professional creation, preview, approval, scheduling, and recovery |
+| Composer and publishing V2 | in progress | Domain/repository foundation complete; workflow decomposition active |
 | Planner and Jalali calendar V2 | planned | Month/week/list planning and mobile agenda flow |
 | Campaigns, content, and media V2 | planned | Coherent campaign and asset operations |
 | Inbox and reports V2 | planned | Social engagement, operational recovery, and insights |
@@ -227,9 +227,18 @@ Dashboard does not own:
 
 ## M5 — Composer and publishing workflow V2
 
-Status: `next`
+Status: `in progress`
 
 Recommended branch: `feat/composer-v2`
+
+Foundation delivered through PR #37:
+
+- typed form, media, autosave, workspace-mode, and save-action contracts;
+- pure readiness and validation derivation;
+- validated local-draft parsing and serialization;
+- centralized Composer loading, media, post persistence, scheduling, readiness, and status repository;
+- route migration away from duplicate local API/domain implementations;
+- unit coverage for readiness, approval blocking, validation precedence, and local drafts.
 
 ### Preserve existing capabilities
 

@@ -20,6 +20,7 @@ Read this file after `AGENTS.md`. Update it whenever a pull request changes the 
 - Repository-level production CI and image-build acceptance are complete.
 - Shared workspace shell cleanup is completed through PR #30.
 - Dashboard V2 implementation and acceptance are completed through PRs #32 and #36.
+- Composer V2 domain and repository foundation is implemented through PR #37.
 - Next 16 TypeScript configuration normalization is completed through PR #35.
 - Generated browser reports and temporary output artifacts are excluded.
 - The active `main` ruleset still requires manual verification in GitHub Settings.
@@ -65,6 +66,14 @@ Repository-level acceptance is complete. M2 remains `in progress` only until a n
 - Existing route URLs are unchanged.
 - `npm run shell:audit` prevents page-level `AuthGate` or `AppShell` ownership from returning.
 
+## Composer V2 current architecture
+
+- `frontend/lib/composer/domain.ts` owns Composer form contracts, autosave parsing, readiness derivation, and save-action validation.
+- `frontend/lib/composer/repository.ts` owns Composer loading, media, post persistence, scheduling, readiness, and status API operations.
+- `frontend/app/compose/_page.tsx` still owns workflow orchestration and presentation, but no longer defines duplicate API or domain contracts.
+- Pure domain tests cover title/body requirements, schedule readiness, approval blocking, local drafts, and meaningful unsaved content.
+- The next Composer slice should separate orchestration/form state and then split presentation panels without changing backend semantics.
+
 ## Remaining foundation administration
 
 - Verify the `main` repository ruleset and close or update issues #7 and #20.
@@ -92,7 +101,7 @@ Recommended branch: `feat/composer-v2`
 
 Preserve create/edit, autosave and restore, campaign assignment, media selection and editing, Rubika and Instagram capability/readiness, previews, approval, scheduling, automation rules, retry, cancel, recovery, and manual publication.
 
-Split the current route into typed domain, repository, query/mutation, form-state, capability-adapter, media, preview, readiness, and submission-state modules without changing backend contracts.
+Typed domain and repository modules are complete. Continue with orchestration/form state, capability adapters, media workflow, preview/readiness panels, and the submission state machine without changing backend contracts.
 
 ### 3. Planner and Jalali calendar V2
 

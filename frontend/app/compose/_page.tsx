@@ -18,67 +18,39 @@ import { Button } from "../../components/ui/button";
 import { Field, Input, Select, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
 import { NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
-import { createCampaign, loadCampaigns, type Campaign } from "../../lib/campaigns";
-import { channelCanAutoPublish, channelCanManualPublish, channelIsReady, channelStatusLabel, findChannelAccount, loadChannelAccounts, type ChannelAccount } from "../../lib/channel-accounts";
-import { channelOptions, hasChannel, normalizeChannels, serializeChannels, type PublishingChannel } from "../../lib/channels";
-import { approvalBlocksPublishing, approvalConfig } from "../../lib/posts";
-import { loadWorkspaceOverview, type StoreProfile } from "../../lib/workspace";
+import { createCampaign, type Campaign } from "../../lib/campaigns";
+import { channelCanAutoPublish, channelCanManualPublish, channelIsReady, channelStatusLabel, findChannelAccount, type ChannelAccount } from "../../lib/channel-accounts";
+import { channelOptions, hasChannel, serializeChannels, type PublishingChannel } from "../../lib/channels";
+import {
+  composerDraftStorageKey,
+  composerTimezone,
+  deriveComposerReadiness,
+  emptyComposerForm,
+  getComposerValidationMessage,
+  hasComposerDraftContent,
+  parseComposerDraft,
+  serializeComposerDraft,
+  type AutosaveState,
+  type ComposerForm,
+  type ComposerImageEditSource,
+  type MediaAsset,
+  type SaveAction,
+  type StudioPanel,
+  type WorkspaceMode
+} from "../../lib/composer/domain";
+import {
+  attachComposerMedia,
+  changeComposerPostStatus,
+  loadComposerMediaFile,
+  loadComposerResources,
+  markComposerPostReady,
+  saveComposerPost,
+  scheduleComposerPost,
+  uploadComposerMedia
+} from "../../lib/composer/repository";
+import { approvalConfig, type Post } from "../../lib/posts";
+import type { StoreProfile } from "../../lib/workspace";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-const scheduleTimezone = "Asia/Tehran";
-const localDraftKey = "rubika_publisher_compose_draft";
-
-type MediaAsset = {
-  id: number;
-  post_id: number | null;
-  original_filename: string;
-  content_type: string;
-  size_bytes: number;
-  folder: string;
-  tags: string;
-};
-
-type SaveAction = "draft" | "ready" | "schedule";
-type AutosaveState = "idle" | "dirty" | "saved" | "restored";
-type StudioPanel = "preview" | "schedule" | "review";
-type WorkspaceMode = "content" | "media" | "workflow";
-type ComposerImageEditSource = {
-  imageUrl: string;
-  filename: string;
-  folder: string;
-  tags: string;
-};
-
-type Post = {
-  id: number;
-  title: string;
-  caption: string;
-  hashtags: string;
-  platform: string;
-  status: string;
-  timezone: string;
-  campaign_id: number | null;
-  campaign: string;
-  internal_note: string;
-  scheduled_at: string | null;
-  approval_status: string;
-  approval_note: string;
-  submitted_at: string | null;
-  reviewed_at: string | null;
-  reviewed_by: string;
-};
-
-const emptyForm = {
-  title: "",
-  caption: "",
-  hashtags: "",
-  platform: "rubika",
-  timezone: scheduleTimezone,
-  campaign_id: null as number | null,
-  campaign: "",
-  internal_note: "",
-  scheduled_at: null as string | null
-};
 
 function ComposePageContent() {
   const { showToast } = useToast();
@@ -94,7 +66,7 @@ function ComposePageContent() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(emptyComposerForm);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [selectedMediaId, setSelectedMediaId] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -136,12 +108,26 @@ function ComposePageContent() {
 
   const captionLength = form.caption.length;
   const hashtagCount = form.hashtags.split(/\s+/).filter((item) => item.startsWith("#")).length;
-  const timezone = scheduleTimezone;
-  const hasSchedule = Boolean(form.scheduled_at);
-  const hasTitle = Boolean(form.title.trim());
-  const hasPostBody = Boolean(form.caption.trim() || previewImageUrl);
-  const hasLocalDraftContent = Boolean(form.title.trim() || form.caption.trim() || form.hashtags.trim() || form.campaign_id || form.campaign.trim() || form.internal_note.trim() || form.scheduled_at || selectedMediaId);
-  const selectedChannels = useMemo(() => normalizeChannels(form.platform), [form.platform]);
+  const timezone = composerTimezone;
+  const readiness = useMemo(() => deriveComposerReadiness({
+    form,
+    channelAccounts,
+    editingPost,
+    hasMedia: Boolean(previewImageUrl)
+  }), [channelAccounts, editingPost, form, previewImageUrl]);
+  const {
+    selectedChannels,
+    selectedReadyChannels,
+    hasSchedule,
+    hasTitle,
+    hasPostBody,
+    hasReadyPublishingChannel,
+    reviewBlocksSchedule,
+    canSaveDraft,
+    canMarkReady,
+    canSchedule
+  } = readiness;
+  const hasLocalDraftContent = hasComposerDraftContent(form, selectedMediaId);
   const instagramSelected = hasChannel(form.platform, "instagram");
   const rubikaSelected = hasChannel(form.platform, "rubika");
   const rubikaChannel = findChannelAccount(channelAccounts, "rubika");
@@ -149,13 +135,6 @@ function ComposePageContent() {
   const rubikaReady = channelIsReady(rubikaChannel);
   const instagramReady = channelIsReady(instagramChannel);
   const instagramManualReady = channelCanManualPublish(instagramChannel);
-  const selectedReadyChannels = selectedChannels.filter((channel) => channelIsReady(findChannelAccount(channelAccounts, channel)));
-  const hasReadyPublishingChannel = selectedReadyChannels.length > 0;
-  const canMoveToReady = !editingPost || ["draft", "failed", "cancelled"].includes(editingPost.status);
-  const reviewBlocksSchedule = editingPost ? approvalBlocksPublishing(editingPost) : false;
-  const canSaveDraft = hasTitle;
-  const canMarkReady = hasTitle && hasPostBody && canMoveToReady;
-  const canSchedule = canMarkReady && hasSchedule && hasReadyPublishingChannel && !reviewBlocksSchedule;
   const channelNotes = selectedChannels.map((channel) => {
     const account = findChannelAccount(channelAccounts, channel);
     if (!account) return `${channel === "rubika" ? "روبیکا" : "اینستاگرام"} هنوز در مرکز کانال‌ها ثبت نشده است.`;
@@ -209,7 +188,7 @@ function ComposePageContent() {
       ? `ذخیره خودکار ${new Date(autosaveAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}`
       : "ذخیره خودکار فعال";
   const scheduleLabel = form.scheduled_at
-    ? new Date(form.scheduled_at).toLocaleString("fa-IR", { dateStyle: "medium", hour: "2-digit", minute: "2-digit", timeZone: scheduleTimezone })
+    ? new Date(form.scheduled_at).toLocaleString("fa-IR", { dateStyle: "medium", hour: "2-digit", minute: "2-digit", timeZone: composerTimezone })
     : "انتخاب نشده";
   const campaignLabel = selectedCampaign?.name || form.campaign || "بدون کمپین";
   const selectedChannelLabel = selectedChannels.length === 2
@@ -259,77 +238,72 @@ function ComposePageContent() {
     { label: "بازبینی", value: "review", icon: ShieldCheck, ready: canSchedule }
   ];
 
-  function token() {
-    return window.localStorage.getItem("rubika_publisher_access") ?? "";
-  }
-
   const loadData = useCallback(async () => {
     setLoading(true);
     setComposerReady(false);
-    const headers = { Authorization: `Bearer ${token()}` };
-    const [overview, loadedCampaigns, channelData, mediaResponse, postsResponse, postResponse] = await Promise.all([
-      loadWorkspaceOverview(),
-      loadCampaigns(),
-      loadChannelAccounts(),
-      fetch(`${apiUrl}/media`, { headers }),
-      fetch(`${apiUrl}/posts`, { headers }),
-      editingPostId ? fetch(`${apiUrl}/posts/${editingPostId}`, { headers }) : Promise.resolve(null)
-    ]);
+    const resources = await loadComposerResources(editingPostId);
+    const loadedMediaAssets = resources.mediaAssets;
 
-    setStore(overview.store);
-    setChannelAccounts(channelData.accounts);
-    setCampaigns(loadedCampaigns);
-    if (postsResponse.ok) setPosts(await postsResponse.json());
-
-    let loadedMediaAssets: MediaAsset[] = [];
-    if (mediaResponse.ok) {
-      loadedMediaAssets = await mediaResponse.json();
-      setMediaAssets(loadedMediaAssets);
-    }
+    setStore(resources.store);
+    setChannelAccounts(resources.channelAccounts);
+    setCampaigns(resources.campaigns);
+    setPosts(resources.posts);
+    setMediaAssets(loadedMediaAssets);
 
     if (editingPostId) {
-      if (!postResponse?.ok) {
-        throw new Error("دریافت پست برای ویرایش ناموفق بود");
-      }
+      const post = resources.editingPost;
+      if (!post) throw new Error("دریافت پست برای ویرایش ناموفق بود");
 
-      const post = (await postResponse.json()) as Post;
       setEditingPost(post);
       setForm({
         title: post.title,
         caption: post.caption,
         hashtags: post.hashtags,
         platform: post.platform || "rubika",
-        timezone: scheduleTimezone,
+        timezone: composerTimezone,
         campaign_id: post.campaign_id ?? null,
         campaign: post.campaign || "",
         internal_note: post.internal_note || "",
         scheduled_at: post.scheduled_at
       });
       setShowOptionalDetails(Boolean(post.campaign_id || post.campaign || post.internal_note));
-
       const attachedAsset = loadedMediaAssets.find((asset) => asset.post_id === post.id);
       setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
     } else {
-      const presetCampaign = presetCampaignId ? loadedCampaigns.find((campaign) => String(campaign.id) === presetCampaignId) ?? null : null;
-      let restoredDraft: { form: typeof emptyForm; selectedMediaId: string; savedAt: string } | null = null;
-      try {
-        const savedDraft = window.localStorage.getItem(localDraftKey);
-        restoredDraft = savedDraft ? JSON.parse(savedDraft) : null;
-      } catch {
-        window.localStorage.removeItem(localDraftKey);
+      const presetCampaign = presetCampaignId
+        ? resources.campaigns.find((campaign) => String(campaign.id) === presetCampaignId) ?? null
+        : null;
+      const savedDraft = window.localStorage.getItem(composerDraftStorageKey);
+      const restoredDraft = parseComposerDraft(savedDraft);
+      if (savedDraft && !restoredDraft) {
+        window.localStorage.removeItem(composerDraftStorageKey);
       }
+
       setEditingPost(null);
       const nextForm = restoredDraft?.form
-        ? { ...emptyForm, ...restoredDraft.form, scheduled_at: presetScheduledAt || restoredDraft.form.scheduled_at }
-        : { ...emptyForm, scheduled_at: presetScheduledAt };
+        ? {
+            ...emptyComposerForm,
+            ...restoredDraft.form,
+            scheduled_at: presetScheduledAt || restoredDraft.form.scheduled_at
+          }
+        : { ...emptyComposerForm, scheduled_at: presetScheduledAt };
       if (presetCampaign) {
         nextForm.campaign_id = presetCampaign.id;
         nextForm.campaign = presetCampaign.name;
       }
       setForm(nextForm);
       const restoredMediaId = restoredDraft?.selectedMediaId ?? "";
-      setSelectedMediaId(loadedMediaAssets.some((asset) => String(asset.id) === restoredMediaId) ? restoredMediaId : "");
-      setShowOptionalDetails(Boolean(presetCampaign || restoredDraft?.form?.campaign_id || restoredDraft?.form?.campaign || restoredDraft?.form?.internal_note));
+      setSelectedMediaId(
+        loadedMediaAssets.some((asset) => String(asset.id) === restoredMediaId)
+          ? restoredMediaId
+          : ""
+      );
+      setShowOptionalDetails(Boolean(
+        presetCampaign
+        || restoredDraft?.form.campaign_id
+        || restoredDraft?.form.campaign
+        || restoredDraft?.form.internal_note
+      ));
       if (restoredDraft?.savedAt) {
         setAutosaveState("restored");
         setAutosaveAt(restoredDraft.savedAt);
@@ -372,11 +346,7 @@ function ComposePageContent() {
       const entries = await Promise.all(
         imageAssets.map(async (asset) => {
           try {
-            const response = await fetch(`${apiUrl}/media/${asset.id}/file`, {
-              headers: { Authorization: `Bearer ${token()}` }
-            });
-            if (!response.ok) return null;
-            const blob = await response.blob();
+            const blob = await loadComposerMediaFile(asset.id);
             const url = URL.createObjectURL(blob);
             createdUrls.push(url);
             return [asset.id, url] as const;
@@ -404,7 +374,7 @@ function ComposePageContent() {
   useEffect(() => {
     if (!composerReady || isEditing) return;
     if (!hasLocalDraftContent) {
-      window.localStorage.removeItem(localDraftKey);
+      window.localStorage.removeItem(composerDraftStorageKey);
       setAutosaveAt("");
       setAutosaveState("idle");
       return;
@@ -412,7 +382,10 @@ function ComposePageContent() {
     setAutosaveState("dirty");
     const timeout = window.setTimeout(() => {
       const savedAt = new Date().toISOString();
-      window.localStorage.setItem(localDraftKey, JSON.stringify({ form, selectedMediaId, savedAt }));
+      window.localStorage.setItem(
+        composerDraftStorageKey,
+        serializeComposerDraft({ form, selectedMediaId, savedAt })
+      );
       setAutosaveAt(savedAt);
       setAutosaveState("saved");
     }, 700);
@@ -420,12 +393,12 @@ function ComposePageContent() {
   }, [composerReady, form, hasLocalDraftContent, isEditing, selectedMediaId]);
 
   function clearAutosavedDraft() {
-    window.localStorage.removeItem(localDraftKey);
+    window.localStorage.removeItem(composerDraftStorageKey);
     setAutosaveAt("");
     setAutosaveState("idle");
   }
 
-  function updateField(field: keyof typeof emptyForm, value: typeof emptyForm[keyof typeof emptyForm]) {
+  function updateField(field: keyof ComposerForm, value: ComposerForm[keyof ComposerForm]) {
     setForm((current) => ({ ...current, [field]: value }));
     if (message) setMessage("");
   }
@@ -478,7 +451,7 @@ function ComposePageContent() {
       ...current,
       caption: current.caption || defaultCaption,
       hashtags: store?.default_hashtags || current.hashtags,
-      timezone: scheduleTimezone
+      timezone: composerTimezone
     }));
     if (message) setMessage("");
   }
@@ -501,7 +474,7 @@ function ComposePageContent() {
         caption: editingPost.caption,
         hashtags: editingPost.hashtags,
         platform: editingPost.platform || "rubika",
-        timezone: scheduleTimezone,
+        timezone: composerTimezone,
         campaign_id: editingPost.campaign_id ?? null,
         campaign: editingPost.campaign || "",
         internal_note: editingPost.internal_note || "",
@@ -511,7 +484,7 @@ function ComposePageContent() {
       const attachedAsset = mediaAssets.find((asset) => asset.post_id === editingPost.id);
       setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
     } else {
-      setForm({ ...emptyForm, scheduled_at: presetScheduledAt });
+      setForm({ ...emptyComposerForm, scheduled_at: presetScheduledAt });
       setSelectedMediaId("");
       setShowOptionalDetails(false);
       clearAutosavedDraft();
@@ -527,17 +500,7 @@ function ComposePageContent() {
 
   async function uploadSelectedFile() {
     if (!selectedFile) return null;
-
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-    const response = await fetch(`${apiUrl}/media`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token()}` },
-      body: formData
-    });
-
-    if (!response.ok) throw new Error("آپلود تصویر ناموفق بود");
-    return response.json() as Promise<MediaAsset>;
+    return uploadComposerMedia({ file: selectedFile });
   }
 
   function openImageEditor() {
@@ -568,17 +531,11 @@ function ComposePageContent() {
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", editingImageSource.folder);
-      formData.append("tags", [editingImageSource.tags, "edited", "composer"].filter(Boolean).join(", "));
-      const response = await fetch(`${apiUrl}/media`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token()}` },
-        body: formData
+      const savedAsset = await uploadComposerMedia({
+        file,
+        folder: editingImageSource.folder,
+        tags: [editingImageSource.tags, "edited", "composer"].filter(Boolean).join(", ")
       });
-      if (!response.ok) throw new Error("ذخیره نسخه ویرایش‌شده ناموفق بود");
-      const savedAsset = (await response.json()) as MediaAsset;
       setMediaAssets((current) => [savedAsset, ...current.filter((asset) => asset.id !== savedAsset.id)]);
       setSelectedMediaId(String(savedAsset.id));
       setSelectedFile(null);
@@ -594,99 +551,43 @@ function ComposePageContent() {
     }
   }
 
-  async function attachMedia(assetId: number, postId: number | null) {
-    const response = await fetch(`${apiUrl}/media/${assetId}/attach`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token()}`
-      },
-      body: JSON.stringify({ post_id: postId })
-    });
-
-    if (!response.ok) throw new Error("اتصال تصویر به پست ناموفق بود");
-  }
-
   async function syncSelectedMedia(postId: number) {
     const attachedAssets = mediaAssets.filter((asset) => asset.post_id === postId);
     const uploadedAsset = await uploadSelectedFile();
 
     if (uploadedAsset) {
-      await Promise.all(attachedAssets.map((asset) => attachMedia(asset.id, null)));
-      await attachMedia(uploadedAsset.id, postId);
+      await Promise.all(attachedAssets.map((asset) => attachComposerMedia(asset.id, null)));
+      await attachComposerMedia(uploadedAsset.id, postId);
       return;
     }
 
     if (selectedMediaId) {
-      await Promise.all(attachedAssets.filter((asset) => String(asset.id) !== selectedMediaId).map((asset) => attachMedia(asset.id, null)));
-      await attachMedia(Number(selectedMediaId), postId);
+      await Promise.all(attachedAssets.filter((asset) => String(asset.id) !== selectedMediaId).map((asset) => attachComposerMedia(asset.id, null)));
+      await attachComposerMedia(Number(selectedMediaId), postId);
       return;
     }
 
-    await Promise.all(attachedAssets.map((asset) => attachMedia(asset.id, null)));
-  }
-
-  async function schedulePost(postId: number, scheduledAt: string) {
-    const response = await fetch(`${apiUrl}/posts/${postId}/schedule`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token()}`
-      },
-      body: JSON.stringify({ scheduled_at: scheduledAt, timezone: scheduleTimezone })
-    });
-
-    if (!response.ok) throw new Error("زمان‌بندی پست ناموفق بود");
-    return response.json() as Promise<Post>;
-  }
-
-  async function markReadyPost(postId: number) {
-    const response = await fetch(`${apiUrl}/posts/${postId}/ready`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token()}` }
-    });
-
-    if (!response.ok) throw new Error("آماده‌سازی پست ناموفق بود");
-    return response.json() as Promise<Post>;
-  }
-
-  async function changePostStatus(postId: number, status: string) {
-    const response = await fetch(`${apiUrl}/posts/${postId}/status`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token()}`
-      },
-      body: JSON.stringify({ status })
-    });
-
-    if (!response.ok) throw new Error("تغییر وضعیت پست ناموفق بود");
-    return response.json() as Promise<Post>;
+    await Promise.all(attachedAssets.map((asset) => attachComposerMedia(asset.id, null)));
   }
 
   async function persistPost(action: SaveAction) {
-    if (!canSaveDraft) {
-      setError("برای ذخیره پست، عنوان داخلی را وارد کنید.");
-      showToast({ title: "عنوان داخلی لازم است", description: "قبل از ذخیره، یک عنوان برای مدیریت محتوا وارد کنید.", tone: "warning" });
-      return;
-    }
-    if (action === "ready" && !canMarkReady) {
-      setError("برای آماده‌سازی، کپشن یا تصویر پست را کامل کنید.");
-      showToast({ title: "محتوای پست کامل نیست", description: "برای آماده‌سازی، کپشن یا تصویر اضافه کنید.", tone: "warning" });
-      return;
-    }
-    if (action === "schedule" && !canSchedule) {
-      const scheduleError = !hasReadyPublishingChannel
-        ? "برای زمان‌بندی، حداقل یک کانال آماده در مرکز کانال‌ها لازم است."
-        : instagramSelected && !instagramReady
-          ? "اینستاگرام هنوز آماده نیست؛ حالت دستی یا Meta OAuth را از مرکز کانال‌ها کامل کنید."
-        : reviewBlocksSchedule
-          ? "این پست برای زمان‌بندی باید تایید بازبینی داشته باشد."
-          : hasReadyPublishingChannel
-            ? "برای زمان‌بندی، زمان انتشار را انتخاب کنید."
-            : "برای زمان‌بندی، ابتدا مرکز کانال‌ها را کامل کنید.";
-      setError(scheduleError);
-      showToast({ title: "زمان‌بندی هنوز آماده نیست", description: scheduleError, tone: "warning" });
+    const validationMessage = getComposerValidationMessage({
+      action,
+      readiness,
+      instagramSelected,
+      instagramReady
+    });
+    if (validationMessage) {
+      setError(validationMessage);
+      showToast({
+        title: !canSaveDraft
+          ? "عنوان داخلی لازم است"
+          : action === "ready"
+            ? "محتوای پست کامل نیست"
+            : "زمان‌بندی هنوز آماده نیست",
+        description: validationMessage,
+        tone: "warning"
+      });
       return;
     }
 
@@ -695,27 +596,16 @@ function ComposePageContent() {
     setError("");
 
     try {
-      const endpoint = isEditing ? `${apiUrl}/posts/${editingPostId}` : `${apiUrl}/posts`;
-      const response = await fetch(endpoint, {
-        method: isEditing ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token()}`
-        },
-        body: JSON.stringify({ ...form, timezone: scheduleTimezone })
-      });
-
-      if (!response.ok) throw new Error(isEditing ? "به‌روزرسانی پست ناموفق بود" : "ذخیره پیش‌نویس ناموفق بود");
-      const savedPost = (await response.json()) as Post;
+      const savedPost = await saveComposerPost({ form, editingPostId });
 
       await syncSelectedMedia(savedPost.id);
 
       if (action === "schedule" && form.scheduled_at) {
-        await schedulePost(savedPost.id, form.scheduled_at);
+        await scheduleComposerPost(savedPost.id, form.scheduled_at);
       } else if (action === "ready") {
-        await markReadyPost(savedPost.id);
+        await markComposerPostReady(savedPost.id);
       } else if (isEditing && editingPost?.status === "scheduled" && !form.scheduled_at) {
-        await changePostStatus(savedPost.id, "draft");
+        await changeComposerPostStatus(savedPost.id, "draft");
       }
 
       if (!isEditing) {
