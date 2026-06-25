@@ -42,7 +42,15 @@ jobs:
         run: npm run token:audit
 
       - name: Typecheck
-        run: npm run typecheck
+        run: bash -o pipefail -c 'npm run typecheck 2>&1 | tee typecheck-report.txt'
+
+      - name: Upload TypeScript diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-typecheck-report
+          path: frontend/typecheck-report.txt
+          if-no-files-found: ignore
 
       - name: Test
         run: npm run test
