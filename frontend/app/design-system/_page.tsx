@@ -18,8 +18,6 @@ import {
   Sparkles,
   Wand2
 } from "lucide-react";
-import { AppShell } from "../../components/app-shell";
-import { AuthGate } from "../../components/auth-gate";
 import { AmbientMesh } from "../../components/liquid-glass/ambient-mesh";
 import {
   NButton,
@@ -60,8 +58,6 @@ export default function DesignSystemPage() {
   const [activeTab, setActiveTab] = useState("all");
 
   return (
-    <AuthGate>
-      <AppShell>
         <NPage>
           <NPageHeader
             eyebrow="V-3 Material Bridge"
@@ -249,8 +245,6 @@ export default function DesignSystemPage() {
             </aside>
           </div>
         </NPage>
-      </AppShell>
-    </AuthGate>
   );
 }
 

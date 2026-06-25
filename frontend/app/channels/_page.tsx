@@ -2,8 +2,6 @@
 
 import { AlertTriangle, BadgeCheck, Clock3, Instagram, Network, RadioTower, Send, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { AppShell } from "../../components/app-shell";
-import { AuthGate } from "../../components/auth-gate";
 import { LoadingPanel } from "../../components/loading-skeleton";
 import { Button } from "../../components/ui/button";
 import { DetailGrid, NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
@@ -140,8 +138,6 @@ export default function ChannelsPage() {
   ], [instagram, instagramIsReady, rubika, rubikaReady]);
 
   return (
-    <AuthGate>
-      <AppShell>
         <WorkspacePage className="space-y-4">
           <section className="app-studio-panel rounded-lg px-4 py-4">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
@@ -273,7 +269,5 @@ export default function ChannelsPage() {
             </>
           ) : null}
         </WorkspacePage>
-      </AppShell>
-    </AuthGate>
   );
 }

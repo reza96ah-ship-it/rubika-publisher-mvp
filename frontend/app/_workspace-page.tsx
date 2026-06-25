@@ -18,8 +18,6 @@ import {
 } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AppShell } from "../components/app-shell";
-import { AuthGate } from "../components/auth-gate";
 import { WorkspaceAvatar } from "../components/brand-mark";
 import { Skeleton } from "../components/loading-skeleton";
 import {
@@ -491,8 +489,6 @@ export default function HomePage() {
   };
 
   return (
-    <AuthGate>
-      <AppShell>
         <NPage className="dashboard-spec-page pb-5">
           <section className="dashboard-command-brief">
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
@@ -634,7 +630,5 @@ export default function HomePage() {
             )}
           </NSection>
         </NPage>
-      </AppShell>
-    </AuthGate>
   );
 }

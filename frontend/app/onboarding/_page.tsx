@@ -2,8 +2,6 @@
 
 import { ArrowUpLeft, BadgeCheck, CalendarDays, CheckCircle2, CircleDashed, Network, PenLine, Rocket, Store, Target } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { AppShell } from "../../components/app-shell";
-import { AuthGate } from "../../components/auth-gate";
 import { LoadingPanel } from "../../components/loading-skeleton";
 import { Button } from "../../components/ui/button";
 import { NoticeBanner, StatusToken, WorkspacePage, WorkspacePanel } from "../../components/workspace-ui";
@@ -143,8 +141,6 @@ export default function OnboardingPage() {
   const nextStep = steps.find((step) => !step.done && !step.optional) ?? steps.find((step) => !step.done) ?? steps[steps.length - 1];
 
   return (
-    <AuthGate>
-      <AppShell>
         <WorkspacePage className="space-y-4">
           <section className="app-studio-panel overflow-hidden rounded-lg border-t-4 border-app-success">
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -245,7 +241,5 @@ export default function OnboardingPage() {
             </section>
           ) : null}
         </WorkspacePage>
-      </AppShell>
-    </AuthGate>
   );
 }

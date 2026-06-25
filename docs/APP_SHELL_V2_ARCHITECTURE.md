@@ -1,9 +1,11 @@
 # Nashrino AppShell V2
 
-AppShell V2 is a compatibility-first shell migration. Existing pages continue to render through the public `AppShell` component while spatial layout, navigation metadata, mobile navigation, and top-bar presentation move into focused modules.
+AppShell V2 is owned once by the shared protected `(workspace)` layout. Protected pages render route content only, while authentication, spatial layout, navigation metadata, mobile navigation, notifications, global shortcuts, and top-bar presentation remain centralized.
 
 ## Components
 
+- `app/(workspace)/layout.tsx` — sole owner of `AuthGate` and `AppShell` for protected routes.
+- `components/auth-gate.tsx` — one client-session validation boundary for the protected workspace.
 - `components/app-shell.tsx` — workspace data, notification polling, command palette state, account state, haptics, and route-change coordination.
 - `components/shell/navigation.ts` — canonical navigation items, groups, active-route logic, and mobile navigation selection.
 - `components/shell/workspace-frame.tsx` — fixed ambient canvas, desktop sidebar slot, floating top-bar slot, and the only primary scroll region.
@@ -13,15 +15,16 @@ AppShell V2 is a compatibility-first shell migration. Existing pages continue to
 
 ## Preserved behavior
 
+- one protected-session validation request per workspace load;
 - workspace overview loading and refresh;
 - store and Rubika readiness guidance;
-- notification polling every 15 seconds while visible;
+- one notification polling loop every 15 seconds while visible;
 - live notification broadcast and toasts;
-- command palette with Ctrl/Cmd + K;
+- one command palette listener for Ctrl/Cmd + K;
 - account menu and logout;
-- mobile touch feedback when reduced motion is not requested;
+- one mobile touch-feedback listener when reduced motion is not requested;
 - scroll reset after route changes;
-- existing page-level `AppShell` API.
+- unchanged public route URLs.
 
 ## Spatial rules
 
@@ -44,6 +47,10 @@ AppShell V2 is a compatibility-first shell migration. Existing pages continue to
 - menus and icon-only buttons have accessible labels;
 - high-contrast and reduced-transparency modes continue to use the token bridge.
 
-## Follow-up
+## Ownership and regression guard
 
-After this compatibility shell is stable, protected pages will move under a shared `(workspace)` route-group layout. That change will remove repeated page-level `AuthGate` and `AppShell` wrappers without changing route URLs.
+- Protected route implementations must not import or render `AuthGate` or `AppShell`.
+- Public routes such as `/login` remain outside workspace authentication.
+- App Router route groups do not contribute URL segments, so the shared layout does not change route URLs.
+- `frontend/scripts/check-single-workspace-shell.mjs` verifies that only `app/(workspace)/layout.tsx` owns the protected shell.
+- `npm run shell:audit` runs in the Frontend CI job and in the aggregate frontend `check` command.

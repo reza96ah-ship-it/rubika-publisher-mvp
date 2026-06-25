@@ -2,8 +2,6 @@
 
 import { AlertTriangle, BellRing, CheckCircle2, CircleAlert, Clock3, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AuthGate } from "../../components/auth-gate";
-import { AppShell } from "../../components/app-shell";
 import { DataSearchField, FilterChip } from "../../components/data-view";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
@@ -145,8 +143,6 @@ export default function InboxPage() {
   ];
 
   return (
-    <AuthGate>
-      <AppShell>
         <WorkspacePage>
           <section className="app-studio-panel rounded-lg px-4 py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
@@ -296,7 +292,5 @@ export default function InboxPage() {
             </aside>
           </section>
         </WorkspacePage>
-      </AppShell>
-    </AuthGate>
   );
 }

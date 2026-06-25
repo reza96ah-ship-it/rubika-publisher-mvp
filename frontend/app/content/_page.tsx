@@ -19,8 +19,6 @@ import {
   XCircle
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AppShell } from "../../components/app-shell";
-import { AuthGate } from "../../components/auth-gate";
 import { ApprovalBadge } from "../../components/approval-badge";
 import { ChannelBadges } from "../../components/channel-badges";
 import { CountdownBadge } from "../../components/countdown-badge";
@@ -460,8 +458,6 @@ export default function ContentWorkspacePage() {
   }
 
   return (
-    <AuthGate>
-      <AppShell>
         <NPage className="content-ops-page pb-5">
           <NPageHeader
             eyebrow="Content Ops"
@@ -784,7 +780,5 @@ export default function ContentWorkspacePage() {
             )}
           </NInspectorDrawer>
         </NPage>
-      </AppShell>
-    </AuthGate>
   );
 }

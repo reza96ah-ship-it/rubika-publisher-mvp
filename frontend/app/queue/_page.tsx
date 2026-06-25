@@ -3,8 +3,6 @@
 import { AlertTriangle, CalendarClock, CalendarDays, CheckCircle2, Clipboard, ExternalLink, ImageIcon, ListChecks, RefreshCw, RotateCcw, TimerReset, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { AuthGate } from "../../components/auth-gate";
-import { AppShell } from "../../components/app-shell";
 import { ApprovalBadge } from "../../components/approval-badge";
 import { ChannelBadges } from "../../components/channel-badges";
 import { CountdownBadge } from "../../components/countdown-badge";
@@ -382,8 +380,6 @@ export default function QueuePage() {
   }
 
   return (
-    <AuthGate>
-      <AppShell>
         <WorkspacePage className="space-y-4">
           <nav className="flex items-center gap-1 rounded-lg border border-app-border bg-app-surface/70 px-1.5 py-1.5 shadow-hairline backdrop-blur-sm" aria-label="زیرمنوی برنامه‌ریز">
             <Link href="/calendar" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-bold text-app-muted hover:bg-app-surface hover:text-app-text hover:shadow-hairline transition">
@@ -699,8 +695,6 @@ export default function QueuePage() {
             </aside>
           </section>
         </WorkspacePage>
-      </AppShell>
-    </AuthGate>
   );
 }
 

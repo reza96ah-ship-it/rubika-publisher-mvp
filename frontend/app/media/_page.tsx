@@ -2,8 +2,6 @@
 
 import { DragEvent, FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Crop, FileImage, Folder, Grid2X2, Hash, ImageIcon, Images, Link2, List, PencilLine, Save, Search, SlidersHorizontal, Trash2, UploadCloud, X, XCircle } from "lucide-react";
-import { AuthGate } from "../../components/auth-gate";
-import { AppShell } from "../../components/app-shell";
 import { LoadingRows } from "../../components/loading-skeleton";
 import { MediaImageEditor } from "../../components/media-image-editor";
 import { StatusBadge } from "../../components/status-badge";
@@ -495,8 +493,6 @@ export default function MediaPage() {
   }
 
   return (
-    <AuthGate>
-      <AppShell>
         <WorkspacePage>
           {editingAsset && mediaPreviewUrls[editingAsset.id] ? (
             <MediaImageEditor
@@ -1117,7 +1113,5 @@ export default function MediaPage() {
             </aside>
           </section>
         </WorkspacePage>
-      </AppShell>
-    </AuthGate>
   );
 }

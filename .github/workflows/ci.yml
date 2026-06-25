@@ -41,6 +41,9 @@ jobs:
       - name: Token audit
         run: npm run token:audit
 
+      - name: Workspace shell audit
+        run: npm run shell:audit
+
       - name: Typecheck
         run: bash -o pipefail -c 'npm run typecheck 2>&1 | tee typecheck-report.txt'
 
