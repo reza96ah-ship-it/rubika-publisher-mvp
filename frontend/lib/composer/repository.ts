@@ -1,0 +1,141 @@
+import { loadCampaigns, type Campaign } from "../campaigns";
+import { loadChannelAccounts, type ChannelAccount } from "../channel-accounts";
+import {
+  apiUrl,
+  authHeaders,
+  type Post
+} from "../posts";
+import { loadWorkspaceOverview, type StoreProfile } from "../workspace";
+import {
+  composerTimezone,
+  type ComposerForm,
+  type MediaAsset
+} from "./domain";
+
+export type ComposerResources = {
+  store: StoreProfile | null;
+  channelAccounts: ChannelAccount[];
+  campaigns: Campaign[];
+  posts: Post[];
+  mediaAssets: MediaAsset[];
+  editingPost: Post | null;
+};
+
+async function fetchJson<T>(
+  path: string,
+  message: string,
+  init: RequestInit = {}
+): Promise<T> {
+  const response = await fetch(`${apiUrl}${path}`, {
+    ...init,
+    headers: {
+      ...authHeaders(),
+      ...init.headers
+    }
+  });
+  if (!response.ok) throw new Error(message);
+  return response.json() as Promise<T>;
+}
+
+export async function loadComposerResources(
+  editingPostId?: string | null
+): Promise<ComposerResources> {
+  const [overview, campaigns, channelData, mediaAssets, posts, editingPost] = await Promise.all([
+    loadWorkspaceOverview(),
+    loadCampaigns(),
+    loadChannelAccounts(),
+    fetchJson<MediaAsset[]>("/media", "دریافت رسانه‌های Composer ناموفق بود"),
+    fetchJson<Post[]>("/posts", "دریافت محتواهای Composer ناموفق بود"),
+    editingPostId
+      ? fetchJson<Post>(`/posts/${editingPostId}`, "دریافت پست برای ویرایش ناموفق بود")
+      : Promise.resolve(null)
+  ]);
+
+  return {
+    store: overview.store,
+    channelAccounts: channelData.accounts,
+    campaigns,
+    posts,
+    mediaAssets,
+    editingPost
+  };
+}
+
+export async function loadComposerMediaFile(assetId: number) {
+  const response = await fetch(`${apiUrl}/media/${assetId}/file`, {
+    headers: authHeaders()
+  });
+  if (!response.ok) throw new Error("دریافت پیش‌نمایش رسانه ناموفق بود");
+  return response.blob();
+}
+
+export async function uploadComposerMedia(input: {
+  file: File;
+  folder?: string;
+  tags?: string;
+}) {
+  const formData = new FormData();
+  formData.append("file", input.file);
+  if (input.folder !== undefined) formData.append("folder", input.folder);
+  if (input.tags !== undefined) formData.append("tags", input.tags);
+
+  const response = await fetch(`${apiUrl}/media`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: formData
+  });
+  if (!response.ok) throw new Error("آپلود تصویر ناموفق بود");
+  return response.json() as Promise<MediaAsset>;
+}
+
+export async function attachComposerMedia(assetId: number, postId: number | null) {
+  await fetchJson<MediaAsset>(
+    `/media/${assetId}/attach`,
+    "اتصال تصویر به پست ناموفق بود",
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ post_id: postId })
+    }
+  );
+}
+
+export async function saveComposerPost(input: {
+  form: ComposerForm;
+  editingPostId?: string | null;
+}) {
+  return fetchJson<Post>(
+    input.editingPostId ? `/posts/${input.editingPostId}` : "/posts",
+    input.editingPostId ? "به‌روزرسانی پست ناموفق بود" : "ذخیره پیش‌نویس ناموفق بود",
+    {
+      method: input.editingPostId ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...input.form, timezone: composerTimezone })
+    }
+  );
+}
+
+export async function scheduleComposerPost(postId: number, scheduledAt: string) {
+  return fetchJson<Post>(`/posts/${postId}/schedule`, "زمان‌بندی پست ناموفق بود", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      scheduled_at: scheduledAt,
+      timezone: composerTimezone
+    })
+  });
+}
+
+export async function markComposerPostReady(postId: number) {
+  return fetchJson<Post>(`/posts/${postId}/ready`, "آماده‌سازی پست ناموفق بود", {
+    method: "POST"
+  });
+}
+
+export async function changeComposerPostStatus(postId: number, status: string) {
+  return fetchJson<Post>(`/posts/${postId}/status`, "تغییر وضعیت پست ناموفق بود", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status })
+  });
+}
