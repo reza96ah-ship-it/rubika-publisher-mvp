@@ -33,9 +33,13 @@ jobs:
       - name: Seed representative operational data
         run: docker compose exec -T backend python - < .github/scripts/seed-dashboard-review.py
 
-      - name: Install browser client
+      - name: Install isolated browser client
         working-directory: frontend
-        run: npm install --no-save --legacy-peer-deps playwright-core@1.52.0
+        run: |
+          mkdir -p /tmp/dashboard-browser
+          npm install --prefix /tmp/dashboard-browser --no-audit --no-fund playwright-core@1.52.0
+          mkdir -p node_modules
+          ln -s /tmp/dashboard-browser/node_modules/playwright-core node_modules/playwright-core
 
       - name: Capture responsive light and dark dashboards
         working-directory: frontend
