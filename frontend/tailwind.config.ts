@@ -1,7 +1,11 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./features/**/*.{ts,tsx}"
+  ],
   theme: {
     extend: {
       fontFamily: {
@@ -51,7 +55,10 @@ const config: Config = {
         lift: "var(--n-shadow-lift)",
         accent: "0 10px 22px rgb(var(--n-color-primary) / 0.18)",
         overlay: "var(--n-shadow-lift)",
-        studio: "var(--n-shadow-studio)"
+        studio: "var(--n-shadow-studio)",
+        liquidPanel: "var(--n-material-panel-shadow)",
+        liquidFloating: "var(--n-material-floating-shadow)",
+        liquidSolid: "var(--n-material-solid-shadow)"
       },
       borderRadius: {
         nxs: "var(--n-radius-xs)",
@@ -59,7 +66,22 @@ const config: Config = {
         nmd: "var(--n-radius-md)",
         nlg: "var(--n-radius-lg)",
         nxl: "var(--n-radius-xl)",
-        n2xl: "var(--n-radius-2xl)"
+        n2xl: "var(--n-radius-2xl)",
+        chip: "var(--n-radius-chip)",
+        control: "var(--n-radius-compact-control)",
+        field: "var(--n-radius-field)",
+        card: "var(--n-radius-inner-card)",
+        panel: "var(--n-radius-panel)",
+        shell: "var(--n-radius-shell)",
+        pill: "var(--n-radius-pill)"
+      },
+      backdropBlur: {
+        liquidPanel: "var(--n-material-panel-blur)",
+        liquidFloating: "var(--n-material-floating-blur)"
+      },
+      backdropSaturate: {
+        liquidPanel: "var(--n-material-panel-saturation)",
+        liquidFloating: "var(--n-material-floating-saturation)"
       },
       minHeight: {
         compact: "var(--n-density-compact)",
@@ -75,4 +97,3 @@ const config: Config = {
 };
 
 export default config;
-
