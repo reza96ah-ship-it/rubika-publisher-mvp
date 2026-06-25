@@ -1,7 +1,14 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState
+} from "react";
 import {
   isRubikaConnected,
   isStoreConfigured,
@@ -26,7 +33,21 @@ import { MobileNavigationDrawer } from "./shell/mobile-navigation-drawer";
 import { WorkspaceFrame } from "./shell/workspace-frame";
 import { WorkspaceTopbar } from "./shell/workspace-topbar";
 
+const AppShellContext = createContext(false);
+
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const nested = useContext(AppShellContext);
+
+  if (nested) return children;
+
+  return (
+    <AppShellContext.Provider value>
+      <AppShellRoot>{children}</AppShellRoot>
+    </AppShellContext.Provider>
+  );
+}
+
+function AppShellRoot({ children }: { children: React.ReactNode }) {
   const { showToast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
