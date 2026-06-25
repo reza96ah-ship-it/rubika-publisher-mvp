@@ -2,59 +2,47 @@
 
 Last updated: 2026-06-25  
 Canonical branch: `main`  
-Roadmap status vocabulary: `done`, `in progress`, `next`, `planned`, `blocked`, `deferred`
+Statuses: `done`, `in progress`, `next`, `planned`, `blocked`, `deferred`
 
-## Roadmap principles
+## Operating rules
 
-- Preserve real backend behavior while redesigning frontend workflows.
-- One focused branch and pull request per concern.
-- Use real APIs in completed features; fixtures are temporary only.
-- Persian, RTL, Jalali, mobile, accessibility, and channel capability are acceptance requirements, not optional polish.
-- Production infrastructure changes must be separated from feature redesigns.
-- Each milestone updates `docs/CURRENT_STATUS.md` and this file.
+- Preserve backend contracts and publishing behavior unless a change is explicitly scoped.
+- Use one focused branch and pull request per concern.
+- Completed product features use real APIs, not permanent fixtures.
+- Persian RTL, Jalali flows, mobile behavior, accessibility, and honest channel capability are acceptance requirements.
+- Milestone-changing pull requests update this file and `docs/CURRENT_STATUS.md`.
 
 ## Milestone summary
 
-| Milestone | Status | Primary outcome |
+| Milestone | Status | Outcome |
 |---|---|---|
-| Repository consolidation and governance | done | `main` is canonical; governance and CI established |
-| Generated-artifact cleanup | done | Browser reports and exported review artifacts removed |
-| Liquid Glass token bridge | done | Controlled material, geometry, theme, and accessibility tokens |
-| AppShell V2 | done | Shared navigation, top bar, mobile drawer, fixed canvas, single main scroll |
-| Shared workspace route layout | done | Protected routes share one App Router layout without URL changes |
-| Production Compose and deployment | in progress | Repository implementation validated; operational staging drill remains |
-| Remove legacy page shell wrappers | planned | Eliminate duplicate compatibility wrappers and listeners |
-| Dashboard V2 | planned | First complete real-data product vertical slice |
-| Composer and publishing V2 | planned | Professional creation, preview, approval, scheduling, and recovery |
-| Planner and Jalali calendar V2 | planned | Month/week/list planning and mobile agenda flow |
-| Campaigns, content, and media V2 | planned | Coherent campaign and asset operations |
-| Inbox and reports V2 | planned | Social engagement, operational recovery, and insights |
-| Channels, onboarding, and settings V2 | planned | Production-ready account and workspace administration |
-| Production security hardening | planned | Session, credentials, tokens, audit, and deployment controls |
-| Final application audit | planned | Responsive, accessibility, performance, dead-code, and consistency sign-off |
+| M0 Repository and governance | done | Canonical `main`, GitHub-flow, CI, and continuity |
+| M1 Design-system foundation | done | Liquid Glass, AppShell V2, and shared workspace layout |
+| M2 Production deployment | in progress | Repository implementation validated; staging drill remains |
+| M3 Single workspace shell | done | One layout-owned AuthGate and AppShell |
+| M4 Dashboard V2 | next | First real-data product vertical slice |
+| M5 Composer V2 | planned | Creation, approval, scheduling, and recovery |
+| M6 Planner V2 | planned | Jalali month/week/list planning and mobile agenda |
+| M7 Campaigns, content, media | planned | Coherent campaign and asset operations |
+| M8 Inbox and reports | planned | Engagement, recovery, and actionable insight |
+| M9 Channels and settings | planned | Production-ready workspace administration |
+| M10 Security hardening | planned | Sessions, credentials, tokens, audit, and abuse controls |
+| M11 Final audit | planned | Responsive, accessibility, performance, and consistency sign-off |
 
----
-
-## M0 — Repository consolidation and governance
+## M0 — Repository and governance
 
 Status: `done`
 
 Completed:
 
-- consolidated accepted application history into `main`;
-- set `main` as default branch;
-- added `CONTRIBUTING.md`;
-- added pull-request template;
-- added repository-governance documentation;
-- prepared main-branch ruleset JSON;
-- preserved safety branches during consolidation;
-- established Frontend and Backend CI jobs.
+- accepted history consolidated into `main`;
+- default branch, contribution workflow, PR template, CI, and continuity package established;
+- generated browser and review artifacts excluded.
 
-Remaining administrative check:
+Remaining administration:
 
-- verify the imported GitHub ruleset is active and targets `main`.
-
----
+- verify the active GitHub ruleset targets `main`;
+- retire obsolete merged branches after uniqueness and deployment checks.
 
 ## M1 — Design-system foundation
 
@@ -62,212 +50,80 @@ Status: `done`
 
 Completed:
 
-- deterministic frontend installation;
-- token audit;
-- semantic-token preservation;
-- Liquid Glass material bridge;
-- controlled radii;
-- ambient mesh;
-- dark, studio, high-contrast, reduced-motion, and reduced-transparency behavior;
-- design-system laboratory;
-- AppShell V2;
-- accessible mobile navigation drawer;
-- shared `(workspace)` route layout.
+- deterministic frontend installation, token audit, semantic token bridge, Liquid Glass materials, radius hierarchy, themes, and reduced-motion/transparency behavior;
+- AppShell V2, shared navigation, top bar, mobile drawer, fixed canvas, and one scroll owner;
+- shared protected `(workspace)` layout without URL changes;
+- page-level shell wrappers removed and structural ownership audit added.
 
-Follow-up technical cleanup:
+Remaining tooling follow-up: align Next.js and `eslint-config-next` major versions in a dedicated PR.
 
-- remove page-level compatibility wrappers;
-- align Next.js and `eslint-config-next` major versions in a dedicated tooling PR;
-- update stale documentation references.
-
----
-
-## M2 — Production Compose and deployment
+## M2 — Production deployment
 
 Status: `in progress`
 
-Implementation merged through PR #27. Compose validation was corrected through PR #28.
+Repository work completed through PRs #27–#29:
 
-### Goals
+- immutable frontend/backend images and separate production Compose;
+- shared API/worker/Beat/migration backend image;
+- internal PostgreSQL/Redis, persistent volumes, migrations, health checks, restart policies, and reverse-proxy-ready bindings;
+- deployment, smoke check, rollback, backup, checksum, restore, environment template, runbook, and Deployment CI.
 
-- run immutable application images in production;
-- stop using development servers and source bind mounts on the server;
-- provide repeatable backup, migration, health, deployment, and rollback procedures;
-- prepare for HTTPS reverse proxy without coupling to one hosting provider.
+Operational acceptance still required:
 
-### Repository implementation and validation complete
+- deploy `main` on a non-production host;
+- verify health, persistence, HTTPS proxying, CORS, and OAuth callbacks;
+- complete backup, restore, and image rollback drills;
+- verify development Compose on the target host.
 
-- `compose.production.yaml` with separate edge and internal networks;
-- standalone multi-stage Next.js production image;
-- non-root backend production image without reload mode;
-- API, Celery worker, Celery Beat, and migration services using one versioned backend image;
-- one-shot Alembic migration dependency before application startup;
-- health checks and restart policies;
-- named PostgreSQL, Redis, and application-storage volumes;
-- no application source bind mounts;
-- loopback-only frontend and backend host bindings by default;
-- `.env.production.example` with deployment variables;
-- deployment and smoke-check scripts;
-- image-tag rollback script;
-- PostgreSQL backup, checksum, and guarded restore scripts;
-- `docs/PRODUCTION_DEPLOYMENT.md`;
-- Deployment CI for shell syntax, Compose rendering, and production image builds;
-- final Frontend, Backend, and Deployment CI passed;
-- clean backend and frontend production image builds passed;
-- frontend healthcheck YAML parsing defect fixed by quoting the complete Node command.
+M2 becomes `done` after the documented staging drill passes.
 
-### Operational acceptance still required
+## M3 — Single workspace shell ownership
 
-- deploy the merged `main` branch to a non-production host;
-- verify PostgreSQL and media persistence across service recreation;
-- verify Alembic migrations complete before application traffic;
-- verify backend, database, worker, and frontend runtime health checks;
-- verify HTTPS reverse proxy, CORS, and OAuth callback routing;
-- create and verify a database backup and checksum;
-- complete a database restore drill outside production;
-- complete an application image rollback drill outside production;
-- verify the development Compose workflow remains usable on the target environment;
-- record the drill results without committing credentials or real backups.
+Status: `done`
 
-M2 becomes `done` after the documented non-production operational drill passes. Repository CI and image-build acceptance are already complete.
+Completed through PR #30:
 
----
+- removed `AuthGate` and `AppShell` imports and wrappers from all 16 protected route implementations;
+- retained sole ownership in `frontend/app/(workspace)/layout.tsx`;
+- removed nested compatibility contexts;
+- preserved URLs and centralized one auth check, notification loop, command shortcut, haptic listener, and scroll owner;
+- added `npm run shell:audit` to the frontend aggregate check and CI;
+- updated AppShell architecture and continuity documentation.
 
-## M3 — Remove legacy page shell wrappers
-
-Status: `planned`
-
-Recommended branch: `refactor/remove-legacy-page-shell-wrappers`
-
-### Scope
-
-- remove page-level imports and wrappers for `AuthGate` and `AppShell` from protected page implementations;
-- retain ownership in `frontend/app/(workspace)/layout.tsx`;
-- remove compatibility nesting contexts once all pages are migrated;
-- update AppShell architecture documentation;
-- add regression tests for one shell and one auth check.
-
-### Acceptance
-
-- one AuthGate request per protected page load;
-- one AppShell instance;
-- one notification polling loop;
-- one command-palette shortcut listener;
-- one mobile haptic listener;
-- no public route is wrapped by workspace auth;
-- all existing URLs remain unchanged;
-- all CI checks pass.
-
----
+Acceptance: protected pages do not own the shell, `/login` remains public, and Frontend, Backend, and Deployment CI pass.
 
 ## M4 — Dashboard V2
 
-Status: `planned`
+Status: `next`
 
 Recommended branch: `feat/dashboard-v2`
 
-### Route ownership
-
 Dashboard owns:
 
-- today state;
-- publishing health;
-- next scheduled post;
-- active campaign summary;
-- channel readiness;
-- alerts requiring action;
-- compact performance/throughput insight.
+- today state and one clear primary action;
+- publishing health, failure categories, and operational alerts;
+- next scheduled post and active campaign summary;
+- channel readiness and approval/failure backlogs;
+- compact throughput and performance insight.
 
-Dashboard does not own:
+Dashboard does not own the full calendar, permanent queue/log tables, full campaign reporting, duplicate content-library views, or permanent onboarding progress.
 
-- full onboarding after setup;
-- full calendar;
-- full campaign report;
-- duplicate content library;
-- permanent queue/log tables.
+Acceptance:
 
-### Data requirements
+- real backend data with loading, empty, degraded, partially connected, error, and recovery states;
+- 390 px mobile, tablet, and desktop hierarchy without horizontal overflow;
+- RTL, dark, high-contrast, keyboard, and screen-reader review;
+- automated coverage and before/after PR evidence.
 
-- posts and post statistics;
-- publishing attempts and failure categories;
-- campaigns;
-- workspace/channel readiness;
-- operational notifications;
-- next scheduled post;
-- recent throughput/performance.
-
-### UX requirements
-
-- Publishing Pulse uses real worker/post state;
-- one clear primary action;
-- action-oriented alerts;
-- loading, empty, degraded, partially connected, and error states;
-- single-column mobile hierarchy;
-- two-column tablet hierarchy;
-- dense but readable desktop grid;
-- no horizontal overflow at 390 px;
-- no decorative charts without operational meaning.
-
-### Acceptance
-
-- no final fixture-only business state;
-- backend/API failures show recovery guidance;
-- mobile, desktop, RTL, dark, high-contrast, keyboard, and screen-reader review complete;
-- automated unit/integration coverage;
-- before/after screenshots included in PR.
-
----
-
-## M5 — Composer and publishing workflow V2
+## M5 — Composer and publishing V2
 
 Status: `planned`
 
 Recommended branch: `feat/composer-v2`
 
-### Preserve existing capabilities
+Preserve create/edit, autosave/restore, campaigns, media, channel capability, previews, approval, scheduling, manual publishing, automation rules, retry, cancel, and recovery. Split the monolith into typed domain, repository, hook, form, capability, media, preview, readiness, and submission-state modules.
 
-- create draft;
-- edit existing post;
-- autosave and restore;
-- campaign assignment and creation;
-- media library selection;
-- upload and image editing;
-- Rubika and Instagram destination selection;
-- channel-specific readiness checks;
-- professional/personal Instagram capability differences;
-- Rubika and Instagram previews;
-- approval submission and validation;
-- scheduling;
-- manual publication flow;
-- Instagram automation-rule attachment;
-- retry/cancel/recovery actions where owned by the publishing workflow.
-
-### Architecture goals
-
-Split large page logic into:
-
-- domain types;
-- API clients/repositories;
-- query/mutation hooks;
-- form state;
-- channel capability adapters;
-- media workflow;
-- preview components;
-- readiness and validation panel;
-- submission state machine.
-
-### Acceptance
-
-- real create/update API calls;
-- edit flow by post ID;
-- no silent data loss;
-- clear autosave status;
-- mobile step flow;
-- keyboard-accessible media and scheduling controls;
-- full error/retry behavior;
-- automated tests for create, edit, approval, schedule, and manual mode.
-
----
+Acceptance: real APIs, no silent data loss, clear autosave state, mobile step flow, keyboard-accessible controls, and tests for create/edit/approval/schedule/manual modes.
 
 ## M6 — Planner and Jalali calendar V2
 
@@ -275,201 +131,46 @@ Status: `planned`
 
 Recommended branch: `feat/planner-calendar-v2`
 
-### Scope
+Deliver month/week/list modes, Persian/Jalali navigation, shared filters, validated rescheduling with rollback, day/post inspection, Composer handoff, gap detection, Queue as a secondary view, and agenda-first mobile behavior.
 
-- month, week, and list modes;
-- Persian weekdays and Jalali navigation;
-- campaign, channel, status, and approval filters;
-- drag/reschedule with server validation;
-- day details;
-- post inspector drawer;
-- open in Composer;
-- gap detection;
-- Queue as a secondary Planner view;
-- agenda-first mobile mode.
-
-### Acceptance
-
-- no duplicate calendar and queue filter systems;
-- rescheduling has optimistic state with rollback;
-- timezone/Jalali behavior is tested;
-- keyboard alternatives exist for drag actions;
-- no nested scroll traps;
-- mobile agenda is usable at 390 px.
-
----
+Acceptance: tested timezone/Jalali behavior, keyboard alternatives for drag actions, no nested scroll traps, and usable 390 px agenda.
 
 ## M7 — Campaigns, content, and media V2
 
 Status: `planned`
 
-### Campaigns
+Deliver campaign portfolio/workbench, a unified content library with approvals and recoverable bulk actions, and a media library/editor with folders, tags, associations, aspect variants, brand assets, and templates.
 
-- portfolio and health overview;
-- campaign workbench;
-- posts, media, calendar, reports, and automation tabs;
-- owner, goal, date, risk, and progress state;
-- create/edit in drawer.
-
-### Content
-
-- unified content library;
-- saved views;
-- one filter model;
-- bulk selection/actions;
-- approvals: submit, approve, reject, request changes;
-- retry and open in Composer.
-
-### Media
-
-- upload and asset library;
-- folder/tag organization;
-- post/campaign association;
-- Persian image editor;
-- square, horizontal, portrait, and story variants;
-- brand kit assets and templates.
-
-### Acceptance
-
-- shared query/filter primitives;
-- bulk actions are recoverable;
-- approval permissions are enforced by backend and reflected in UI;
-- editor remains solid, readable, and performant;
-- responsive and keyboard review complete.
-
----
+Acceptance: shared query/filter primitives, backend-enforced permissions, responsive keyboard behavior, and a solid performant editor.
 
 ## M8 — Inbox and reports V2
 
 Status: `planned`
 
-### Inbox
+Unify operational notifications, Instagram engagement, automation events, assignment, priority, saved replies, internal notes, human takeover, resolution, and retries. Reports cover publishing health, error categories, campaign/automation/channel performance, insights, exports, and Logs as a secondary view.
 
-Unify:
-
-- operational notifications;
-- Instagram comments and messages;
-- automation events;
-- assignment;
-- read/unread and priority;
-- saved replies;
-- internal notes;
-- human takeover;
-- resolve/reopen;
-- retryable failures.
-
-### Reports
-
-- publishing health;
-- attempts and error categories;
-- campaign performance;
-- automation performance;
-- channel comparison;
-- actionable insight cards;
-- exports;
-- Logs as a secondary Reports view.
-
-### Acceptance
-
-- no double-scrolling charts;
-- clear filters and date ranges;
-- report queries are bounded and performant;
-- automation event delivery/failure/retry state is visible;
-- operational and customer messages are distinguishable but share one triage model.
-
----
+Acceptance: bounded queries, clear filters, visible delivery/failure/retry state, and no double-scrolling charts.
 
 ## M9 — Channels, onboarding, and settings V2
 
 Status: `planned`
 
-### Channels
+Deliver Rubika health, official Meta OAuth, professional-account discovery, personal-account manual/reminder mode, webhooks, permissions/capability matrix, minimal onboarding, workspace profile, brand kit, team/roles, and security settings.
 
-- Rubika connection and health;
-- Meta OAuth;
-- professional account discovery/selection;
-- personal account manual/reminder mode;
-- webhook status;
-- permissions and capability matrix;
-- health tests and troubleshooting.
-
-### Onboarding
-
-- minimal guided setup;
-- workspace identity;
-- first channel;
-- first scheduled post;
-- no permanent onboarding dashboard after completion.
-
-### Settings
-
-- workspace/store profile;
-- brand kit;
-- team and roles;
-- security;
-- webhook/API settings later;
-- billing later.
-
-### Acceptance
-
-- channel capability is honest and explicit;
-- credentials are never shown after entry;
-- failure and reconnect flows are documented;
-- setup can be completed on mobile;
-- permissions are backend-enforced.
-
----
+Acceptance: honest capabilities, hidden stored credentials, documented reconnect flows, mobile setup, and backend-enforced permissions.
 
 ## M10 — Production security hardening
 
 Status: `planned`
 
-- move toward secure HTTP-only session handling;
-- encrypt platform credentials/tokens at rest;
-- token expiry and rotation;
-- audit log for privileged changes;
-- rate limiting and abuse protection;
-- CSRF/session review;
-- secret-management and deployment review;
-- backup retention and restore drills;
-- security headers and HTTPS deployment.
-
-This milestone may be split and partially delivered earlier when production deployment begins.
-
----
+Move toward HTTP-only sessions, encrypted platform credentials, token expiry/rotation, privileged-change audit, rate limiting, CSRF/session review, secret-management review, backup retention drills, and security headers. Split and deliver earlier where production deployment requires it.
 
 ## M11 — Final application audit
 
 Status: `planned`
 
-Audit all core routes at:
+Audit all core routes at 390×844, 430×932, 768×1024, 820×1180, 1024×768, 1280×800, 1440×900, and 1920×1080.
 
-- 390 × 844;
-- 430 × 932;
-- 768 × 1024;
-- 820 × 1180;
-- 1024 × 768;
-- 1280 × 800;
-- 1440 × 900;
-- 1920 × 1080.
+Review RTL and mixed text, Jalali correctness, keyboard/focus/screen readers, contrast, reduced motion/transparency, overflow, nested scrolling, blur/image performance, duplicate requests/listeners, state consistency, dead code, deployment documentation, and feature parity.
 
-Review:
-
-- RTL and mixed Persian/Latin ordering;
-- Jalali correctness;
-- keyboard navigation;
-- focus order and restoration;
-- screen-reader labels;
-- contrast;
-- reduced motion/transparency;
-- horizontal overflow;
-- nested scroll containers;
-- backdrop-blur cost;
-- image performance;
-- duplicate API requests and listeners;
-- loading/empty/error consistency;
-- dead CSS and superseded components;
-- deployment and rollback documentation;
-- feature parity against the prior implementation.
-
-Final acceptance requires clean CI, completed production smoke tests, and an updated `docs/CURRENT_STATUS.md` marking the release candidate state.
+Final acceptance requires clean CI, completed production smoke tests, and release-candidate continuity status.
