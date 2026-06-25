@@ -22,7 +22,7 @@ Roadmap status vocabulary: `done`, `in progress`, `next`, `planned`, `blocked`, 
 | Liquid Glass token bridge | done | Controlled material, geometry, theme, and accessibility tokens |
 | AppShell V2 | done | Shared navigation, top bar, mobile drawer, fixed canvas, single main scroll |
 | Shared workspace route layout | done | Protected routes share one App Router layout without URL changes |
-| Production Compose and deployment | next | Immutable production runtime and rollback path |
+| Production Compose and deployment | in progress | Immutable production runtime, operations runbook, and rollback path |
 | Remove legacy page shell wrappers | planned | Eliminate duplicate compatibility wrappers and listeners |
 | Dashboard V2 | planned | First complete real-data product vertical slice |
 | Composer and publishing V2 | planned | Professional creation, preview, approval, scheduling, and recovery |
@@ -30,7 +30,7 @@ Roadmap status vocabulary: `done`, `in progress`, `next`, `planned`, `blocked`, 
 | Campaigns, content, and media V2 | planned | Coherent campaign and asset operations |
 | Inbox and reports V2 | planned | Social engagement, operational recovery, and insights |
 | Channels, onboarding, and settings V2 | planned | Production-ready account and workspace administration |
-| Production security hardening | planned | Session, secrets, tokens, audit, and deployment controls |
+| Production security hardening | planned | Session, credentials, tokens, audit, and deployment controls |
 | Final application audit | planned | Responsive, accessibility, performance, dead-code, and consistency sign-off |
 
 ---
@@ -84,9 +84,9 @@ Follow-up technical cleanup:
 
 ## M2 — Production Compose and deployment
 
-Status: `next`
+Status: `in progress`
 
-Recommended branch: `chore/production-compose`
+Current branch: `chore/production-compose`
 
 ### Goals
 
@@ -95,35 +95,41 @@ Recommended branch: `chore/production-compose`
 - provide repeatable backup, migration, health, deployment, and rollback procedures;
 - prepare for HTTPS reverse proxy without coupling to one hosting provider.
 
-### Deliverables
+### Implemented on the milestone branch
 
-- `compose.production.yaml` or equivalent production override;
-- production frontend Dockerfile using a multi-stage Next.js build;
-- production backend image and command without reload mode;
-- worker and Beat using the same versioned backend image;
-- health checks;
-- restart policies;
-- production-safe volume ownership;
-- internal networking for PostgreSQL and Redis;
-- documented environment variables;
-- deployment script;
-- rollback script;
-- database backup and restore procedure;
+- `compose.production.yaml` with separate edge and internal networks;
+- standalone multi-stage Next.js production image;
+- non-root backend production image without reload mode;
+- API, Celery worker, Celery Beat, and migration services using one versioned backend image;
+- one-shot Alembic migration dependency before application startup;
+- health checks and restart policies;
+- named PostgreSQL, Redis, and application-storage volumes;
+- no application source bind mounts;
+- loopback-only frontend and backend host bindings by default;
+- `.env.production.example` with deployment variables;
+- deployment and smoke-check scripts;
+- image-tag rollback script;
+- PostgreSQL backup, checksum, and guarded restore scripts;
 - `docs/PRODUCTION_DEPLOYMENT.md`;
-- smoke-check commands.
+- Deployment CI job for shell syntax, Compose rendering, and production image builds.
 
-### Acceptance
+### Acceptance still required
 
+- Frontend, Backend, and Deployment CI pass on the pull request;
 - production stack builds from a clean checkout;
-- frontend runs with `next start` or standalone output;
+- frontend runs from standalone output;
 - backend runs without `--reload`;
 - no application source bind mounts;
 - PostgreSQL data and media persist across recreation;
 - Alembic migrations apply before app traffic;
-- backend and database health checks pass;
-- rollback procedure is tested on a non-production environment;
-- no secrets are committed;
+- backend, database, worker, and frontend health checks pass;
+- HTTPS reverse proxy behavior is verified;
+- database backup and restore are tested outside production;
+- application rollback is tested outside production;
+- no deployment credentials or real backups are committed;
 - current development Compose remains usable locally.
+
+M2 becomes `done` only after repository CI and a documented non-production operational drill pass.
 
 ---
 

@@ -74,12 +74,23 @@ Read the exact installed versions from `frontend/package.json`; do not repeat st
 
 ### Runtime
 
-- Docker Compose.
-- Development frontend: `http://localhost:3100`.
+Development:
+
+- `docker-compose.yml` remains development-only.
+- Frontend: `http://localhost:3100`.
 - Backend: `http://localhost:8000`.
 - Health endpoints: `/health` and `/health/db`.
 
-The current Compose file is development-oriented. Production Compose is a pending roadmap item.
+Production:
+
+- `compose.production.yaml` defines immutable application services.
+- `frontend/Dockerfile.production` builds standalone Next.js output.
+- `backend/Dockerfile.production` is shared by API, worker, Beat, and migrations.
+- PostgreSQL and Redis remain internal-only.
+- Frontend and backend bind to loopback by default for a host reverse proxy.
+- Operational procedures are in `docs/PRODUCTION_DEPLOYMENT.md`.
+
+Production deployment is not accepted until repository CI and a non-production deployment, persistence, backup, restore, and rollback drill pass.
 
 ## 6. Canonical navigation
 
@@ -147,18 +158,29 @@ All new backend routers must be registered in `backend/app/main.py`. All persist
 
 Instagram automation is only for professional accounts. Personal Instagram accounts remain reminder/manual mode.
 
-## 10. Branch and PR workflow
+## 10. Deployment safety rules
+
+- Do not convert `docker-compose.yml` into production configuration.
+- Keep production services free of source bind mounts and development commands.
+- API, worker, Beat, and migration services must use the same backend image tag.
+- Migrations must complete before application traffic.
+- Do not publish PostgreSQL or Redis host ports.
+- Keep real host environment files, release state, and backups untracked.
+- Do not claim production readiness from image builds alone; complete the operational drill in `docs/PRODUCTION_DEPLOYMENT.md`.
+- Database downgrade is not automatic during image rollback; review schema compatibility or restore a matching backup.
+
+## 11. Branch and PR workflow
 
 - Create focused work from current `main`.
 - Preferred prefixes: `feat/`, `fix/`, `refactor/`, `chore/`, `docs/`, `test/`, `release/`.
 - One concern per branch and pull request.
 - Do not force-push shared or protected branches.
-- Do not commit generated reports, traces, build output, dependency folders, or secrets.
+- Do not commit generated reports, traces, build output, dependency folders, deployment host files, or backups.
 - Update `docs/CURRENT_STATUS.md` in every PR that changes phase status or next steps.
 - Update `docs/DECISION_LOG.md` for new architectural/product decisions.
 - Update `docs/IMPLEMENTATION_ROADMAP.md` when sequencing or acceptance criteria change.
 
-## 11. Required validation
+## 12. Required validation
 
 Frontend:
 
@@ -184,7 +206,7 @@ python -c "from app.main import app; print(app.title)"
 pytest
 ```
 
-Full stack:
+Development full stack:
 
 ```bash
 cp .env.example .env
@@ -194,9 +216,20 @@ curl -fsS http://localhost:8000/health
 curl -fsS http://localhost:8000/health/db
 ```
 
+Production deployment assets:
+
+```bash
+cp .env.production.example .env.production
+docker compose --env-file .env.production -f compose.production.yaml config --quiet
+docker compose --env-file .env.production -f compose.production.yaml build backend frontend
+bash -n scripts/production-common.sh scripts/deploy-production.sh scripts/rollback-production.sh scripts/backup-postgres.sh scripts/restore-postgres.sh scripts/smoke-check-production.sh
+```
+
+The copied example file is only for configuration and image-build validation. Replace all placeholders before a real deployment.
+
 For frontend changes, also verify 390 px and 1440 px layouts, keyboard focus, RTL ordering, loading, empty, error, restricted, disconnected-channel, dark, and high-contrast states.
 
-## 12. Definition of done
+## 13. Definition of done
 
 A feature is not complete until it has:
 
@@ -210,3 +243,5 @@ A feature is not complete until it has:
 - no duplicate shell, polling, or global listeners;
 - updated continuity documentation;
 - passing required CI.
+
+An infrastructure milestone additionally requires documented non-production operational acceptance, including persistence and recovery checks.

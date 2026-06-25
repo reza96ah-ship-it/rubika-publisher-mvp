@@ -1,6 +1,7 @@
 # Environment
 .env
 .env.local
+.env.production
 .env.*.local
 
 # Python
@@ -34,6 +35,8 @@ postgres_data/
 redis_data/
 backend/celerybeat-schedule
 backend/celerybeat-schedule.*
+.deployments/
+backups/
 
 # Storage: keep folder, ignore uploaded files
 storage/media/*
