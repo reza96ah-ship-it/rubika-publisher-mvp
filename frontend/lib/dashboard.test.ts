@@ -220,12 +220,15 @@ describe("deriveDashboardModel", () => {
 
 describe("loadDashboardSnapshot", () => {
   afterEach(() => {
-    window.localStorage.clear();
     vi.unstubAllGlobals();
   });
 
   it("treats a missing active store as an empty onboarding state", async () => {
-    window.localStorage.setItem("rubika_publisher_access", "test-session");
+    vi.stubGlobal("window", {
+      localStorage: {
+        getItem: vi.fn().mockReturnValue("test-session")
+      }
+    });
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => null
