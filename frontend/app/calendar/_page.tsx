@@ -19,8 +19,6 @@ import {
 import Link from "next/link";
 import { CSSProperties, DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AppShell } from "../../components/app-shell";
-import { AuthGate } from "../../components/auth-gate";
 import { ChannelBadges } from "../../components/channel-badges";
 import { LoadingRows } from "../../components/loading-skeleton";
 import { CountdownBadge } from "../../components/countdown-badge";
@@ -824,9 +822,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <AuthGate>
-      <AppShell>
-        <WorkspacePage className="calendar-pro-page">
+<WorkspacePage className="calendar-pro-page">
           <section className="calendar-pro-hero">
             <div className="calendar-pro-hero-copy">
               <p className="app-section-kicker calendar-pro-kicker text-[10px] font-black">برنامه‌ریز</p>
@@ -1462,7 +1458,5 @@ export default function CalendarPage() {
           ) : null}
           <PlannerComposerDrawer scheduledAt={quickCreateAt} defaultCampaign={selectedCampaignOption?.label ?? ""} onClose={() => setQuickCreateAt(null)} onCreated={() => loadPosts(true)} />
         </WorkspacePage>
-      </AppShell>
-    </AuthGate>
-  );
+);
 }

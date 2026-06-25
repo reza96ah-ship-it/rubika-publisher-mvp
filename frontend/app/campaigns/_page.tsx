@@ -3,8 +3,6 @@
 import { AlertTriangle, BarChart3, CalendarDays, CheckCircle2, CheckSquare2, Download, FileImage, ImageIcon, PieChart, Plus, Printer, RefreshCw, Target, TimerReset, TrendingUp, XCircle, Zap } from "lucide-react";
 import Link from "next/link";
 import { CSSProperties, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AppShell } from "../../components/app-shell";
-import { AuthGate } from "../../components/auth-gate";
 import { DataRow, DataSearchField, DataTable, DataToolbar } from "../../components/data-view";
 import { LoadingRows } from "../../components/loading-skeleton";
 import { PublishingWorkspaceHeader } from "../../components/publishing-workspace";
@@ -932,9 +930,7 @@ export default function CampaignsPage() {
   }
 
   return (
-    <AuthGate>
-      <AppShell>
-        <WorkspacePage className="campaigns-pro-page">
+<WorkspacePage className="campaigns-pro-page">
           <PublishingWorkspaceHeader
             activeTab="campaigns"
             title="مرکز کمپین‌ها"
@@ -1601,7 +1597,5 @@ export default function CampaignsPage() {
             </section>
           ) : null}
         </WorkspacePage>
-      </AppShell>
-    </AuthGate>
-  );
+);
 }

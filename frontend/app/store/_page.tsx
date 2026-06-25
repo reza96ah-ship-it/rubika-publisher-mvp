@@ -18,8 +18,6 @@ import {
   X
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { AppShell } from "../../components/app-shell";
-import { AuthGate } from "../../components/auth-gate";
 import { LoadingPanel } from "../../components/loading-skeleton";
 import { useToast } from "../../components/toast-provider";
 import { Button } from "../../components/ui/button";
@@ -477,9 +475,7 @@ export default function StorePage() {
   }, [dirty]);
 
   return (
-    <AuthGate>
-      <AppShell>
-        <WorkspacePage>
+<WorkspacePage>
           <section className="app-studio-panel rounded-lg px-3 py-2.5 sm:px-4 sm:py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
@@ -760,7 +756,5 @@ export default function StorePage() {
             </form>
           )}
         </WorkspacePage>
-      </AppShell>
-    </AuthGate>
-  );
+);
 }

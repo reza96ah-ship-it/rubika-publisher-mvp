@@ -2,8 +2,6 @@
 
 import { BadgeCheck, ExternalLink, Instagram, KeyRound, PlugZap, RefreshCw, Route, Save, ShieldCheck } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { AppShell } from "../../components/app-shell";
-import { AuthGate } from "../../components/auth-gate";
 import { InstagramAutomationPanel } from "../../components/instagram-automation-panel";
 import { LoadingPanel } from "../../components/loading-skeleton";
 import { useToast } from "../../components/toast-provider";
@@ -238,9 +236,7 @@ export default function InstagramPage() {
   }
 
   return (
-    <AuthGate>
-      <AppShell>
-        <WorkspacePage className="space-y-4">
+<WorkspacePage className="space-y-4">
           <section className="app-studio-panel rounded-lg px-4 py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
@@ -393,7 +389,5 @@ export default function InstagramPage() {
             </div>
           ) : null}
         </WorkspacePage>
-      </AppShell>
-    </AuthGate>
-  );
+);
 }

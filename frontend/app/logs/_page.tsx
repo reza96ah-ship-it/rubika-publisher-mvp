@@ -2,8 +2,6 @@
 
 import { AlertTriangle, CheckCircle2, Clock3, FileUp, ListChecks, MessageSquareText, RefreshCw, RotateCcw, Search, UploadCloud } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AuthGate } from "../../components/auth-gate";
-import { AppShell } from "../../components/app-shell";
 import { ChannelBadges } from "../../components/channel-badges";
 import { DataRow, DataSearchField, DataTable, DataToolbar, FilterChip } from "../../components/data-view";
 import { StatusBadge } from "../../components/status-badge";
@@ -325,9 +323,7 @@ export default function LogsPage() {
   ];
 
   return (
-    <AuthGate>
-      <AppShell>
-        <WorkspacePage>
+<WorkspacePage>
           <section className="app-studio-panel rounded-lg px-4 py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
@@ -560,7 +556,5 @@ export default function LogsPage() {
             </aside>
           </section>
         </WorkspacePage>
-      </AppShell>
-    </AuthGate>
-  );
+);
 }

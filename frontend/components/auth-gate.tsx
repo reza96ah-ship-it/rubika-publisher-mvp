@@ -1,25 +1,11 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "./loading-skeleton";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-const AuthGateContext = createContext(false);
-
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const nested = useContext(AuthGateContext);
-
-  if (nested) return children;
-
-  return (
-    <AuthGateContext.Provider value>
-      <AuthGateRoot>{children}</AuthGateRoot>
-    </AuthGateContext.Provider>
-  );
-}
-
-function AuthGateRoot({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
 

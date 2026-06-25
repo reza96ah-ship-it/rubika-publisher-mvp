@@ -3,8 +3,6 @@
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AtSign, CalendarClock, CheckCircle2, ChevronDown, Clock3, Cloud, Eye, FileText, ImagePlus, Images, LayoutTemplate, Megaphone, PencilLine, Plus, Send, ShieldCheck, SlidersHorizontal, WandSparkles } from "lucide-react";
-import { AuthGate } from "../../components/auth-gate";
-import { AppShell } from "../../components/app-shell";
 import { ApprovalBadge } from "../../components/approval-badge";
 import { ChannelBadges } from "../../components/channel-badges";
 import { ComposerActionFooter } from "../../components/composer-action-footer";
@@ -751,9 +749,7 @@ function ComposePageContent() {
   }
 
   return (
-    <AuthGate>
-      <AppShell>
-        <WorkspacePage className="space-y-3 sm:space-y-4">
+<WorkspacePage className="space-y-3 sm:space-y-4">
           {editingImageSource ? (
             <MediaImageEditor
               imageUrl={editingImageSource.imageUrl}
@@ -1198,9 +1194,7 @@ function ComposePageContent() {
             </div>
           </form>
         </WorkspacePage>
-      </AppShell>
-    </AuthGate>
-  );
+);
 }
 
 export default function ComposePage() {

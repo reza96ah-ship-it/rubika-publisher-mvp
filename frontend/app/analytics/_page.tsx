@@ -2,8 +2,6 @@
 
 import { Activity, AlertTriangle, ArrowDownUp, ArrowUpLeft, CalendarClock, CheckCircle2, Clock3, FileImage, ImageIcon, Layers3, LineChart, MessageSquareText, Search, ShieldCheck, Sparkles, Target, TrendingDown, TrendingUp, X, Zap } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AppShell } from "../../components/app-shell";
-import { AuthGate } from "../../components/auth-gate";
 import { WorkspaceAvatar } from "../../components/brand-mark";
 import { LoadingPanel } from "../../components/loading-skeleton";
 import { NButton, NMetricTile, NNotice, NPage, NPageHeader, NSavedViewToolbar, NStatusPill } from "../../components/nashrino-ui";
@@ -525,9 +523,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <AuthGate>
-      <AppShell>
-        <NPage className="analytics-pro-page pb-6">
+<NPage className="analytics-pro-page pb-6">
           <NPageHeader
             eyebrow="مرکز تحلیل چندکاناله"
             title="تحلیل عملکرد"
@@ -1047,7 +1043,5 @@ export default function AnalyticsPage() {
             </aside>
           </section>
         </NPage>
-      </AppShell>
-    </AuthGate>
-  );
+);
 }
