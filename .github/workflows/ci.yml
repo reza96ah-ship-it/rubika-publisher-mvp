@@ -139,8 +139,8 @@ jobs:
       - name: Build production images
         run: docker compose --env-file .env.production -f compose.production.yaml build backend frontend
 
-  apply-shell-codemod:
-    name: Apply shell codemod
+  format-generated-pages:
+    name: Format generated pages
     if: github.event_name == 'pull_request' && github.head_ref == 'refactor/remove-legacy-page-shell-wrappers'
     runs-on: ubuntu-latest
     permissions:
@@ -152,21 +152,60 @@ jobs:
           ref: refactor/remove-legacy-page-shell-wrappers
           fetch-depth: 0
 
-      - name: Extract and run one-shot codemod
+      - name: Normalize outer JSX indentation
         run: |
-          sed -n "/python - <<'PY'/,/^          PY$/p" .github/workflows/one-shot-remove-legacy-shell-wrappers.yml \
-            | sed '1d;$d;s/^          //' > /tmp/remove-shell-wrappers.py
-          python /tmp/remove-shell-wrappers.py
+          python - <<'PY'
+          from pathlib import Path
 
-      - name: Commit generated refactor
+          paths = [
+              "frontend/app/_workspace-page.tsx",
+              "frontend/app/analytics/_page.tsx",
+              "frontend/app/calendar/_page.tsx",
+              "frontend/app/campaigns/_page.tsx",
+              "frontend/app/channels/_page.tsx",
+              "frontend/app/compose/_page.tsx",
+              "frontend/app/content/_page.tsx",
+              "frontend/app/design-system/_page.tsx",
+              "frontend/app/inbox/_page.tsx",
+              "frontend/app/instagram/_page.tsx",
+              "frontend/app/logs/_page.tsx",
+              "frontend/app/media/_page.tsx",
+              "frontend/app/onboarding/_page.tsx",
+              "frontend/app/queue/_page.tsx",
+              "frontend/app/rubika/_page.tsx",
+              "frontend/app/store/_page.tsx",
+          ]
+
+          marker = "\n  return (\n<"
+          closing = "\n);\n}"
+          for value in paths:
+              path = Path(value)
+              text = path.read_text(encoding="utf-8")
+              start = text.rfind(marker)
+              end = text.rfind(closing)
+              if start < 0 or end < start:
+                  raise SystemExit(f"Unexpected generated indentation in {value}")
+              body_start = start + len("\n  return (\n")
+              lines = text[body_start:end].splitlines()
+              lines[0] = "    " + lines[0]
+              for index in range(1, len(lines)):
+                  if lines[index].startswith("    "):
+                      lines[index] = lines[index][4:]
+              text = text[:body_start] + "\n".join(lines) + "\n  );\n}" + text[end + len(closing):]
+              path.write_text(text, encoding="utf-8")
+
+          Path("tools/test.txt").unlink(missing_ok=True)
+          PY
+
+      - name: Commit formatting cleanup
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git restore --source=HEAD -- .github/workflows/ci.yml .github/workflows/one-shot-remove-legacy-shell-wrappers.yml
+          git restore --source=HEAD -- .github/workflows/ci.yml
           git add -A
           if git diff --cached --quiet; then
-            echo "No generated changes remain."
+            echo "No formatting cleanup remains."
             exit 0
           fi
-          git commit -m "refactor(frontend): remove legacy page shell wrappers"
+          git commit -m "style(frontend): normalize workspace page indentation"
           git push origin HEAD:refactor/remove-legacy-page-shell-wrappers
