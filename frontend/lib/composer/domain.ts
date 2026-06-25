@@ -63,6 +63,7 @@ export type ComposerReadiness = {
   hasSchedule: boolean;
   hasReadyPublishingChannel: boolean;
   canMoveToReady: boolean;
+  canMoveToSchedule: boolean;
   reviewBlocksSchedule: boolean;
   canSaveDraft: boolean;
   canMarkReady: boolean;
@@ -138,12 +139,16 @@ export function deriveComposerReadiness(input: {
   const hasReadyPublishingChannel = selectedReadyChannels.length > 0;
   const canMoveToReady = !editingPost
     || ["draft", "failed", "cancelled"].includes(editingPost.status);
+  const canMoveToSchedule = !editingPost
+    || ["draft", "ready", "scheduled", "failed"].includes(editingPost.status);
   const reviewBlocksSchedule = editingPost
     ? approvalBlocksPublishing(editingPost)
     : false;
   const canSaveDraft = hasTitle;
   const canMarkReady = hasTitle && hasPostBody && canMoveToReady;
-  const canSchedule = canMarkReady
+  const canSchedule = hasTitle
+    && hasPostBody
+    && canMoveToSchedule
     && hasSchedule
     && hasReadyPublishingChannel
     && !reviewBlocksSchedule;
@@ -156,6 +161,7 @@ export function deriveComposerReadiness(input: {
     hasSchedule,
     hasReadyPublishingChannel,
     canMoveToReady,
+    canMoveToSchedule,
     reviewBlocksSchedule,
     canSaveDraft,
     canMarkReady,
@@ -181,6 +187,9 @@ export function getComposerValidationMessage(input: {
 
   if (action !== "schedule" || readiness.canSchedule) return "";
 
+  if (!readiness.canMoveToSchedule) {
+    return "وضعیت فعلی پست برای زمان‌بندی یا زمان‌بندی مجدد قابل تغییر نیست.";
+  }
   if (!readiness.hasReadyPublishingChannel) {
     return "برای زمان‌بندی، حداقل یک کانال آماده در مرکز کانال‌ها لازم است.";
   }
