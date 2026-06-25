@@ -20,6 +20,15 @@ out/
 dist/
 coverage/
 
+# Browser and UI test artifacts
+playwright-report/
+test-results/
+blob-report/
+frontend/playwright-report/
+frontend/test-results/
+frontend/blob-report/
+frontend/.playwright/
+
 # Docker / local data
 postgres_data/
 redis_data/
