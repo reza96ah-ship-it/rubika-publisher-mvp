@@ -33,36 +33,25 @@ jobs:
       - name: Seed representative operational data
         run: docker compose exec -T backend python - < .github/scripts/seed-dashboard-review.py
 
-      - name: Install isolated browser client
-        working-directory: frontend
-        run: |
-          rm -rf /tmp/dashboard-browser
-          mkdir -p /tmp/dashboard-browser
-          cd /tmp/dashboard-browser
-          npm init -y
-          npm install --no-audit --no-fund playwright-core@1.52.0
-          mkdir -p "$GITHUB_WORKSPACE/frontend/node_modules"
-          ln -s /tmp/dashboard-browser/node_modules/playwright-core "$GITHUB_WORKSPACE/frontend/node_modules/playwright-core"
+      - name: Install browser client
+        run: python -m pip install --disable-pip-version-check selenium
 
       - name: Capture responsive light and dark dashboards
-        working-directory: frontend
         run: |
-          set -a
-          source ../.env
-          set +a
           mkdir -p visual-review
-          login_payload=$(jq -n --arg email "$ADMIN_EMAIL" --arg password "$ADMIN_PASSWORD" '{email:$email,password:$password}')
-          visual_session=$(curl -fsS -H 'Content-Type: application/json' -d "$login_payload" http://127.0.0.1:8000/auth/login | jq -r '.access_token')
+          visual_session=$(docker compose exec -T backend python -c 'from app.config import get_settings; from app.security import create_access_token; print(create_access_token(get_settings().admin_email))')
           browser_bin=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
+          chromedriver_bin=$(command -v chromedriver)
           test -n "$visual_session"
           test -n "$browser_bin"
-          VISUAL_SESSION="$visual_session" BROWSER_BIN="$browser_bin" node ../.github/scripts/render-dashboard-review.cjs
+          test -n "$chromedriver_bin"
+          VISUAL_SESSION="$visual_session" BROWSER_BIN="$browser_bin" CHROMEDRIVER_BIN="$chromedriver_bin" python .github/scripts/render-dashboard-review.py
 
       - name: Upload dashboard review screenshots
         uses: actions/upload-artifact@v4
         with:
           name: dashboard-v2-visual-review
-          path: frontend/visual-review
+          path: visual-review
           if-no-files-found: error
           retention-days: 14
 
