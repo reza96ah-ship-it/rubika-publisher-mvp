@@ -11,8 +11,6 @@ permissions:
 
 jobs:
   screenshots:
-    # Dashboard-specific responsive acceptance against the real local stack.
-    # This test-only branch commit refreshes visual diagnostics for PR review.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -21,6 +19,8 @@ jobs:
       - name: Start real application stack
         run: |
           cp .env.example .env
+          sed -i 's#^NEXT_PUBLIC_API_URL=.*#NEXT_PUBLIC_API_URL=http://127.0.0.1:8000#' .env
+          sed -i 's#^FRONTEND_PUBLIC_URL=.*#FRONTEND_PUBLIC_URL=http://127.0.0.1:3100#' .env
           docker compose up -d --build
           for attempt in $(seq 1 90); do
             if curl -fsS http://127.0.0.1:8000/health >/dev/null && curl -fsS http://127.0.0.1:3100/login >/dev/null; then
@@ -47,6 +47,7 @@ jobs:
           test -n "$visual_session"
           test -n "$browser_bin"
           test -n "$chromedriver_bin"
+          curl -fsS -H "Authorization: Bearer $visual_session" http://127.0.0.1:8000/auth/me >/dev/null
           VISUAL_SESSION="$visual_session" BROWSER_BIN="$browser_bin" CHROMEDRIVER_BIN="$chromedriver_bin" python .github/scripts/render-dashboard-review.py
 
       - name: Upload dashboard review screenshots
