@@ -126,7 +126,15 @@ jobs:
         run: bash -n scripts/production-common.sh scripts/deploy-production.sh scripts/rollback-production.sh scripts/backup-postgres.sh scripts/restore-postgres.sh scripts/smoke-check-production.sh
 
       - name: Validate production Compose
-        run: docker compose --env-file .env.production -f compose.production.yaml config --quiet
+        run: bash -o pipefail -c 'docker compose --env-file .env.production -f compose.production.yaml config 2>&1 | tee compose-config.log'
+
+      - name: Upload Compose diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-compose-config
+          path: compose-config.log
+          if-no-files-found: warn
 
       - name: Build production images
         run: docker compose --env-file .env.production -f compose.production.yaml build backend frontend
