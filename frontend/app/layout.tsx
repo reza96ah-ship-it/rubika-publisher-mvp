@@ -1,4 +1,5 @@
 import "./globals.css";
+import "../design-tokens/liquid-glass.css";
 import { ToastProvider } from "../components/toast-provider";
 import { productName, productTagline } from "../lib/product";
 

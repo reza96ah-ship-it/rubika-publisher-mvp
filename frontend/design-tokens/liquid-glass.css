@@ -1,0 +1,209 @@
+:root,
+[data-theme="light"] {
+  /* Updated Nashrino visual foundation. Existing semantic RGB tokens remain authoritative. */
+  --n-liquid-accent: oklch(0.61 0.19 263);
+  --n-liquid-accent-hover: oklch(0.56 0.2 263);
+  --n-liquid-accent-soft: oklch(0.72 0.14 263 / 0.16);
+  --n-liquid-canvas: oklch(0.976 0.008 255);
+
+  /* Material layer: use glass only where depth and spatial context add value. */
+  --n-material-panel-bg: rgb(255 255 255 / 0.84);
+  --n-material-panel-border: rgb(255 255 255 / 0.76);
+  --n-material-panel-divider: rgb(30 41 59 / 0.08);
+  --n-material-panel-blur: 10px;
+  --n-material-panel-saturation: 108%;
+  --n-material-panel-shadow:
+    0 1px 1px rgb(15 23 42 / 0.025),
+    0 10px 30px rgb(15 23 42 / 0.065);
+
+  --n-material-floating-bg: rgb(255 255 255 / 0.56);
+  --n-material-floating-border: rgb(255 255 255 / 0.72);
+  --n-material-floating-blur: 28px;
+  --n-material-floating-saturation: 140%;
+  --n-material-floating-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.52),
+    0 18px 48px rgb(15 23 42 / 0.12);
+
+  --n-material-solid-bg: rgb(var(--n-color-surface) / 0.98);
+  --n-material-solid-muted-bg: rgb(var(--n-color-surface-muted) / 0.98);
+  --n-material-solid-border: rgb(var(--n-color-border) / 0.9);
+  --n-material-solid-shadow: var(--n-shadow-hairline);
+
+  /* Controlled geometry hierarchy. */
+  --n-radius-chip: 0.5rem;
+  --n-radius-compact-control: 0.75rem;
+  --n-radius-field: 1rem;
+  --n-radius-inner-card: 1.25rem;
+  --n-radius-panel: 1.5rem;
+  --n-radius-shell: 1.875rem;
+  --n-radius-pill: 9999px;
+
+  /* Ambient canvas colors. */
+  --n-mesh-blue: oklch(0.84 0.09 248 / 0.24);
+  --n-mesh-violet: oklch(0.88 0.07 302 / 0.18);
+  --n-mesh-cyan: oklch(0.9 0.055 210 / 0.14);
+  --n-mesh-opacity: 1;
+
+  /* Temporary compatibility bridge for existing glass aliases. */
+  --n-glass-blur-desktop: var(--n-material-floating-blur);
+  --n-glass-blur-mobile: 18px;
+  --n-glass-saturation: var(--n-material-floating-saturation);
+  --n-glass-surface: var(--n-material-floating-bg);
+  --n-glass-surface-strong: var(--n-material-panel-bg);
+  --n-glass-surface-soft: rgb(255 255 255 / 0.44);
+  --n-glass-border: var(--n-material-floating-border);
+  --surface-glass: var(--n-material-floating-bg);
+  --surface-glass-strong: var(--n-material-panel-bg);
+}
+
+[data-theme="dark"],
+[data-theme="studio"],
+.nashrino-dark-studio {
+  --n-liquid-accent: oklch(0.72 0.15 259);
+  --n-liquid-accent-hover: oklch(0.76 0.14 259);
+  --n-liquid-accent-soft: oklch(0.63 0.15 250 / 0.22);
+  --n-liquid-canvas: oklch(0.155 0.022 258);
+
+  --n-material-panel-bg: rgb(22 29 43 / 0.88);
+  --n-material-panel-border: rgb(255 255 255 / 0.1);
+  --n-material-panel-divider: rgb(255 255 255 / 0.075);
+  --n-material-panel-shadow:
+    0 1px 0 rgb(255 255 255 / 0.025) inset,
+    0 16px 42px rgb(0 0 0 / 0.24);
+
+  --n-material-floating-bg: rgb(28 36 53 / 0.62);
+  --n-material-floating-border: rgb(255 255 255 / 0.13);
+  --n-material-floating-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 20px 56px rgb(0 0 0 / 0.32);
+
+  --n-material-solid-bg: rgb(var(--n-color-surface) / 0.98);
+  --n-material-solid-muted-bg: rgb(var(--n-color-surface-muted) / 0.98);
+  --n-material-solid-border: rgb(255 255 255 / 0.1);
+
+  --n-mesh-blue: oklch(0.48 0.13 252 / 0.18);
+  --n-mesh-violet: oklch(0.45 0.12 302 / 0.16);
+  --n-mesh-cyan: oklch(0.5 0.09 210 / 0.1);
+
+  --n-glass-surface-soft: rgb(28 36 53 / 0.48);
+}
+
+[data-theme="high-contrast"] {
+  --n-material-panel-bg: rgb(255 255 255);
+  --n-material-panel-border: rgb(0 0 0);
+  --n-material-panel-divider: rgb(0 0 0);
+  --n-material-panel-blur: 0px;
+  --n-material-panel-saturation: 100%;
+  --n-material-panel-shadow: 0 0 0 2px rgb(0 0 0);
+
+  --n-material-floating-bg: rgb(255 255 255);
+  --n-material-floating-border: rgb(0 0 0);
+  --n-material-floating-blur: 0px;
+  --n-material-floating-saturation: 100%;
+  --n-material-floating-shadow: 0 0 0 2px rgb(0 0 0);
+
+  --n-material-solid-bg: rgb(255 255 255);
+  --n-material-solid-muted-bg: rgb(255 255 255);
+  --n-material-solid-border: rgb(0 0 0);
+  --n-material-solid-shadow: 0 0 0 2px rgb(0 0 0);
+  --n-mesh-opacity: 0;
+}
+
+.n-liquid-canvas {
+  background:
+    radial-gradient(60rem 48rem at 105% -5%, var(--n-mesh-blue), transparent 70%),
+    radial-gradient(54rem 44rem at -5% 30%, var(--n-mesh-violet), transparent 72%),
+    radial-gradient(42rem 32rem at 56% 110%, var(--n-mesh-cyan), transparent 72%),
+    var(--n-liquid-canvas);
+}
+
+.n-liquid-ambient-mesh {
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 48rem at 105% -5%, var(--n-mesh-blue), transparent 70%),
+    radial-gradient(54rem 44rem at -5% 30%, var(--n-mesh-violet), transparent 72%),
+    radial-gradient(42rem 32rem at 56% 110%, var(--n-mesh-cyan), transparent 72%);
+  opacity: var(--n-mesh-opacity);
+}
+
+.n-liquid-panel {
+  background: var(--n-material-panel-bg);
+  border-color: var(--n-material-panel-border);
+  box-shadow: var(--n-material-panel-shadow);
+  -webkit-backdrop-filter: blur(var(--n-material-panel-blur)) saturate(var(--n-material-panel-saturation));
+  backdrop-filter: blur(var(--n-material-panel-blur)) saturate(var(--n-material-panel-saturation));
+}
+
+.n-liquid-floating {
+  background: var(--n-material-floating-bg);
+  border-color: var(--n-material-floating-border);
+  box-shadow: var(--n-material-floating-shadow);
+  -webkit-backdrop-filter: blur(var(--n-material-floating-blur)) saturate(var(--n-material-floating-saturation));
+  backdrop-filter: blur(var(--n-material-floating-blur)) saturate(var(--n-material-floating-saturation));
+}
+
+.n-liquid-solid {
+  background: var(--n-material-solid-bg);
+  border-color: var(--n-material-solid-border);
+  box-shadow: var(--n-material-solid-shadow);
+}
+
+.n-liquid-solid-muted {
+  background: var(--n-material-solid-muted-bg);
+  border-color: var(--n-material-solid-border);
+  box-shadow: var(--n-material-solid-shadow);
+}
+
+.n-radius-chip {
+  border-radius: var(--n-radius-chip);
+}
+
+.n-radius-control {
+  border-radius: var(--n-radius-compact-control);
+}
+
+.n-radius-field {
+  border-radius: var(--n-radius-field);
+}
+
+.n-radius-card {
+  border-radius: var(--n-radius-inner-card);
+}
+
+.n-radius-panel {
+  border-radius: var(--n-radius-panel);
+}
+
+.n-radius-shell {
+  border-radius: var(--n-radius-shell);
+}
+
+.n-radius-pill {
+  border-radius: var(--n-radius-pill);
+}
+
+@media (max-width: 767px) {
+  :root,
+  [data-theme="light"],
+  [data-theme="dark"],
+  [data-theme="studio"],
+  .nashrino-dark-studio {
+    --n-material-panel-bg: rgb(var(--n-color-surface) / 0.94);
+    --n-material-panel-blur: 6px;
+    --n-material-floating-blur: 18px;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  [data-theme="light"],
+  [data-theme="dark"],
+  [data-theme="studio"],
+  .nashrino-dark-studio {
+    --n-material-panel-bg: rgb(var(--n-color-surface) / 0.98);
+    --n-material-floating-bg: rgb(var(--n-color-surface-raised) / 0.96);
+    --n-material-panel-blur: 0px;
+    --n-material-floating-blur: 0px;
+    --n-mesh-opacity: 0.35;
+  }
+}
