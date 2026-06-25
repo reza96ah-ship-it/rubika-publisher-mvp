@@ -111,3 +111,22 @@ jobs:
 
       - name: Test
         run: pytest
+
+  deployment:
+    name: Deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare validation environment
+        run: cp .env.production.example .env.production
+
+      - name: Validate shell scripts
+        run: bash -n scripts/production-common.sh scripts/deploy-production.sh scripts/rollback-production.sh scripts/backup-postgres.sh scripts/restore-postgres.sh scripts/smoke-check-production.sh
+
+      - name: Validate production Compose
+        run: docker compose --env-file .env.production -f compose.production.yaml config --quiet
+
+      - name: Build production images
+        run: docker compose --env-file .env.production -f compose.production.yaml build backend frontend
