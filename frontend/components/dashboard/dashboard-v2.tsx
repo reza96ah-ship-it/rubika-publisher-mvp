@@ -255,7 +255,7 @@ export default function DashboardV2() {
         </NNotice>
       ) : null}
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="شاخص‌های اصلی داشبورد">
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="شاخص‌های اصلی داشبورد">
         <NMetricTile
           label="زمان‌بندی امروز"
           value={model.scheduledToday}

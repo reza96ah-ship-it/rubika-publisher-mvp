@@ -172,19 +172,33 @@ function resultValue<T>(
 }
 
 export async function loadDashboardSnapshot(): Promise<DashboardSnapshot> {
-  const [postsResult, attemptsResult, channelsResult, campaignsResult, storeResult, rubikaResult, notificationsResult] = await Promise.allSettled([
+  const errors: Partial<Record<DashboardSource, string>> = {};
+  const [storeResult] = await Promise.allSettled([
+    fetchJson<StoreProfile | null>("/stores/active", "دریافت فضای کاری ناموفق بود")
+  ]);
+  const store = resultValue(storeResult, null, "store", errors);
+
+  if (!store) {
+    return {
+      posts: [],
+      attempts: [],
+      channels: emptyChannels,
+      campaigns: [],
+      workspace: { store: null, rubika: null },
+      notifications: emptyOperationalNotifications,
+      errors
+    };
+  }
+
+  const [postsResult, attemptsResult, channelsResult, campaignsResult, rubikaResult, notificationsResult] = await Promise.allSettled([
     fetchJson<Post[]>("/posts", "دریافت محتوای داشبورد ناموفق بود"),
     fetchJson<PublishAttempt[]>("/publish-attempts", "دریافت تلاش‌های انتشار ناموفق بود"),
     fetchJson<ChannelAccountList>("/channels/accounts", "دریافت وضعیت کانال‌ها ناموفق بود"),
     fetchJson<Campaign[]>("/campaigns?status=all", "دریافت کمپین‌ها ناموفق بود"),
-    fetchJson<StoreProfile>("/stores/active", "دریافت فضای کاری ناموفق بود"),
-    fetchJson<RubikaSettings>("/rubika/settings", "دریافت تنظیمات روبیکا ناموفق بود"),
+    fetchJson<RubikaSettings | null>("/rubika/settings", "دریافت تنظیمات روبیکا ناموفق بود"),
     fetchJson<OperationalNotifications>("/notifications", "دریافت هشدارهای عملیاتی ناموفق بود")
   ]);
-
-  const errors: Partial<Record<DashboardSource, string>> = {};
-  const store = resultValue(storeResult, null as StoreProfile | null, "store", errors);
-  const rubika = resultValue(rubikaResult, null as RubikaSettings | null, "rubika", errors);
+  const rubika = resultValue(rubikaResult, null, "rubika", errors);
 
   return {
     posts: resultValue(postsResult, [], "posts", errors),
