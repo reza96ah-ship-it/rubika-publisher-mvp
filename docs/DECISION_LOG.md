@@ -196,3 +196,24 @@ This file records durable decisions that future agents must not silently reverse
 - Update `docs/IMPLEMENTATION_ROADMAP.md` when milestone status or sequencing changes.
 - Update this log when a durable decision is accepted or superseded.
 - Keep `AGENTS.md` accurate enough to bootstrap a new agent from GitHub alone.
+
+---
+
+## D-012 — Separate immutable production runtime
+
+**Date:** 2026-06-25  
+**Status:** accepted
+
+**Decision:** Production uses `compose.production.yaml`, immutable version-tagged application images, standalone Next.js output, and one shared backend image for API, worker, Beat, and migrations. The development Compose file remains separate.
+
+**Reason:** Production needs repeatable builds, migration ordering, health-gated startup, persistent data, controlled rollback, and reverse-proxy integration without source bind mounts or development servers.
+
+**Consequences:**
+
+- PostgreSQL and Redis have no host port mappings in production.
+- Frontend and backend bind to loopback by default for a host HTTPS reverse proxy.
+- Alembic runs as a one-shot dependency before application services start.
+- PostgreSQL, Redis, media, and the Beat schedule use named volumes.
+- Frontend public API configuration is supplied at image-build time.
+- Deployment, smoke checking, backup, restore, and image rollback are scripted and documented.
+- M2 is not complete until CI and a non-production operational drill pass.
