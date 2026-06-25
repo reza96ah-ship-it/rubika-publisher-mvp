@@ -23,8 +23,8 @@ Roadmap status vocabulary: `done`, `in progress`, `next`, `planned`, `blocked`, 
 | AppShell V2 | done | Shared navigation, top bar, mobile drawer, fixed canvas, single main scroll |
 | Shared workspace route layout | done | Protected routes share one App Router layout without URL changes |
 | Production Compose and deployment | in progress | Repository implementation validated; operational staging drill remains |
-| Remove legacy page shell wrappers | planned | Eliminate duplicate compatibility wrappers and listeners |
-| Dashboard V2 | planned | First complete real-data product vertical slice |
+| Remove legacy page shell wrappers | done | One layout-owned auth boundary and application shell |
+| Dashboard V2 | next | First complete real-data product vertical slice |
 | Composer and publishing V2 | planned | Professional creation, preview, approval, scheduling, and recovery |
 | Planner and Jalali calendar V2 | planned | Month/week/list planning and mobile agenda flow |
 | Campaigns, content, and media V2 | planned | Coherent campaign and asset operations |
@@ -72,13 +72,13 @@ Completed:
 - design-system laboratory;
 - AppShell V2;
 - accessible mobile navigation drawer;
-- shared `(workspace)` route layout.
+- shared `(workspace)` route layout;
+- removal of page-level shell compatibility wrappers;
+- structural shell-ownership audit in Frontend CI.
 
-Follow-up technical cleanup:
+Remaining tooling follow-up:
 
-- remove page-level compatibility wrappers;
-- align Next.js and `eslint-config-next` major versions in a dedicated tooling PR;
-- update stale documentation references.
+- align Next.js and `eslint-config-next` major versions in a dedicated tooling PR.
 
 ---
 
@@ -135,34 +135,37 @@ M2 becomes `done` after the documented non-production operational drill passes. 
 
 ## M3 — Remove legacy page shell wrappers
 
-Status: `planned`
+Status: `done`
 
-Recommended branch: `refactor/remove-legacy-page-shell-wrappers`
+Completed through PR #30.
 
-### Scope
+### Delivered
 
-- remove page-level imports and wrappers for `AuthGate` and `AppShell` from protected page implementations;
-- retain ownership in `frontend/app/(workspace)/layout.tsx`;
-- remove compatibility nesting contexts once all pages are migrated;
-- update AppShell architecture documentation;
-- add regression tests for one shell and one auth check.
+- removed page-level imports and JSX wrappers for `AuthGate` and `AppShell` from all 16 protected route implementation modules;
+- retained sole ownership in `frontend/app/(workspace)/layout.tsx`;
+- removed temporary nested-context compatibility bypasses from `AuthGate` and `AppShell`;
+- preserved all existing public route URLs;
+- preserved one notification polling loop, one command-palette listener, one mobile haptic listener, and one workspace scroll owner;
+- updated AppShell architecture documentation;
+- added `frontend/scripts/check-single-workspace-shell.mjs`;
+- added `npm run shell:audit` to the aggregate frontend check and Frontend CI.
 
 ### Acceptance
 
-- one AuthGate request per protected page load;
+- one AuthGate request per protected workspace load;
 - one AppShell instance;
 - one notification polling loop;
 - one command-palette shortcut listener;
 - one mobile haptic listener;
 - no public route is wrapped by workspace auth;
 - all existing URLs remain unchanged;
-- all CI checks pass.
+- structural shell audit and complete CI pass.
 
 ---
 
 ## M4 — Dashboard V2
 
-Status: `planned`
+Status: `next`
 
 Recommended branch: `feat/dashboard-v2`
 
