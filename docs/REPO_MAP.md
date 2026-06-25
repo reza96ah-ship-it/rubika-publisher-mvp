@@ -7,10 +7,18 @@ This map helps a new agent find the correct implementation area before changing 
 - `AGENTS.md` — authoritative startup and engineering instructions.
 - `README.md` — product overview and local startup.
 - `CONTRIBUTING.md` — branch, PR, validation, and merge workflow.
-- `docker-compose.yml` — current development stack.
-- `.env.example` — environment-variable template; never commit real secrets.
-- `.github/workflows/ci.yml` — Frontend and Backend CI.
+- `docker-compose.yml` — development stack.
+- `compose.production.yaml` — immutable production stack and health-gated service graph.
+- `.env.example` — development environment-variable template.
+- `.env.production.example` — production deployment-variable template; never commit the copied host file.
+- `.github/workflows/ci.yml` — Frontend, Backend, and Deployment CI.
 - `.github/pull_request_template.md` — required PR evidence/checklist.
+- `scripts/production-common.sh` — shared production script environment and Compose helpers.
+- `scripts/deploy-production.sh` — image build, migration, startup, smoke check, and release-state recording.
+- `scripts/smoke-check-production.sh` — backend, database, and frontend health verification.
+- `scripts/rollback-production.sh` — switch to an existing backend/frontend image tag.
+- `scripts/backup-postgres.sh` — compressed PostgreSQL backup and checksum.
+- `scripts/restore-postgres.sh` — guarded restore with pre-restore backup and service restart.
 
 ## Continuity and planning documents
 
@@ -30,6 +38,7 @@ Additional references:
 - `docs/APP_SHELL_V2_ARCHITECTURE.md`
 - `docs/LIQUID_GLASS_DESIGN_TOKENS.md`
 - `docs/INSTAGRAM_COMMENT_TO_DM_AUTOMATION_PRD.md`
+- `docs/PRODUCTION_DEPLOYMENT.md`
 - `docs/REPOSITORY_GOVERNANCE.md`
 - `docs/HANDOFF_PROMPT.md`
 
@@ -92,8 +101,11 @@ Some large route implementations are temporarily kept in private `_page.tsx` mod
 
 Before adding a new helper, search for an existing domain module and avoid duplicate API clients.
 
-### Frontend tests
+### Frontend runtime and tests
 
+- `frontend/Dockerfile` — development image.
+- `frontend/Dockerfile.production` — multi-stage standalone Next.js production image.
+- `frontend/.dockerignore` — production-safe frontend build context.
 - `frontend/**/*.test.*` — Vitest tests.
 - `frontend/tests/e2e/` — Playwright browser scenarios.
 - `frontend/scripts/check-build.mjs` — isolated build validation.
@@ -151,20 +163,31 @@ Use services for business behavior rather than expanding router functions. Impor
 
 Changes here affect operational safety and require careful retry/idempotency analysis.
 
-### Backend tests
+### Backend runtime and tests
 
-Root: `backend/tests/`
-
-Coverage includes authentication/store scope, posts, campaigns, media, channels, publishing, notifications, Instagram OAuth/automation, and other service behavior.
+- `backend/Dockerfile` — development image with optional development dependencies.
+- `backend/Dockerfile.production` — non-root production runtime shared by API, worker, Beat, and migration services.
+- `backend/.dockerignore` — production-safe backend build context.
+- `backend/tests/` — authentication/store scope, posts, campaigns, media, channels, publishing, notifications, Instagram OAuth/automation, and service behavior tests.
 
 ## Storage and runtime
 
-- `storage/media/` — persisted media, ignored except placeholder.
-- Docker volume `postgres_data` — database data.
-- Docker volume `frontend_node_modules` — container frontend dependencies.
+Development:
+
+- `storage/media/` — development media persistence, ignored except placeholder.
+- Docker volume `postgres_data` — development database data.
+- Docker volume `frontend_node_modules` — development frontend dependencies.
 - Docker volume `frontend_next` — development Next.js cache.
 
-Do not delete production data volumes during normal updates.
+Production:
+
+- Docker volume `<project>_postgres_data` — PostgreSQL data.
+- Docker volume `<project>_redis_data` — Redis append-only data.
+- Docker volume `<project>_storage_data` — media and Celery Beat schedule.
+- `.deployments/` — ignored local current/previous image-tag state.
+- `backups/` — ignored default database and media backup destination.
+
+Do not delete production data volumes during normal updates. Follow `docs/PRODUCTION_DEPLOYMENT.md` for backup, restore, and rollback.
 
 ## Reference repositories
 
