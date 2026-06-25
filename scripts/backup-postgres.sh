@@ -11,6 +11,7 @@ require_command sha256sum
 
 backup_dir="${1:-${ROOT_DIR}/backups}"
 mkdir -p "${backup_dir}"
+backup_dir="$(cd "${backup_dir}" && pwd)"
 
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 backup_file="${backup_dir}/nashrino-postgres-${stamp}.dump"
