@@ -3,7 +3,7 @@ project: Nashrino SocialOps Studio
 repository: reza96ah-ship-it/rubika-publisher-mvp
 canonical_branch: main
 status_date: 2026-06-25
-active_program: Production Compose and deployment acceptance
+active_program: Production deployment operational acceptance
 next_recommended_branch: refactor/remove-legacy-page-shell-wrappers
 ---
 
@@ -15,8 +15,9 @@ Read this file after `AGENTS.md`. Update it whenever a pull request changes the 
 
 - `main` is the canonical and default branch.
 - Accepted application history is consolidated into `main`.
-- Production deployment implementation is under review on `chore/production-compose`.
-- Frontend and Backend CI are established.
+- Production deployment implementation merged through PR #27.
+- Compose healthcheck validation was corrected through PR #28.
+- Frontend, Backend, and Deployment CI passed on the final hotfix commit.
 - Generated browser reports and temporary output artifacts are excluded.
 - The active `main` ruleset still requires manual verification in GitHub Settings.
 
@@ -31,7 +32,7 @@ Read this file after `AGENTS.md`. Update it whenever a pull request changes the 
 
 ## Production deployment implementation
 
-The M2 branch adds:
+The following production assets now exist on `main`:
 
 - standalone multi-stage Next.js production image;
 - non-root backend production image without reload mode;
@@ -43,9 +44,9 @@ The M2 branch adds:
 - loopback bindings for a host reverse proxy;
 - deployment, smoke-check, rollback, backup, and guarded restore scripts;
 - production environment template and deployment runbook;
-- CI validation of scripts, Compose rendering, and production image builds.
+- CI validation of shell syntax, Compose rendering, and clean production image builds.
 
-M2 remains `in progress` until CI and a non-production deployment, persistence, backup, restore, and rollback drill pass.
+Repository-level acceptance is complete. M2 remains `in progress` only until a non-production deployment, persistence, backup, restore, rollback, and reverse-proxy drill pass.
 
 ## Remaining foundation cleanup
 
@@ -56,22 +57,18 @@ M2 remains `in progress` until CI and a non-production deployment, persistence, 
 
 ## Immediate next sequence
 
-### 1. Complete M2 acceptance
+### 1. Complete M2 operational acceptance
 
-Current branch: `chore/production-compose`
+Use the merged `main` branch and `docs/PRODUCTION_DEPLOYMENT.md`.
 
-Required evidence:
+Remaining evidence:
 
-- Frontend, Backend, and Deployment CI pass;
-- clean-checkout production image build;
-- successful non-production deployment;
+- successful non-production deployment and smoke check;
 - PostgreSQL and media persistence across recreation;
 - working HTTPS reverse proxy, CORS, and OAuth callback routing;
 - successful database backup and checksum;
 - successful restore and application rollback drills;
-- development Compose remains usable.
-
-Runbook: `docs/PRODUCTION_DEPLOYMENT.md`.
+- development Compose regression check on the target host.
 
 ### 2. Remove legacy page shell wrappers
 
@@ -103,7 +100,7 @@ Preserve month/week/list modes, filtering, day/post inspection, rescheduling, ga
 
 ## Current technical risks
 
-- Production assets still need environment-specific acceptance.
+- Production assets still need environment-specific operational acceptance.
 - Reverse proxy, DNS, HTTPS, OAuth, CORS, and volume behavior vary by host.
 - Next.js and `eslint-config-next` major versions are not aligned.
 - Browser authentication still relies on localStorage bearer tokens.
