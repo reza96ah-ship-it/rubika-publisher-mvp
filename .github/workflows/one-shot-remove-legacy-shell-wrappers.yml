@@ -1,0 +1,124 @@
+name: One-shot remove legacy shell wrappers
+
+on:
+  push:
+    branches:
+      - refactor/remove-legacy-page-shell-wrappers
+
+permissions:
+  contents: write
+
+jobs:
+  codemod:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: refactor/remove-legacy-page-shell-wrappers
+          fetch-depth: 0
+
+      - name: Remove legacy page wrappers and compatibility guards
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import re
+
+          root = Path('.')
+          app_root = root / 'frontend' / 'app'
+          workspace_layout = app_root / '(workspace)' / 'layout.tsx'
+          changed_pages = []
+
+          import_patterns = [
+              re.compile(r'^import\s*\{\s*AuthGate\s*\}\s*from\s*["\'][^"\']*components/auth-gate["\'];\s*\n', re.MULTILINE),
+              re.compile(r'^import\s*\{\s*AppShell\s*\}\s*from\s*["\'][^"\']*components/app-shell["\'];\s*\n', re.MULTILINE),
+          ]
+          opening = re.compile(r'(?m)^\s*<AuthGate>\s*\n\s*<AppShell>\s*\n?')
+          closing = re.compile(r'(?m)^\s*</AppShell>\s*\n\s*</AuthGate>\s*\n?')
+
+          for path in sorted(app_root.rglob('*.tsx')):
+              if path == workspace_layout:
+                  continue
+              text = path.read_text(encoding='utf-8')
+              if 'AuthGate' not in text and 'AppShell' not in text:
+                  continue
+              original = text
+              for pattern in import_patterns:
+                  text = pattern.sub('', text)
+              text = opening.sub('', text)
+              text = closing.sub('', text)
+              if text != original:
+                  path.write_text(text, encoding='utf-8')
+                  changed_pages.append(path.as_posix())
+
+          auth_path = root / 'frontend' / 'components' / 'auth-gate.tsx'
+          auth = auth_path.read_text(encoding='utf-8')
+          auth = auth.replace(
+              'import { createContext, useContext, useEffect, useState } from "react";',
+              'import { useEffect, useState } from "react";'
+          )
+          auth = auth.replace('const AuthGateContext = createContext(false);\n\n', '')
+          auth = auth.replace(
+              '''export function AuthGate({ children }: { children: React.ReactNode }) {\n  const nested = useContext(AuthGateContext);\n\n  if (nested) return children;\n\n  return (\n    <AuthGateContext.Provider value>\n      <AuthGateRoot>{children}</AuthGateRoot>\n    </AuthGateContext.Provider>\n  );\n}\n\nfunction AuthGateRoot({ children }: { children: React.ReactNode }) {''',
+              'export function AuthGate({ children }: { children: React.ReactNode }) {'
+          )
+          auth_path.write_text(auth, encoding='utf-8')
+
+          shell_path = root / 'frontend' / 'components' / 'app-shell.tsx'
+          shell = shell_path.read_text(encoding='utf-8')
+          shell = shell.replace(
+              '''import {\n  createContext,\n  useCallback,\n  useContext,\n  useEffect,\n  useRef,\n  useState\n} from "react";''',
+              '''import {\n  useCallback,\n  useEffect,\n  useRef,\n  useState\n} from "react";'''
+          )
+          shell = shell.replace('const AppShellContext = createContext(false);\n\n', '')
+          shell = shell.replace(
+              '''export function AppShell({ children }: { children: React.ReactNode }) {\n  const nested = useContext(AppShellContext);\n\n  if (nested) return children;\n\n  return (\n    <AppShellContext.Provider value>\n      <AppShellRoot>{children}</AppShellRoot>\n    </AppShellContext.Provider>\n  );\n}\n\nfunction AppShellRoot({ children }: { children: React.ReactNode }) {''',
+              'export function AppShell({ children }: { children: React.ReactNode }) {'
+          )
+          shell_path.write_text(shell, encoding='utf-8')
+
+          check_script = root / 'frontend' / 'scripts' / 'check-single-workspace-shell.mjs'
+          check_script.write_text('''import { readFileSync, readdirSync, statSync } from "node:fs";\nimport { join, relative } from "node:path";\n\nconst appRoot = new URL("../app/", import.meta.url);\nconst layoutPath = new URL("../app/(workspace)/layout.tsx", import.meta.url);\nconst violations = [];\n\nfunction walk(directory) {\n  for (const entry of readdirSync(directory)) {\n    const path = join(directory, entry);\n    if (statSync(path).isDirectory()) walk(path);\n    else if (path.endsWith(".tsx")) {\n      const source = readFileSync(path, "utf8");\n      const normalized = relative(appRoot.pathname, path);\n      if (path !== layoutPath.pathname && /components\\/(auth-gate|app-shell)/.test(source)) {\n        violations.push(`${normalized}: imports a workspace shell owner`);\n      }\n      if (path !== layoutPath.pathname && /<(AuthGate|AppShell)(\\s|>)/.test(source)) {\n        violations.push(`${normalized}: renders a workspace shell owner`);\n      }\n    }\n  }\n}\n\nwalk(appRoot.pathname);\nconst layout = readFileSync(layoutPath, "utf8");\nfor (const expected of ["<AuthGate>", "<AppShell>{children}</AppShell>"]) {\n  if (!layout.includes(expected)) violations.push(`workspace layout is missing ${expected}`);\n}\n\nif (violations.length) {\n  console.error("Workspace shell ownership violations:\\n" + violations.map((item) => `- ${item}`).join("\\n"));\n  process.exit(1);\n}\n\nconsole.log("Workspace shell ownership is singular and layout-owned.");\n''', encoding='utf-8')
+
+          package_path = root / 'frontend' / 'package.json'
+          package = json.loads(package_path.read_text(encoding='utf-8'))
+          package['scripts']['shell:audit'] = 'node scripts/check-single-workspace-shell.mjs'
+          package['scripts']['check'] = 'npm run lint && npm run token:audit && npm run shell:audit && npm run typecheck && npm run test && npm run build:check'
+          package_path.write_text(json.dumps(package, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          workflow_path = root / '.github' / 'workflows' / 'ci.yml'
+          workflow = workflow_path.read_text(encoding='utf-8')
+          needle = '      - name: Typecheck\n        run: bash -o pipefail -c \'npm run typecheck 2>&1 | tee typecheck-report.txt\'\n'
+          replacement = '      - name: Workspace shell audit\n        run: npm run shell:audit\n\n' + needle
+          if 'Workspace shell audit' not in workflow:
+              workflow = workflow.replace(needle, replacement)
+          workflow_path.write_text(workflow, encoding='utf-8')
+
+          report_path = root / 'docs' / 'LEGACY_SHELL_WRAPPER_REMOVAL.md'
+          report_path.write_text(
+              '# Legacy page shell wrapper removal\n\n'
+              'The shared `frontend/app/(workspace)/layout.tsx` is the sole owner of `AuthGate` and `AppShell`.\n\n'
+              f'Removed compatibility wrappers from {len(changed_pages)} route implementation files:\n\n'
+              + ''.join(f'- `{path}`\n' for path in changed_pages)
+              + '\nThe `shell:audit` check prevents page-level shell imports or JSX wrappers from returning.\n',
+              encoding='utf-8'
+          )
+
+          one_shot = root / '.github' / 'workflows' / 'one-shot-remove-legacy-shell-wrappers.yml'
+          one_shot.unlink()
+
+          if not changed_pages:
+              raise SystemExit('No legacy page wrappers were found; refusing to create an empty refactor.')
+          print(f'Removed wrappers from {len(changed_pages)} page implementations.')
+          PY
+
+      - name: Commit refactor
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "refactor(frontend): remove legacy page shell wrappers"
+          git push origin HEAD:refactor/remove-legacy-page-shell-wrappers
