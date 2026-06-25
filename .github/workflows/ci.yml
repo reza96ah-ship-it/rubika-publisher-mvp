@@ -138,3 +138,34 @@ jobs:
 
       - name: Build production images
         run: docker compose --env-file .env.production -f compose.production.yaml build backend frontend
+
+  apply-shell-codemod:
+    name: Apply shell codemod
+    if: github.event_name == 'pull_request' && github.head_ref == 'refactor/remove-legacy-page-shell-wrappers'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout refactor branch
+        uses: actions/checkout@v4
+        with:
+          ref: refactor/remove-legacy-page-shell-wrappers
+          fetch-depth: 0
+
+      - name: Extract and run one-shot codemod
+        run: |
+          sed -n "/python - <<'PY'/,/^          PY$/p" .github/workflows/one-shot-remove-legacy-shell-wrappers.yml \
+            | sed '1d;$d;s/^          //' > /tmp/remove-shell-wrappers.py
+          python /tmp/remove-shell-wrappers.py
+
+      - name: Commit generated refactor
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No generated changes remain."
+            exit 0
+          fi
+          git commit -m "refactor(frontend): remove legacy page shell wrappers"
+          git push origin HEAD:refactor/remove-legacy-page-shell-wrappers
