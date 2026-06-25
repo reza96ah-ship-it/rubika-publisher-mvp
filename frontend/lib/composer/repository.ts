@@ -21,19 +21,29 @@ export type ComposerResources = {
   editingPost: Post | null;
 };
 
-async function fetchJson<T>(
-  path: string,
-  message: string,
-  init: RequestInit = {}
-): Promise<T> {
-  const response = await fetch(`${apiUrl}${path}`, {
+async function request(path: string, init: RequestInit = {}) {
+  return fetch(`${apiUrl}${path}`, {
     ...init,
     headers: {
       ...authHeaders(),
       ...init.headers
     }
   });
+}
+
+async function fetchJson<T>(
+  path: string,
+  message: string,
+  init: RequestInit = {}
+): Promise<T> {
+  const response = await request(path, init);
   if (!response.ok) throw new Error(message);
+  return response.json() as Promise<T>;
+}
+
+async function fetchOptionalJson<T>(path: string, fallback: T): Promise<T> {
+  const response = await request(path);
+  if (!response.ok) return fallback;
   return response.json() as Promise<T>;
 }
 
@@ -44,8 +54,8 @@ export async function loadComposerResources(
     loadWorkspaceOverview(),
     loadCampaigns(),
     loadChannelAccounts(),
-    fetchJson<MediaAsset[]>("/media", "دریافت رسانه‌های Composer ناموفق بود"),
-    fetchJson<Post[]>("/posts", "دریافت محتواهای Composer ناموفق بود"),
+    fetchOptionalJson<MediaAsset[]>("/media", []),
+    fetchOptionalJson<Post[]>("/posts", []),
     editingPostId
       ? fetchJson<Post>(`/posts/${editingPostId}`, "دریافت پست برای ویرایش ناموفق بود")
       : Promise.resolve(null)
@@ -62,9 +72,7 @@ export async function loadComposerResources(
 }
 
 export async function loadComposerMediaFile(assetId: number) {
-  const response = await fetch(`${apiUrl}/media/${assetId}/file`, {
-    headers: authHeaders()
-  });
+  const response = await request(`/media/${assetId}/file`);
   if (!response.ok) throw new Error("دریافت پیش‌نمایش رسانه ناموفق بود");
   return response.blob();
 }
@@ -73,18 +81,27 @@ export async function uploadComposerMedia(input: {
   file: File;
   folder?: string;
   tags?: string;
+  errorMessage?: string;
 }) {
   const formData = new FormData();
   formData.append("file", input.file);
   if (input.folder !== undefined) formData.append("folder", input.folder);
   if (input.tags !== undefined) formData.append("tags", input.tags);
 
-  const response = await fetch(`${apiUrl}/media`, {
+  const response = await request("/media", {
     method: "POST",
-    headers: authHeaders(),
     body: formData
   });
-  if (!response.ok) throw new Error("آپلود تصویر ناموفق بود");
+  if (!response.ok) {
+    const editedMedia = input.tags
+      ?.split(",")
+      .map((tag) => tag.trim())
+      .includes("edited");
+    throw new Error(
+      input.errorMessage
+      || (editedMedia ? "ذخیره نسخه ویرایش‌شده ناموفق بود" : "آپلود تصویر ناموفق بود")
+    );
+  }
   return response.json() as Promise<MediaAsset>;
 }
 
