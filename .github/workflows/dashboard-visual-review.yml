@@ -12,6 +12,7 @@ permissions:
 jobs:
   screenshots:
     # Dashboard-specific responsive acceptance against the real local stack.
+    # This test-only branch commit refreshes visual diagnostics for PR review.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
