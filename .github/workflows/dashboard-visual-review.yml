@@ -33,11 +33,9 @@ jobs:
       - name: Seed representative operational data
         run: docker compose exec -T backend python - < .github/scripts/seed-dashboard-review.py
 
-      - name: Install browser runtime
+      - name: Install browser client
         working-directory: frontend
-        run: |
-          npm install --no-save playwright@1.52.0
-          npx playwright install --with-deps chromium
+        run: npm install --no-save --legacy-peer-deps playwright-core@1.52.0
 
       - name: Capture responsive light and dark dashboards
         working-directory: frontend
@@ -46,7 +44,12 @@ jobs:
           source ../.env
           set +a
           mkdir -p visual-review
-          VISUAL_ADMIN_EMAIL="$ADMIN_EMAIL" VISUAL_ADMIN_PASSWORD="$ADMIN_PASSWORD" node ../.github/scripts/capture-dashboard-review.cjs
+          login_payload=$(jq -n --arg email "$ADMIN_EMAIL" --arg password "$ADMIN_PASSWORD" '{email:$email,password:$password}')
+          visual_session=$(curl -fsS -H 'Content-Type: application/json' -d "$login_payload" http://127.0.0.1:8000/auth/login | jq -r '.access_token')
+          browser_bin=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
+          test -n "$visual_session"
+          test -n "$browser_bin"
+          VISUAL_SESSION="$visual_session" BROWSER_BIN="$browser_bin" node ../.github/scripts/render-dashboard-review.cjs
 
       - name: Upload dashboard review screenshots
         uses: actions/upload-artifact@v4
