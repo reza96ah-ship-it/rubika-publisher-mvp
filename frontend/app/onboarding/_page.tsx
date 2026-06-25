@@ -141,105 +141,105 @@ export default function OnboardingPage() {
   const nextStep = steps.find((step) => !step.done && !step.optional) ?? steps.find((step) => !step.done) ?? steps[steps.length - 1];
 
   return (
-    <WorkspacePage className="space-y-4">
-      <section className="app-studio-panel overflow-hidden rounded-lg border-t-4 border-app-success">
-        <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="px-4 py-5 lg:px-5">
-            <p className="app-section-kicker text-[10px] font-black">راه‌اندازی هدایت‌شده</p>
-            <h1 className="mt-2 text-2xl font-black text-app-text">راه‌اندازی {productName}</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-7 text-app-muted">
-              این مسیر، ماژول‌های پراکنده را به یک سفر ساده تبدیل می‌کند: برند، کانال، کمپین، محتوا و زمان‌بندی.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button href={nextStep.href}>
-                <Rocket className="ml-2 h-4 w-4" aria-hidden="true" />
-                {nextStep.action}
-              </Button>
-              <Button href="/compose" variant="secondary">ساخت محتوا</Button>
-              <Button href="/calendar" variant="secondary">تقویم</Button>
-            </div>
-          </div>
-          <div className="dashboard-pulse border-t border-app-border p-4 lg:border-r lg:border-t-0">
-            <div className="flex items-center justify-between gap-3">
-              <span className="dashboard-flow-node flex h-11 w-11 items-center justify-center rounded-full border-2 border-app-success/30 bg-app-surface text-app-success">
-                {progress === 100 ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : <CircleDashed className="h-5 w-5" aria-hidden="true" />}
-              </span>
-              <StatusToken tone={progress === 100 ? "success" : "warning"}>{completedCount}/{steps.length} کامل</StatusToken>
-            </div>
-            <p className="mt-4 text-xs font-black text-app-muted">پیشرفت راه‌اندازی</p>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-app-surfaceMuted shadow-hairline">
-              <div className="app-progress h-full rounded-full bg-app-success transition-all" style={{ width: `${progress}%` }} />
-            </div>
-            <p className="mt-3 text-sm font-black text-app-text">{progress}% آماده برای انتشار حرفه‌ای</p>
-            <p className="mt-1 text-xs leading-5 text-app-muted">قدم بعدی: {nextStep.label}</p>
-          </div>
-        </div>
-      </section>
-
-      {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
-      {loading ? <LoadingPanel /> : null}
-
-      {!loading ? (
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <WorkspacePanel
-            title="مسیر حرفه‌ای‌سازی workspace"
-            description="هر ردیف یک تصمیم عملیاتی است؛ وضعیت‌ها، اقدام بعدی و ترتیب کار در یک مسیر واحد دیده می‌شود."
-            action={<StatusToken tone={progress === 100 ? "success" : "warning"}>{progress}% آماده</StatusToken>}
-            bodyClassName="p-0"
-          >
-            <div className="divide-y divide-app-border">
-              {steps.map((step, index) => <StepRow key={step.key} step={step} active={step.key === nextStep.key} index={index} />)}
-            </div>
-          </WorkspacePanel>
-
-          <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-            <section className="dashboard-live-monitor">
-              <div className="dashboard-monitor-head flex items-center justify-between gap-3 px-4 py-3">
-                <div>
-                  <p className="app-section-kicker text-[10px] font-black">روز اول</p>
-                  <h2 className="mt-1 text-sm font-black text-app-text">ترتیب پیشنهادی</h2>
+        <WorkspacePage className="space-y-4">
+          <section className="app-studio-panel overflow-hidden rounded-lg border-t-4 border-app-success">
+            <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="px-4 py-5 lg:px-5">
+                <p className="app-section-kicker text-[10px] font-black">راه‌اندازی هدایت‌شده</p>
+                <h1 className="mt-2 text-2xl font-black text-app-text">راه‌اندازی {productName}</h1>
+                <p className="mt-2 max-w-3xl text-sm leading-7 text-app-muted">
+                  این مسیر، ماژول‌های پراکنده را به یک سفر ساده تبدیل می‌کند: برند، کانال، کمپین، محتوا و زمان‌بندی.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button href={nextStep.href}>
+                    <Rocket className="ml-2 h-4 w-4" aria-hidden="true" />
+                    {nextStep.action}
+                  </Button>
+                  <Button href="/compose" variant="secondary">ساخت محتوا</Button>
+                  <Button href="/calendar" variant="secondary">تقویم</Button>
                 </div>
-                <Rocket className="app-status-pulse h-4 w-4 text-app-teal" aria-hidden="true" />
               </div>
-              <div className="divide-y divide-app-border/80">
-                {[
-                  "برند را کامل کنید تا خروجی‌ها هویت واقعی داشته باشند.",
-                  "کانال‌ها را بررسی کنید و محدودیت اینستاگرام معمولی را شفاف نگه دارید.",
-                  "یک کمپین ساده بسازید یا مستقیم اولین پست را آماده کنید.",
-                  "پست را زمان‌بندی کنید و از Calendar وضعیت نهایی را ببینید."
-                ].map((item, index) => (
-                  <div key={item} className="flex items-start gap-3 px-4 py-3">
-                    <span className="mt-0.5 text-[10px] font-black text-app-muted">0{index + 1}</span>
-                    <p className="text-xs font-bold leading-6 text-app-muted">{item}</p>
-                  </div>
-                ))}
+              <div className="dashboard-pulse border-t border-app-border p-4 lg:border-r lg:border-t-0">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="dashboard-flow-node flex h-11 w-11 items-center justify-center rounded-full border-2 border-app-success/30 bg-app-surface text-app-success">
+                    {progress === 100 ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : <CircleDashed className="h-5 w-5" aria-hidden="true" />}
+                  </span>
+                  <StatusToken tone={progress === 100 ? "success" : "warning"}>{completedCount}/{steps.length} کامل</StatusToken>
+                </div>
+                <p className="mt-4 text-xs font-black text-app-muted">پیشرفت راه‌اندازی</p>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-app-surfaceMuted shadow-hairline">
+                  <div className="app-progress h-full rounded-full bg-app-success transition-all" style={{ width: `${progress}%` }} />
+                </div>
+                <p className="mt-3 text-sm font-black text-app-text">{progress}% آماده برای انتشار حرفه‌ای</p>
+                <p className="mt-1 text-xs leading-5 text-app-muted">قدم بعدی: {nextStep.label}</p>
               </div>
-              <Button href={nextStep.href} variant="ghost" size="sm" className="w-full justify-between rounded-none border-t border-app-border bg-app-surfaceMuted/70 px-4 py-3 text-app-primary">
-                {nextStep.action}
-                <ArrowUpLeft className="h-3.5 w-3.5" aria-hidden="true" />
-              </Button>
-            </section>
+            </div>
+          </section>
 
-            <WorkspacePanel title="وضعیت فعلی" description="خلاصه داده‌های فعال workspace." bodyClassName="p-3">
-              <div className="grid gap-2">
-                {[
-                  { label: "برند", value: isStoreConfigured(store) ? "آماده" : "ناقص", healthy: isStoreConfigured(store) },
-                  { label: "کانال اصلی", value: isRubikaConnected(rubika) ? "آماده" : "نیازمند بررسی", healthy: isRubikaConnected(rubika) },
-                  { label: "کمپین‌ها", value: String(campaigns.length), healthy: campaigns.length > 0 },
-                  { label: "محتوا", value: String(posts.length), healthy: posts.length > 0 },
-                  { label: "زمان‌بندی", value: hasScheduledPost(posts) ? "فعال" : "خالی", healthy: hasScheduledPost(posts) }
-                ].map((signal) => (
-                  <div key={signal.label} className="flex items-center gap-3 rounded-md bg-app-surfaceMuted px-3 py-2">
-                    <span className={`h-2 w-2 shrink-0 rounded-full ${signal.healthy ? "bg-app-success" : "bg-app-warning"}`} />
-                    <span className="min-w-0 flex-1 text-xs font-bold text-app-muted">{signal.label}</span>
-                    <span className="truncate text-xs font-black text-app-text">{signal.value}</span>
+          {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
+          {loading ? <LoadingPanel /> : null}
+
+          {!loading ? (
+            <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <WorkspacePanel
+                title="مسیر حرفه‌ای‌سازی workspace"
+                description="هر ردیف یک تصمیم عملیاتی است؛ وضعیت‌ها، اقدام بعدی و ترتیب کار در یک مسیر واحد دیده می‌شود."
+                action={<StatusToken tone={progress === 100 ? "success" : "warning"}>{progress}% آماده</StatusToken>}
+                bodyClassName="p-0"
+              >
+                <div className="divide-y divide-app-border">
+                  {steps.map((step, index) => <StepRow key={step.key} step={step} active={step.key === nextStep.key} index={index} />)}
+                </div>
+              </WorkspacePanel>
+
+              <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+                <section className="dashboard-live-monitor">
+                  <div className="dashboard-monitor-head flex items-center justify-between gap-3 px-4 py-3">
+                    <div>
+                      <p className="app-section-kicker text-[10px] font-black">روز اول</p>
+                      <h2 className="mt-1 text-sm font-black text-app-text">ترتیب پیشنهادی</h2>
+                    </div>
+                    <Rocket className="app-status-pulse h-4 w-4 text-app-teal" aria-hidden="true" />
                   </div>
-                ))}
-              </div>
-            </WorkspacePanel>
-          </aside>
-        </section>
-      ) : null}
-    </WorkspacePage>
+                  <div className="divide-y divide-app-border/80">
+                    {[
+                      "برند را کامل کنید تا خروجی‌ها هویت واقعی داشته باشند.",
+                      "کانال‌ها را بررسی کنید و محدودیت اینستاگرام معمولی را شفاف نگه دارید.",
+                      "یک کمپین ساده بسازید یا مستقیم اولین پست را آماده کنید.",
+                      "پست را زمان‌بندی کنید و از Calendar وضعیت نهایی را ببینید."
+                    ].map((item, index) => (
+                      <div key={item} className="flex items-start gap-3 px-4 py-3">
+                        <span className="mt-0.5 text-[10px] font-black text-app-muted">0{index + 1}</span>
+                        <p className="text-xs font-bold leading-6 text-app-muted">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <Button href={nextStep.href} variant="ghost" size="sm" className="w-full justify-between rounded-none border-t border-app-border bg-app-surfaceMuted/70 px-4 py-3 text-app-primary">
+                    {nextStep.action}
+                    <ArrowUpLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Button>
+                </section>
+
+                <WorkspacePanel title="وضعیت فعلی" description="خلاصه داده‌های فعال workspace." bodyClassName="p-3">
+                  <div className="grid gap-2">
+                    {[
+                      { label: "برند", value: isStoreConfigured(store) ? "آماده" : "ناقص", healthy: isStoreConfigured(store) },
+                      { label: "کانال اصلی", value: isRubikaConnected(rubika) ? "آماده" : "نیازمند بررسی", healthy: isRubikaConnected(rubika) },
+                      { label: "کمپین‌ها", value: String(campaigns.length), healthy: campaigns.length > 0 },
+                      { label: "محتوا", value: String(posts.length), healthy: posts.length > 0 },
+                      { label: "زمان‌بندی", value: hasScheduledPost(posts) ? "فعال" : "خالی", healthy: hasScheduledPost(posts) }
+                    ].map((signal) => (
+                      <div key={signal.label} className="flex items-center gap-3 rounded-md bg-app-surfaceMuted px-3 py-2">
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${signal.healthy ? "bg-app-success" : "bg-app-warning"}`} />
+                        <span className="min-w-0 flex-1 text-xs font-bold text-app-muted">{signal.label}</span>
+                        <span className="truncate text-xs font-black text-app-text">{signal.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </WorkspacePanel>
+              </aside>
+            </section>
+          ) : null}
+        </WorkspacePage>
   );
 }

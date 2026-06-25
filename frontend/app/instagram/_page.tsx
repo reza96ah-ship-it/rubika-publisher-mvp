@@ -236,158 +236,158 @@ export default function InstagramPage() {
   }
 
   return (
-    <WorkspacePage className="space-y-4">
-      <section className="app-studio-panel rounded-lg px-4 py-3">
-        <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
-          <div>
-            <p className="text-[10px] font-black text-app-primary">تنظیمات کانال</p>
-            <h1 className="mt-1 text-xl font-black text-app-text">اتصال اینستاگرام</h1>
-            <p className="mt-1 text-xs leading-5 text-app-muted">اکانت معمولی با یادآوری دستی کار می‌کند؛ Creator و Business بعد از Meta OAuth انتشار مستقیم می‌گیرند.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <StatusToken tone={dirty ? "warning" : statusTone(status)}>{dirty ? "تغییرات ذخیره نشده" : statusLabel(status)}</StatusToken>
-            <StatusToken tone={readyCount === 3 ? "success" : "warning"}>{readyCount}/3 آماده</StatusToken>
-            <Button type="button" variant="secondary" size="sm" disabled={testing || dirty} onClick={testConnection}>
-              <RefreshCw className={`ml-2 h-4 w-4 ${testing ? "animate-spin" : ""}`} aria-hidden="true" />
-              تست اتصال
-            </Button>
-          </div>
-        </div>
-      </section>
+        <WorkspacePage className="space-y-4">
+          <section className="app-studio-panel rounded-lg px-4 py-3">
+            <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+              <div>
+                <p className="text-[10px] font-black text-app-primary">تنظیمات کانال</p>
+                <h1 className="mt-1 text-xl font-black text-app-text">اتصال اینستاگرام</h1>
+                <p className="mt-1 text-xs leading-5 text-app-muted">اکانت معمولی با یادآوری دستی کار می‌کند؛ Creator و Business بعد از Meta OAuth انتشار مستقیم می‌گیرند.</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <StatusToken tone={dirty ? "warning" : statusTone(status)}>{dirty ? "تغییرات ذخیره نشده" : statusLabel(status)}</StatusToken>
+                <StatusToken tone={readyCount === 3 ? "success" : "warning"}>{readyCount}/3 آماده</StatusToken>
+                <Button type="button" variant="secondary" size="sm" disabled={testing || dirty} onClick={testConnection}>
+                  <RefreshCw className={`ml-2 h-4 w-4 ${testing ? "animate-spin" : ""}`} aria-hidden="true" />
+                  تست اتصال
+                </Button>
+              </div>
+            </div>
+          </section>
 
-      {loading ? <LoadingPanel /> : null}
-      {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
-      {error ? <NoticeBanner tone="warning" title="وضعیت اتصال">{error}</NoticeBanner> : null}
+          {loading ? <LoadingPanel /> : null}
+          {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
+          {error ? <NoticeBanner tone="warning" title="وضعیت اتصال">{error}</NoticeBanner> : null}
 
-      {!loading ? (
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <WorkspacePanel title="پروفایل کانال" description="اطلاعاتی که در فاز OAuth برای اتصال به حساب حرفه‌ای Meta لازم می‌شود.">
-            <form onSubmit={saveSettings} className="grid gap-4">
-              <section className="grid gap-2 rounded-md border border-app-border bg-app-surfaceMuted p-3 sm:grid-cols-3">
-                {[
-                  { value: "personal", label: "معمولی", detail: "یادآوری دستی، بدون انتشار خودکار" },
-                  { value: "creator", label: "Creator", detail: "انتشار مستقیم بعد از Meta OAuth" },
-                  { value: "business", label: "Business", detail: "انتشار مستقیم بعد از اتصال Page" }
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setAccountType(option.value as "personal" | "creator" | "business")}
-                    className={`app-interactive rounded-md border px-3 py-3 text-right ${
-                      accountType === option.value ? "border-app-primary/30 bg-app-surface text-app-primary shadow-soft" : "border-app-border bg-app-surfaceMuted/70 text-app-text hover:bg-app-surface"
-                    }`}
-                    aria-pressed={accountType === option.value}
-                  >
-                    <span className="block text-sm font-black">{option.label}</span>
-                    <span className="mt-1 block text-xs leading-5 text-app-muted">{option.detail}</span>
-                  </button>
-                ))}
-              </section>
+          {!loading ? (
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+              <WorkspacePanel title="پروفایل کانال" description="اطلاعاتی که در فاز OAuth برای اتصال به حساب حرفه‌ای Meta لازم می‌شود.">
+                <form onSubmit={saveSettings} className="grid gap-4">
+                  <section className="grid gap-2 rounded-md border border-app-border bg-app-surfaceMuted p-3 sm:grid-cols-3">
+                    {[
+                      { value: "personal", label: "معمولی", detail: "یادآوری دستی، بدون انتشار خودکار" },
+                      { value: "creator", label: "Creator", detail: "انتشار مستقیم بعد از Meta OAuth" },
+                      { value: "business", label: "Business", detail: "انتشار مستقیم بعد از اتصال Page" }
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setAccountType(option.value as "personal" | "creator" | "business")}
+                        className={`app-interactive rounded-md border px-3 py-3 text-right ${
+                          accountType === option.value ? "border-app-primary/30 bg-app-surface text-app-primary shadow-soft" : "border-app-border bg-app-surfaceMuted/70 text-app-text hover:bg-app-surface"
+                        }`}
+                        aria-pressed={accountType === option.value}
+                      >
+                        <span className="block text-sm font-black">{option.label}</span>
+                        <span className="mt-1 block text-xs leading-5 text-app-muted">{option.detail}</span>
+                      </button>
+                    ))}
+                  </section>
 
-              <Field label="نام کاربری اینستاگرام" hint="مثلاً brand_shop">
-                <Input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="instagram_username" />
-              </Field>
-              {accountType !== "personal" ? (
-                <>
-                  <section className="rounded-md border border-app-border bg-app-surface/75 p-3 shadow-hairline">
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-app-primary/10 text-app-primary">
-                            <PlugZap className="h-4 w-4" aria-hidden="true" />
+                  <Field label="نام کاربری اینستاگرام" hint="مثلاً brand_shop">
+                    <Input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="instagram_username" />
+                  </Field>
+                  {accountType !== "personal" ? (
+                    <>
+                      <section className="rounded-md border border-app-border bg-app-surface/75 p-3 shadow-hairline">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-app-primary/10 text-app-primary">
+                                <PlugZap className="h-4 w-4" aria-hidden="true" />
+                              </span>
+                              <div>
+                                <p className="text-sm font-black text-app-text">اتصال امن Meta</p>
+                                <p className="mt-1 text-xs leading-5 text-app-muted">ورود رسمی Meta، دریافت Page token و شناسایی Instagram Professional Account.</p>
+                              </div>
+                            </div>
+                            {oauth?.configured ? (
+                              <p className="mt-3 text-[11px] leading-5 text-app-muted" dir="ltr">Redirect URI: {oauth.redirect_uri}</p>
+                            ) : (
+                              <p className="mt-3 text-[11px] leading-5 text-app-warning">برای فعال شدن، این envها لازم است: {oauth?.missing?.join(", ") || "META_APP_ID, META_APP_SECRET"}</p>
+                            )}
+                          </div>
+                          <Button type="button" variant={saved?.status === "connected" ? "secondary" : "primary"} size="sm" onClick={connectWithMeta} disabled={oauthLoading}>
+                            <ExternalLink className="ml-2 h-4 w-4" aria-hidden="true" />
+                            {oauthLoading ? "بررسی..." : saved?.status === "connected" ? "اتصال دوباره" : "اتصال با Meta"}
+                          </Button>
+                        </div>
+                      </section>
+                      <Field label="Instagram Professional Account ID" hint="بعد از OAuth به صورت خودکار قابل دریافت است.">
+                        <Input value={professionalAccountId} onChange={(event) => setProfessionalAccountId(event.target.value)} placeholder="1784..." dir="ltr" />
+                      </Field>
+                      <Field label="Facebook Page ID" hint="برای Graph API انتشار محتوا به Page linkage نیاز است.">
+                        <Input value={pageId} onChange={(event) => setPageId(event.target.value)} placeholder="page_id" dir="ltr" />
+                      </Field>
+                      <Field label="Meta Page Access Token" hint={saved?.has_access_token ? `توکن ذخیره شده: ${saved.access_token_masked}` : "فقط برای توسعه؛ مسیر اصلی از دکمه اتصال امن Meta است."}>
+                        <Input value={accessToken} onChange={(event) => setAccessToken(event.target.value)} placeholder={saved?.has_access_token ? "برای تغییر، توکن جدید را وارد کنید" : "EAAB..."} dir="ltr" type="password" autoComplete="off" />
+                      </Field>
+                      <Field label="مجوزهای موردنیاز" hint="در فاز OAuth به scopeهای Meta تبدیل می‌شود.">
+                        <Textarea value={permissions} onChange={(event) => setPermissions(event.target.value)} className="min-h-24" dir="ltr" />
+                      </Field>
+                    </>
+                  ) : (
+                    <NoticeBanner tone="info" title="حالت اکانت معمولی">
+                      این حالت پست را خودکار منتشر نمی‌کند. در زمان مقرر، پست به وضعیت آماده انتشار دستی می‌رسد تا کپشن را کپی کنید و در Instagram منتشر کنید.
+                    </NoticeBanner>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={saving}>
+                      <Save className="ml-2 h-4 w-4" aria-hidden="true" />
+                      {saving ? "در حال ذخیره" : "ذخیره تنظیمات"}
+                    </Button>
+                    <Button href="/compose" variant="secondary">رفتن به composer</Button>
+                  </div>
+                </form>
+              </WorkspacePanel>
+
+              <InstagramAutomationPanel accountType={accountType} channelStatus={saved?.status ?? status} />
+
+              <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+                <WorkspacePanel title={accountType === "personal" ? "مسیر اکانت معمولی" : "مسیر اتصال واقعی"} description={accountType === "personal" ? "بدون پسورد و بدون اتوماسیون ناامن؛ فقط یادآوری و آماده‌سازی دستی." : "این فاز عمداً توکن جعلی ذخیره نمی‌کند."} action={<StatusToken tone={accountType === "personal" ? "success" : "warning"}>{accountType === "personal" ? "Reminder mode" : "OAuth pending"}</StatusToken>}>
+                  <div className="space-y-3">
+                    {readiness.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <div key={item.label} className="flex items-start gap-3 rounded-md border border-app-border bg-app-surface p-3">
+                          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${item.done ? "bg-app-success/10 text-app-success" : "bg-app-warning/10 text-app-warning"}`}>
+                            {item.done ? <BadgeCheck className="h-4 w-4" aria-hidden="true" /> : <Icon className="h-4 w-4" aria-hidden="true" />}
                           </span>
                           <div>
-                            <p className="text-sm font-black text-app-text">اتصال امن Meta</p>
-                            <p className="mt-1 text-xs leading-5 text-app-muted">ورود رسمی Meta، دریافت Page token و شناسایی Instagram Professional Account.</p>
+                            <p className="text-sm font-black text-app-text">{item.label}</p>
+                            <p className="mt-1 text-xs leading-5 text-app-muted">{item.detail}</p>
                           </div>
                         </div>
-                        {oauth?.configured ? (
-                          <p className="mt-3 text-[11px] leading-5 text-app-muted" dir="ltr">Redirect URI: {oauth.redirect_uri}</p>
-                        ) : (
-                          <p className="mt-3 text-[11px] leading-5 text-app-warning">برای فعال شدن، این envها لازم است: {oauth?.missing?.join(", ") || "META_APP_ID, META_APP_SECRET"}</p>
-                        )}
-                      </div>
-                      <Button type="button" variant={saved?.status === "connected" ? "secondary" : "primary"} size="sm" onClick={connectWithMeta} disabled={oauthLoading}>
-                        <ExternalLink className="ml-2 h-4 w-4" aria-hidden="true" />
-                        {oauthLoading ? "بررسی..." : saved?.status === "connected" ? "اتصال دوباره" : "اتصال با Meta"}
-                      </Button>
-                    </div>
-                  </section>
-                  <Field label="Instagram Professional Account ID" hint="بعد از OAuth به صورت خودکار قابل دریافت است.">
-                    <Input value={professionalAccountId} onChange={(event) => setProfessionalAccountId(event.target.value)} placeholder="1784..." dir="ltr" />
-                  </Field>
-                  <Field label="Facebook Page ID" hint="برای Graph API انتشار محتوا به Page linkage نیاز است.">
-                    <Input value={pageId} onChange={(event) => setPageId(event.target.value)} placeholder="page_id" dir="ltr" />
-                  </Field>
-                  <Field label="Meta Page Access Token" hint={saved?.has_access_token ? `توکن ذخیره شده: ${saved.access_token_masked}` : "فقط برای توسعه؛ مسیر اصلی از دکمه اتصال امن Meta است."}>
-                    <Input value={accessToken} onChange={(event) => setAccessToken(event.target.value)} placeholder={saved?.has_access_token ? "برای تغییر، توکن جدید را وارد کنید" : "EAAB..."} dir="ltr" type="password" autoComplete="off" />
-                  </Field>
-                  <Field label="مجوزهای موردنیاز" hint="در فاز OAuth به scopeهای Meta تبدیل می‌شود.">
-                    <Textarea value={permissions} onChange={(event) => setPermissions(event.target.value)} className="min-h-24" dir="ltr" />
-                  </Field>
-                </>
-              ) : (
-                <NoticeBanner tone="info" title="حالت اکانت معمولی">
-                  این حالت پست را خودکار منتشر نمی‌کند. در زمان مقرر، پست به وضعیت آماده انتشار دستی می‌رسد تا کپشن را کپی کنید و در Instagram منتشر کنید.
+                      );
+                    })}
+                  </div>
+                </WorkspacePanel>
+
+                <WorkspacePanel title="قرارداد انتشار" description={accountType === "personal" ? "اکانت معمولی فقط یادآوری دستی می‌گیرد." : "قبل از اتصال واقعی، انتشار مستقیم اینستاگرام مسدود می‌ماند."}>
+                  <DetailGrid
+                    items={[
+                      { label: "وضعیت", value: statusLabel(status), hint: "وضعیت آماده‌سازی کانال" },
+                      { label: "آخرین تست", value: formatDateTime(saved?.last_test_at), hint: "تست فعلی فقط OAuth pending را گزارش می‌کند" },
+                      { label: "نوع حساب", value: accountType === "personal" ? "معمولی" : accountType === "creator" ? "Creator" : "Business", hint: accountType === "personal" ? "یادآوری دستی" : "انتشار مستقیم بعد از OAuth" },
+                      { label: "پشتیبانی فعلی", value: accountType === "personal" ? "زمان‌بندی یادآوری" : "پیش‌نویس و انتخاب کانال", hint: accountType === "personal" ? "بدون auto-publish" : "زمان‌بندی مستقیم بعد از OAuth" },
+                      { label: "مسیر بعدی", value: accountType === "personal" ? "Push reminder + copy flow" : "Meta OAuth + publisher adapter", hint: accountType === "personal" ? "تجربه دستی حرفه‌ای" : "Graph API content publishing" }
+                    ]}
+                  />
+                  <NoticeBanner tone="info" title="گام بعدی فنی">
+                    {accountType === "personal" ? "برای اکانت معمولی باید push reminder، copy caption و open Instagram flow را کامل کنیم." : "باید flow ورود Meta، ذخیره refresh token، بررسی مجوزها و adapter انتشار Instagram اضافه شود."}
+                  </NoticeBanner>
+                  <Button href="/queue" variant="secondary" className="mt-4 w-full">
+                    <Route className="ml-2 h-4 w-4" aria-hidden="true" />
+                    مشاهده صف انتشار
+                  </Button>
+                </WorkspacePanel>
+
+                <NoticeBanner tone={accountType === "personal" ? "success" : "warning"} title="توجه">
+                  {accountType === "personal" ? "اکانت معمولی می‌تواند زمان‌بندی شود، اما انتشار نهایی دستی است." : "انتخاب اینستاگرام در composer برای آماده‌سازی محتوا فعال است، اما زمان‌بندی مستقیم آن تا اتصال واقعی Meta مسدود می‌شود."}
                 </NoticeBanner>
-              )}
-              <div className="flex flex-wrap gap-2">
-                <Button type="submit" disabled={saving}>
-                  <Save className="ml-2 h-4 w-4" aria-hidden="true" />
-                  {saving ? "در حال ذخیره" : "ذخیره تنظیمات"}
-                </Button>
-                <Button href="/compose" variant="secondary">رفتن به composer</Button>
-              </div>
-            </form>
-          </WorkspacePanel>
-
-          <InstagramAutomationPanel accountType={accountType} channelStatus={saved?.status ?? status} />
-
-          <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-            <WorkspacePanel title={accountType === "personal" ? "مسیر اکانت معمولی" : "مسیر اتصال واقعی"} description={accountType === "personal" ? "بدون پسورد و بدون اتوماسیون ناامن؛ فقط یادآوری و آماده‌سازی دستی." : "این فاز عمداً توکن جعلی ذخیره نمی‌کند."} action={<StatusToken tone={accountType === "personal" ? "success" : "warning"}>{accountType === "personal" ? "Reminder mode" : "OAuth pending"}</StatusToken>}>
-              <div className="space-y-3">
-                {readiness.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div key={item.label} className="flex items-start gap-3 rounded-md border border-app-border bg-app-surface p-3">
-                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${item.done ? "bg-app-success/10 text-app-success" : "bg-app-warning/10 text-app-warning"}`}>
-                        {item.done ? <BadgeCheck className="h-4 w-4" aria-hidden="true" /> : <Icon className="h-4 w-4" aria-hidden="true" />}
-                      </span>
-                      <div>
-                        <p className="text-sm font-black text-app-text">{item.label}</p>
-                        <p className="mt-1 text-xs leading-5 text-app-muted">{item.detail}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </WorkspacePanel>
-
-            <WorkspacePanel title="قرارداد انتشار" description={accountType === "personal" ? "اکانت معمولی فقط یادآوری دستی می‌گیرد." : "قبل از اتصال واقعی، انتشار مستقیم اینستاگرام مسدود می‌ماند."}>
-              <DetailGrid
-                items={[
-                  { label: "وضعیت", value: statusLabel(status), hint: "وضعیت آماده‌سازی کانال" },
-                  { label: "آخرین تست", value: formatDateTime(saved?.last_test_at), hint: "تست فعلی فقط OAuth pending را گزارش می‌کند" },
-                  { label: "نوع حساب", value: accountType === "personal" ? "معمولی" : accountType === "creator" ? "Creator" : "Business", hint: accountType === "personal" ? "یادآوری دستی" : "انتشار مستقیم بعد از OAuth" },
-                  { label: "پشتیبانی فعلی", value: accountType === "personal" ? "زمان‌بندی یادآوری" : "پیش‌نویس و انتخاب کانال", hint: accountType === "personal" ? "بدون auto-publish" : "زمان‌بندی مستقیم بعد از OAuth" },
-                  { label: "مسیر بعدی", value: accountType === "personal" ? "Push reminder + copy flow" : "Meta OAuth + publisher adapter", hint: accountType === "personal" ? "تجربه دستی حرفه‌ای" : "Graph API content publishing" }
-                ]}
-              />
-              <NoticeBanner tone="info" title="گام بعدی فنی">
-                {accountType === "personal" ? "برای اکانت معمولی باید push reminder، copy caption و open Instagram flow را کامل کنیم." : "باید flow ورود Meta، ذخیره refresh token، بررسی مجوزها و adapter انتشار Instagram اضافه شود."}
-              </NoticeBanner>
-              <Button href="/queue" variant="secondary" className="mt-4 w-full">
-                <Route className="ml-2 h-4 w-4" aria-hidden="true" />
-                مشاهده صف انتشار
-              </Button>
-            </WorkspacePanel>
-
-            <NoticeBanner tone={accountType === "personal" ? "success" : "warning"} title="توجه">
-              {accountType === "personal" ? "اکانت معمولی می‌تواند زمان‌بندی شود، اما انتشار نهایی دستی است." : "انتخاب اینستاگرام در composer برای آماده‌سازی محتوا فعال است، اما زمان‌بندی مستقیم آن تا اتصال واقعی Meta مسدود می‌شود."}
-            </NoticeBanner>
-          </aside>
-        </div>
-      ) : null}
-    </WorkspacePage>
+              </aside>
+            </div>
+          ) : null}
+        </WorkspacePage>
   );
 }

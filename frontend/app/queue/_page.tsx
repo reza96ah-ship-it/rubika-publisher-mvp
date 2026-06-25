@@ -380,321 +380,321 @@ export default function QueuePage() {
   }
 
   return (
-    <WorkspacePage className="space-y-4">
-      <nav className="flex items-center gap-1 rounded-lg border border-app-border bg-app-surface/70 px-1.5 py-1.5 shadow-hairline backdrop-blur-sm" aria-label="زیرمنوی برنامه‌ریز">
-        <Link href="/calendar" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-bold text-app-muted hover:bg-app-surface hover:text-app-text hover:shadow-hairline transition">
-          <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
-          تقویم انتشار
-        </Link>
-        <Link href="/queue" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-black bg-app-surface text-app-primary shadow-hairline border border-app-border/80 transition">
-          <ListChecks className="h-3.5 w-3.5" aria-hidden="true" />
-          صف انتشار
-        </Link>
-      </nav>
+        <WorkspacePage className="space-y-4">
+          <nav className="flex items-center gap-1 rounded-lg border border-app-border bg-app-surface/70 px-1.5 py-1.5 shadow-hairline backdrop-blur-sm" aria-label="زیرمنوی برنامه‌ریز">
+            <Link href="/calendar" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-bold text-app-muted hover:bg-app-surface hover:text-app-text hover:shadow-hairline transition">
+              <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
+              تقویم انتشار
+            </Link>
+            <Link href="/queue" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-black bg-app-surface text-app-primary shadow-hairline border border-app-border/80 transition">
+              <ListChecks className="h-3.5 w-3.5" aria-hidden="true" />
+              صف انتشار
+            </Link>
+          </nav>
 
-      <PublishingWorkspaceHeader
-        activeTab="queue"
-        title="صف انتشار"
-        description="گلوگاه‌های انتشار، زمان‌بندی و بازیابی خطا را در یک نمای عملیاتی کنترل کنید."
-        counts={{
-          queue: posts.length
-        }}
-        meta={(
-          <>
-            <StatusToken tone="primary">{posts.length} پست در صف</StatusToken>
-            <StatusToken tone={counts.failed ? "alert" : "success"}>{counts.failed ? `${counts.failed} خطای فعال` : "بدون خطای فعال"}</StatusToken>
-            <StatusToken tone={counts.blockedByReview ? "warning" : "success"}>{counts.blockedByReview ? `${counts.blockedByReview} منتظر تایید` : "بازبینی پاک"}</StatusToken>
-            <StatusToken tone={readyChannelCount ? "success" : "warning"}>{readyChannelCount}/{channelAccounts.length || 2} کانال آماده</StatusToken>
-            {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
-          </>
-        )}
-        action={(
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="secondary" size="sm" disabled={refreshing} onClick={() => loadQueue(true)}>
-              <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
-              به‌روزرسانی
-            </Button>
-            {counts.failed ? (
-              <Button type="button" size="sm" disabled={retryingAll || posts.some((post) => post.status === "failed" && approvalBlocksPublishing(post))} onClick={retryAllFailed}>
-                <RotateCcw className={`ml-2 h-4 w-4 ${retryingAll ? "animate-spin" : ""}`} aria-hidden="true" />
-                بازیابی همه خطاها
-              </Button>
-            ) : null}
-          </div>
-        )}
-      />
-
-      {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
-      {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
-      {posts.some((post) => post.status === "failed" && approvalBlocksPublishing(post)) ? (
-        <NoticeBanner tone="warning" title="بازیابی گروهی محدود شده است">
-          بعضی پست‌های ناموفق هنوز تایید بازبینی ندارند. آن‌ها را از لیست محتوا تایید کنید یا جداگانه بررسی کنید.
-        </NoticeBanner>
-      ) : null}
-      {!readyChannelCount ? (
-        <NoticeBanner tone="warning" title="هیچ کانال آماده‌ای فعال نیست">
-          برای زمان‌بندی و بازیابی صف، ابتدا وضعیت روبیکا یا اینستاگرام را در مرکز کانال‌ها کامل کنید.
-        </NoticeBanner>
-      ) : null}
-
-      <section className="grid overflow-hidden rounded-md border border-app-border bg-app-surface sm:grid-cols-2 xl:grid-cols-4">
-        {queueSummary.map((item) => {
-          const Icon = item.icon;
-          const active = statusFilter === item.status;
-          return (
-            <button
-              key={item.status}
-              type="button"
-              onClick={() => setStatusFilter(active ? "all" : item.status)}
-              className={`flex min-w-0 items-start gap-3 border-b border-app-border p-3 text-right transition hover:bg-app-surfaceMuted sm:border-l sm:last:border-l-0 xl:border-b-0 ${
-                active ? "bg-app-primary/10 ring-1 ring-inset ring-app-primary/20" : ""
-              }`}
-            >
-              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted ${item.tone}`}>
-                <Icon className="h-4 w-4" aria-hidden="true" />
-              </span>
-              <span className="min-w-0">
-                <span className="flex items-baseline gap-2">
-                  <span className={`text-lg font-black ${item.tone}`}>{item.count}</span>
-                  <span className="truncate text-xs font-bold text-app-text">{item.label}</span>
-                </span>
-                <span className="mt-1 block truncate text-[11px] text-app-muted">{item.detail}</span>
-              </span>
-            </button>
-          );
-        })}
-      </section>
-
-      <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <WorkspacePanel
-          title="عملیات صف"
-          description="پست‌های صف را اسکن کنید و اقدام‌های اصلی را از بازبین کناری انجام دهید."
-          bodyClassName="p-4"
-          action={<Button href="/logs" variant="secondary" size="sm">سلامت انتشار</Button>}
-        >
-          <DataToolbar
+          <PublishingWorkspaceHeader
+            activeTab="queue"
+            title="صف انتشار"
+            description="گلوگاه‌های انتشار، زمان‌بندی و بازیابی خطا را در یک نمای عملیاتی کنترل کنید."
+            counts={{
+              queue: posts.length
+            }}
             meta={(
               <>
-                <StatusToken tone="neutral">{filteredPosts.length} نتیجه</StatusToken>
-                <StatusToken tone="neutral">{posts.length} کل صف</StatusToken>
+                <StatusToken tone="primary">{posts.length} پست در صف</StatusToken>
+                <StatusToken tone={counts.failed ? "alert" : "success"}>{counts.failed ? `${counts.failed} خطای فعال` : "بدون خطای فعال"}</StatusToken>
+                <StatusToken tone={counts.blockedByReview ? "warning" : "success"}>{counts.blockedByReview ? `${counts.blockedByReview} منتظر تایید` : "بازبینی پاک"}</StatusToken>
+                <StatusToken tone={readyChannelCount ? "success" : "warning"}>{readyChannelCount}/{channelAccounts.length || 2} کانال آماده</StatusToken>
+                {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
               </>
             )}
-          >
-            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_150px_180px] xl:items-center">
-              <DataSearchField
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="جست‌وجوی عنوان، کپشن، کمپین، یادداشت یا خطا"
-              />
-              <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
-                <ListChecks className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as QueueFilter)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
-                  {queueFilters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label} · {filterCount(filter.value)}</option>)}
-                </select>
-              </label>
-              <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
-                <ListChecks className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
-                  <option value="all">همه کمپین‌ها</option>
-                  {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
-                </select>
-              </label>
-            </div>
-          </DataToolbar>
-
-          <div className="mt-3 max-h-[66vh] overflow-y-auto rounded-lg bg-app-surfaceMuted/50 p-2 shadow-inner sm:mt-4">
-            {loading ? <LoadingRows /> : null}
-            {!loading && filteredPosts.length === 0 ? (
-              <EmptyState
-                icon={<ListChecks className="h-5 w-5" aria-hidden="true" />}
-                title="برای این فیلتر پستی در صف نیست."
-                description="از استودیو تولید یک پست آماده یا زمان‌بندی‌شده بسازید."
-                action={<Button href="/compose">ایجاد پست جدید</Button>}
-              />
-            ) : null}
-            {!loading && filteredPosts.length > 0 ? (
-              <div className="grid gap-2.5">
-                {filteredPosts.map((post) => {
-                  const previewUrl = previewUrlForPost(post);
-                  const media = primaryMediaForPost(post);
-                  const campaignKey = campaignKeyForPost(post);
-                  const selected = selectedPost?.id === post.id;
-                  return (
-                    <ContentOperationCard
-                      key={post.id}
-                      action={(
-                        <Button type="button" variant={selected ? "primary" : "secondary"} size="sm" onClick={() => setSelectedPostId(post.id)}>
-                          بازبینی
-                        </Button>
-                      )}
-                      approval={<ApprovalBadge status={post.approval_status} compact />}
-                      campaignColor={campaignColorForPost(post, campaigns)}
-                      campaignLabel={campaignKey !== "none" ? campaignLabelForPost(post, campaigns) : "بدون کمپین"}
-                      caption={post.caption || "بدون کپشن"}
-                      error={post.last_error}
-                      lifecycle={(
-                        <>
-                          <StatusBadge status={post.status} />
-                          <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
-                        </>
-                      )}
-                      mediaLabel={media ? "رسانه آماده" : "بدون رسانه"}
-                      meta={(
-                        <>
-                          <p>زمان‌بندی: {formatDateTime(post.scheduled_at)}</p>
-                          <p>تلاش انتشار: {post.attempt_count}</p>
-                          <p>آخرین تغییر: {formatDateTime(post.updated_at)}</p>
-                        </>
-                      )}
-                      onSelect={() => setSelectedPostId(post.id)}
-                      platform={post.platform}
-                      previewAlt={media?.original_filename ?? post.title}
-                      previewUrl={previewUrl}
-                      selected={selected}
-                      title={post.title}
-                    />
-                  );
-                })}
+            action={(
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" size="sm" disabled={refreshing} onClick={() => loadQueue(true)}>
+                  <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
+                  به‌روزرسانی
+                </Button>
+                {counts.failed ? (
+                  <Button type="button" size="sm" disabled={retryingAll || posts.some((post) => post.status === "failed" && approvalBlocksPublishing(post))} onClick={retryAllFailed}>
+                    <RotateCcw className={`ml-2 h-4 w-4 ${retryingAll ? "animate-spin" : ""}`} aria-hidden="true" />
+                    بازیابی همه خطاها
+                  </Button>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-        </WorkspacePanel>
+            )}
+          />
 
-        <aside className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
-          <div className="space-y-4">
-            <WorkspacePanel title="بازبین صف" description="جزئیات و اقدام‌های پست انتخاب‌شده." bodyClassName="max-h-[68vh] overflow-y-auto p-3 sm:p-4 lg:max-h-none">
-              {selectedPost ? (
-                <div>
-                  <div className="mb-4 overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
-                    {previewUrlForPost(selectedPost) ? (
-                      <img src={previewUrlForPost(selectedPost)} alt={primaryMediaForPost(selectedPost)?.original_filename ?? selectedPost.title} className="aspect-video w-full object-cover" />
-                    ) : (
-                      <div className="flex aspect-video flex-col items-center justify-center gap-2 text-xs text-app-muted">
-                        <ImageIcon className="h-6 w-6 text-slate-400" aria-hidden="true" />
-                        این پست بدون رسانه وارد صف شده است
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge status={selectedPost.status} />
-                    <ChannelBadges platform={selectedPost.platform} compact />
-                    <ApprovalBadge status={selectedPost.approval_status} />
-                    <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
-                    {primaryMediaForPost(selectedPost) ? <StatusToken tone="success">رسانه آماده</StatusToken> : <StatusToken tone="warning">نیازمند رسانه</StatusToken>}
-                  </div>
-                  <h2 className="mt-3 font-black text-app-text">{selectedPost.title}</h2>
-                  <p className="mt-2 max-h-44 overflow-auto whitespace-pre-wrap rounded-md border border-app-border bg-slate-50 p-3 text-sm leading-7 text-app-muted">
-                    {selectedPost.caption || "بدون کپشن"}
-                  </p>
-                  <div className="mt-4">
-                    <DetailGrid
-                      items={[
-                        { label: "زمان‌بندی", value: formatDateTime(selectedPost.scheduled_at) },
-                        { label: "کمپین", value: campaignLabelForPost(selectedPost, campaigns) },
-                        { label: "بازبینی", value: approvalConfig(selectedPost.approval_status).label },
-                        { label: "تلاش انتشار", value: selectedPost.attempt_count },
-                        { label: "آخرین تغییر", value: formatDateTime(selectedPost.updated_at) },
-                        { label: "شناسه پست", value: `#${selectedPost.id}` },
-                        ...postChannelReadiness(selectedPost)
-                      ]}
-                    />
-                  </div>
-                  <div className="mt-4">
-                    <p className="mb-3 text-xs font-black text-app-text">مسیر صف</p>
-                    <Timeline items={[
-                      {
-                        title: "ساخت محتوا",
-                        description: "رکورد پست در فضای کاری ایجاد شده است.",
-                        meta: formatDateTime(selectedPost.created_at),
-                        tone: "primary"
-                      },
-                      {
-                        title: selectedPost.scheduled_at ? "ورود به برنامه انتشار" : "آماده‌سازی برای صف",
-                        description: selectedPost.scheduled_at ? "زمان انتشار برای این پست ثبت شده است." : "پست منتظر تصمیم بعدی مدیر فضای کاری است.",
-                        meta: selectedPost.scheduled_at ? formatDateTime(selectedPost.scheduled_at) : undefined,
-                        tone: selectedPost.scheduled_at ? "warning" : "neutral"
-                      },
-                      {
-                        title: selectedPost.status === "failed" ? "نیازمند بازیابی" : selectedPost.status === "publishing" ? "در اختیار worker" : "وضعیت فعلی صف",
-                        description: selectedPost.last_error || "وضعیت صف برای این پست پایدار است.",
-                        meta: `آخرین تغییر: ${formatDateTime(selectedPost.updated_at)}`,
-                        tone: selectedPost.status === "failed" ? "alert" : selectedPost.status === "publishing" ? "primary" : "success"
-                      }
-                    ]} />
-                  </div>
-                  {selectedPost.last_error ? (
-                    <div className="mt-4 space-y-3">
-                      <NoticeBanner tone="alert" title="آخرین خطا">
-                        {selectedPost.last_error}
-                      </NoticeBanner>
-                      <NoticeBanner tone="info" title="پیشنهاد بازیابی">
-                        {recoveryGuidance(selectedPost.last_error)}
-                      </NoticeBanner>
-                    </div>
-                  ) : null}
-                  {approvalBlocksPublishing(selectedPost) ? (
-                    <NoticeBanner tone="warning" title="انتشار مسدود است">
-                      {approvalConfig(selectedPost.approval_status).description}
-                    </NoticeBanner>
-                  ) : null}
-                  {selectedPost.status === "manual_ready" ? (
-                    <div className="mt-4 space-y-3">
-                      <NoticeBanner tone="info" title="آماده انتشار دستی اینستاگرام">
-                        کپشن را کپی کنید، تصویر را در Instagram انتخاب کنید و پس از انتشار، این پست را به عنوان منتشرشده ثبت کنید.
-                      </NoticeBanner>
-                      <div className="grid gap-2">
-                        <Button type="button" onClick={() => copyManualCaption(selectedPost)}>
-                          <Clipboard className="ml-2 h-4 w-4" aria-hidden="true" />
-                          کپی کپشن
-                        </Button>
-                        <Button type="button" variant="secondary" onClick={openInstagram}>
-                          <ExternalLink className="ml-2 h-4 w-4" aria-hidden="true" />
-                          باز کردن Instagram
-                        </Button>
-                        <Button type="button" variant="secondary" disabled={markingManualPostId === selectedPost.id} onClick={() => markManualPublished(selectedPost)}>
-                          <CheckCircle2 className="ml-2 h-4 w-4" aria-hidden="true" />
-                          {markingManualPostId === selectedPost.id ? "در حال ثبت" : "ثبت به عنوان منتشرشده"}
-                        </Button>
-                      </div>
-                    </div>
-                  ) : null}
-                  <div className="mt-4 grid gap-2">
-                    <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary">باز کردن پست</Button>
-                    {selectedPost.status === "failed" ? (
-                      <Button type="button" disabled={retryingPostId === selectedPost.id || approvalBlocksPublishing(selectedPost)} onClick={() => retryPost(selectedPost)}>
-                        <RotateCcw className={`ml-2 h-4 w-4 ${retryingPostId === selectedPost.id ? "animate-spin" : ""}`} aria-hidden="true" />
-                        {retryingPostId === selectedPost.id ? "در حال ورود به صف" : "تلاش مجدد انتشار"}
-                      </Button>
-                    ) : null}
-                    {["ready", "scheduled", "manual_ready"].includes(selectedPost.status) ? (
-                      <Button type="button" variant="ghost" onClick={() => cancelPost(selectedPost)}>
-                        لغو از صف
-                      </Button>
-                    ) : null}
-                    <Button href="/logs" variant="secondary">مشاهده لاگ انتشار</Button>
-                  </div>
+          {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
+          {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
+          {posts.some((post) => post.status === "failed" && approvalBlocksPublishing(post)) ? (
+            <NoticeBanner tone="warning" title="بازیابی گروهی محدود شده است">
+              بعضی پست‌های ناموفق هنوز تایید بازبینی ندارند. آن‌ها را از لیست محتوا تایید کنید یا جداگانه بررسی کنید.
+            </NoticeBanner>
+          ) : null}
+          {!readyChannelCount ? (
+            <NoticeBanner tone="warning" title="هیچ کانال آماده‌ای فعال نیست">
+              برای زمان‌بندی و بازیابی صف، ابتدا وضعیت روبیکا یا اینستاگرام را در مرکز کانال‌ها کامل کنید.
+            </NoticeBanner>
+          ) : null}
+
+          <section className="grid overflow-hidden rounded-md border border-app-border bg-app-surface sm:grid-cols-2 xl:grid-cols-4">
+            {queueSummary.map((item) => {
+              const Icon = item.icon;
+              const active = statusFilter === item.status;
+              return (
+                <button
+                  key={item.status}
+                  type="button"
+                  onClick={() => setStatusFilter(active ? "all" : item.status)}
+                  className={`flex min-w-0 items-start gap-3 border-b border-app-border p-3 text-right transition hover:bg-app-surfaceMuted sm:border-l sm:last:border-l-0 xl:border-b-0 ${
+                    active ? "bg-app-primary/10 ring-1 ring-inset ring-app-primary/20" : ""
+                  }`}
+                >
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted ${item.tone}`}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="flex items-baseline gap-2">
+                      <span className={`text-lg font-black ${item.tone}`}>{item.count}</span>
+                      <span className="truncate text-xs font-bold text-app-text">{item.label}</span>
+                    </span>
+                    <span className="mt-1 block truncate text-[11px] text-app-muted">{item.detail}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </section>
+
+          <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <WorkspacePanel
+              title="عملیات صف"
+              description="پست‌های صف را اسکن کنید و اقدام‌های اصلی را از بازبین کناری انجام دهید."
+              bodyClassName="p-4"
+              action={<Button href="/logs" variant="secondary" size="sm">سلامت انتشار</Button>}
+            >
+              <DataToolbar
+                meta={(
+                  <>
+                    <StatusToken tone="neutral">{filteredPosts.length} نتیجه</StatusToken>
+                    <StatusToken tone="neutral">{posts.length} کل صف</StatusToken>
+                  </>
+                )}
+              >
+                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_150px_180px] xl:items-center">
+                  <DataSearchField
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder="جست‌وجوی عنوان، کپشن، کمپین، یادداشت یا خطا"
+                  />
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
+                    <ListChecks className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as QueueFilter)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                      {queueFilters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label} · {filterCount(filter.value)}</option>)}
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
+                    <ListChecks className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                      <option value="all">همه کمپین‌ها</option>
+                      {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
+                    </select>
+                  </label>
                 </div>
-              ) : (
-                <EmptyState
-                  icon={<XCircle className="h-5 w-5" aria-hidden="true" />}
-                  title="پستی برای نمایش انتخاب نشده است."
-                  action={<Button href="/compose">زمان‌بندی پست</Button>}
-                />
-              )}
+              </DataToolbar>
+
+              <div className="mt-3 max-h-[66vh] overflow-y-auto rounded-lg bg-app-surfaceMuted/50 p-2 shadow-inner sm:mt-4">
+                {loading ? <LoadingRows /> : null}
+                {!loading && filteredPosts.length === 0 ? (
+                  <EmptyState
+                    icon={<ListChecks className="h-5 w-5" aria-hidden="true" />}
+                    title="برای این فیلتر پستی در صف نیست."
+                    description="از استودیو تولید یک پست آماده یا زمان‌بندی‌شده بسازید."
+                    action={<Button href="/compose">ایجاد پست جدید</Button>}
+                  />
+                ) : null}
+                {!loading && filteredPosts.length > 0 ? (
+                  <div className="grid gap-2.5">
+                    {filteredPosts.map((post) => {
+                      const previewUrl = previewUrlForPost(post);
+                      const media = primaryMediaForPost(post);
+                      const campaignKey = campaignKeyForPost(post);
+                      const selected = selectedPost?.id === post.id;
+                      return (
+                        <ContentOperationCard
+                          key={post.id}
+                          action={(
+                            <Button type="button" variant={selected ? "primary" : "secondary"} size="sm" onClick={() => setSelectedPostId(post.id)}>
+                              بازبینی
+                            </Button>
+                          )}
+                          approval={<ApprovalBadge status={post.approval_status} compact />}
+                          campaignColor={campaignColorForPost(post, campaigns)}
+                          campaignLabel={campaignKey !== "none" ? campaignLabelForPost(post, campaigns) : "بدون کمپین"}
+                          caption={post.caption || "بدون کپشن"}
+                          error={post.last_error}
+                          lifecycle={(
+                            <>
+                              <StatusBadge status={post.status} />
+                              <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
+                            </>
+                          )}
+                          mediaLabel={media ? "رسانه آماده" : "بدون رسانه"}
+                          meta={(
+                            <>
+                              <p>زمان‌بندی: {formatDateTime(post.scheduled_at)}</p>
+                              <p>تلاش انتشار: {post.attempt_count}</p>
+                              <p>آخرین تغییر: {formatDateTime(post.updated_at)}</p>
+                            </>
+                          )}
+                          onSelect={() => setSelectedPostId(post.id)}
+                          platform={post.platform}
+                          previewAlt={media?.original_filename ?? post.title}
+                          previewUrl={previewUrl}
+                          selected={selected}
+                          title={post.title}
+                        />
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
             </WorkspacePanel>
 
-            {nextScheduled ? (
-              <WorkspacePanel title="انتشار بعدی" description="نزدیک‌ترین پست زمان‌بندی‌شده در صف." bodyClassName="p-3" className="hidden xl:block">
-                <p className="font-black text-app-text">{nextScheduled.title}</p>
-                <p className="mt-2 text-sm leading-7 text-app-muted">{formatDateTime(nextScheduled.scheduled_at)}</p>
-                <CountdownBadge status={nextScheduled.status} scheduledAt={nextScheduled.scheduled_at} className="mt-3" />
-              </WorkspacePanel>
-            ) : null}
+            <aside className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+              <div className="space-y-4">
+                <WorkspacePanel title="بازبین صف" description="جزئیات و اقدام‌های پست انتخاب‌شده." bodyClassName="max-h-[68vh] overflow-y-auto p-3 sm:p-4 lg:max-h-none">
+                  {selectedPost ? (
+                    <div>
+                      <div className="mb-4 overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
+                        {previewUrlForPost(selectedPost) ? (
+                          <img src={previewUrlForPost(selectedPost)} alt={primaryMediaForPost(selectedPost)?.original_filename ?? selectedPost.title} className="aspect-video w-full object-cover" />
+                        ) : (
+                          <div className="flex aspect-video flex-col items-center justify-center gap-2 text-xs text-app-muted">
+                            <ImageIcon className="h-6 w-6 text-slate-400" aria-hidden="true" />
+                            این پست بدون رسانه وارد صف شده است
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusBadge status={selectedPost.status} />
+                        <ChannelBadges platform={selectedPost.platform} compact />
+                        <ApprovalBadge status={selectedPost.approval_status} />
+                        <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
+                        {primaryMediaForPost(selectedPost) ? <StatusToken tone="success">رسانه آماده</StatusToken> : <StatusToken tone="warning">نیازمند رسانه</StatusToken>}
+                      </div>
+                      <h2 className="mt-3 font-black text-app-text">{selectedPost.title}</h2>
+                      <p className="mt-2 max-h-44 overflow-auto whitespace-pre-wrap rounded-md border border-app-border bg-slate-50 p-3 text-sm leading-7 text-app-muted">
+                        {selectedPost.caption || "بدون کپشن"}
+                      </p>
+                      <div className="mt-4">
+                        <DetailGrid
+                          items={[
+                            { label: "زمان‌بندی", value: formatDateTime(selectedPost.scheduled_at) },
+                            { label: "کمپین", value: campaignLabelForPost(selectedPost, campaigns) },
+                            { label: "بازبینی", value: approvalConfig(selectedPost.approval_status).label },
+                            { label: "تلاش انتشار", value: selectedPost.attempt_count },
+                            { label: "آخرین تغییر", value: formatDateTime(selectedPost.updated_at) },
+                            { label: "شناسه پست", value: `#${selectedPost.id}` },
+                            ...postChannelReadiness(selectedPost)
+                          ]}
+                        />
+                      </div>
+                      <div className="mt-4">
+                        <p className="mb-3 text-xs font-black text-app-text">مسیر صف</p>
+                        <Timeline items={[
+                          {
+                            title: "ساخت محتوا",
+                            description: "رکورد پست در فضای کاری ایجاد شده است.",
+                            meta: formatDateTime(selectedPost.created_at),
+                            tone: "primary"
+                          },
+                          {
+                            title: selectedPost.scheduled_at ? "ورود به برنامه انتشار" : "آماده‌سازی برای صف",
+                            description: selectedPost.scheduled_at ? "زمان انتشار برای این پست ثبت شده است." : "پست منتظر تصمیم بعدی مدیر فضای کاری است.",
+                            meta: selectedPost.scheduled_at ? formatDateTime(selectedPost.scheduled_at) : undefined,
+                            tone: selectedPost.scheduled_at ? "warning" : "neutral"
+                          },
+                          {
+                            title: selectedPost.status === "failed" ? "نیازمند بازیابی" : selectedPost.status === "publishing" ? "در اختیار worker" : "وضعیت فعلی صف",
+                            description: selectedPost.last_error || "وضعیت صف برای این پست پایدار است.",
+                            meta: `آخرین تغییر: ${formatDateTime(selectedPost.updated_at)}`,
+                            tone: selectedPost.status === "failed" ? "alert" : selectedPost.status === "publishing" ? "primary" : "success"
+                          }
+                        ]} />
+                      </div>
+                      {selectedPost.last_error ? (
+                        <div className="mt-4 space-y-3">
+                          <NoticeBanner tone="alert" title="آخرین خطا">
+                            {selectedPost.last_error}
+                          </NoticeBanner>
+                          <NoticeBanner tone="info" title="پیشنهاد بازیابی">
+                            {recoveryGuidance(selectedPost.last_error)}
+                          </NoticeBanner>
+                        </div>
+                      ) : null}
+                      {approvalBlocksPublishing(selectedPost) ? (
+                        <NoticeBanner tone="warning" title="انتشار مسدود است">
+                          {approvalConfig(selectedPost.approval_status).description}
+                        </NoticeBanner>
+                      ) : null}
+                      {selectedPost.status === "manual_ready" ? (
+                        <div className="mt-4 space-y-3">
+                          <NoticeBanner tone="info" title="آماده انتشار دستی اینستاگرام">
+                            کپشن را کپی کنید، تصویر را در Instagram انتخاب کنید و پس از انتشار، این پست را به عنوان منتشرشده ثبت کنید.
+                          </NoticeBanner>
+                          <div className="grid gap-2">
+                            <Button type="button" onClick={() => copyManualCaption(selectedPost)}>
+                              <Clipboard className="ml-2 h-4 w-4" aria-hidden="true" />
+                              کپی کپشن
+                            </Button>
+                            <Button type="button" variant="secondary" onClick={openInstagram}>
+                              <ExternalLink className="ml-2 h-4 w-4" aria-hidden="true" />
+                              باز کردن Instagram
+                            </Button>
+                            <Button type="button" variant="secondary" disabled={markingManualPostId === selectedPost.id} onClick={() => markManualPublished(selectedPost)}>
+                              <CheckCircle2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                              {markingManualPostId === selectedPost.id ? "در حال ثبت" : "ثبت به عنوان منتشرشده"}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
+                      <div className="mt-4 grid gap-2">
+                        <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary">باز کردن پست</Button>
+                        {selectedPost.status === "failed" ? (
+                          <Button type="button" disabled={retryingPostId === selectedPost.id || approvalBlocksPublishing(selectedPost)} onClick={() => retryPost(selectedPost)}>
+                            <RotateCcw className={`ml-2 h-4 w-4 ${retryingPostId === selectedPost.id ? "animate-spin" : ""}`} aria-hidden="true" />
+                            {retryingPostId === selectedPost.id ? "در حال ورود به صف" : "تلاش مجدد انتشار"}
+                          </Button>
+                        ) : null}
+                        {["ready", "scheduled", "manual_ready"].includes(selectedPost.status) ? (
+                          <Button type="button" variant="ghost" onClick={() => cancelPost(selectedPost)}>
+                            لغو از صف
+                          </Button>
+                        ) : null}
+                        <Button href="/logs" variant="secondary">مشاهده لاگ انتشار</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <EmptyState
+                      icon={<XCircle className="h-5 w-5" aria-hidden="true" />}
+                      title="پستی برای نمایش انتخاب نشده است."
+                      action={<Button href="/compose">زمان‌بندی پست</Button>}
+                    />
+                  )}
+                </WorkspacePanel>
 
-          </div>
-        </aside>
-      </section>
-    </WorkspacePage>
+                {nextScheduled ? (
+                  <WorkspacePanel title="انتشار بعدی" description="نزدیک‌ترین پست زمان‌بندی‌شده در صف." bodyClassName="p-3" className="hidden xl:block">
+                    <p className="font-black text-app-text">{nextScheduled.title}</p>
+                    <p className="mt-2 text-sm leading-7 text-app-muted">{formatDateTime(nextScheduled.scheduled_at)}</p>
+                    <CountdownBadge status={nextScheduled.status} scheduledAt={nextScheduled.scheduled_at} className="mt-3" />
+                  </WorkspacePanel>
+                ) : null}
+
+              </div>
+            </aside>
+          </section>
+        </WorkspacePage>
   );
 }
 

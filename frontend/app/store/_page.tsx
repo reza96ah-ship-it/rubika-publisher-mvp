@@ -475,286 +475,286 @@ export default function StorePage() {
   }, [dirty]);
 
   return (
-    <WorkspacePage>
-      <section className="app-studio-panel rounded-lg px-3 py-2.5 sm:px-4 sm:py-3">
-        <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
-          <div>
-            <p className="text-[10px] font-black text-app-primary">تنظیمات برند</p>
-            <h1 className="mt-1 text-xl font-black text-app-text">پروفایل فروشگاه</h1>
-            <p className="mt-1 text-xs leading-5 text-app-muted">هویت فروشگاه و متن‌های ثابت را برای تولید محتوای منظم نگه دارید.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <StatusToken tone={requiredReady ? "success" : "warning"}>{requiredReady ? "حداقل آماده" : "نیازمند تکمیل"}</StatusToken>
-            <StatusToken tone={saving || dirty ? "warning" : "success"}>{saving ? "در حال ذخیره" : dirty ? "تغییرات ذخیره نشده" : "ذخیره شده"}</StatusToken>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid overflow-hidden rounded-md border border-app-border bg-app-surface sm:grid-cols-3">
-        {[
-          { label: "آمادگی پروفایل", value: `${score}%`, detail: "نام و منطقه زمانی پایه‌های ضروری‌اند", icon: StoreIcon, tone: requiredReady ? "text-app-success" : "text-app-warning" },
-          { label: "کیت برند", value: `${defaultCount(form)}/8`, detail: "لوگو، آواتار، لحن، CTA و قوانین", icon: Palette, tone: "text-app-primary" },
-          { label: "وضعیت ویرایش", value: dirty ? "ذخیره نشده" : "به‌روز", detail: dirty ? "نسخه جدید را ثبت کنید" : "آخرین تغییرات ثبت شده است", icon: Save, tone: dirty ? "text-app-warning" : "text-app-success" }
-        ].map((metric) => {
-          const Icon = metric.icon;
-          return (
-            <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 sm:border-b-0 sm:border-l sm:last:border-l-0">
-              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted ${metric.tone}`}>
-                <Icon className="h-4 w-4" aria-hidden="true" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-[11px] font-black text-app-muted">{metric.label}</p>
-                <p className="mt-0.5 truncate text-base font-black text-app-text">{metric.value}</p>
-                <p className="truncate text-[11px] text-app-muted">{metric.detail}</p>
+        <WorkspacePage>
+          <section className="app-studio-panel rounded-lg px-3 py-2.5 sm:px-4 sm:py-3">
+            <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+              <div>
+                <p className="text-[10px] font-black text-app-primary">تنظیمات برند</p>
+                <h1 className="mt-1 text-xl font-black text-app-text">پروفایل فروشگاه</h1>
+                <p className="mt-1 text-xs leading-5 text-app-muted">هویت فروشگاه و متن‌های ثابت را برای تولید محتوای منظم نگه دارید.</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <StatusToken tone={requiredReady ? "success" : "warning"}>{requiredReady ? "حداقل آماده" : "نیازمند تکمیل"}</StatusToken>
+                <StatusToken tone={saving || dirty ? "warning" : "success"}>{saving ? "در حال ذخیره" : dirty ? "تغییرات ذخیره نشده" : "ذخیره شده"}</StatusToken>
               </div>
             </div>
-          );
-        })}
-      </section>
+          </section>
 
-      {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
-      {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
-
-      {loading ? (
-        <WorkspacePanel title="پروفایل فروشگاه">
-          <LoadingPanel />
-        </WorkspacePanel>
-      ) : (
-        <form onSubmit={saveStore}>
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="space-y-3 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
-              <WorkspacePanel
-                title="هویت فروشگاه"
-                description="مشخصات اصلی برند و اطلاعات عملیاتی فروشگاه را یک‌جا مدیریت کنید."
-                action={<Tag tone={requiredReady ? "success" : "warning"}>{requiredReady ? "اطلاعات پایه آماده" : "نیازمند تکمیل"}</Tag>}
-                bodyClassName="p-0"
-              >
-                <div className="grid gap-3 p-3 sm:p-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(240px,0.65fr)]">
-                  <Field label="نام فروشگاه" required hint="نامی که در workspace و پیش‌نمایش کپشن نمایش داده می‌شود.">
-                    <Input value={form.name} onChange={(event) => updateField("name", event.target.value)} placeholder="مثلاً فروشگاه سپهر" required />
-                  </Field>
-
-                  <Field label="دسته‌بندی فعالیت" hint="برای دسته‌بندی محتوا و ساخت کمپین‌های منظم‌تر.">
-                    <Input value={form.category} onChange={(event) => updateField("category", event.target.value)} placeholder="مثلاً پوشاک یا محصولات آرایشی" />
-                  </Field>
-                </div>
-
-                <div className="grid gap-3 border-t border-app-border bg-app-surfaceMuted/70 p-3 sm:p-4 md:grid-cols-2">
-                  <Field label="شماره تماس" hint="در صورت نیاز برای CTA و اطلاعات تماس مشتری استفاده می‌شود.">
-                    <Input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} placeholder="0912 000 0000" className="text-left" dir="ltr" inputMode="tel" />
-                  </Field>
-
-                  <Field label="منطقه زمانی" required hint="مبنای زمان‌بندی صف انتشار برای این workspace.">
-                    <div className="relative">
-                      <Input value={form.timezone} readOnly className="bg-app-surface pl-10 text-left text-app-text" dir="ltr" required />
-                      <Clock3 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" aria-hidden="true" />
-                    </div>
-                  </Field>
-                </div>
-              </WorkspacePanel>
-
-              <WorkspacePanel
-                title="هویت بصری برند"
-                description="لوگو و آواتار را از کتابخانه رسانه انتخاب کنید یا مستقیم همین‌جا آپلود کنید."
-                action={<Tag tone={form.logo_asset_id || form.avatar_asset_id ? "success" : "warning"}>{form.logo_asset_id || form.avatar_asset_id ? "دارایی بصری آماده" : "بدون تصویر برند"}</Tag>}
-              >
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <BrandAssetPicker
-                    title="لوگوی برند"
-                    description="برای کارت‌های برند، گزارش‌ها و فضاهای رسمی‌تر استفاده می‌شود."
-                    selectedId={form.logo_asset_id}
-                    previewUrl={logoUrl}
-                    assets={imageAssets}
-                    previewUrls={mediaPreviewUrls}
-                    uploading={uploadingAsset === "logo_asset_id"}
-                    onUpload={(file) => void uploadBrandAsset("logo_asset_id", file)}
-                    onSelect={(assetId) => updateField("logo_asset_id", assetId)}
-                    onClear={() => updateField("logo_asset_id", null)}
-                  />
-
-                  <BrandAssetPicker
-                    title="آواتار انتشار"
-                    description="در پیش‌نمایش محتوا، composer و هویت سریع workspace دیده می‌شود."
-                    selectedId={form.avatar_asset_id}
-                    previewUrl={avatarUrl}
-                    assets={imageAssets}
-                    previewUrls={mediaPreviewUrls}
-                    uploading={uploadingAsset === "avatar_asset_id"}
-                    onUpload={(file) => void uploadBrandAsset("avatar_asset_id", file)}
-                    onSelect={(assetId) => updateField("avatar_asset_id", assetId)}
-                    onClear={() => updateField("avatar_asset_id", null)}
-                  />
-                </div>
-              </WorkspacePanel>
-
-              <WorkspacePanel
-                title="کیت برند"
-                description="لحن، رنگ و CTA پیش‌فرض برند را برای composer و پیش‌نمایش انتشار آماده کنید."
-                action={<Tag tone={form.brand_voice || form.default_cta ? "success" : "warning"}>{form.brand_voice || form.default_cta ? "هویت محتوایی آماده" : "نیازمند تعریف"}</Tag>}
-              >
-                <div className="grid gap-5 lg:grid-cols-2">
-                  <Field label="رنگ اصلی برند" hint="در آواتار، پیش‌نمایش و وضعیت‌های برند استفاده می‌شود.">
-                    <div className="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] items-center gap-3">
-                      <Input
-                        type="color"
-                        value={isHexColor(brandPrimaryColorDraft) ? brandPrimaryColorDraft : "#0F766E"}
-                        onInput={(event) => setBrandPrimaryColorDraft(event.currentTarget.value)}
-                        onChange={(event) => setBrandPrimaryColorDraft(event.target.value)}
-                        onBlur={(event) => commitBrandColor("brand_primary_color", event.currentTarget.value)}
-                        className="h-11 w-16 shrink-0 p-1"
-                        aria-label="رنگ اصلی برند"
-                      />
-                      <Input
-                        value={form.brand_primary_color}
-                        onChange={(event) => updateField("brand_primary_color", event.target.value)}
-                        className="text-left uppercase"
-                        dir="ltr"
-                      />
-                    </div>
-                  </Field>
-
-                  <Field label="رنگ مکمل برند" hint="برای تاکیدهای ثانویه، CTA و گزارش‌های آینده.">
-                    <div className="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] items-center gap-3">
-                      <Input
-                        type="color"
-                        value={isHexColor(brandAccentColorDraft) ? brandAccentColorDraft : "#2563EB"}
-                        onInput={(event) => setBrandAccentColorDraft(event.currentTarget.value)}
-                        onChange={(event) => setBrandAccentColorDraft(event.target.value)}
-                        onBlur={(event) => commitBrandColor("brand_accent_color", event.currentTarget.value)}
-                        className="h-11 w-16 shrink-0 p-1"
-                        aria-label="رنگ مکمل برند"
-                      />
-                      <Input
-                        value={form.brand_accent_color}
-                        onChange={(event) => updateField("brand_accent_color", event.target.value)}
-                        className="text-left uppercase"
-                        dir="ltr"
-                      />
-                    </div>
-                  </Field>
-
-                  <Field label="لحن برند" hint="مثلاً صمیمی، مطمئن، اقتصادی، لوکس یا آموزشی.">
-                    <Textarea
-                      value={form.brand_voice}
-                      onChange={(event) => updateField("brand_voice", event.target.value)}
-                      placeholder="مثلاً صمیمی، کوتاه، قابل اعتماد و متمرکز بر خرید آسان"
-                    />
-                  </Field>
-
-                  <Field label="دعوت به اقدام پیش‌فرض" hint="CTA کوتاه که در شروع سریع composer و پیش‌نمایش استفاده می‌شود.">
-                    <Textarea
-                      value={form.default_cta}
-                      onChange={(event) => updateField("default_cta", event.target.value)}
-                      placeholder="برای سفارش همین حالا پیام بدهید."
-                    />
-                  </Field>
-
-                  <div className="lg:col-span-2">
-                    <Field label="قوانین محتوایی برند" hint="مواردی که کپشن‌ها باید رعایت کنند یا از آن دوری کنند.">
-                      <Textarea
-                        value={form.content_guidelines}
-                        onChange={(event) => updateField("content_guidelines", event.target.value)}
-                        placeholder="مثلاً قیمت را واضح بنویس، از اغراق زیاد پرهیز کن، همیشه روش سفارش را اضافه کن."
-                      />
-                    </Field>
+          <section className="grid overflow-hidden rounded-md border border-app-border bg-app-surface sm:grid-cols-3">
+            {[
+              { label: "آمادگی پروفایل", value: `${score}%`, detail: "نام و منطقه زمانی پایه‌های ضروری‌اند", icon: StoreIcon, tone: requiredReady ? "text-app-success" : "text-app-warning" },
+              { label: "کیت برند", value: `${defaultCount(form)}/8`, detail: "لوگو، آواتار، لحن، CTA و قوانین", icon: Palette, tone: "text-app-primary" },
+              { label: "وضعیت ویرایش", value: dirty ? "ذخیره نشده" : "به‌روز", detail: dirty ? "نسخه جدید را ثبت کنید" : "آخرین تغییرات ثبت شده است", icon: Save, tone: dirty ? "text-app-warning" : "text-app-success" }
+            ].map((metric) => {
+              const Icon = metric.icon;
+              return (
+                <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 sm:border-b-0 sm:border-l sm:last:border-l-0">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted ${metric.tone}`}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-black text-app-muted">{metric.label}</p>
+                    <p className="mt-0.5 truncate text-base font-black text-app-text">{metric.value}</p>
+                    <p className="truncate text-[11px] text-app-muted">{metric.detail}</p>
                   </div>
                 </div>
-              </WorkspacePanel>
+              );
+            })}
+          </section>
 
-              <WorkspacePanel title="پیش‌فرض‌های انتشار" description="متن‌های تکرارشونده را یک‌بار تنظیم کنید تا composer شروع سریع‌تری داشته باشد.">
-                <div className="grid gap-5 lg:grid-cols-2">
-              <Field label="توضیحات کوتاه فروشگاه" hint="یک توضیح کوتاه که شخصیت برند و پیشنهاد اصلی را مشخص کند.">
-                <Textarea value={form.description} onChange={(event) => updateField("description", event.target.value)} />
-              </Field>
+          {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
+          {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
 
-              <Field label="هشتگ‌های پیش‌فرض" hint="در هر خط یا با فاصله بنویسید.">
-                <Textarea value={form.default_hashtags} onChange={(event) => updateField("default_hashtags", event.target.value)} placeholder="#فروشگاه #خرید_آنلاین" />
-              </Field>
+          {loading ? (
+            <WorkspacePanel title="پروفایل فروشگاه">
+              <LoadingPanel />
+            </WorkspacePanel>
+          ) : (
+            <form onSubmit={saveStore}>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
+                <div className="space-y-3 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
+                  <WorkspacePanel
+                    title="هویت فروشگاه"
+                    description="مشخصات اصلی برند و اطلاعات عملیاتی فروشگاه را یک‌جا مدیریت کنید."
+                    action={<Tag tone={requiredReady ? "success" : "warning"}>{requiredReady ? "اطلاعات پایه آماده" : "نیازمند تکمیل"}</Tag>}
+                    bodyClassName="p-0"
+                  >
+                    <div className="grid gap-3 p-3 sm:p-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(240px,0.65fr)]">
+                      <Field label="نام فروشگاه" required hint="نامی که در workspace و پیش‌نمایش کپشن نمایش داده می‌شود.">
+                        <Input value={form.name} onChange={(event) => updateField("name", event.target.value)} placeholder="مثلاً فروشگاه سپهر" required />
+                      </Field>
 
-              <Field label="متن پایانی کپشن" hint="دعوت به اقدام ثابت مثل سفارش، تماس یا مراجعه حضوری.">
-                <Textarea value={form.caption_footer} onChange={(event) => updateField("caption_footer", event.target.value)} placeholder="برای سفارش پیام بدهید." />
-              </Field>
+                      <Field label="دسته‌بندی فعالیت" hint="برای دسته‌بندی محتوا و ساخت کمپین‌های منظم‌تر.">
+                        <Input value={form.category} onChange={(event) => updateField("category", event.target.value)} placeholder="مثلاً پوشاک یا محصولات آرایشی" />
+                      </Field>
+                    </div>
 
-                  <div className="lg:col-span-2">
-                    <NoticeBanner>
-                      composer از این اطلاعات برای شروع سریع‌تر کپشن‌ها استفاده می‌کند.
-                    </NoticeBanner>
+                    <div className="grid gap-3 border-t border-app-border bg-app-surfaceMuted/70 p-3 sm:p-4 md:grid-cols-2">
+                      <Field label="شماره تماس" hint="در صورت نیاز برای CTA و اطلاعات تماس مشتری استفاده می‌شود.">
+                        <Input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} placeholder="0912 000 0000" className="text-left" dir="ltr" inputMode="tel" />
+                      </Field>
+
+                      <Field label="منطقه زمانی" required hint="مبنای زمان‌بندی صف انتشار برای این workspace.">
+                        <div className="relative">
+                          <Input value={form.timezone} readOnly className="bg-app-surface pl-10 text-left text-app-text" dir="ltr" required />
+                          <Clock3 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" aria-hidden="true" />
+                        </div>
+                      </Field>
+                    </div>
+                  </WorkspacePanel>
+
+                  <WorkspacePanel
+                    title="هویت بصری برند"
+                    description="لوگو و آواتار را از کتابخانه رسانه انتخاب کنید یا مستقیم همین‌جا آپلود کنید."
+                    action={<Tag tone={form.logo_asset_id || form.avatar_asset_id ? "success" : "warning"}>{form.logo_asset_id || form.avatar_asset_id ? "دارایی بصری آماده" : "بدون تصویر برند"}</Tag>}
+                  >
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <BrandAssetPicker
+                        title="لوگوی برند"
+                        description="برای کارت‌های برند، گزارش‌ها و فضاهای رسمی‌تر استفاده می‌شود."
+                        selectedId={form.logo_asset_id}
+                        previewUrl={logoUrl}
+                        assets={imageAssets}
+                        previewUrls={mediaPreviewUrls}
+                        uploading={uploadingAsset === "logo_asset_id"}
+                        onUpload={(file) => void uploadBrandAsset("logo_asset_id", file)}
+                        onSelect={(assetId) => updateField("logo_asset_id", assetId)}
+                        onClear={() => updateField("logo_asset_id", null)}
+                      />
+
+                      <BrandAssetPicker
+                        title="آواتار انتشار"
+                        description="در پیش‌نمایش محتوا، composer و هویت سریع workspace دیده می‌شود."
+                        selectedId={form.avatar_asset_id}
+                        previewUrl={avatarUrl}
+                        assets={imageAssets}
+                        previewUrls={mediaPreviewUrls}
+                        uploading={uploadingAsset === "avatar_asset_id"}
+                        onUpload={(file) => void uploadBrandAsset("avatar_asset_id", file)}
+                        onSelect={(assetId) => updateField("avatar_asset_id", assetId)}
+                        onClear={() => updateField("avatar_asset_id", null)}
+                      />
+                    </div>
+                  </WorkspacePanel>
+
+                  <WorkspacePanel
+                    title="کیت برند"
+                    description="لحن، رنگ و CTA پیش‌فرض برند را برای composer و پیش‌نمایش انتشار آماده کنید."
+                    action={<Tag tone={form.brand_voice || form.default_cta ? "success" : "warning"}>{form.brand_voice || form.default_cta ? "هویت محتوایی آماده" : "نیازمند تعریف"}</Tag>}
+                  >
+                    <div className="grid gap-5 lg:grid-cols-2">
+                      <Field label="رنگ اصلی برند" hint="در آواتار، پیش‌نمایش و وضعیت‌های برند استفاده می‌شود.">
+                        <div className="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] items-center gap-3">
+                          <Input
+                            type="color"
+                            value={isHexColor(brandPrimaryColorDraft) ? brandPrimaryColorDraft : "#0F766E"}
+                            onInput={(event) => setBrandPrimaryColorDraft(event.currentTarget.value)}
+                            onChange={(event) => setBrandPrimaryColorDraft(event.target.value)}
+                            onBlur={(event) => commitBrandColor("brand_primary_color", event.currentTarget.value)}
+                            className="h-11 w-16 shrink-0 p-1"
+                            aria-label="رنگ اصلی برند"
+                          />
+                          <Input
+                            value={form.brand_primary_color}
+                            onChange={(event) => updateField("brand_primary_color", event.target.value)}
+                            className="text-left uppercase"
+                            dir="ltr"
+                          />
+                        </div>
+                      </Field>
+
+                      <Field label="رنگ مکمل برند" hint="برای تاکیدهای ثانویه، CTA و گزارش‌های آینده.">
+                        <div className="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] items-center gap-3">
+                          <Input
+                            type="color"
+                            value={isHexColor(brandAccentColorDraft) ? brandAccentColorDraft : "#2563EB"}
+                            onInput={(event) => setBrandAccentColorDraft(event.currentTarget.value)}
+                            onChange={(event) => setBrandAccentColorDraft(event.target.value)}
+                            onBlur={(event) => commitBrandColor("brand_accent_color", event.currentTarget.value)}
+                            className="h-11 w-16 shrink-0 p-1"
+                            aria-label="رنگ مکمل برند"
+                          />
+                          <Input
+                            value={form.brand_accent_color}
+                            onChange={(event) => updateField("brand_accent_color", event.target.value)}
+                            className="text-left uppercase"
+                            dir="ltr"
+                          />
+                        </div>
+                      </Field>
+
+                      <Field label="لحن برند" hint="مثلاً صمیمی، مطمئن، اقتصادی، لوکس یا آموزشی.">
+                        <Textarea
+                          value={form.brand_voice}
+                          onChange={(event) => updateField("brand_voice", event.target.value)}
+                          placeholder="مثلاً صمیمی، کوتاه، قابل اعتماد و متمرکز بر خرید آسان"
+                        />
+                      </Field>
+
+                      <Field label="دعوت به اقدام پیش‌فرض" hint="CTA کوتاه که در شروع سریع composer و پیش‌نمایش استفاده می‌شود.">
+                        <Textarea
+                          value={form.default_cta}
+                          onChange={(event) => updateField("default_cta", event.target.value)}
+                          placeholder="برای سفارش همین حالا پیام بدهید."
+                        />
+                      </Field>
+
+                      <div className="lg:col-span-2">
+                        <Field label="قوانین محتوایی برند" hint="مواردی که کپشن‌ها باید رعایت کنند یا از آن دوری کنند.">
+                          <Textarea
+                            value={form.content_guidelines}
+                            onChange={(event) => updateField("content_guidelines", event.target.value)}
+                            placeholder="مثلاً قیمت را واضح بنویس، از اغراق زیاد پرهیز کن، همیشه روش سفارش را اضافه کن."
+                          />
+                        </Field>
+                      </div>
+                    </div>
+                  </WorkspacePanel>
+
+                  <WorkspacePanel title="پیش‌فرض‌های انتشار" description="متن‌های تکرارشونده را یک‌بار تنظیم کنید تا composer شروع سریع‌تری داشته باشد.">
+                    <div className="grid gap-5 lg:grid-cols-2">
+                  <Field label="توضیحات کوتاه فروشگاه" hint="یک توضیح کوتاه که شخصیت برند و پیشنهاد اصلی را مشخص کند.">
+                    <Textarea value={form.description} onChange={(event) => updateField("description", event.target.value)} />
+                  </Field>
+
+                  <Field label="هشتگ‌های پیش‌فرض" hint="در هر خط یا با فاصله بنویسید.">
+                    <Textarea value={form.default_hashtags} onChange={(event) => updateField("default_hashtags", event.target.value)} placeholder="#فروشگاه #خرید_آنلاین" />
+                  </Field>
+
+                  <Field label="متن پایانی کپشن" hint="دعوت به اقدام ثابت مثل سفارش، تماس یا مراجعه حضوری.">
+                    <Textarea value={form.caption_footer} onChange={(event) => updateField("caption_footer", event.target.value)} placeholder="برای سفارش پیام بدهید." />
+                  </Field>
+
+                      <div className="lg:col-span-2">
+                        <NoticeBanner>
+                          composer از این اطلاعات برای شروع سریع‌تر کپشن‌ها استفاده می‌کند.
+                        </NoticeBanner>
+                      </div>
+                    </div>
+                  </WorkspacePanel>
+
+                  <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-md border border-app-border bg-app-surface/95 p-3 shadow-lg shadow-app-border/40 backdrop-blur md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm font-black text-app-text">{dirty ? "تغییرات آماده ذخیره است" : "پروفایل فروشگاه به‌روز است"}</p>
+                      <p className="mt-1 text-xs text-app-muted">{dirty ? "برای استفاده در composer، نسخه جدید را ثبت کنید." : "هر تغییر جدید در این نوار مشخص می‌شود."}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" variant="secondary" onClick={resetChanges} disabled={!dirty || saving}>
+                        <Undo2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                        بازگردانی
+                      </Button>
+                      <Button type="submit" disabled={!dirty || saving}>
+                        <Save className="ml-2 h-4 w-4" aria-hidden="true" />
+                        {saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
+
+                <aside className="hidden space-y-3 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
+              <WorkspacePanel title="چک‌لیست آماده‌سازی" description="برای یک workspace قابل اتکا، این موارد را کامل نگه دارید.">
+                <div className="space-y-0">
+                  {readinessItems.map((item) => <ReadinessRow key={item.label} item={item} />)}
+                </div>
               </WorkspacePanel>
 
-              <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-md border border-app-border bg-app-surface/95 p-3 shadow-lg shadow-app-border/40 backdrop-blur md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-sm font-black text-app-text">{dirty ? "تغییرات آماده ذخیره است" : "پروفایل فروشگاه به‌روز است"}</p>
-                  <p className="mt-1 text-xs text-app-muted">{dirty ? "برای استفاده در composer، نسخه جدید را ثبت کنید." : "هر تغییر جدید در این نوار مشخص می‌شود."}</p>
+              <WorkspacePanel title="پیش‌نمایش کپشن پایه" description="خروجی پایه‌ای که در کپشن‌ها تکرار می‌شود.">
+                <div className="rounded-md border border-app-border bg-app-surfaceMuted p-4">
+                  <div className="mb-4 flex items-center gap-3 border-b border-app-border pb-3">
+                    <WorkspaceAvatar name={form.name || "نام فروشگاه"} color={form.brand_primary_color} imageUrl={avatarUrl || logoUrl} />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-app-text">{form.name || "نام فروشگاه"}</p>
+                      <p className="mt-1 flex items-center gap-1 text-xs text-app-muted">
+                        <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
+                        {form.category || "دسته‌بندی فروشگاه"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="whitespace-pre-wrap text-sm leading-7 text-app-text">{previewCaption(form)}</p>
+                  {logoUrl ? (
+                    <div className="mt-4 rounded-md border border-app-border bg-app-surface p-3">
+                      <p className="mb-2 text-[11px] font-black text-app-muted">لوگوی ثبت‌شده</p>
+                      <img src={logoUrl} alt="لوگوی برند" className="max-h-20 max-w-full rounded object-contain" />
+                    </div>
+                  ) : null}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="secondary" onClick={resetChanges} disabled={!dirty || saving}>
-                    <Undo2 className="ml-2 h-4 w-4" aria-hidden="true" />
-                    بازگردانی
-                  </Button>
-                  <Button type="submit" disabled={!dirty || saving}>
-                    <Save className="ml-2 h-4 w-4" aria-hidden="true" />
-                    {saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <aside className="hidden space-y-3 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
-          <WorkspacePanel title="چک‌لیست آماده‌سازی" description="برای یک workspace قابل اتکا، این موارد را کامل نگه دارید.">
-            <div className="space-y-0">
-              {readinessItems.map((item) => <ReadinessRow key={item.label} item={item} />)}
-            </div>
-          </WorkspacePanel>
-
-          <WorkspacePanel title="پیش‌نمایش کپشن پایه" description="خروجی پایه‌ای که در کپشن‌ها تکرار می‌شود.">
-            <div className="rounded-md border border-app-border bg-app-surfaceMuted p-4">
-              <div className="mb-4 flex items-center gap-3 border-b border-app-border pb-3">
-                <WorkspaceAvatar name={form.name || "نام فروشگاه"} color={form.brand_primary_color} imageUrl={avatarUrl || logoUrl} />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-black text-app-text">{form.name || "نام فروشگاه"}</p>
-                  <p className="mt-1 flex items-center gap-1 text-xs text-app-muted">
-                    <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
-                    {form.category || "دسته‌بندی فروشگاه"}
+                <div className="mt-4 grid gap-3 text-xs text-app-muted">
+                  <p className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                    {form.brand_voice || "لحن برند هنوز تعریف نشده"}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Megaphone className="h-4 w-4" aria-hidden="true" />
+                    {form.default_cta || "CTA پیش‌فرض هنوز خالی است"}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" aria-hidden="true" />
+                    {form.phone || "شماره تماس ثبت نشده"}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Hash className="h-4 w-4" aria-hidden="true" />
+                    {form.default_hashtags ? "هشتگ پیش‌فرض آماده است" : "هشتگ پیش‌فرض هنوز خالی است"}
                   </p>
                 </div>
-              </div>
-              <p className="whitespace-pre-wrap text-sm leading-7 text-app-text">{previewCaption(form)}</p>
-              {logoUrl ? (
-                <div className="mt-4 rounded-md border border-app-border bg-app-surface p-3">
-                  <p className="mb-2 text-[11px] font-black text-app-muted">لوگوی ثبت‌شده</p>
-                  <img src={logoUrl} alt="لوگوی برند" className="max-h-20 max-w-full rounded object-contain" />
-                </div>
-              ) : null}
-            </div>
-            <div className="mt-4 grid gap-3 text-xs text-app-muted">
-              <p className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
-                {form.brand_voice || "لحن برند هنوز تعریف نشده"}
-              </p>
-              <p className="flex items-center gap-2">
-                <Megaphone className="h-4 w-4" aria-hidden="true" />
-                {form.default_cta || "CTA پیش‌فرض هنوز خالی است"}
-              </p>
-              <p className="flex items-center gap-2">
-                <Phone className="h-4 w-4" aria-hidden="true" />
-                {form.phone || "شماره تماس ثبت نشده"}
-              </p>
-              <p className="flex items-center gap-2">
-                <Hash className="h-4 w-4" aria-hidden="true" />
-                {form.default_hashtags ? "هشتگ پیش‌فرض آماده است" : "هشتگ پیش‌فرض هنوز خالی است"}
-              </p>
-            </div>
-          </WorkspacePanel>
+              </WorkspacePanel>
 
-          <WorkspacePanel title="مرحله بعدی" description="بعد از هویت برند، کانال‌های انتشار را کامل کنید.">
-            <Button href="/channels" className="w-full">باز کردن مرکز کانال‌ها</Button>
-          </WorkspacePanel>
-            </aside>
-          </div>
-        </form>
-      )}
-    </WorkspacePage>
+              <WorkspacePanel title="مرحله بعدی" description="بعد از هویت برند، کانال‌های انتشار را کامل کنید.">
+                <Button href="/channels" className="w-full">باز کردن مرکز کانال‌ها</Button>
+              </WorkspacePanel>
+                </aside>
+              </div>
+            </form>
+          )}
+        </WorkspacePage>
   );
 }

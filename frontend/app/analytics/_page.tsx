@@ -523,525 +523,525 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <NPage className="analytics-pro-page pb-6">
-      <NPageHeader
-        eyebrow="مرکز تحلیل چندکاناله"
-        title="تحلیل عملکرد"
-        description="نمای تصمیم‌ساز برای روند انتشار، سلامت کمپین‌ها، آمادگی رسانه‌ای و پست‌هایی که نیاز به اقدام دارند."
-        meta={(
-          <>
-            <NStatusPill tone={attemptSummary.failed ? "alert" : "success"}>{attemptSummary.failed ? `${attemptSummary.failed} تلاش ناموفق` : "ارسال پایدار"}</NStatusPill>
-            <NStatusPill tone="primary">{scopedPosts.length} پست مرتبط</NStatusPill>
-          </>
-        )}
-        action={<NButton href="/logs" variant="secondary" size="sm">سلامت انتشار</NButton>}
-        className="analytics-pro-header"
-      />
-
-      <section className="analytics-command-strip grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="grid gap-2 md:grid-cols-3">
-          {insightCards.map((insight) => {
-            const Icon = insight.icon;
-            return (
-              <div key={insight.title} className="analytics-insight-card app-row rounded-lg p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <span className={`analytics-insight-icon flex h-9 w-9 items-center justify-center rounded-md ${insight.tone}`}>
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  <NStatusPill tone="neutral" className="text-[10px]">{insight.token}</NStatusPill>
-                </div>
-                <p className="mt-3 text-[11px] font-black text-app-muted">{insight.title}</p>
-                <p className={`mt-1 truncate text-base font-black ${insight.tone}`}>{insight.value}</p>
-                <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{insight.detail}</p>
-              </div>
-            );
-          })}
-        </div>
-        <div className="analytics-next-signal rounded-lg p-3">
-          <div className="flex items-center gap-2">
-            <span className="analytics-live-orb flex h-9 w-9 items-center justify-center rounded-md text-app-primary">
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-xs font-black text-app-text">سیگنال اجرایی امروز</p>
-              <p className="mt-1 text-[11px] text-app-muted">اولویت بعدی بر اساس داده همین بازه</p>
-            </div>
-          </div>
-          <div className="mt-3 rounded-md border border-app-border bg-app-surface/82 p-3">
-            <p className="text-sm font-black text-app-text">
-              {failedCount ? "ابتدا خطاهای انتشار را پاک کنید" : visualReadinessRate < 60 ? "پوشش تصویری پست‌ها را کامل‌تر کنید" : queuedCount ? "صف زمان‌بندی را برای ارسال بعدی بررسی کنید" : "عملکرد بازه فعلی پایدار است"}
-            </p>
-            <p className="mt-2 text-xs leading-5 text-app-muted">
-              {failedCount ? `${failedCount} مورد نیازمند توجه در پست‌ها یا تلاش‌ها دیده می‌شود.` : visualReadinessRate < 60 ? "پست‌های دارای تصویر در مقایسه با کل محتوا هنوز کم هستند." : queuedCount ? `${queuedCount} پست آماده یا زمان‌بندی‌شده در جریان است.` : "برای رشد بهتر، کمپین بعدی را با رسانه و زمان پیشنهادی بسازید."}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <NSavedViewToolbar
-        views={rangeOptions.map((option) => ({ label: option.label, value: option.value }))}
-        activeView={timeRange}
-        onViewChange={(value) => setTimeRange(value as TimeRange)}
-        filters={(
-          <label className="flex min-h-9 min-w-[190px] items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 text-xs font-bold text-app-muted shadow-hairline">
-            <Layers3 className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
-              <option value="all">همه کمپین‌ها</option>
-              {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
-            </select>
-          </label>
-        )}
-        meta={(
-          <>
-            <NStatusPill tone="neutral">{scopedAttempts.length} تلاش</NStatusPill>
-            {campaignFilter !== "all" ? <NStatusPill tone="primary">فیلتر کمپین</NStatusPill> : null}
-            {hasComparison ? <NStatusPill tone="info">مقایسه فعال</NStatusPill> : <NStatusPill tone="neutral">بدون مقایسه</NStatusPill>}
-          </>
-        )}
-      />
-
-      {error ? <NNotice tone="alert" title="نیاز به بررسی">{error}</NNotice> : null}
-
-      <section className="analytics-kpi-grid grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-        {dashboardMetrics.map((metric) => {
-          const deltaIsGood = metric.delta === 0 ? null : metric.positiveIsGood === false ? metric.delta < 0 : metric.delta > 0;
-          return (
-            <div key={metric.label} className="analytics-kpi-wrap">
-              <NMetricTile label={metric.label} value={metric.value} detail={metric.detail} icon={metric.icon} tone={metric.tileTone} href={metric.href} />
-              {hasComparison && metric.delta !== null ? (
-                <p className={`analytics-kpi-delta mt-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-black ${deltaIsGood === true ? "text-emerald-700" : deltaIsGood === false ? "text-rose-700" : "text-slate-500"}`}>
-                  {metric.delta > 0 ? <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" /> : metric.delta < 0 ? <TrendingDown className="h-3.5 w-3.5" aria-hidden="true" /> : null}
-                  {metric.delta > 0 ? "+" : ""}{metric.delta}% نسبت به بازه قبل
-                </p>
-              ) : null}
-            </div>
-          );
-        })}
-      </section>
-
-      <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="min-w-0 space-y-3">
-          <WorkspacePanel
-            title="روند تلاش‌های انتشار"
-            description="مقایسه تلاش‌های موفق، ناموفق و در حال اجرا در بازه انتخاب‌شده."
-            action={(
-              <div className="flex items-center gap-2">
-                {selectedTrend ? (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedTrendKey("")}
-                    className="app-interactive inline-flex items-center gap-1 text-xs font-bold text-app-primary hover:text-app-primaryHover"
-                  >
-                    <X className="h-3.5 w-3.5" aria-hidden="true" />
-                    لغو انتخاب
-                  </button>
-                ) : null}
-                <StatusToken tone="neutral">{trend.length} نقطه زمانی</StatusToken>
-              </div>
+        <NPage className="analytics-pro-page pb-6">
+          <NPageHeader
+            eyebrow="مرکز تحلیل چندکاناله"
+            title="تحلیل عملکرد"
+            description="نمای تصمیم‌ساز برای روند انتشار، سلامت کمپین‌ها، آمادگی رسانه‌ای و پست‌هایی که نیاز به اقدام دارند."
+            meta={(
+              <>
+                <NStatusPill tone={attemptSummary.failed ? "alert" : "success"}>{attemptSummary.failed ? `${attemptSummary.failed} تلاش ناموفق` : "ارسال پایدار"}</NStatusPill>
+                <NStatusPill tone="primary">{scopedPosts.length} پست مرتبط</NStatusPill>
+              </>
             )}
-          >
-            {loading ? <LoadingPanel /> : null}
-            {!loading && trend.length === 0 ? (
-              <EmptyState
-                icon={<LineChart className="h-5 w-5" aria-hidden="true" />}
-                title="هنوز روندی برای نمایش وجود ندارد"
-                description="پس از ثبت تلاش‌های انتشار، نمودار عملیاتی اینجا کامل می‌شود."
-              />
-            ) : null}
-            <div className="mb-3 flex flex-wrap gap-3 text-[11px] font-bold text-app-muted">
-              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> موفق</span>
-              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-rose-500" /> ناموفق</span>
-              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-sky-500" /> در حال اجرا</span>
-            </div>
-            <div className="analytics-trend-stage pb-2">
-              <div
-                className="grid h-48 min-w-0 items-end gap-1.5 border-b border-app-border px-2 pt-3 sm:gap-2 sm:px-4"
-                style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(0, 1fr))` }}
-              >
-                {trend.map((item, index) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => setSelectedTrendKey((current) => current === item.key ? "" : item.key)}
-                    data-trend-inspector
-                    data-trend-bar
-                    className={`analytics-trend-bucket relative flex h-full min-w-0 flex-col justify-end overflow-visible rounded-t pb-6 text-center transition ${selectedTrend?.key === item.key ? "analytics-trend-bucket-active ring-1 ring-inset ring-blue-100" : ""}`}
-                    title={`${item.label}: ${item.total} تلاش`}
-                  >
-                    <p className="mb-2 text-[10px] font-black text-app-muted">{item.total || ""}</p>
-                    <div className="flex h-40 items-end justify-center">
-                      <div
-                        className={`flex w-5 flex-col-reverse overflow-hidden rounded-t bg-app-surfaceMuted transition ${selectedTrend?.key === item.key ? "ring-2 ring-app-primary" : ""}`}
-                        style={{ height: item.total ? `${Math.max(8, percent(item.total, maxTrendTotal))}%` : "0%" }}
-                        title={`${item.label}: ${item.total} تلاش`}
-                      >
-                        <span className="bg-emerald-500" style={{ height: `${percent(item.success, Math.max(1, item.total))}%` }} />
-                        <span className="bg-rose-500" style={{ height: `${percent(item.failed, Math.max(1, item.total))}%` }} />
-                        <span className="bg-sky-500" style={{ height: `${percent(item.started, Math.max(1, item.total))}%` }} />
-                      </div>
-                    </div>
-                    <p className={`absolute bottom-0 left-1/2 min-h-4 max-w-[5.5rem] -translate-x-1/2 truncate whitespace-nowrap text-center text-[10px] font-bold ${showTrendTick(index) ? "text-app-muted" : "text-transparent"}`}>
-                      {showTrendTick(index) ? item.label : ""}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </WorkspacePanel>
+            action={<NButton href="/logs" variant="secondary" size="sm">سلامت انتشار</NButton>}
+            className="analytics-pro-header"
+          />
 
-          <WorkspacePanel
-            title="ترکیب عملیات محتوا"
-            description="وضعیت چرخه پست‌ها و نوع ارسال در یک نمای فشرده."
-          >
-            <div className="grid gap-3 border-b border-app-border pb-4 sm:grid-cols-2">
-              <div className="flex items-center justify-between gap-3 rounded-md bg-app-surfaceMuted p-3 shadow-hairline">
-                <span className="flex items-center gap-2">
-                  <MessageSquareText className="h-4 w-4 text-app-primary" aria-hidden="true" />
-                  <span className="text-sm font-black text-app-text">ارسال متنی</span>
-                </span>
-                <span className="text-sm font-black text-app-text">{attemptSummary.text} <span className="text-xs text-app-muted">({percent(attemptSummary.text, scopedAttempts.length)}%)</span></span>
-              </div>
-              <div className="flex items-center justify-between gap-3 rounded-md bg-app-surfaceMuted p-3 shadow-hairline">
-                <span className="flex items-center gap-2">
-                  <FileImage className="h-4 w-4 text-app-primary" aria-hidden="true" />
-                  <span className="text-sm font-black text-app-text">ارسال رسانه‌ای</span>
-                </span>
-                <span className="text-sm font-black text-app-text">{attemptSummary.media} <span className="text-xs text-app-muted">({percent(attemptSummary.media, scopedAttempts.length)}%)</span></span>
-              </div>
-            </div>
-            <div className="mt-2 divide-y divide-app-border">
-              {Object.entries(statusLabels).map(([status, label]) => {
-                const count = statusCounts[status] ?? 0;
-                const ratio = percent(count, Math.max(1, scopedPosts.length));
+          <section className="analytics-command-strip grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="grid gap-2 md:grid-cols-3">
+              {insightCards.map((insight) => {
+                const Icon = insight.icon;
                 return (
-                  <div key={status} className="grid gap-2 py-3 md:grid-cols-[150px_minmax(0,1fr)_36px] md:items-center">
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={status} />
-                      <span className="text-xs font-black text-app-text">{label}</span>
+                  <div key={insight.title} className="analytics-insight-card app-row rounded-lg p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className={`analytics-insight-icon flex h-9 w-9 items-center justify-center rounded-md ${insight.tone}`}>
+                        <Icon className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      <NStatusPill tone="neutral" className="text-[10px]">{insight.token}</NStatusPill>
                     </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-app-surfaceMuted">
-                      <div className={`h-full rounded-full ${statusProgressClasses[status] ?? "bg-app-primary"}`} style={{ width: `${ratio}%` }} />
-                    </div>
-                    <span className="text-left text-xs font-black text-app-text">{count}</span>
+                    <p className="mt-3 text-[11px] font-black text-app-muted">{insight.title}</p>
+                    <p className={`mt-1 truncate text-base font-black ${insight.tone}`}>{insight.value}</p>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{insight.detail}</p>
                   </div>
                 );
               })}
             </div>
-          </WorkspacePanel>
+            <div className="analytics-next-signal rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <span className="analytics-live-orb flex h-9 w-9 items-center justify-center rounded-md text-app-primary">
+                  <Sparkles className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-black text-app-text">سیگنال اجرایی امروز</p>
+                  <p className="mt-1 text-[11px] text-app-muted">اولویت بعدی بر اساس داده همین بازه</p>
+                </div>
+              </div>
+              <div className="mt-3 rounded-md border border-app-border bg-app-surface/82 p-3">
+                <p className="text-sm font-black text-app-text">
+                  {failedCount ? "ابتدا خطاهای انتشار را پاک کنید" : visualReadinessRate < 60 ? "پوشش تصویری پست‌ها را کامل‌تر کنید" : queuedCount ? "صف زمان‌بندی را برای ارسال بعدی بررسی کنید" : "عملکرد بازه فعلی پایدار است"}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-app-muted">
+                  {failedCount ? `${failedCount} مورد نیازمند توجه در پست‌ها یا تلاش‌ها دیده می‌شود.` : visualReadinessRate < 60 ? "پست‌های دارای تصویر در مقایسه با کل محتوا هنوز کم هستند." : queuedCount ? `${queuedCount} پست آماده یا زمان‌بندی‌شده در جریان است.` : "برای رشد بهتر، کمپین بعدی را با رسانه و زمان پیشنهادی بسازید."}
+                </p>
+              </div>
+            </div>
+          </section>
 
-          <WorkspacePanel
-            title="جزئیات عملکرد پست‌ها"
-            description="پست‌های بازه را جست‌وجو، مرتب و برای بررسی عملیاتی باز کنید."
-            action={<StatusToken tone="neutral">{drilldownPosts.length} نتیجه</StatusToken>}
-            bodyClassName="p-3"
-          >
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_170px]">
-              <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 ring-app-primary focus-within:ring-2">
-                <Search className="h-4 w-4 shrink-0 text-app-muted" aria-hidden="true" />
-                <input
-                  value={postSearch}
-                  onChange={(event) => setPostSearch(event.target.value)}
-                  placeholder="جست‌وجوی عنوان، کمپین یا وضعیت"
-                  className="w-full bg-transparent text-sm outline-none placeholder:text-app-muted/70"
-                />
-              </label>
-              <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
-                <ArrowDownUp className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <select value={postSort} onChange={(event) => setPostSort(event.target.value as PostSort)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
-                  <option value="activity">آخرین فعالیت</option>
-                  <option value="attempts">بیشترین تلاش</option>
-                  <option value="title">عنوان پست</option>
+          <NSavedViewToolbar
+            views={rangeOptions.map((option) => ({ label: option.label, value: option.value }))}
+            activeView={timeRange}
+            onViewChange={(value) => setTimeRange(value as TimeRange)}
+            filters={(
+              <label className="flex min-h-9 min-w-[190px] items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 text-xs font-bold text-app-muted shadow-hairline">
+                <Layers3 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                  <option value="all">همه کمپین‌ها</option>
+                  {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
                 </select>
               </label>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {postFilterOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setPostFilter(option.value)}
-                    className={`app-interactive nashrino-control-radius inline-flex min-h-8 items-center px-3 text-xs font-bold transition ${postFilter === option.value ? "bg-app-primary text-white" : "bg-app-surfaceMuted text-app-muted hover:bg-app-primary/10 hover:text-app-primary"}`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-            <DataTable
-              columns={["پست", "وضعیت", "تلاش", "آخرین فعالیت", "اقدام"]}
-              gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_80px_150px_100px]"
-              empty={drilldownPosts.length === 0 ? <EmptyState title="پستی با این فیلتر پیدا نشد" description="عبارت جست‌وجو یا فیلتر وضعیت را تغییر دهید." /> : null}
-            >
-              {drilldownPosts.map((post) => (
-                <DataRow key={post.id} gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_80px_150px_100px]">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-app-surfaceMuted ring-1 ring-app-border">
-                      {previewUrlForPost(post) ? (
-                        <img src={previewUrlForPost(post)} alt={primaryMediaForPost(post)?.original_filename ?? post.title} className="h-full w-full object-cover" />
-                      ) : (
-                        <ImageIcon className="h-4 w-4 text-app-muted" aria-hidden="true" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-black text-app-text">{post.title}</p>
-                      <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-app-muted">
-                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
-                        {campaignLabelForPost(post, campaigns)}
-                      </p>
-                    </div>
-                  </div>
-                  <div><StatusBadge status={post.status} /></div>
-                  <div>
-                    <p className="text-xs font-black text-app-text">{post.attempt_count}</p>
-                    <p className="mt-1 text-[11px] text-app-muted">بار ارسال</p>
-                  </div>
-                  <p className="text-xs leading-5 text-app-muted">{formatDateTime(postActivityDate(post))}</p>
-                  <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm" className="w-full">
-                    <ArrowUpLeft className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                    باز کردن
-                  </Button>
-                </DataRow>
-              ))}
-            </DataTable>
-          </WorkspacePanel>
-        </div>
+            )}
+            meta={(
+              <>
+                <NStatusPill tone="neutral">{scopedAttempts.length} تلاش</NStatusPill>
+                {campaignFilter !== "all" ? <NStatusPill tone="primary">فیلتر کمپین</NStatusPill> : null}
+                {hasComparison ? <NStatusPill tone="info">مقایسه فعال</NStatusPill> : <NStatusPill tone="neutral">بدون مقایسه</NStatusPill>}
+              </>
+            )}
+          />
 
-        <aside className="grid gap-3 lg:grid-cols-2 xl:block xl:space-y-3 xl:self-start">
-          <WorkspacePanel title="هویت گزارش" description="برندی که این تحلیل با آن آماده می‌شود." bodyClassName="p-4">
-            <div className="flex items-center gap-3">
-              <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandAvatarUrl} />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-black text-app-text">{store?.name || "پروفایل فروشگاه"}</p>
-                <p className="mt-1 truncate text-xs text-app-muted">{store?.brand_voice || "لحن برند ثبت نشده"}</p>
-              </div>
-            </div>
-            {brandLogoUrl ? (
-              <div className="mt-4 rounded-md border border-app-border bg-app-surfaceMuted p-3">
-                <p className="mb-2 text-[11px] font-black text-app-muted">لوگوی گزارش</p>
-                <img src={brandLogoUrl} alt="لوگوی برند" className="max-h-20 max-w-full rounded object-contain" />
-              </div>
-            ) : null}
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <div className="rounded-md bg-app-surfaceMuted p-2">
-                <p className="text-[10px] font-black text-app-muted">رنگ اصلی</p>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="h-5 w-5 rounded shadow-hairline" style={{ backgroundColor: brandColor }} />
-                  <span className="text-xs font-black text-app-text" dir="ltr">{brandColor}</span>
-                </div>
-              </div>
-              <div className="rounded-md bg-app-surfaceMuted p-2">
-                <p className="text-[10px] font-black text-app-muted">رنگ مکمل</p>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="h-5 w-5 rounded shadow-hairline" style={{ backgroundColor: brandAccentColor }} />
-                  <span className="text-xs font-black text-app-text" dir="ltr">{brandAccentColor}</span>
-                </div>
-              </div>
-            </div>
-            <p className="mt-3 line-clamp-2 text-xs leading-5 text-app-muted">{store?.default_cta || "CTA پیش‌فرض برای گزارش‌های بعدی هنوز ثبت نشده است."}</p>
-          </WorkspacePanel>
+          {error ? <NNotice tone="alert" title="نیاز به بررسی">{error}</NNotice> : null}
 
-          {selectedTrend ? (
-            <WorkspacePanel
-              title="بازرس روز انتخاب‌شده"
-              description={selectedTrend.label}
-              action={(
-                <button
-                  type="button"
-                  onClick={() => setSelectedTrendKey("")}
-                  className="app-interactive nashrino-control-radius flex h-8 w-8 items-center justify-center text-app-muted hover:bg-app-surfaceMuted hover:text-app-text"
-                  aria-label="بستن جزئیات روز"
-                  title="بستن جزئیات روز"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </button>
-              )}
-              bodyClassName="p-4"
-            >
-              <div data-trend-inspector>
-                <div className="grid grid-cols-4 divide-x divide-x-reverse divide-app-border overflow-hidden rounded-md bg-app-surfaceMuted text-center shadow-hairline">
-                  <div className="p-2"><p className="text-sm font-black text-app-text">{selectedTrend.total}</p><p className="mt-1 text-[10px] text-app-muted">کل تلاش</p></div>
-                  <div className="p-2"><p className="text-sm font-black text-app-success">{selectedTrend.success}</p><p className="mt-1 text-[10px] text-app-muted">موفق</p></div>
-                  <div className="p-2"><p className="text-sm font-black text-app-danger">{selectedTrend.failed}</p><p className="mt-1 text-[10px] text-app-muted">ناموفق</p></div>
-                  <div className="p-2"><p className="text-sm font-black text-app-primary">{selectedTrend.started}</p><p className="mt-1 text-[10px] text-app-muted">در اجرا</p></div>
+          <section className="analytics-kpi-grid grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            {dashboardMetrics.map((metric) => {
+              const deltaIsGood = metric.delta === 0 ? null : metric.positiveIsGood === false ? metric.delta < 0 : metric.delta > 0;
+              return (
+                <div key={metric.label} className="analytics-kpi-wrap">
+                  <NMetricTile label={metric.label} value={metric.value} detail={metric.detail} icon={metric.icon} tone={metric.tileTone} href={metric.href} />
+                  {hasComparison && metric.delta !== null ? (
+                    <p className={`analytics-kpi-delta mt-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-black ${deltaIsGood === true ? "text-emerald-700" : deltaIsGood === false ? "text-rose-700" : "text-slate-500"}`}>
+                      {metric.delta > 0 ? <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" /> : metric.delta < 0 ? <TrendingDown className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+                      {metric.delta > 0 ? "+" : ""}{metric.delta}% نسبت به بازه قبل
+                    </p>
+                  ) : null}
                 </div>
-                <div className="mt-4 flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-app-primary" aria-hidden="true" />
-                  <p className="text-xs font-black text-app-text">فعالیت‌های ثبت‌شده</p>
+              );
+            })}
+          </section>
+
+          <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="min-w-0 space-y-3">
+              <WorkspacePanel
+                title="روند تلاش‌های انتشار"
+                description="مقایسه تلاش‌های موفق، ناموفق و در حال اجرا در بازه انتخاب‌شده."
+                action={(
+                  <div className="flex items-center gap-2">
+                    {selectedTrend ? (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTrendKey("")}
+                        className="app-interactive inline-flex items-center gap-1 text-xs font-bold text-app-primary hover:text-app-primaryHover"
+                      >
+                        <X className="h-3.5 w-3.5" aria-hidden="true" />
+                        لغو انتخاب
+                      </button>
+                    ) : null}
+                    <StatusToken tone="neutral">{trend.length} نقطه زمانی</StatusToken>
+                  </div>
+                )}
+              >
+                {loading ? <LoadingPanel /> : null}
+                {!loading && trend.length === 0 ? (
+                  <EmptyState
+                    icon={<LineChart className="h-5 w-5" aria-hidden="true" />}
+                    title="هنوز روندی برای نمایش وجود ندارد"
+                    description="پس از ثبت تلاش‌های انتشار، نمودار عملیاتی اینجا کامل می‌شود."
+                  />
+                ) : null}
+                <div className="mb-3 flex flex-wrap gap-3 text-[11px] font-bold text-app-muted">
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> موفق</span>
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-rose-500" /> ناموفق</span>
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-sky-500" /> در حال اجرا</span>
                 </div>
-                {selectedTrendAttempts.length ? (
-                  <div className="mt-3 divide-y divide-app-border">
-                    {selectedTrendAttempts.map((attempt) => (
-                      <article key={attempt.id} className="py-3 first:pt-0 last:pb-0">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="truncate text-xs font-black text-app-text">{attempt.post_title}</p>
-                          <StatusToken tone={attempt.status === "success" ? "success" : attempt.status === "failed" ? "alert" : "info"}>
-                            {attempt.status === "success" ? "موفق" : attempt.status === "failed" ? "ناموفق" : "در اجرا"}
-                          </StatusToken>
+                <div className="analytics-trend-stage pb-2">
+                  <div
+                    className="grid h-48 min-w-0 items-end gap-1.5 border-b border-app-border px-2 pt-3 sm:gap-2 sm:px-4"
+                    style={{ gridTemplateColumns: `repeat(${Math.max(1, trend.length)}, minmax(0, 1fr))` }}
+                  >
+                    {trend.map((item, index) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => setSelectedTrendKey((current) => current === item.key ? "" : item.key)}
+                        data-trend-inspector
+                        data-trend-bar
+                        className={`analytics-trend-bucket relative flex h-full min-w-0 flex-col justify-end overflow-visible rounded-t pb-6 text-center transition ${selectedTrend?.key === item.key ? "analytics-trend-bucket-active ring-1 ring-inset ring-blue-100" : ""}`}
+                        title={`${item.label}: ${item.total} تلاش`}
+                      >
+                        <p className="mb-2 text-[10px] font-black text-app-muted">{item.total || ""}</p>
+                        <div className="flex h-40 items-end justify-center">
+                          <div
+                            className={`flex w-5 flex-col-reverse overflow-hidden rounded-t bg-app-surfaceMuted transition ${selectedTrend?.key === item.key ? "ring-2 ring-app-primary" : ""}`}
+                            style={{ height: item.total ? `${Math.max(8, percent(item.total, maxTrendTotal))}%` : "0%" }}
+                            title={`${item.label}: ${item.total} تلاش`}
+                          >
+                            <span className="bg-emerald-500" style={{ height: `${percent(item.success, Math.max(1, item.total))}%` }} />
+                            <span className="bg-rose-500" style={{ height: `${percent(item.failed, Math.max(1, item.total))}%` }} />
+                            <span className="bg-sky-500" style={{ height: `${percent(item.started, Math.max(1, item.total))}%` }} />
+                          </div>
                         </div>
-                        <p className="mt-1 text-[11px] text-app-muted">{formatDateTime(attempt.created_at)}</p>
-                      </article>
+                        <p className={`absolute bottom-0 left-1/2 min-h-4 max-w-[5.5rem] -translate-x-1/2 truncate whitespace-nowrap text-center text-[10px] font-bold ${showTrendTick(index) ? "text-app-muted" : "text-transparent"}`}>
+                          {showTrendTick(index) ? item.label : ""}
+                        </p>
+                      </button>
                     ))}
                   </div>
-                ) : (
-                  <p className="mt-3 text-xs leading-5 text-app-muted">برای این روز تلاش انتشاری ثبت نشده است.</p>
-                )}
-              </div>
-            </WorkspacePanel>
-          ) : null}
-          <WorkspacePanel
-            title="پست‌های پیشرو"
-            description="محتواهایی که از نظر وضعیت، رسانه و تلاش ارسال آماده‌تر هستند."
-            action={<StatusToken tone="primary">{topOperationalPosts.length} مورد</StatusToken>}
-            bodyClassName="p-3"
-          >
-            {topOperationalPosts.length === 0 ? (
-              <EmptyState
-                icon={<ShieldCheck className="h-5 w-5" aria-hidden="true" />}
-                title="هنوز پست قابل رتبه‌بندی وجود ندارد"
-                description="پس از ساخت یا انتشار پست، رتبه‌بندی عملکرد اینجا نمایش داده می‌شود."
-              />
-            ) : null}
-            <div className="space-y-2">
-              {topOperationalPosts.map(({ post, media, score }) => {
-                const previewUrl = previewUrlForPost(post);
-                return (
-                  <article key={post.id} className="app-row overflow-hidden rounded-md border border-app-border bg-app-surface shadow-hairline">
-                    <div className="flex gap-3 p-2.5">
-                      <div className="flex h-16 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md bg-app-surfaceMuted ring-1 ring-app-border">
-                        {previewUrl ? (
-                          <img src={previewUrl} alt={media[0]?.original_filename ?? post.title} className="h-full w-full object-cover" />
-                        ) : (
-                          <FileImage className="h-5 w-5 text-app-muted" aria-hidden="true" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="line-clamp-2 text-xs font-black leading-5 text-app-text">{post.title}</p>
-                          <StatusToken tone={score >= 75 ? "success" : score >= 50 ? "warning" : "alert"}>{score}</StatusToken>
-                        </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          <StatusBadge status={post.status} />
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-app-muted">
-                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
-                            {campaignLabelForPost(post, campaigns)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </WorkspacePanel>
-
-          <WorkspacePanel
-            title="اقدام‌های پیشنهادی"
-            description="مواردی که بهتر است اول بررسی شوند."
-            action={<StatusToken tone={failedPosts.length ? "alert" : "success"}>{failedPosts.length ? "رسیدگی" : "پایدار"}</StatusToken>}
-          >
-            {failedPosts.length === 0 ? (
-              <EmptyState
-                icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
-                title="فعلاً مورد بحرانی وجود ندارد"
-                description="خطاهای انتشار یا پست‌های شکست‌خورده در این بازه دیده نمی‌شود."
-              />
-            ) : null}
-            <div className="space-y-2">
-              {failedPosts.map((post) => (
-                <article key={post.id} className="rounded-md border border-app-border bg-app-surface p-3 shadow-hairline">
-                  <div className="flex gap-3">
-                    <div className="flex h-14 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-app-danger/10 ring-1 ring-app-danger/20">
-                      {previewUrlForPost(post) ? (
-                        <img src={previewUrlForPost(post)} alt={primaryMediaForPost(post)?.original_filename ?? post.title} className="h-full w-full object-cover" />
-                      ) : (
-                        <AlertTriangle className="h-4 w-4 text-app-danger" aria-hidden="true" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={post.status} />
-                        <span className="text-xs text-app-muted">تلاش: {post.attempt_count}</span>
-                      </div>
-                      <h3 className="mt-2 truncate text-sm font-black text-app-text">{post.title}</h3>
-                    </div>
-                  </div>
-                  {post.last_error ? <p className="mt-1 line-clamp-2 text-xs leading-6 text-rose-600">{post.last_error}</p> : null}
-                  <div className="mt-3 flex gap-2">
-                    <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن</Button>
-                    <Button href="/logs" variant="secondary" size="sm">لاگ‌ها</Button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </WorkspacePanel>
-
-          <WorkspacePanel title="خلاصه عملیاتی" description="سیگنال‌های قابل اتکا برای تصمیم بعدی.">
-            <DetailGrid
-              items={[
-                { label: "تلاش کامل‌شده", value: attemptSummary.completed, hint: "موفق + ناموفق" },
-                { label: "در حال اجرا", value: attemptSummary.started, hint: "تلاش شروع‌شده" },
-                { label: "پست در جریان", value: queuedCount, hint: "آماده یا زمان‌بندی‌شده" },
-                { label: "کل تلاش‌ها", value: scopedAttempts.length, hint: "ثبت‌شده در بازه" }
-              ]}
-            />
-            {campaignPerformance.length ? (
-              <div className="mt-4 rounded-md border border-app-border bg-app-surfaceMuted p-3">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-app-primary" aria-hidden="true" />
-                  <p className="text-xs font-black text-app-text">رتبه‌بندی کمپین‌ها</p>
                 </div>
-                <div className="mt-3 space-y-2">
-                  {campaignPerformance.map((campaign) => (
-                    <div key={campaign.campaignKey} className="rounded bg-app-surface p-2 shadow-hairline">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="flex min-w-0 items-center gap-1.5 truncate text-xs font-black text-app-text">
-                          <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: campaign.color }} />
-                          {campaign.label}
-                        </p>
-                        <span className="text-[11px] font-black text-app-primary">{campaign.total} پست</span>
+              </WorkspacePanel>
+
+              <WorkspacePanel
+                title="ترکیب عملیات محتوا"
+                description="وضعیت چرخه پست‌ها و نوع ارسال در یک نمای فشرده."
+              >
+                <div className="grid gap-3 border-b border-app-border pb-4 sm:grid-cols-2">
+                  <div className="flex items-center justify-between gap-3 rounded-md bg-app-surfaceMuted p-3 shadow-hairline">
+                    <span className="flex items-center gap-2">
+                      <MessageSquareText className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <span className="text-sm font-black text-app-text">ارسال متنی</span>
+                    </span>
+                    <span className="text-sm font-black text-app-text">{attemptSummary.text} <span className="text-xs text-app-muted">({percent(attemptSummary.text, scopedAttempts.length)}%)</span></span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 rounded-md bg-app-surfaceMuted p-3 shadow-hairline">
+                    <span className="flex items-center gap-2">
+                      <FileImage className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <span className="text-sm font-black text-app-text">ارسال رسانه‌ای</span>
+                    </span>
+                    <span className="text-sm font-black text-app-text">{attemptSummary.media} <span className="text-xs text-app-muted">({percent(attemptSummary.media, scopedAttempts.length)}%)</span></span>
+                  </div>
+                </div>
+                <div className="mt-2 divide-y divide-app-border">
+                  {Object.entries(statusLabels).map(([status, label]) => {
+                    const count = statusCounts[status] ?? 0;
+                    const ratio = percent(count, Math.max(1, scopedPosts.length));
+                    return (
+                      <div key={status} className="grid gap-2 py-3 md:grid-cols-[150px_minmax(0,1fr)_36px] md:items-center">
+                        <div className="flex items-center gap-2">
+                          <StatusBadge status={status} />
+                          <span className="text-xs font-black text-app-text">{label}</span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-app-surfaceMuted">
+                          <div className={`h-full rounded-full ${statusProgressClasses[status] ?? "bg-app-primary"}`} style={{ width: `${ratio}%` }} />
+                        </div>
+                        <span className="text-left text-xs font-black text-app-text">{count}</span>
                       </div>
-                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-app-surfaceMuted">
-                        <div className="h-full rounded-full bg-app-primary" style={{ width: `${percent(campaign.published + campaign.queued, Math.max(1, campaign.total))}%` }} />
-                      </div>
-                      <p className="mt-1 text-[11px] text-app-muted">{campaign.published} منتشرشده · {campaign.queued} در جریان · {campaign.media} دارای رسانه</p>
-                    </div>
+                    );
+                  })}
+                </div>
+              </WorkspacePanel>
+
+              <WorkspacePanel
+                title="جزئیات عملکرد پست‌ها"
+                description="پست‌های بازه را جست‌وجو، مرتب و برای بررسی عملیاتی باز کنید."
+                action={<StatusToken tone="neutral">{drilldownPosts.length} نتیجه</StatusToken>}
+                bodyClassName="p-3"
+              >
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_170px]">
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 ring-app-primary focus-within:ring-2">
+                    <Search className="h-4 w-4 shrink-0 text-app-muted" aria-hidden="true" />
+                    <input
+                      value={postSearch}
+                      onChange={(event) => setPostSearch(event.target.value)}
+                      placeholder="جست‌وجوی عنوان، کمپین یا وضعیت"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-app-muted/70"
+                    />
+                  </label>
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
+                    <ArrowDownUp className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <select value={postSort} onChange={(event) => setPostSort(event.target.value as PostSort)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                      <option value="activity">آخرین فعالیت</option>
+                      <option value="attempts">بیشترین تلاش</option>
+                      <option value="title">عنوان پست</option>
+                    </select>
+                  </label>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {postFilterOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setPostFilter(option.value)}
+                        className={`app-interactive nashrino-control-radius inline-flex min-h-8 items-center px-3 text-xs font-bold transition ${postFilter === option.value ? "bg-app-primary text-white" : "bg-app-surfaceMuted text-app-muted hover:bg-app-primary/10 hover:text-app-primary"}`}
+                    >
+                      {option.label}
+                    </button>
                   ))}
                 </div>
-              </div>
-            ) : null}
-            <div className="mt-4 divide-y divide-app-border border-t border-app-border">
-              <div className="py-3">
-                <p className="text-[11px] font-black text-app-muted">آخرین تلاش ثبت‌شده</p>
-                <p className="mt-1 text-sm font-black text-app-text">{lastAttempt ? formatDateTime(lastAttempt.created_at) : "—"}</p>
-              </div>
-              <div className="py-3">
-                <p className="text-[11px] font-black text-app-muted">نزدیک‌ترین پست در جریان</p>
-                {queuedPosts[0] ? (
-                  <>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <StatusBadge status={queuedPosts[0].status} />
-                      <span className="text-xs text-app-muted">{formatDateTime(queuedPosts[0].scheduled_at)}</span>
-                    </div>
-                    <p className="mt-2 truncate text-sm font-black text-app-text">{queuedPosts[0].title}</p>
-                  </>
-                ) : <p className="mt-1 text-sm text-app-muted">پست فعالی در صف نیست.</p>}
-              </div>
-              <div className="py-3">
-                <p className="text-[11px] font-black text-app-muted">بیشترین تلاش انتشار</p>
-                {highAttemptPosts[0] ? (
-                  <div className="mt-2 flex items-center justify-between gap-3">
-                    <p className="truncate text-sm font-black text-app-text">{highAttemptPosts[0].title}</p>
-                    <StatusToken tone={highAttemptPosts[0].attempt_count > 1 ? "warning" : "neutral"}>{highAttemptPosts[0].attempt_count} تلاش</StatusToken>
+                <DataTable
+                  columns={["پست", "وضعیت", "تلاش", "آخرین فعالیت", "اقدام"]}
+                  gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_80px_150px_100px]"
+                  empty={drilldownPosts.length === 0 ? <EmptyState title="پستی با این فیلتر پیدا نشد" description="عبارت جست‌وجو یا فیلتر وضعیت را تغییر دهید." /> : null}
+                >
+                  {drilldownPosts.map((post) => (
+                    <DataRow key={post.id} gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_80px_150px_100px]">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-app-surfaceMuted ring-1 ring-app-border">
+                          {previewUrlForPost(post) ? (
+                            <img src={previewUrlForPost(post)} alt={primaryMediaForPost(post)?.original_filename ?? post.title} className="h-full w-full object-cover" />
+                          ) : (
+                            <ImageIcon className="h-4 w-4 text-app-muted" aria-hidden="true" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-black text-app-text">{post.title}</p>
+                          <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-app-muted">
+                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
+                            {campaignLabelForPost(post, campaigns)}
+                          </p>
+                        </div>
+                      </div>
+                      <div><StatusBadge status={post.status} /></div>
+                      <div>
+                        <p className="text-xs font-black text-app-text">{post.attempt_count}</p>
+                        <p className="mt-1 text-[11px] text-app-muted">بار ارسال</p>
+                      </div>
+                      <p className="text-xs leading-5 text-app-muted">{formatDateTime(postActivityDate(post))}</p>
+                      <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm" className="w-full">
+                        <ArrowUpLeft className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                        باز کردن
+                      </Button>
+                    </DataRow>
+                  ))}
+                </DataTable>
+              </WorkspacePanel>
+            </div>
+
+            <aside className="grid gap-3 lg:grid-cols-2 xl:block xl:space-y-3 xl:self-start">
+              <WorkspacePanel title="هویت گزارش" description="برندی که این تحلیل با آن آماده می‌شود." bodyClassName="p-4">
+                <div className="flex items-center gap-3">
+                  <WorkspaceAvatar name={store?.name || "فضای کاری اجتماعی"} size="lg" color={brandColor} imageUrl={brandAvatarUrl} />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-app-text">{store?.name || "پروفایل فروشگاه"}</p>
+                    <p className="mt-1 truncate text-xs text-app-muted">{store?.brand_voice || "لحن برند ثبت نشده"}</p>
                   </div>
-                ) : <p className="mt-1 text-sm text-app-muted">داده‌ای برای رتبه‌بندی وجود ندارد.</p>}
-              </div>
-            </div>
-            <div className="mt-4 grid gap-2">
-              <Button href="/queue" variant="secondary">باز کردن صف انتشار</Button>
-              <Button href="/content" variant="secondary">میز محتوا</Button>
-            </div>
-          </WorkspacePanel>
-        </aside>
-      </section>
-    </NPage>
+                </div>
+                {brandLogoUrl ? (
+                  <div className="mt-4 rounded-md border border-app-border bg-app-surfaceMuted p-3">
+                    <p className="mb-2 text-[11px] font-black text-app-muted">لوگوی گزارش</p>
+                    <img src={brandLogoUrl} alt="لوگوی برند" className="max-h-20 max-w-full rounded object-contain" />
+                  </div>
+                ) : null}
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <div className="rounded-md bg-app-surfaceMuted p-2">
+                    <p className="text-[10px] font-black text-app-muted">رنگ اصلی</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="h-5 w-5 rounded shadow-hairline" style={{ backgroundColor: brandColor }} />
+                      <span className="text-xs font-black text-app-text" dir="ltr">{brandColor}</span>
+                    </div>
+                  </div>
+                  <div className="rounded-md bg-app-surfaceMuted p-2">
+                    <p className="text-[10px] font-black text-app-muted">رنگ مکمل</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="h-5 w-5 rounded shadow-hairline" style={{ backgroundColor: brandAccentColor }} />
+                      <span className="text-xs font-black text-app-text" dir="ltr">{brandAccentColor}</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-3 line-clamp-2 text-xs leading-5 text-app-muted">{store?.default_cta || "CTA پیش‌فرض برای گزارش‌های بعدی هنوز ثبت نشده است."}</p>
+              </WorkspacePanel>
+
+              {selectedTrend ? (
+                <WorkspacePanel
+                  title="بازرس روز انتخاب‌شده"
+                  description={selectedTrend.label}
+                  action={(
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTrendKey("")}
+                      className="app-interactive nashrino-control-radius flex h-8 w-8 items-center justify-center text-app-muted hover:bg-app-surfaceMuted hover:text-app-text"
+                      aria-label="بستن جزئیات روز"
+                      title="بستن جزئیات روز"
+                    >
+                      <X className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  )}
+                  bodyClassName="p-4"
+                >
+                  <div data-trend-inspector>
+                    <div className="grid grid-cols-4 divide-x divide-x-reverse divide-app-border overflow-hidden rounded-md bg-app-surfaceMuted text-center shadow-hairline">
+                      <div className="p-2"><p className="text-sm font-black text-app-text">{selectedTrend.total}</p><p className="mt-1 text-[10px] text-app-muted">کل تلاش</p></div>
+                      <div className="p-2"><p className="text-sm font-black text-app-success">{selectedTrend.success}</p><p className="mt-1 text-[10px] text-app-muted">موفق</p></div>
+                      <div className="p-2"><p className="text-sm font-black text-app-danger">{selectedTrend.failed}</p><p className="mt-1 text-[10px] text-app-muted">ناموفق</p></div>
+                      <div className="p-2"><p className="text-sm font-black text-app-primary">{selectedTrend.started}</p><p className="mt-1 text-[10px] text-app-muted">در اجرا</p></div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <p className="text-xs font-black text-app-text">فعالیت‌های ثبت‌شده</p>
+                    </div>
+                    {selectedTrendAttempts.length ? (
+                      <div className="mt-3 divide-y divide-app-border">
+                        {selectedTrendAttempts.map((attempt) => (
+                          <article key={attempt.id} className="py-3 first:pt-0 last:pb-0">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="truncate text-xs font-black text-app-text">{attempt.post_title}</p>
+                              <StatusToken tone={attempt.status === "success" ? "success" : attempt.status === "failed" ? "alert" : "info"}>
+                                {attempt.status === "success" ? "موفق" : attempt.status === "failed" ? "ناموفق" : "در اجرا"}
+                              </StatusToken>
+                            </div>
+                            <p className="mt-1 text-[11px] text-app-muted">{formatDateTime(attempt.created_at)}</p>
+                          </article>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-xs leading-5 text-app-muted">برای این روز تلاش انتشاری ثبت نشده است.</p>
+                    )}
+                  </div>
+                </WorkspacePanel>
+              ) : null}
+              <WorkspacePanel
+                title="پست‌های پیشرو"
+                description="محتواهایی که از نظر وضعیت، رسانه و تلاش ارسال آماده‌تر هستند."
+                action={<StatusToken tone="primary">{topOperationalPosts.length} مورد</StatusToken>}
+                bodyClassName="p-3"
+              >
+                {topOperationalPosts.length === 0 ? (
+                  <EmptyState
+                    icon={<ShieldCheck className="h-5 w-5" aria-hidden="true" />}
+                    title="هنوز پست قابل رتبه‌بندی وجود ندارد"
+                    description="پس از ساخت یا انتشار پست، رتبه‌بندی عملکرد اینجا نمایش داده می‌شود."
+                  />
+                ) : null}
+                <div className="space-y-2">
+                  {topOperationalPosts.map(({ post, media, score }) => {
+                    const previewUrl = previewUrlForPost(post);
+                    return (
+                      <article key={post.id} className="app-row overflow-hidden rounded-md border border-app-border bg-app-surface shadow-hairline">
+                        <div className="flex gap-3 p-2.5">
+                          <div className="flex h-16 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md bg-app-surfaceMuted ring-1 ring-app-border">
+                            {previewUrl ? (
+                              <img src={previewUrl} alt={media[0]?.original_filename ?? post.title} className="h-full w-full object-cover" />
+                            ) : (
+                              <FileImage className="h-5 w-5 text-app-muted" aria-hidden="true" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="line-clamp-2 text-xs font-black leading-5 text-app-text">{post.title}</p>
+                              <StatusToken tone={score >= 75 ? "success" : score >= 50 ? "warning" : "alert"}>{score}</StatusToken>
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                              <StatusBadge status={post.status} />
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-app-muted">
+                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
+                                {campaignLabelForPost(post, campaigns)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </WorkspacePanel>
+
+              <WorkspacePanel
+                title="اقدام‌های پیشنهادی"
+                description="مواردی که بهتر است اول بررسی شوند."
+                action={<StatusToken tone={failedPosts.length ? "alert" : "success"}>{failedPosts.length ? "رسیدگی" : "پایدار"}</StatusToken>}
+              >
+                {failedPosts.length === 0 ? (
+                  <EmptyState
+                    icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
+                    title="فعلاً مورد بحرانی وجود ندارد"
+                    description="خطاهای انتشار یا پست‌های شکست‌خورده در این بازه دیده نمی‌شود."
+                  />
+                ) : null}
+                <div className="space-y-2">
+                  {failedPosts.map((post) => (
+                    <article key={post.id} className="rounded-md border border-app-border bg-app-surface p-3 shadow-hairline">
+                      <div className="flex gap-3">
+                        <div className="flex h-14 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-app-danger/10 ring-1 ring-app-danger/20">
+                          {previewUrlForPost(post) ? (
+                            <img src={previewUrlForPost(post)} alt={primaryMediaForPost(post)?.original_filename ?? post.title} className="h-full w-full object-cover" />
+                          ) : (
+                            <AlertTriangle className="h-4 w-4 text-app-danger" aria-hidden="true" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <StatusBadge status={post.status} />
+                            <span className="text-xs text-app-muted">تلاش: {post.attempt_count}</span>
+                          </div>
+                          <h3 className="mt-2 truncate text-sm font-black text-app-text">{post.title}</h3>
+                        </div>
+                      </div>
+                      {post.last_error ? <p className="mt-1 line-clamp-2 text-xs leading-6 text-rose-600">{post.last_error}</p> : null}
+                      <div className="mt-3 flex gap-2">
+                        <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن</Button>
+                        <Button href="/logs" variant="secondary" size="sm">لاگ‌ها</Button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </WorkspacePanel>
+
+              <WorkspacePanel title="خلاصه عملیاتی" description="سیگنال‌های قابل اتکا برای تصمیم بعدی.">
+                <DetailGrid
+                  items={[
+                    { label: "تلاش کامل‌شده", value: attemptSummary.completed, hint: "موفق + ناموفق" },
+                    { label: "در حال اجرا", value: attemptSummary.started, hint: "تلاش شروع‌شده" },
+                    { label: "پست در جریان", value: queuedCount, hint: "آماده یا زمان‌بندی‌شده" },
+                    { label: "کل تلاش‌ها", value: scopedAttempts.length, hint: "ثبت‌شده در بازه" }
+                  ]}
+                />
+                {campaignPerformance.length ? (
+                  <div className="mt-4 rounded-md border border-app-border bg-app-surfaceMuted p-3">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <p className="text-xs font-black text-app-text">رتبه‌بندی کمپین‌ها</p>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {campaignPerformance.map((campaign) => (
+                        <div key={campaign.campaignKey} className="rounded bg-app-surface p-2 shadow-hairline">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="flex min-w-0 items-center gap-1.5 truncate text-xs font-black text-app-text">
+                              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: campaign.color }} />
+                              {campaign.label}
+                            </p>
+                            <span className="text-[11px] font-black text-app-primary">{campaign.total} پست</span>
+                          </div>
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-app-surfaceMuted">
+                            <div className="h-full rounded-full bg-app-primary" style={{ width: `${percent(campaign.published + campaign.queued, Math.max(1, campaign.total))}%` }} />
+                          </div>
+                          <p className="mt-1 text-[11px] text-app-muted">{campaign.published} منتشرشده · {campaign.queued} در جریان · {campaign.media} دارای رسانه</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                <div className="mt-4 divide-y divide-app-border border-t border-app-border">
+                  <div className="py-3">
+                    <p className="text-[11px] font-black text-app-muted">آخرین تلاش ثبت‌شده</p>
+                    <p className="mt-1 text-sm font-black text-app-text">{lastAttempt ? formatDateTime(lastAttempt.created_at) : "—"}</p>
+                  </div>
+                  <div className="py-3">
+                    <p className="text-[11px] font-black text-app-muted">نزدیک‌ترین پست در جریان</p>
+                    {queuedPosts[0] ? (
+                      <>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <StatusBadge status={queuedPosts[0].status} />
+                          <span className="text-xs text-app-muted">{formatDateTime(queuedPosts[0].scheduled_at)}</span>
+                        </div>
+                        <p className="mt-2 truncate text-sm font-black text-app-text">{queuedPosts[0].title}</p>
+                      </>
+                    ) : <p className="mt-1 text-sm text-app-muted">پست فعالی در صف نیست.</p>}
+                  </div>
+                  <div className="py-3">
+                    <p className="text-[11px] font-black text-app-muted">بیشترین تلاش انتشار</p>
+                    {highAttemptPosts[0] ? (
+                      <div className="mt-2 flex items-center justify-between gap-3">
+                        <p className="truncate text-sm font-black text-app-text">{highAttemptPosts[0].title}</p>
+                        <StatusToken tone={highAttemptPosts[0].attempt_count > 1 ? "warning" : "neutral"}>{highAttemptPosts[0].attempt_count} تلاش</StatusToken>
+                      </div>
+                    ) : <p className="mt-1 text-sm text-app-muted">داده‌ای برای رتبه‌بندی وجود ندارد.</p>}
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-2">
+                  <Button href="/queue" variant="secondary">باز کردن صف انتشار</Button>
+                  <Button href="/content" variant="secondary">میز محتوا</Button>
+                </div>
+              </WorkspacePanel>
+            </aside>
+          </section>
+        </NPage>
   );
 }
