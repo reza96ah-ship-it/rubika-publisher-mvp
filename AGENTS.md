@@ -112,10 +112,12 @@ Do not add a primary navigation item without updating the master roadmap, `docs/
 ## 7. Current frontend architecture rules
 
 - Protected routes use the shared App Router `(workspace)` layout.
-- `AuthGate` and `AppShell` are owned by the shared workspace layout.
-- Existing page-level wrappers may still exist as temporary compatibility no-ops; removing them is a pending cleanup task.
+- `frontend/app/(workspace)/layout.tsx` is the sole owner of `AuthGate` and `AppShell`.
+- Protected page implementations must not import or render `AuthGate` or `AppShell`.
+- Public routes such as `/login` remain outside workspace authentication.
 - Only the primary workspace stage should scroll.
-- AppShell owns workspace overview, notifications, command palette, account actions, mobile navigation, and route-change scroll reset.
+- AppShell owns workspace overview, notifications, command palette, account actions, mobile navigation, haptics, and route-change scroll reset.
+- `npm run shell:audit` must pass and prevents duplicate shell ownership from returning.
 - Strong glass material is limited to navigation and small overlays.
 - Dense tables, editors, charts, and long lists use solid or nearly solid surfaces.
 
@@ -189,6 +191,7 @@ cd frontend
 npm ci
 npm run lint
 npm run token:audit
+npm run shell:audit
 npm run typecheck
 npm run test
 npm run build
