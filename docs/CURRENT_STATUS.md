@@ -3,8 +3,8 @@ project: Nashrino SocialOps Studio
 repository: reza96ah-ship-it/rubika-publisher-mvp
 canonical_branch: main
 status_date: 2026-06-25
-active_program: Production deployment operational acceptance
-next_recommended_branch: refactor/remove-legacy-page-shell-wrappers
+active_program: Dashboard V2 preparation and production deployment operational acceptance
+next_recommended_branch: feat/dashboard-v2
 ---
 
 # Current Project Status
@@ -17,7 +17,8 @@ Read this file after `AGENTS.md`. Update it whenever a pull request changes the 
 - Accepted application history is consolidated into `main`.
 - Production deployment implementation merged through PR #27.
 - Compose healthcheck validation was corrected through PR #28.
-- Frontend, Backend, and Deployment CI passed on the final hotfix commit.
+- Repository-level production CI and image-build acceptance are complete.
+- Shared workspace shell cleanup is completed through PR #30.
 - Generated browser reports and temporary output artifacts are excluded.
 - The active `main` ruleset still requires manual verification in GitHub Settings.
 
@@ -28,11 +29,14 @@ Read this file after `AGENTS.md`. Update it whenever a pull request changes the 
 - Liquid Glass token and material bridge;
 - AppShell V2 with shared navigation and mobile drawer;
 - shared protected `(workspace)` route layout without URL changes;
+- one layout-owned `AuthGate` and one layout-owned `AppShell`;
+- no page-level compatibility shell wrappers;
+- structural `shell:audit` regression guard in Frontend CI;
 - durable repository continuity and contribution guidance.
 
 ## Production deployment implementation
 
-The following production assets now exist on `main`:
+The following production assets exist on `main`:
 
 - standalone multi-stage Next.js production image;
 - non-root backend production image without reload mode;
@@ -48,12 +52,20 @@ The following production assets now exist on `main`:
 
 Repository-level acceptance is complete. M2 remains `in progress` only until a non-production deployment, persistence, backup, restore, rollback, and reverse-proxy drill pass.
 
-## Remaining foundation cleanup
+## Shared workspace shell ownership
 
-- Remove page-level `AuthGate` and `AppShell` compatibility wrappers.
-- Update stale documents that describe the workspace route migration as pending.
+- `frontend/app/(workspace)/layout.tsx` is the sole protected-shell owner.
+- Protected pages render route content only.
+- Authentication validation runs once per workspace load.
+- Notification polling, command-palette shortcuts, mobile haptics, and scroll ownership remain centralized in one AppShell instance.
+- Existing route URLs are unchanged.
+- `npm run shell:audit` prevents page-level `AuthGate` or `AppShell` ownership from returning.
+
+## Remaining foundation administration
+
 - Verify the `main` repository ruleset and close or update issues #7 and #20.
 - Retire obsolete merged branches only after uniqueness and deployment checks.
+- Align Next.js and `eslint-config-next` major versions in a dedicated tooling PR.
 
 ## Immediate next sequence
 
@@ -70,31 +82,27 @@ Remaining evidence:
 - successful restore and application rollback drills;
 - development Compose regression check on the target host.
 
-### 2. Remove legacy page shell wrappers
-
-Recommended branch: `refactor/remove-legacy-page-shell-wrappers`
-
-Acceptance:
-
-- one `AuthGate`;
-- one `AppShell`;
-- one notification polling loop;
-- one command-palette listener;
-- one haptic listener;
-- unchanged route URLs;
-- passing CI.
-
-### 3. Dashboard V2
+### 2. Dashboard V2
 
 Recommended branch: `feat/dashboard-v2`
 
-Use real backend data for publishing health, the next scheduled publication, active campaigns, channel readiness, action backlogs, alerts, and compact throughput insight.
+Use real backend data for:
 
-### 4. Composer and publishing V2
+- publishing health;
+- next scheduled publication;
+- active campaign summary;
+- channel readiness;
+- approval and failure backlogs;
+- operational alerts;
+- compact throughput and performance insight.
+
+Do not add full onboarding progress, the full calendar, full campaign reports, duplicate content lists, or permanent queue/log tables to Dashboard.
+
+### 3. Composer and publishing V2
 
 Preserve create/edit, autosave, media, campaigns, readiness, approval, scheduling, previews, automation rules, queue actions, retry, cancel, and manual publication.
 
-### 5. Planner and Jalali calendar V2
+### 4. Planner and Jalali calendar V2
 
 Preserve month/week/list modes, filtering, day/post inspection, rescheduling, gap detection, queue secondary view, and agenda-first mobile behavior.
 
@@ -110,7 +118,21 @@ Preserve month/week/list modes, filtering, day/post inspection, rescheduling, ga
 
 ## Validation
 
-Development:
+Frontend:
+
+```bash
+cd frontend
+npm ci
+npm run lint
+npm run token:audit
+npm run shell:audit
+npm run typecheck
+npm run test
+npm run build
+npm audit --omit=dev
+```
+
+Development stack:
 
 ```bash
 docker compose exec frontend npm run check
