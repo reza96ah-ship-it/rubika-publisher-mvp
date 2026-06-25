@@ -48,11 +48,12 @@ jobs:
           VISUAL_SESSION="$visual_session" BROWSER_BIN="$browser_bin" CHROMEDRIVER_BIN="$chromedriver_bin" python .github/scripts/render-dashboard-review.py
 
       - name: Upload dashboard review screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dashboard-v2-visual-review
           path: visual-review
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Show service logs on failure
