@@ -1,5 +1,6 @@
 name: One-shot remove legacy shell wrappers
 
+# This workflow deletes itself after committing the refactor.
 on:
   push:
     branches:
