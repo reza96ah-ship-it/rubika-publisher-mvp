@@ -1,12 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "./loading-skeleton";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const AuthGateContext = createContext(false);
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
+  const nested = useContext(AuthGateContext);
+
+  if (nested) return children;
+
+  return (
+    <AuthGateContext.Provider value>
+      <AuthGateRoot>{children}</AuthGateRoot>
+    </AuthGateContext.Provider>
+  );
+}
+
+function AuthGateRoot({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
 
@@ -40,7 +53,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   if (!ready) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-app-background text-app-text">
-        <div className="w-full max-w-xs rounded-md border border-app-border bg-white p-4 shadow-sm" aria-label="در حال بررسی نشست کاربری">
+        <div
+          className="w-full max-w-xs rounded-md border border-app-border bg-white p-4 shadow-sm"
+          aria-label="در حال بررسی نشست کاربری"
+        >
           <Skeleton className="h-3 w-32" />
           <Skeleton className="mt-3 h-2.5 w-full" />
         </div>
