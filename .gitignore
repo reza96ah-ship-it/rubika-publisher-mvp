@@ -32,3 +32,5 @@ storage/media/*
 Thumbs.db
 .vscode/
 .idea/
+
+frontend/next-env.d.ts

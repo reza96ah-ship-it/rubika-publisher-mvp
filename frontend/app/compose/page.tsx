@@ -1,14 +1,17 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ComposerActionFooter } from "../../components/composer-action-footer";
 import { PageHeader } from "../../components/page-header";
 import { RubikaPostPreview } from "../../components/rubika-post-preview";
+import { MediaGalleryPicker } from "../../components/media-gallery-picker";
+import { ComposerSchedulePanel } from "../../components/composer-schedule-panel";
 import { Button } from "../../components/ui/button";
 import { SectionCard } from "../../components/ui/card";
-import { Field, Input, Select, Textarea } from "../../components/ui/form";
+import { Field, Input, Textarea } from "../../components/ui/form";
 import { Tag } from "../../components/ui/tag";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -16,6 +19,7 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 type Store = {
   default_hashtags: string;
   caption_footer: string;
+  timezone?: string;
 };
 
 type MediaAsset = {
@@ -26,18 +30,40 @@ type MediaAsset = {
   size_bytes: number;
 };
 
+type Post = {
+  id: number;
+  title: string;
+  caption: string;
+  hashtags: string;
+  platform: string;
+  status: string;
+  timezone: string;
+  campaign: string;
+  internal_note: string;
+  scheduled_at: string | null;
+};
+
 const emptyForm = {
   title: "",
   caption: "",
   hashtags: "",
-  platform: "rubika"
+  platform: "rubika",
+  timezone: "Asia/Tehran",
+  campaign: "",
+  internal_note: "",
+  scheduled_at: null as string | null
 };
 
-export default function ComposePage() {
+function ComposePageContent() {
+  const searchParams = useSearchParams();
+  const editingPostId = searchParams.get("postId");
+  const isEditing = Boolean(editingPostId);
+
   const [store, setStore] = useState<Store | null>(null);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<number, string>>({});
   const [form, setForm] = useState(emptyForm);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [selectedMediaId, setSelectedMediaId] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFilePreviewUrl, setSelectedFilePreviewUrl] = useState("");
@@ -61,6 +87,8 @@ export default function ComposePage() {
 
   const captionLength = form.caption.length;
   const hashtagCount = form.hashtags.split(/\s+/).filter((item) => item.startsWith("#")).length;
+  const timezone = form.timezone || store?.timezone || "Asia/Tehran";
+  const hasSchedule = Boolean(form.scheduled_at);
 
   function token() {
     return window.localStorage.getItem("rubika_publisher_access") ?? "";
@@ -69,22 +97,60 @@ export default function ComposePage() {
   async function loadData() {
     setLoading(true);
     const headers = { Authorization: `Bearer ${token()}` };
-    const [storeResponse, mediaResponse] = await Promise.all([
+    const requests = [
       fetch(`${apiUrl}/stores/active`, { headers }),
       fetch(`${apiUrl}/media`, { headers })
-    ]);
+    ];
+
+    if (editingPostId) {
+      requests.push(fetch(`${apiUrl}/posts/${editingPostId}`, { headers }));
+    }
+
+    const [storeResponse, mediaResponse, postResponse] = await Promise.all(requests);
 
     if (storeResponse.ok) setStore(await storeResponse.json());
-    if (mediaResponse.ok) setMediaAssets(await mediaResponse.json());
+
+    let loadedMediaAssets: MediaAsset[] = [];
+    if (mediaResponse.ok) {
+      loadedMediaAssets = await mediaResponse.json();
+      setMediaAssets(loadedMediaAssets);
+    }
+
+    if (editingPostId) {
+      if (!postResponse?.ok) {
+        throw new Error("دریافت پست برای ویرایش ناموفق بود");
+      }
+
+      const post = (await postResponse.json()) as Post;
+      setEditingPost(post);
+      setForm({
+        title: post.title,
+        caption: post.caption,
+        hashtags: post.hashtags,
+        platform: post.platform || "rubika",
+        timezone: post.timezone || "Asia/Tehran",
+        campaign: post.campaign || "",
+        internal_note: post.internal_note || "",
+        scheduled_at: post.scheduled_at
+      });
+
+      const attachedAsset = loadedMediaAssets.find((asset) => asset.post_id === post.id);
+      setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
+    } else {
+      setEditingPost(null);
+      setForm(emptyForm);
+      setSelectedMediaId("");
+    }
+
     setLoading(false);
   }
 
   useEffect(() => {
-    loadData().catch(() => {
-      setError("خطا در دریافت اطلاعات اولیه composer");
+    loadData().catch((err) => {
+      setError(err instanceof Error ? err.message : isEditing ? "خطا در دریافت اطلاعات پست برای ویرایش" : "خطا در دریافت اطلاعات اولیه composer");
       setLoading(false);
     });
-  }, []);
+  }, [editingPostId]);
 
   useEffect(() => {
     if (!selectedFile) {
@@ -140,7 +206,7 @@ export default function ComposePage() {
     };
   }, [mediaAssets]);
 
-  function updateField(field: keyof typeof emptyForm, value: string) {
+  function updateField(field: keyof typeof emptyForm, value: string | null) {
     setForm((current) => ({ ...current, [field]: value }));
     if (message) setMessage("");
   }
@@ -154,8 +220,24 @@ export default function ComposePage() {
   }
 
   function resetComposer(options: { clearStatus?: boolean } = { clearStatus: true }) {
-    setForm(emptyForm);
-    setSelectedMediaId("");
+    if (editingPost) {
+      setForm({
+        title: editingPost.title,
+        caption: editingPost.caption,
+        hashtags: editingPost.hashtags,
+        platform: editingPost.platform || "rubika",
+        timezone: editingPost.timezone || "Asia/Tehran",
+        campaign: editingPost.campaign || "",
+        internal_note: editingPost.internal_note || "",
+        scheduled_at: editingPost.scheduled_at
+      });
+      const attachedAsset = mediaAssets.find((asset) => asset.post_id === editingPost.id);
+      setSelectedMediaId(attachedAsset ? String(attachedAsset.id) : "");
+    } else {
+      setForm(emptyForm);
+      setSelectedMediaId("");
+    }
+
     setSelectedFile(null);
 
     if (options.clearStatus) {
@@ -192,6 +274,39 @@ export default function ComposePage() {
     if (!response.ok) throw new Error("اتصال تصویر به پست ناموفق بود");
   }
 
+  async function syncSelectedMedia(postId: number) {
+    const attachedAssets = mediaAssets.filter((asset) => asset.post_id === postId);
+    const uploadedAsset = await uploadSelectedFile();
+
+    if (uploadedAsset) {
+      await Promise.all(attachedAssets.map((asset) => attachMedia(asset.id, null)));
+      await attachMedia(uploadedAsset.id, postId);
+      return;
+    }
+
+    if (selectedMediaId) {
+      await Promise.all(attachedAssets.filter((asset) => String(asset.id) !== selectedMediaId).map((asset) => attachMedia(asset.id, null)));
+      await attachMedia(Number(selectedMediaId), postId);
+      return;
+    }
+
+    await Promise.all(attachedAssets.map((asset) => attachMedia(asset.id, null)));
+  }
+
+  async function schedulePost(postId: number, scheduledAt: string) {
+    const response = await fetch(`${apiUrl}/posts/${postId}/schedule`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token()}`
+      },
+      body: JSON.stringify({ scheduled_at: scheduledAt, timezone })
+    });
+
+    if (!response.ok) throw new Error("زمان‌بندی پست ناموفق بود");
+    return response.json() as Promise<Post>;
+  }
+
   async function saveDraft(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
@@ -199,8 +314,9 @@ export default function ComposePage() {
     setError("");
 
     try {
-      const response = await fetch(`${apiUrl}/posts`, {
-        method: "POST",
+      const endpoint = isEditing ? `${apiUrl}/posts/${editingPostId}` : `${apiUrl}/posts`;
+      const response = await fetch(endpoint, {
+        method: isEditing ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token()}`
@@ -208,18 +324,20 @@ export default function ComposePage() {
         body: JSON.stringify(form)
       });
 
-      if (!response.ok) throw new Error("ذخیره پیش‌نویس ناموفق بود");
+      if (!response.ok) throw new Error(isEditing ? "به‌روزرسانی پست ناموفق بود" : "ذخیره پیش‌نویس ناموفق بود");
       const savedPost = await response.json();
 
-      const uploadedAsset = await uploadSelectedFile();
-      if (uploadedAsset) {
-        await attachMedia(uploadedAsset.id, savedPost.id);
-      } else if (selectedMediaId) {
-        await attachMedia(Number(selectedMediaId), savedPost.id);
+      await syncSelectedMedia(savedPost.id);
+
+      if (form.scheduled_at) {
+        await schedulePost(savedPost.id, form.scheduled_at);
       }
 
-      resetComposer({ clearStatus: false });
-      setMessage("پست به عنوان پیش‌نویس ذخیره شد");
+      if (!isEditing) {
+        resetComposer({ clearStatus: false });
+      }
+
+      setMessage(form.scheduled_at ? "پست ذخیره و زمان‌بندی شد" : isEditing ? "پست به‌روزرسانی شد" : "پست به عنوان پیش‌نویس ذخیره شد");
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطای ذخیره پیش‌نویس");
@@ -232,11 +350,11 @@ export default function ComposePage() {
     <AuthGate>
       <AppShell>
         <PageHeader
-          eyebrow="Phase 3 — Composer-Centric Creation"
-          title="ایجاد پست روبیکا"
-          description="پست را از یک محیط متمرکز بسازید: تصویر، کپشن، هشتگ، پیش‌نمایش و ذخیره پیش‌نویس در یک جریان واحد."
-          actionLabel="مدیریت پست‌ها"
-          actionHref="/posts"
+          eyebrow={isEditing ? "ویرایش محتوا" : "ایجاد محتوا"}
+          title={isEditing ? "ویرایش پست روبیکا" : "ایجاد پست روبیکا"}
+          description={isEditing ? "اطلاعات پست موجود را ویرایش کنید و تغییرات را روی همان پست ذخیره کنید." : "پست را از یک محیط متمرکز بسازید: تصویر، کپشن، هشتگ، پیش‌نمایش و ذخیره پیش‌نویس در یک جریان واحد."}
+          actionLabel="فضای محتوا"
+          actionHref="/content"
         />
 
         <form onSubmit={saveDraft} className="grid gap-5 xl:grid-cols-5">
@@ -261,33 +379,19 @@ export default function ComposePage() {
                 </div>
 
                 <div className="rounded-2xl border border-app-border bg-white p-4">
-                  <Field label="انتخاب از کتابخانه">
-                    <Select
-                      value={selectedMediaId}
-                      onChange={(event) => {
-                        setSelectedMediaId(event.target.value);
-                        if (event.target.value) setSelectedFile(null);
-                        if (message) setMessage("");
-                      }}
-                    >
-                      <option value="">بدون تصویر</option>
-                      {mediaAssets.map((asset) => (
-                        <option key={asset.id} value={asset.id}>{asset.original_filename}</option>
-                      ))}
-                    </Select>
-                  </Field>
-                  {loading ? <p className="mt-3 text-xs text-app-muted">در حال دریافت رسانه‌ها...</p> : null}
-                  {selectedMedia ? (
-                    <div className="mt-4 flex items-center gap-3 rounded-xl bg-slate-50 p-3">
-                      {mediaPreviewUrls[selectedMedia.id] ? (
-                        <img src={mediaPreviewUrls[selectedMedia.id]} alt={selectedMedia.original_filename} className="h-14 w-14 rounded-xl object-cover ring-1 ring-app-border" />
-                      ) : null}
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-app-text">{selectedMedia.original_filename}</p>
-                        <p className="text-xs text-app-muted">از کتابخانه رسانه</p>
-                      </div>
-                    </div>
-                  ) : null}
+                  <p className="text-sm font-semibold text-app-text">انتخاب از کتابخانه</p>
+                  <p className="mt-1 text-xs leading-6 text-app-muted">به‌جای لیست متنی، تصویر را مستقیم از گالری انتخاب کنید.</p>
+                  <MediaGalleryPicker
+                    assets={mediaAssets}
+                    previewUrls={mediaPreviewUrls}
+                    selectedMediaId={selectedMediaId}
+                    loading={loading}
+                    onSelect={(assetId) => {
+                      setSelectedMediaId(assetId);
+                      if (assetId) setSelectedFile(null);
+                      if (message) setMessage("");
+                    }}
+                  />
                 </div>
               </div>
             </SectionCard>
@@ -325,8 +429,18 @@ export default function ComposePage() {
                   <Tag tone="primary">مقصد: روبیکا</Tag>
                   <Tag tone={previewImageUrl ? "success" : "warning"}>{previewImageUrl ? "تصویر انتخاب شده" : "بدون تصویر"}</Tag>
                   <Tag tone={form.caption ? "success" : "neutral"}>{form.caption ? "کپشن آماده" : "کپشن خالی"}</Tag>
+                  {isEditing ? <Tag tone="neutral">ویرایش پست موجود</Tag> : null}
+                  {hasSchedule ? <Tag tone="success">زمان‌بندی شده</Tag> : null}
                 </div>
               </div>
+            </SectionCard>
+
+            <SectionCard title="زمان‌بندی انتشار" description="در صورت انتخاب زمان، پست بعد از ذخیره وارد وضعیت زمان‌بندی‌شده می‌شود.">
+              <ComposerSchedulePanel
+                scheduledAt={form.scheduled_at}
+                timezone={timezone}
+                onChange={(value) => updateField("scheduled_at", value)}
+              />
             </SectionCard>
 
             {message ? <div className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
@@ -335,6 +449,7 @@ export default function ComposePage() {
             <ComposerActionFooter
               saving={saving}
               disabled={!form.title.trim()}
+              hasSchedule={hasSchedule}
               onUseDefaults={useDefaults}
               onCancel={resetComposer}
             />
@@ -350,8 +465,8 @@ export default function ComposePage() {
                 <div className="space-y-3 text-sm leading-7 text-app-muted">
                   <p>۱. تصویر را آپلود یا از کتابخانه انتخاب کنید.</p>
                   <p>۲. کپشن و هشتگ‌ها را کامل کنید.</p>
-                  <p>۳. پیش‌نمایش را بررسی کنید.</p>
-                  <p>۴. فعلاً پست را به عنوان پیش‌نویس ذخیره کنید.</p>
+                  <p>۳. در صورت نیاز، زمان انتشار را انتخاب کنید.</p>
+                  <p>{isEditing ? "۴. تغییرات را روی همان پست ذخیره کنید." : "۴. پست را به عنوان پیش‌نویس یا زمان‌بندی‌شده ذخیره کنید."}</p>
                 </div>
                 <Button href="/media" variant="secondary" className="mt-4 w-full">رفتن به کتابخانه رسانه</Button>
               </SectionCard>
@@ -360,5 +475,13 @@ export default function ComposePage() {
         </form>
       </AppShell>
     </AuthGate>
+  );
+}
+
+export default function ComposePage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-app-muted">در حال آماده‌سازی composer...</div>}>
+      <ComposePageContent />
+    </Suspense>
   );
 }
