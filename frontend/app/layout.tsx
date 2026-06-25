@@ -9,9 +9,8 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fa" dir="rtl">
+    <html lang="fa" dir="rtl" data-theme="light">
       <body><ToastProvider>{children}</ToastProvider></body>
     </html>
   );
 }
-
