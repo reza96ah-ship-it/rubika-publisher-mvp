@@ -1,0 +1,62 @@
+name: Dashboard visual review
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    # Dashboard-specific responsive acceptance against the real local stack.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start real application stack
+        run: |
+          cp .env.example .env
+          docker compose up -d --build
+          for attempt in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:8000/health >/dev/null && curl -fsS http://127.0.0.1:3100/login >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose ps
+          docker compose logs --tail=200 backend frontend
+          exit 1
+
+      - name: Seed representative operational data
+        run: docker compose exec -T backend python - < .github/scripts/seed-dashboard-review.py
+
+      - name: Install browser client
+        run: python -m pip install --disable-pip-version-check selenium
+
+      - name: Capture responsive light and dark dashboards
+        run: |
+          mkdir -p visual-review
+          visual_session=$(docker compose exec -T backend python -c 'from app.config import get_settings; from app.security import create_access_token; print(create_access_token(get_settings().admin_email))')
+          browser_bin=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
+          chromedriver_bin=$(command -v chromedriver)
+          test -n "$visual_session"
+          test -n "$browser_bin"
+          test -n "$chromedriver_bin"
+          VISUAL_SESSION="$visual_session" BROWSER_BIN="$browser_bin" CHROMEDRIVER_BIN="$chromedriver_bin" python .github/scripts/render-dashboard-review.py
+
+      - name: Upload dashboard review screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-v2-visual-review
+          path: visual-review
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose logs --tail=250 backend frontend
