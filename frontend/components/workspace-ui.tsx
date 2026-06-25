@@ -107,21 +107,21 @@ type TimelineItem = {
 };
 
 const metricToneClasses: Record<NonNullable<MetricTileProps["tone"]>, string> = {
-  neutral: "text-slate-700",
+  neutral: "text-app-text",
   primary: "text-app-primary",
-  success: "text-emerald-700",
-  warning: "text-amber-700",
-  alert: "text-rose-700",
-  info: "text-sky-700"
+  success: "text-app-success",
+  warning: "text-app-warning",
+  alert: "text-app-danger",
+  info: "text-app-primary"
 };
 
 const tokenToneClasses: Record<StatusTokenTone, string> = {
-  neutral: "border-app-border bg-app-surfaceMuted/50 text-app-muted",
-  primary: "border-app-primary/20 bg-app-soft text-app-primary",
-  success: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  warning: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  alert: "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400",
-  info: "border-blue-500/20 bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  neutral: "border-app-border bg-app-surfaceMuted text-app-muted",
+  primary: "border-app-primary/20 bg-app-primary/10 text-app-primary",
+  success: "border-app-success/20 bg-app-success/10 text-app-success",
+  warning: "border-app-warning/20 bg-app-warning/10 text-app-warning",
+  alert: "border-app-danger/20 bg-app-danger/10 text-app-danger",
+  info: "border-app-primary/20 bg-app-primary/10 text-app-primary",
   dark: "border-app-primary bg-app-primary text-white"
 };
 
@@ -132,10 +132,10 @@ const tokenSizeClasses: Record<NonNullable<StatusTokenProps["size"]>, string> = 
 };
 
 const noticeToneClasses: Record<NoticeTone, string> = {
-  success: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  warning: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  alert: "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400",
-  info: "border-blue-500/20 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+  success: "border-app-success/20 bg-app-success/10 text-app-success",
+  warning: "border-app-warning/20 bg-app-warning/10 text-app-warning",
+  alert: "border-app-danger/20 bg-app-danger/10 text-app-danger",
+  info: "border-app-primary/20 bg-app-primary/10 text-app-primary"
 };
 
 export function WorkspacePage({ children, className = "" }: WorkspacePageProps) {
@@ -187,13 +187,13 @@ export function WorkspaceToolbar({ children, meta, className = "" }: WorkspaceTo
 
 export function MetricTile({ label, value, hint, tone = "neutral", icon }: MetricTileProps) {
   return (
-    <div className="app-row min-w-0 bg-white p-2.5 sm:p-3">
+    <div className="app-row min-w-0 bg-app-surface border border-app-border rounded-xl p-2.5 sm:p-3 shadow-soft">
       <div className="flex items-start justify-between gap-2 sm:gap-3">
         <div>
           <p className="line-clamp-1 text-[10px] font-bold text-app-muted sm:text-xs">{label}</p>
           <p className={`mt-1 text-lg font-black sm:text-xl ${metricToneClasses[tone]}`}>{value}</p>
         </div>
-        {icon ? <div className="hidden rounded-md bg-app-surfaceMuted p-2 text-slate-600 sm:block">{icon}</div> : null}
+        {icon ? <div className="hidden rounded-md bg-app-canvas p-2 text-app-muted sm:block">{icon}</div> : null}
       </div>
       {hint ? <p className="mt-1.5 line-clamp-2 text-[11px] leading-5 text-app-muted">{hint}</p> : null}
     </div>
@@ -207,7 +207,7 @@ export function MetricStrip({ children }: { children: ReactNode }) {
 export function WorkspacePanel({ title, description, action, children, className = "", bodyClassName = "p-4" }: WorkspacePanelProps) {
   return (
     <section className={`nashrino-card rounded-xl ${className}`}>
-      <div className="flex flex-col justify-between gap-2 border-b border-app-border bg-[#fbfaf7] px-3 py-2.5 lg:flex-row lg:items-center">
+      <div className="flex flex-col justify-between gap-2 border-b border-app-border bg-app-surfaceMuted px-3 py-2.5 lg:flex-row lg:items-center">
         <div className="min-w-0">
           <h2 className="text-sm font-black text-app-text">{title}</h2>
           {description ? <p className="mt-1 text-xs leading-5 text-app-muted">{description}</p> : null}
@@ -221,8 +221,8 @@ export function WorkspacePanel({ title, description, action, children, className
 
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="app-enter flex flex-col items-center justify-center rounded-md border border-dashed border-app-borderStrong bg-[#faf9f5] px-3 py-5 text-center sm:px-4 sm:py-6">
-      {icon ? <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-md border border-teal-100 bg-white text-app-teal shadow-soft">{icon}</div> : null}
+    <div className="app-enter flex flex-col items-center justify-center rounded-md border border-dashed border-app-border bg-app-surfaceMuted/50 px-3 py-5 text-center sm:px-4 sm:py-6">
+      {icon ? <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-md border border-app-primary/20 bg-app-surface text-app-primary shadow-soft">{icon}</div> : null}
       <p className="text-sm font-black text-app-text">{title}</p>
       {description ? <p className="mt-1.5 max-w-md text-xs leading-5 text-app-muted sm:text-sm sm:leading-6">{description}</p> : null}
       {action ? <div className="mt-3">{action}</div> : null}
@@ -277,12 +277,12 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
             type="button"
             onClick={() => onChange(option.value)}
             className={`app-interactive inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-bold ${
-              active ? "bg-white text-app-primary shadow-sm ring-1 ring-blue-200" : "text-slate-600 hover:text-app-primary"
+              active ? "bg-app-surface text-app-primary shadow-sm ring-1 ring-app-primary/20" : "text-app-muted hover:text-app-primary"
             }`}
           >
             {option.label}
             {typeof option.count === "number" ? (
-              <span className={`rounded px-1.5 py-0.5 ${active ? "bg-blue-50 text-blue-700" : "bg-white text-slate-500"}`}>
+              <span className={`rounded px-1.5 py-0.5 ${active ? "bg-app-primary/10 text-app-primary" : "bg-app-surfaceMuted text-app-muted"}`}>
                 {option.count}
               </span>
             ) : null}
@@ -302,9 +302,9 @@ export function StatusToken({ tone = "neutral", size = "sm", children, className
 }
 
 const railDotClasses: Record<StatusRailStep["state"], string> = {
-  done: "border-emerald-500 bg-emerald-500 text-white",
-  active: "app-dot-pulse border-emerald-500 bg-emerald-500 text-white",
-  pending: "border-slate-300 bg-white text-slate-400"
+  done: "border-app-success bg-app-success text-white",
+  active: "app-dot-pulse border-app-success bg-app-success text-white",
+  pending: "border-app-border bg-app-surface text-app-muted"
 };
 
 export function StatusRail({ steps }: { steps: StatusRailStep[] }) {
@@ -317,14 +317,14 @@ export function StatusRail({ steps }: { steps: StatusRailStep[] }) {
               <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 ${railDotClasses[step.state]}`}>
                 {step.state === "done" ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
               </span>
-              {index < steps.length - 1 ? <span className={`mx-2 h-px flex-1 border-t border-dashed ${step.state === "done" ? "border-emerald-300" : "border-slate-300"}`} /> : null}
+              {index < steps.length - 1 ? <span className={`mx-2 h-px flex-1 border-t border-dashed ${step.state === "done" ? "border-app-success/40" : "border-app-border"}`} /> : null}
             </div>
             <div className="mt-2.5 flex items-start gap-2">
-              {step.icon ? <span className={step.state === "pending" ? "text-slate-400" : "text-app-primary"}>{step.icon}</span> : null}
+              {step.icon ? <span className={step.state === "pending" ? "text-app-muted" : "text-app-primary"}>{step.icon}</span> : null}
               <div className="min-w-0">
                 <p className="truncate text-xs font-black text-app-text">{step.label}</p>
                 {step.description ? <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-app-muted">{step.description}</p> : null}
-                {step.meta ? <div className="mt-1 text-[10px] font-bold text-slate-400">{step.meta}</div> : null}
+                {step.meta ? <div className="mt-1 text-[10px] font-bold text-app-muted">{step.meta}</div> : null}
               </div>
             </div>
           </>
@@ -341,12 +341,12 @@ export function StatusRail({ steps }: { steps: StatusRailStep[] }) {
 }
 
 const timelineDotClasses: Record<NonNullable<TimelineItem["tone"]>, string> = {
-  neutral: "border-slate-300 bg-white text-slate-500",
-  primary: "border-blue-500 bg-blue-50 text-app-primary",
-  success: "border-emerald-500 bg-emerald-50 text-emerald-700",
-  warning: "border-amber-500 bg-amber-50 text-amber-700",
-  alert: "border-rose-500 bg-rose-50 text-rose-700",
-  info: "border-sky-500 bg-sky-50 text-sky-700"
+  neutral: "border-app-border bg-app-surface text-app-muted",
+  primary: "border-app-primary/30 bg-app-primary/10 text-app-primary",
+  success: "border-app-success/30 bg-app-success/10 text-app-success",
+  warning: "border-app-warning/30 bg-app-warning/10 text-app-warning",
+  alert: "border-app-danger/30 bg-app-danger/10 text-app-danger",
+  info: "border-app-primary/30 bg-app-primary/10 text-app-primary"
 };
 
 export function Timeline({ items }: { items: TimelineItem[] }) {
@@ -354,18 +354,17 @@ export function Timeline({ items }: { items: TimelineItem[] }) {
     <ol>
       {items.map((item, index) => (
         <li key={`${item.title}-${index}`} className="relative flex gap-3 pb-4 last:pb-0">
-          {index < items.length - 1 ? <span className="absolute right-[13px] top-7 h-[calc(100%-1rem)] border-r border-dashed border-slate-300" /> : null}
+          {index < items.length - 1 ? <span className="absolute right-[13px] top-7 h-[calc(100%-1rem)] border-r border-dashed border-app-border" /> : null}
           <span className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${timelineDotClasses[item.tone ?? "neutral"]}`}>
             {item.icon ?? <span className="h-1.5 w-1.5 rounded-full bg-current" />}
           </span>
           <div className="min-w-0 pt-1">
             <p className="text-xs font-black text-app-text">{item.title}</p>
             {item.description ? <p className="mt-1 text-xs leading-5 text-app-muted">{item.description}</p> : null}
-            {item.meta ? <div className="mt-1 text-[11px] text-slate-400">{item.meta}</div> : null}
+            {item.meta ? <div className="mt-1 text-[11px] text-app-muted">{item.meta}</div> : null}
           </div>
         </li>
       ))}
     </ol>
   );
 }
-

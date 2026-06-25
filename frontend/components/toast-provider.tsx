@@ -1,5 +1,4 @@
 "use client";
-
 import { AlertTriangle, CheckCircle2, Info, X } from "lucide-react";
 import Link from "next/link";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
@@ -88,4 +87,3 @@ export function useToast() {
   if (!context) throw new Error("useToast must be used within ToastProvider");
   return context;
 }
-

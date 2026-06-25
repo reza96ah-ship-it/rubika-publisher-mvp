@@ -31,19 +31,19 @@ function StepRow({ step, active, index }: { step: SetupStep; active: boolean; in
   const Icon = step.done ? BadgeCheck : step.icon;
   return (
     <article className={`app-row relative grid gap-3 px-4 py-4 lg:grid-cols-[44px_minmax(0,1fr)_132px] lg:items-center ${
-      active ? "bg-amber-50/45" : step.done ? "bg-teal-50/30" : "bg-white"
+      active ? "bg-app-warning/10" : step.done ? "bg-app-success/5" : "bg-app-surface"
     }`}>
       <span className={`absolute inset-y-3 right-0 w-0.5 rounded-full ${
-        step.done ? "bg-app-teal" : active ? "bg-amber-500" : "bg-app-borderStrong"
+        step.done ? "bg-app-success" : active ? "bg-app-warning" : "bg-app-borderStrong"
       }`} aria-hidden="true" />
-      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-white shadow-hairline ${
-        step.done ? "border-teal-100 text-teal-700" : active ? "border-amber-200 text-amber-700" : "border-app-border text-slate-500"
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-app-surface shadow-hairline ${
+        step.done ? "border-app-success/30 text-app-success" : active ? "border-app-warning/30 text-app-warning" : "border-app-border text-app-muted"
       }`}>
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] font-black text-slate-400">0{index + 1}</span>
+          <span className="text-[10px] font-black text-app-muted">0{index + 1}</span>
           <h2 className="text-sm font-black text-app-text">{step.label}</h2>
           {step.optional ? <StatusToken tone="neutral">پیشنهادی</StatusToken> : null}
           {step.done ? <StatusToken tone="success">کامل</StatusToken> : active ? <StatusToken tone="warning">قدم فعلی</StatusToken> : <StatusToken tone="neutral">در انتظار</StatusToken>}
@@ -146,7 +146,7 @@ export default function OnboardingPage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage className="space-y-4">
-          <section className="app-studio-panel overflow-hidden rounded-lg border-t-4 border-app-teal">
+          <section className="app-studio-panel overflow-hidden rounded-lg border-t-4 border-app-success">
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
               <div className="px-4 py-5 lg:px-5">
                 <p className="app-section-kicker text-[10px] font-black">راه‌اندازی هدایت‌شده</p>
@@ -165,14 +165,14 @@ export default function OnboardingPage() {
               </div>
               <div className="dashboard-pulse border-t border-app-border p-4 lg:border-r lg:border-t-0">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="dashboard-flow-node flex h-11 w-11 items-center justify-center rounded-full border-2 border-teal-100 bg-white text-app-teal">
+                  <span className="dashboard-flow-node flex h-11 w-11 items-center justify-center rounded-full border-2 border-app-success/30 bg-app-surface text-app-success">
                     {progress === 100 ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : <CircleDashed className="h-5 w-5" aria-hidden="true" />}
                   </span>
                   <StatusToken tone={progress === 100 ? "success" : "warning"}>{completedCount}/{steps.length} کامل</StatusToken>
                 </div>
                 <p className="mt-4 text-xs font-black text-app-muted">پیشرفت راه‌اندازی</p>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white shadow-hairline">
-                  <div className="app-progress h-full rounded-full bg-app-teal transition-all" style={{ width: `${progress}%` }} />
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-app-surfaceMuted shadow-hairline">
+                  <div className="app-progress h-full rounded-full bg-app-success transition-all" style={{ width: `${progress}%` }} />
                 </div>
                 <p className="mt-3 text-sm font-black text-app-text">{progress}% آماده برای انتشار حرفه‌ای</p>
                 <p className="mt-1 text-xs leading-5 text-app-muted">قدم بعدی: {nextStep.label}</p>
@@ -213,12 +213,12 @@ export default function OnboardingPage() {
                       "پست را زمان‌بندی کنید و از Calendar وضعیت نهایی را ببینید."
                     ].map((item, index) => (
                       <div key={item} className="flex items-start gap-3 px-4 py-3">
-                        <span className="mt-0.5 text-[10px] font-black text-slate-400">0{index + 1}</span>
+                        <span className="mt-0.5 text-[10px] font-black text-app-muted">0{index + 1}</span>
                         <p className="text-xs font-bold leading-6 text-app-muted">{item}</p>
                       </div>
                     ))}
                   </div>
-                  <Button href={nextStep.href} variant="ghost" size="sm" className="w-full justify-between rounded-none border-t border-app-border bg-app-canvas/70 px-4 py-3 text-app-primary">
+                  <Button href={nextStep.href} variant="ghost" size="sm" className="w-full justify-between rounded-none border-t border-app-border bg-app-surfaceMuted/70 px-4 py-3 text-app-primary">
                     {nextStep.action}
                     <ArrowUpLeft className="h-3.5 w-3.5" aria-hidden="true" />
                   </Button>
@@ -234,7 +234,7 @@ export default function OnboardingPage() {
                       { label: "زمان‌بندی", value: hasScheduledPost(posts) ? "فعال" : "خالی", healthy: hasScheduledPost(posts) }
                     ].map((signal) => (
                       <div key={signal.label} className="flex items-center gap-3 rounded-md bg-app-surfaceMuted px-3 py-2">
-                        <span className={`h-2 w-2 shrink-0 rounded-full ${signal.healthy ? "bg-emerald-500" : "bg-amber-500"}`} />
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${signal.healthy ? "bg-app-success" : "bg-app-warning"}`} />
                         <span className="min-w-0 flex-1 text-xs font-bold text-app-muted">{signal.label}</span>
                         <span className="truncate text-xs font-black text-app-text">{signal.value}</span>
                       </div>
@@ -249,4 +249,3 @@ export default function OnboardingPage() {
     </AuthGate>
   );
 }
-

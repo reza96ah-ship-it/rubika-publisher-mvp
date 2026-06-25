@@ -1,8 +1,7 @@
 "use client";
 
-import { Activity, AlertTriangle, CheckCircle2, Clock3, FileUp, ListChecks, MessageSquareText, RefreshCw, RotateCcw, Search, UploadCloud } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, FileUp, ListChecks, MessageSquareText, RefreshCw, RotateCcw, Search, UploadCloud } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { AuthGate } from "../../components/auth-gate";
 import { AppShell } from "../../components/app-shell";
 import { ChannelBadges } from "../../components/channel-badges";
@@ -329,17 +328,6 @@ export default function LogsPage() {
     <AuthGate>
       <AppShell>
         <WorkspacePage>
-          <nav className="flex items-center gap-1 rounded-lg border border-app-border bg-app-surface/70 px-1.5 py-1.5 shadow-hairline backdrop-blur-sm" aria-label="زیرمنوی گزارش‌ها">
-            <Link href="/analytics" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-bold text-app-muted hover:bg-white hover:text-app-text hover:shadow-hairline transition">
-              <Activity className="h-3.5 w-3.5" aria-hidden="true" />
-              تحلیل عملکرد
-            </Link>
-            <Link href="/logs" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-black bg-white text-app-primary shadow-hairline border border-app-border/80 transition">
-              <UploadCloud className="h-3.5 w-3.5" aria-hidden="true" />
-              سابقه انتشار
-            </Link>
-          </nav>
-
           <section className="app-studio-panel rounded-lg px-4 py-3">
             <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
               <div>
@@ -356,11 +344,12 @@ export default function LogsPage() {
                   <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
                   به‌روزرسانی
                 </Button>
+                <Button href="/queue" variant="secondary" size="sm">بازگشت به صف</Button>
               </div>
             </div>
           </section>
 
-          <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-2 xl:grid-cols-4">
+          <section className="grid overflow-hidden rounded-md border border-app-border bg-app-surface sm:grid-cols-2 xl:grid-cols-4">
             {healthSummary.map((item) => {
               const Icon = item.icon;
               const active = status === item.value;
@@ -369,11 +358,11 @@ export default function LogsPage() {
                   key={item.value}
                   type="button"
                   onClick={() => applyStatus(item.value)}
-                  className={`flex min-w-0 items-start gap-3 border-b border-app-border p-3 text-right transition hover:bg-slate-50 sm:border-l sm:last:border-l-0 xl:border-b-0 ${
-                    active ? "bg-blue-50/60 ring-1 ring-inset ring-blue-200" : ""
+                  className={`flex min-w-0 items-start gap-3 border-b border-app-border p-3 text-right transition hover:bg-app-surfaceMuted sm:border-l sm:last:border-l-0 xl:border-b-0 ${
+                    active ? "bg-app-primary/10 ring-1 ring-inset ring-app-primary/20" : ""
                   }`}
                 >
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${item.tone}`}>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted ${item.tone}`}>
                     <Icon className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <span className="min-w-0">
@@ -535,7 +524,7 @@ export default function LogsPage() {
                       </div>
                     ) : null}
 
-                    <details className="rounded-md border border-app-border bg-slate-50 p-3 text-xs text-app-muted">
+                    <details className="rounded-md border border-app-border bg-app-surfaceMuted p-3 text-xs text-app-muted">
                       <summary className="cursor-pointer font-black text-app-text">
                         <UploadCloud className="ml-1.5 inline h-4 w-4 align-middle" aria-hidden="true" />
                         Payload کامل
@@ -575,4 +564,3 @@ export default function LogsPage() {
     </AuthGate>
   );
 }
-

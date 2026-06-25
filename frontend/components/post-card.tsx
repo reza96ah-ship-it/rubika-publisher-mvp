@@ -26,4 +26,3 @@ export function PostCard({ title, caption, status, publishTime, attempts }: Post
     </article>
   );
 }
-

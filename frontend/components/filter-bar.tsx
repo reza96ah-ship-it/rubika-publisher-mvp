@@ -29,4 +29,3 @@ export function FilterBar({
     </div>
   );
 }
-

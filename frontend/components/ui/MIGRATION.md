@@ -1,4 +1,4 @@
-﻿# Component System Migration Guide
+# Component System Migration Guide
 
 ## Phase 2a: Foundation (✅ COMPLETE)
 - [x] Created unified Button component
@@ -165,4 +165,3 @@ Track migration progress:
 - [ ] All KPI cards migrated
 - [ ] All panels migrated
 - [ ] All table rows migrated
-

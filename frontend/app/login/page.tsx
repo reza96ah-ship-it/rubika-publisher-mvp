@@ -41,7 +41,7 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-app-background p-5 text-app-text" dir="rtl">
-      <section className="w-full max-w-md rounded-md border border-app-border bg-white p-6 shadow-sm">
+      <section className="w-full max-w-md rounded-md border border-app-border bg-app-surface p-6 shadow-sm">
         <div className="mb-8 text-center">
           <p className="text-sm font-semibold text-app-primary">{productName}</p>
           <h1 className="mt-2 text-2xl font-bold">ورود به داشبورد محتوا</h1>
@@ -54,7 +54,7 @@ export default function LoginPage() {
             <input
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-2 w-full rounded-md border border-app-border bg-white px-4 py-3 text-left text-sm outline-none ring-app-primary focus:ring-2"
+              className="mt-2 w-full rounded-md border border-app-border bg-app-surface px-4 py-3 text-left text-sm outline-none ring-app-primary/20 focus:ring-2 focus:border-app-primary"
               dir="ltr"
               type="email"
               required
@@ -66,14 +66,14 @@ export default function LoginPage() {
             <input
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="mt-2 w-full rounded-md border border-app-border bg-white px-4 py-3 text-left text-sm outline-none ring-app-primary focus:ring-2"
+              className="mt-2 w-full rounded-md border border-app-border bg-app-surface px-4 py-3 text-left text-sm outline-none ring-app-primary/20 focus:ring-2 focus:border-app-primary"
               dir="ltr"
               type="password"
               required
             />
           </label>
 
-          {error ? <div className="rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+          {error ? <div className="rounded-md bg-app-danger/10 border border-app-danger/20 px-4 py-3 text-sm text-app-danger">{error}</div> : null}
 
           <button
             type="submit"
@@ -87,4 +87,3 @@ export default function LoginPage() {
     </main>
   );
 }
-

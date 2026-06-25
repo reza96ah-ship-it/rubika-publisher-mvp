@@ -278,7 +278,7 @@ export default function InstagramPage() {
                         type="button"
                         onClick={() => setAccountType(option.value as "personal" | "creator" | "business")}
                         className={`app-interactive rounded-md border px-3 py-3 text-right ${
-                          accountType === option.value ? "border-blue-200 bg-white text-app-primary shadow-soft" : "border-app-border bg-white/70 text-app-text hover:bg-white"
+                          accountType === option.value ? "border-app-primary/30 bg-app-surface text-app-primary shadow-soft" : "border-app-border bg-app-surfaceMuted/70 text-app-text hover:bg-app-surface"
                         }`}
                         aria-pressed={accountType === option.value}
                       >
@@ -293,11 +293,11 @@ export default function InstagramPage() {
                   </Field>
                   {accountType !== "personal" ? (
                     <>
-                      <section className="rounded-md border border-app-border bg-white/75 p-3 shadow-hairline">
+                      <section className="rounded-md border border-app-border bg-app-surface/75 p-3 shadow-hairline">
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-app-primary/10 text-app-primary">
                                 <PlugZap className="h-4 w-4" aria-hidden="true" />
                               </span>
                               <div>
@@ -308,7 +308,7 @@ export default function InstagramPage() {
                             {oauth?.configured ? (
                               <p className="mt-3 text-[11px] leading-5 text-app-muted" dir="ltr">Redirect URI: {oauth.redirect_uri}</p>
                             ) : (
-                              <p className="mt-3 text-[11px] leading-5 text-amber-700">برای فعال شدن، این envها لازم است: {oauth?.missing?.join(", ") || "META_APP_ID, META_APP_SECRET"}</p>
+                              <p className="mt-3 text-[11px] leading-5 text-app-warning">برای فعال شدن، این envها لازم است: {oauth?.missing?.join(", ") || "META_APP_ID, META_APP_SECRET"}</p>
                             )}
                           </div>
                           <Button type="button" variant={saved?.status === "connected" ? "secondary" : "primary"} size="sm" onClick={connectWithMeta} disabled={oauthLoading}>
@@ -353,8 +353,8 @@ export default function InstagramPage() {
                     {readiness.map((item) => {
                       const Icon = item.icon;
                       return (
-                        <div key={item.label} className="flex items-start gap-3 rounded-md border border-app-border bg-white p-3">
-                          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${item.done ? "bg-teal-50 text-teal-700" : "bg-amber-50 text-amber-700"}`}>
+                        <div key={item.label} className="flex items-start gap-3 rounded-md border border-app-border bg-app-surface p-3">
+                          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${item.done ? "bg-app-success/10 text-app-success" : "bg-app-warning/10 text-app-warning"}`}>
                             {item.done ? <BadgeCheck className="h-4 w-4" aria-hidden="true" /> : <Icon className="h-4 w-4" aria-hidden="true" />}
                           </span>
                           <div>
@@ -397,4 +397,3 @@ export default function InstagramPage() {
     </AuthGate>
   );
 }
-

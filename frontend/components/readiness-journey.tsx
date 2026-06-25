@@ -93,4 +93,3 @@ export function ReadinessJourney({ store, rubika, posts, loading = false }: Read
     </section>
   );
 }
-

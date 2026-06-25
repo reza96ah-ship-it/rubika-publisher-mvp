@@ -18,4 +18,3 @@ export function ViewTabs() {
     </div>
   );
 }
-

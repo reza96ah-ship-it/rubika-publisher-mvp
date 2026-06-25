@@ -386,11 +386,11 @@ export default function QueuePage() {
       <AppShell>
         <WorkspacePage className="space-y-4">
           <nav className="flex items-center gap-1 rounded-lg border border-app-border bg-app-surface/70 px-1.5 py-1.5 shadow-hairline backdrop-blur-sm" aria-label="زیرمنوی برنامه‌ریز">
-            <Link href="/calendar" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-bold text-app-muted hover:bg-white hover:text-app-text hover:shadow-hairline transition">
+            <Link href="/calendar" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-bold text-app-muted hover:bg-app-surface hover:text-app-text hover:shadow-hairline transition">
               <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
               تقویم انتشار
             </Link>
-            <Link href="/queue" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-black bg-white text-app-primary shadow-hairline border border-app-border/80 transition">
+            <Link href="/queue" className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-black bg-app-surface text-app-primary shadow-hairline border border-app-border/80 transition">
               <ListChecks className="h-3.5 w-3.5" aria-hidden="true" />
               صف انتشار
             </Link>
@@ -441,7 +441,7 @@ export default function QueuePage() {
             </NoticeBanner>
           ) : null}
 
-          <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-2 xl:grid-cols-4">
+          <section className="grid overflow-hidden rounded-md border border-app-border bg-app-surface sm:grid-cols-2 xl:grid-cols-4">
             {queueSummary.map((item) => {
               const Icon = item.icon;
               const active = statusFilter === item.status;
@@ -450,11 +450,11 @@ export default function QueuePage() {
                   key={item.status}
                   type="button"
                   onClick={() => setStatusFilter(active ? "all" : item.status)}
-                  className={`flex min-w-0 items-start gap-3 border-b border-app-border p-3 text-right transition hover:bg-slate-50 sm:border-l sm:last:border-l-0 xl:border-b-0 ${
-                    active ? "bg-blue-50/60 ring-1 ring-inset ring-blue-200" : ""
+                  className={`flex min-w-0 items-start gap-3 border-b border-app-border p-3 text-right transition hover:bg-app-surfaceMuted sm:border-l sm:last:border-l-0 xl:border-b-0 ${
+                    active ? "bg-app-primary/10 ring-1 ring-inset ring-app-primary/20" : ""
                   }`}
                 >
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${item.tone}`}>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted ${item.tone}`}>
                     <Icon className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <span className="min-w-0">
@@ -490,13 +490,13 @@ export default function QueuePage() {
                     onChange={(event) => setSearchTerm(event.target.value)}
                     placeholder="جست‌وجوی عنوان، کپشن، کمپین، یادداشت یا خطا"
                   />
-                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
                     <ListChecks className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as QueueFilter)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
                       {queueFilters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label} · {filterCount(filter.value)}</option>)}
                     </select>
                   </label>
-                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
                     <ListChecks className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
                       <option value="all">همه کمپین‌ها</option>

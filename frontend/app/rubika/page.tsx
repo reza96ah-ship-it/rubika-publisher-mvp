@@ -84,7 +84,7 @@ function buildDiagnostics(maskedToken: string, chatId: string, status: string, d
 
 function DiagnosticRow({ item }: { item: DiagnosticItem }) {
   const Icon = item.done ? BadgeCheck : item.tone === "alert" ? AlertTriangle : RadioTower;
-  const color = item.done ? "text-emerald-700" : item.tone === "alert" ? "text-rose-700" : "text-amber-700";
+  const color = item.done ? "text-app-success" : item.tone === "alert" ? "text-app-danger" : "text-app-warning";
   return (
     <div className="flex items-start gap-3 border-b border-app-border py-3 first:pt-0 last:border-0 last:pb-0">
       <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${color}`} aria-hidden="true" />
@@ -266,16 +266,16 @@ export default function RubikaPage() {
             </div>
           </section>
 
-          <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-3">
+          <section className="grid overflow-hidden rounded-md border border-app-border bg-app-surface sm:grid-cols-3">
             {[
-              { label: "وضعیت اتصال", value: statusLabel(status, dirty, testFresh), detail: dirty ? "بعد از ذخیره دوباره تست کنید" : testFresh ? "آخرین نتیجه تست عملیاتی معتبر است" : "برای زمان‌بندی، تست تازه لازم است", icon: PlugZap, tone: connectionReady ? "text-emerald-700" : status === "failed" ? "text-rose-700" : "text-amber-700" },
-              { label: "تشخیص آماده‌سازی", value: `${readyCount}/3`, detail: "توکن، مقصد و تست اتصال", icon: ShieldCheck, tone: readyCount === 3 ? "text-emerald-700" : "text-amber-700" },
-              { label: "آخرین تست", value: formatLastTest(lastTestAt), detail: testFresh ? "معتبر تا 24 ساعت پس از تست" : "تست مجدد برای باز شدن زمان‌بندی لازم است", icon: Clock3, tone: testFresh ? "text-emerald-700" : "text-amber-700" }
+              { label: "وضعیت اتصال", value: statusLabel(status, dirty, testFresh), detail: dirty ? "بعد از ذخیره دوباره تست کنید" : testFresh ? "آخرین نتیجه تست عملیاتی معتبر است" : "برای زمان‌بندی، تست تازه لازم است", icon: PlugZap, tone: connectionReady ? "text-app-success" : status === "failed" ? "text-app-danger" : "text-app-warning" },
+              { label: "تشخیص آماده‌سازی", value: `${readyCount}/3`, detail: "توکن، مقصد و تست اتصال", icon: ShieldCheck, tone: readyCount === 3 ? "text-app-success" : "text-app-warning" },
+              { label: "آخرین تست", value: formatLastTest(lastTestAt), detail: testFresh ? "معتبر تا 24 ساعت پس از تست" : "تست مجدد برای باز شدن زمان‌بندی لازم است", icon: Clock3, tone: testFresh ? "text-app-success" : "text-app-warning" }
             ].map((metric) => {
               const Icon = metric.icon;
               return (
                 <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 sm:border-b-0 sm:border-l sm:last:border-l-0">
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${metric.tone}`}>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted ${metric.tone}`}>
                     <Icon className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
@@ -288,7 +288,7 @@ export default function RubikaPage() {
             })}
           </section>
 
-          <section className="overflow-hidden rounded-md border border-app-border bg-white">
+          <section className="overflow-hidden rounded-md border border-app-border bg-app-surface">
             <div className="flex flex-col justify-between gap-3 border-b border-app-border px-4 py-3 lg:flex-row lg:items-center">
               <div>
                 <div className="flex items-center gap-2">
@@ -304,14 +304,14 @@ export default function RubikaPage() {
                 const Icon = step.icon;
                 const active = !step.done && journeySteps.slice(0, index).every((item) => item.done);
                 return (
-                  <div key={step.label} className={`flex min-h-[96px] gap-3 p-3 ${step.done ? "bg-emerald-50/50" : active ? "bg-blue-50/60" : "bg-white"}`}>
-                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${step.done ? "border-emerald-200 bg-white text-emerald-700" : active ? "border-blue-200 bg-white text-app-primary" : "border-app-border bg-slate-50 text-slate-400"}`}>
+                  <div key={step.label} className={`flex min-h-[96px] gap-3 p-3 ${step.done ? "bg-app-success/10" : active ? "bg-app-primary/10" : "bg-app-surface"}`}>
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${step.done ? "border-app-success/30 bg-app-surface text-app-success" : active ? "border-app-primary/30 bg-app-surface text-app-primary" : "border-app-border bg-app-surfaceMuted text-app-muted"}`}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-black text-app-text">{step.label}</p>
-                        {step.done ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" /> : <Circle className={`h-4 w-4 shrink-0 ${active ? "text-app-primary" : "text-slate-300"}`} aria-hidden="true" />}
+                        {step.done ? <CheckCircle2 className="h-4 w-4 shrink-0 text-app-success" aria-hidden="true" /> : <Circle className={`h-4 w-4 shrink-0 ${active ? "text-app-primary" : "text-app-border"}`} aria-hidden="true" />}
                       </div>
                       <p className="mt-1 text-xs leading-5 text-app-muted">{step.detail}</p>
                     </div>
@@ -360,7 +360,7 @@ export default function RubikaPage() {
                     />
                   </Field>
 
-                  <div className="grid gap-3 rounded-md border border-app-border bg-slate-50 p-4 text-sm text-app-muted md:grid-cols-2">
+                  <div className="grid gap-3 rounded-md border border-app-border bg-app-surfaceMuted p-4 text-sm text-app-muted md:grid-cols-2">
                     <div>
                       <p className="font-bold text-app-text">توکن ذخیره‌شده</p>
                       <p className="mt-1 break-all text-left font-mono text-xs" dir="ltr">{maskedToken || "هنوز ذخیره نشده"}</p>
@@ -371,7 +371,7 @@ export default function RubikaPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-3 rounded-md border border-app-border bg-white p-3 shadow-sm md:flex-row md:items-center md:justify-between">
+                  <div className="flex flex-col gap-3 rounded-md border border-app-border bg-app-surface p-3 shadow-sm md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="text-sm font-black text-app-text">{dirty ? "تغییرات آماده ذخیره است" : "تنظیمات اتصال به‌روز است"}</p>
                       <p className="mt-1 text-xs text-app-muted">{dirty ? "ذخیره کنید تا تست اتصال برای نسخه جدید فعال شود." : "برای اطمینان از سلامت کانال، تست عملیاتی را اجرا کنید."}</p>
@@ -410,7 +410,7 @@ export default function RubikaPage() {
                   <RefreshCw className={`ml-2 h-4 w-4 ${testing ? "animate-spin" : ""}`} aria-hidden="true" />
                   {testing ? "در حال بررسی اتصال..." : "اجرای تست اتصال"}
                 </Button>
-                {dirty ? <p className="mt-3 text-xs leading-6 text-amber-700">برای اجرای تست، ابتدا تغییرات را ذخیره کنید.</p> : null}
+                {dirty ? <p className="mt-3 text-xs leading-6 text-app-warning">برای اجرای تست، ابتدا تغییرات را ذخیره کنید.</p> : null}
               </WorkspacePanel>
 
               <WorkspacePanel title="جزئیات کانال" description="خلاصه‌ای از تنظیمات ذخیره‌شده و آخرین بررسی.">
@@ -441,5 +441,4 @@ export default function RubikaPage() {
     </AuthGate>
   );
 }
-
 

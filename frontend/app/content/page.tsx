@@ -532,26 +532,26 @@ export default function ContentWorkspacePage() {
                 )}
                 filters={(
                   <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
                     <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <select value={activeStatus} onChange={(event) => setActiveStatus(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
                       {workflowTabs.map((tab) => <option key={tab.value} value={tab.value}>{tab.label} · {statusCount(posts, tab.value)}</option>)}
                     </select>
                   </label>
-                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
                     <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
                       <option value="all">همه کمپین‌ها</option>
                       {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
                     </select>
                   </label>
-                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
                     <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <select value={approvalFilter} onChange={(event) => setApprovalFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
                       {approvalTabs.map((tab) => <option key={tab.value} value={tab.value}>{tab.label}</option>)}
                     </select>
                   </label>
-                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-muted">
+                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
                     <ArrowDownUp className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
                       <option value="priority">اولویت عملیاتی</option>
@@ -708,7 +708,7 @@ export default function ContentWorkspacePage() {
                   <textarea
                     value={reviewNote}
                     onChange={(event) => setReviewNote(event.target.value)}
-                    className="mt-3 min-h-20 w-full resize-y rounded-md border border-app-border bg-white px-3 py-2 text-sm leading-6 text-app-text outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                    className="mt-3 min-h-20 w-full resize-y rounded-md border border-app-border bg-app-surface px-3 py-2 text-sm leading-6 text-app-text outline-none transition focus:border-app-focus focus:ring-2 focus:ring-app-focus/20"
                     placeholder="یادداشت بازبین، دلیل رد یا اصلاح مورد نیاز..."
                   />
                   <div className="mt-3 grid gap-2">
@@ -788,4 +788,3 @@ export default function ContentWorkspacePage() {
     </AuthGate>
   );
 }
-

@@ -23,4 +23,3 @@ export function CountdownBadge({ status, scheduledAt, className = "" }: Countdow
     </span>
   );
 }
-

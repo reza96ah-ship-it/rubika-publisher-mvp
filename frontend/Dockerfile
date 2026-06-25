@@ -1,4 +1,4 @@
-﻿FROM node:22-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
@@ -8,4 +8,3 @@ RUN npm install
 COPY . .
 
 EXPOSE 3000
-

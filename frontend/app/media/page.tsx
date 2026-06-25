@@ -439,10 +439,10 @@ export default function MediaPage() {
   }, [assets, campaigns, postById]);
   const mediaSummary = [
     { label: "همه رسانه‌ها", detail: "دارایی‌های فضای کاری", value: "all" as const, count: assets.length, icon: Images, tone: "text-app-primary" },
-    { label: "رسانه آزاد", detail: "آماده استفاده در پست", value: "unused" as const, count: unusedCount, icon: FileImage, tone: unusedCount ? "text-emerald-700" : "text-slate-500" },
-    { label: "متصل به پست", detail: "در حال استفاده", value: "attached" as const, count: attachedCount, icon: Link2, tone: attachedCount ? "text-sky-700" : "text-slate-500" },
-    { label: "ویرایش‌شده", detail: "خروجی‌های استودیو", value: "edited" as const, count: editedCount, icon: PencilLine, tone: editedCount ? "text-violet-700" : "text-slate-500" },
-    { label: "حجم کتابخانه", detail: "مصرف فایل‌های رسانه‌ای", value: null, count: formatSize(totalSizeBytes), icon: ImageIcon, tone: "text-slate-700" }
+    { label: "رسانه آزاد", detail: "آماده استفاده در پست", value: "unused" as const, count: unusedCount, icon: FileImage, tone: unusedCount ? "text-app-success" : "text-app-muted" },
+    { label: "متصل به پست", detail: "در حال استفاده", value: "attached" as const, count: attachedCount, icon: Link2, tone: attachedCount ? "text-app-primary" : "text-app-muted" },
+    { label: "ویرایش‌شده", detail: "خروجی‌های استودیو", value: "edited" as const, count: editedCount, icon: PencilLine, tone: editedCount ? "text-app-secondary" : "text-app-muted" },
+    { label: "حجم کتابخانه", detail: "مصرف فایل‌های رسانه‌ای", value: null, count: formatSize(totalSizeBytes), icon: ImageIcon, tone: "text-app-text" }
   ];
 
   const filteredAssets = useMemo(() => {
@@ -534,7 +534,7 @@ export default function MediaPage() {
               const active = item.value === mediaFilter;
               const content = (
                 <>
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${item.tone}`}>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted ${item.tone}`}>
                     <Icon className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <span className="min-w-0">
@@ -552,8 +552,8 @@ export default function MediaPage() {
                   key={item.label}
                   type="button"
                   onClick={() => setMediaFilter(item.value)}
-                  className={`flex min-w-0 items-start gap-3 border-b border-app-border p-3 text-right transition hover:bg-slate-50 sm:border-l sm:last:border-l-0 xl:border-b-0 ${
-                    active ? "bg-blue-50/60 ring-1 ring-inset ring-blue-200" : ""
+                  className={`flex min-w-0 items-start gap-3 border-b border-app-border p-3 text-right transition hover:bg-app-surfaceMuted sm:border-l sm:last:border-l-0 xl:border-b-0 ${
+                    active ? "bg-app-primary/10 ring-1 ring-inset ring-app-primary/20" : ""
                   }`}
                 >
                   {content}
@@ -629,7 +629,7 @@ export default function MediaPage() {
                   {selectedFilePreviewUrl ? (
                     <img src={selectedFilePreviewUrl} alt="پیش‌نمایش اولین تصویر انتخاب‌شده" className="aspect-video w-full rounded-md object-cover ring-1 ring-app-border" />
                   ) : (
-                    <div className="flex aspect-video items-center justify-center rounded-md bg-slate-50 text-xs text-app-muted ring-1 ring-app-border">
+                    <div className="flex aspect-video items-center justify-center rounded-md bg-app-surfaceMuted text-xs text-app-muted ring-1 ring-app-border">
                       پیش‌نمایش اولین فایل
                     </div>
                   )}
@@ -650,7 +650,7 @@ export default function MediaPage() {
                       <button
                         type="button"
                         onClick={() => setMediaView("grid")}
-                        className={`app-interactive nashrino-control-radius flex h-8 w-8 items-center justify-center ${mediaView === "grid" ? "bg-white text-app-primary shadow-sm" : "text-slate-500 hover:text-app-primary"}`}
+                        className={`app-interactive nashrino-control-radius flex h-8 w-8 items-center justify-center ${mediaView === "grid" ? "bg-app-surface text-app-primary shadow-sm" : "text-app-muted hover:text-app-primary"}`}
                         aria-label="نمایش شبکه‌ای"
                         title="نمایش شبکه‌ای"
                       >
@@ -659,7 +659,7 @@ export default function MediaPage() {
                       <button
                         type="button"
                         onClick={() => setMediaView("list")}
-                        className={`app-interactive nashrino-control-radius flex h-8 w-8 items-center justify-center ${mediaView === "list" ? "bg-white text-app-primary shadow-sm" : "text-slate-500 hover:text-app-primary"}`}
+                        className={`app-interactive nashrino-control-radius flex h-8 w-8 items-center justify-center ${mediaView === "list" ? "bg-app-surface text-app-primary shadow-sm" : "text-app-muted hover:text-app-primary"}`}
                         aria-label="نمایش فهرستی"
                         title="نمایش فهرستی"
                       >
@@ -685,23 +685,23 @@ export default function MediaPage() {
                   )}
                   className="mb-3"
                 >
-                  <label className="flex min-w-0 items-center gap-2 rounded-md bg-white px-3 py-2 shadow-hairline">
+                  <label className="flex min-w-0 items-center gap-2 rounded-md bg-app-surface px-3 py-2 shadow-hairline">
                     <Search className="h-4 w-4 shrink-0 text-app-muted" aria-hidden="true" />
                     <input
                       value={searchTerm}
                       onChange={(event) => setSearchTerm(event.target.value)}
                       placeholder="جست‌وجو بر اساس نام فایل یا عنوان پست"
-                      className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-app-muted/70"
                     />
                   </label>
                 </WorkspaceToolbar>
                 {folders.length ? (
                   <div className="mb-3 flex flex-wrap gap-2">
-                    <button type="button" onClick={() => setFolderFilter("all")} className={`app-interactive nashrino-control-radius inline-flex min-h-8 items-center px-3 text-xs font-bold ${folderFilter === "all" ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"}`}>
+                    <button type="button" onClick={() => setFolderFilter("all")} className={`app-interactive nashrino-control-radius inline-flex min-h-8 items-center px-3 text-xs font-bold ${folderFilter === "all" ? "bg-app-primary text-white" : "bg-app-surfaceMuted text-app-text hover:bg-app-primary/10 hover:text-app-primary"}`}>
                       همه پوشه‌ها
                     </button>
                     {folders.map((folder) => (
-                    <button key={folder} type="button" onClick={() => setFolderFilter(folder)} className={`app-interactive nashrino-control-radius inline-flex min-h-8 items-center gap-1 px-3 text-xs font-bold ${folderFilter === folder ? "bg-app-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-app-primary"}`}>
+                    <button key={folder} type="button" onClick={() => setFolderFilter(folder)} className={`app-interactive nashrino-control-radius inline-flex min-h-8 items-center gap-1 px-3 text-xs font-bold ${folderFilter === folder ? "bg-app-primary text-white" : "bg-app-surfaceMuted text-app-text hover:bg-app-primary/10 hover:text-app-primary"}`}>
                         <Folder className="h-3.5 w-3.5" aria-hidden="true" />
                         {folder}
                       </button>
@@ -715,7 +715,7 @@ export default function MediaPage() {
                       <StatusToken tone={campaignFilter === "all" ? "neutral" : "primary"}>{campaignFilter === "all" ? "همه کمپین‌ها" : "کمپین انتخاب‌شده"}</StatusToken>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => setCampaignFilter("all")} className={`app-interactive nashrino-control-radius inline-flex min-h-8 items-center px-3 text-xs font-bold ${campaignFilter === "all" ? "bg-app-primary text-white" : "bg-white text-slate-600 shadow-hairline hover:bg-blue-50 hover:text-app-primary"}`}>
+                  <button type="button" onClick={() => setCampaignFilter("all")} className={`app-interactive nashrino-control-radius inline-flex min-h-8 items-center px-3 text-xs font-bold ${campaignFilter === "all" ? "bg-app-primary text-white" : "bg-app-surface text-app-text shadow-hairline hover:bg-app-primary/10 hover:text-app-primary"}`}>
                         همه کمپین‌ها
                       </button>
                       {campaignAssetOptions.map(({ campaign, count }) => (
@@ -726,7 +726,7 @@ export default function MediaPage() {
                             setCampaignFilter(`id:${campaign.id}`);
                             setMediaFilter("attached");
                           }}
-                        className={`app-interactive nashrino-control-radius inline-flex min-h-8 items-center gap-1.5 px-3 text-xs font-bold ${campaignFilter === `id:${campaign.id}` ? "bg-app-primary text-white" : "bg-white text-slate-600 shadow-hairline hover:bg-blue-50 hover:text-app-primary"}`}
+                        className={`app-interactive nashrino-control-radius inline-flex min-h-8 items-center gap-1.5 px-3 text-xs font-bold ${campaignFilter === `id:${campaign.id}` ? "bg-app-primary text-white" : "bg-app-surface text-app-text shadow-hairline hover:bg-app-primary/10 hover:text-app-primary"}`}
                         >
                           <span className="h-2 w-2 rounded-full" style={{ backgroundColor: campaign.color }} />
                           {campaign.name}
@@ -784,7 +784,7 @@ export default function MediaPage() {
                           onDragStart={(event) => startDraggingAsset(event, asset.id)}
                           onDragEnd={stopDraggingAsset}
                           title={canEditImage ? "یک کلیک برای انتخاب، دوبار کلیک برای ویرایش، کشیدن برای اتصال به پست." : "برای اتصال سریع، رسانه را روی پست مقصد بکشید."}
-                          className={`cursor-grab overflow-hidden rounded-md bg-white text-right shadow-hairline transition active:cursor-grabbing hover:shadow-soft ${
+                          className={`cursor-grab overflow-hidden rounded-md bg-app-surface text-right shadow-hairline transition active:cursor-grabbing hover:shadow-soft ${
                             mediaView === "list" ? "flex min-w-0 items-stretch" : ""
                           } ${
                             selected ? "ring-2 ring-app-primary" : ""
@@ -794,7 +794,7 @@ export default function MediaPage() {
                             {previewUrl ? (
                               <img src={previewUrl} alt={asset.original_filename} className="aspect-video w-full object-cover" />
                             ) : (
-                              <div className="flex aspect-video w-full items-center justify-center bg-slate-50 text-xs text-app-muted">
+                              <div className="flex aspect-video w-full items-center justify-center bg-app-surfaceMuted text-xs text-app-muted">
                                 پیش‌نمایش در دسترس نیست
                               </div>
                             )}
@@ -807,12 +807,12 @@ export default function MediaPage() {
                               </span>
                             ) : null}
                             {canEditImage ? (
-                              <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded bg-white/95 px-2 py-1 text-[10px] font-black text-app-text shadow-hairline ring-1 ring-app-border">
+                              <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded bg-app-surface/95 px-2 py-1 text-[10px] font-black text-app-text shadow-hairline ring-1 ring-app-border">
                                 <PencilLine className="h-3 w-3 text-app-primary" aria-hidden="true" />
                                 دوبار کلیک برای ویرایش
                               </span>
                             ) : null}
-                            {selected ? <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-app-primary text-white shadow-sm"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span> : null}
+                            {selected ? <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-app-primary text-app-white shadow-sm"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span> : null}
                           </div>
                           <div className="min-w-0 flex-1 p-3">
                             <p className="truncate text-sm font-black text-app-text" title={asset.original_filename}>{asset.original_filename}</p>
@@ -828,7 +828,7 @@ export default function MediaPage() {
                                 {tagList(asset.tags).slice(0, 3).map((tag) => <Tag key={tag}>{displayTagLabel(tag)}</Tag>)}
                               </div>
                             ) : null}
-                            <div className="mt-3 flex min-h-9 items-center gap-2 rounded bg-slate-50 px-2 py-1.5 text-xs text-app-muted ring-1 ring-app-border">
+                            <div className="mt-3 flex min-h-9 items-center gap-2 rounded bg-app-surfaceMuted px-2 py-1.5 text-xs text-app-muted ring-1 ring-app-border">
                               <Link2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                               <span className="truncate">{linkedPost ? linkedPost.title : "بدون اتصال به پست"}</span>
                             </div>
@@ -851,7 +851,7 @@ export default function MediaPage() {
                     <button
                       type="button"
                       onClick={clearSelectedAsset}
-                    className="app-interactive nashrino-control-radius flex h-8 w-8 items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-app-text"
+                    className="app-interactive nashrino-control-radius flex h-8 w-8 items-center justify-center text-app-muted hover:bg-app-surfaceMuted hover:text-app-text"
                       aria-label="لغو انتخاب رسانه"
                       title="لغو انتخاب رسانه"
                     >
@@ -865,7 +865,7 @@ export default function MediaPage() {
                   <button
                     type="button"
                     onClick={() => setInspectorTab("details")}
-                    className={`app-interactive flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-black ${inspectorTab === "details" ? "bg-white text-app-primary shadow-sm" : "text-slate-500 hover:text-app-text"}`}
+                    className={`app-interactive flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-black ${inspectorTab === "details" ? "bg-app-surface text-app-primary shadow-sm" : "text-app-muted hover:text-app-text"}`}
                   >
                     <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
                     جزئیات
@@ -873,7 +873,7 @@ export default function MediaPage() {
                   <button
                     type="button"
                     onClick={() => setInspectorTab("attach")}
-                    className={`app-interactive flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-black ${inspectorTab === "attach" ? "bg-white text-app-primary shadow-sm" : "text-slate-500 hover:text-app-text"}`}
+                    className={`app-interactive flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-black ${inspectorTab === "attach" ? "bg-app-surface text-app-primary shadow-sm" : "text-app-muted hover:text-app-text"}`}
                   >
                     <Link2 className="h-3.5 w-3.5" aria-hidden="true" />
                     اتصال به پست
@@ -885,7 +885,7 @@ export default function MediaPage() {
                       {selectedPreviewUrl ? (
                         <img src={selectedPreviewUrl} alt={selectedAsset.original_filename} className="aspect-video max-h-64 w-full object-cover lg:max-h-none" />
                       ) : (
-                        <div className="flex h-56 w-full items-center justify-center bg-slate-50 text-xs text-app-muted lg:h-auto lg:aspect-video">
+                        <div className="flex h-56 w-full items-center justify-center bg-app-surfaceMuted text-xs text-app-muted lg:h-auto lg:aspect-video">
                           پیش‌نمایش در دسترس نیست
                         </div>
                       )}
@@ -896,7 +896,7 @@ export default function MediaPage() {
                         <button
                           type="button"
                           onClick={() => setEditingAsset(selectedAsset)}
-                        className="app-interactive nashrino-control-radius absolute bottom-2 left-2 inline-flex min-h-8 items-center gap-1.5 bg-white/95 px-3 text-[11px] font-black text-app-text shadow-soft ring-1 ring-app-border hover:bg-blue-50 hover:text-app-primary"
+                        className="app-interactive nashrino-control-radius absolute bottom-2 left-2 inline-flex min-h-8 items-center gap-1.5 bg-app-surface/95 px-3 text-[11px] font-black text-app-text shadow-soft ring-1 ring-app-border hover:bg-app-primary/10 hover:text-app-primary"
                         >
                           <PencilLine className="h-3.5 w-3.5" aria-hidden="true" />
                           باز کردن در ویرایشگر
@@ -918,7 +918,7 @@ export default function MediaPage() {
                       />
                     </div>
 
-                    <div className="mt-4 rounded-md border border-app-border bg-white p-3 shadow-hairline">
+                    <div className="mt-4 rounded-md border border-app-border bg-app-surface p-3 shadow-hairline">
                       <div className="flex items-center justify-between gap-2">
                         <p className="flex items-center gap-2 text-xs font-black text-app-text">
                           <Crop className="h-4 w-4 text-app-primary" aria-hidden="true" />
@@ -989,13 +989,13 @@ export default function MediaPage() {
                         {selectedLinkedPost ? <StatusBadge status={selectedLinkedPost.status} /> : null}
                       </div>
                       {selectedLinkedPost ? (
-                        <div className="mt-3 rounded-md bg-white p-3 text-xs leading-6 shadow-hairline">
+                        <div className="mt-3 rounded-md bg-app-surface p-3 text-xs leading-6 shadow-hairline">
                           <p className="font-black text-app-text">{selectedLinkedPost.title}</p>
                           <p className="mt-1 text-app-muted">کمپین: {selectedLinkedCampaign}</p>
                           <p className="mt-1 text-app-muted">این رسانه در پست #{selectedLinkedPost.id} استفاده می‌شود. حذف آن بعد از تایید، رسانه را از کتابخانه حذف می‌کند و پست بدون رسانه می‌ماند.</p>
                         </div>
                       ) : (
-                        <p className="mt-3 rounded-md bg-white p-3 text-xs leading-6 text-app-muted shadow-hairline">
+                        <p className="mt-3 rounded-md bg-app-surface p-3 text-xs leading-6 text-app-muted shadow-hairline">
                           این فایل در هیچ پستی استفاده نشده و برای استفاده مجدد در composer یا کمپین‌های بعدی آماده است.
                         </p>
                       )}
@@ -1025,12 +1025,12 @@ export default function MediaPage() {
                       )}
                     </div>
 
-                    <div className="mt-4 rounded-md border border-rose-100 bg-rose-50 p-3">
+                    <div className="mt-4 rounded-md border border-app-danger/30 bg-app-danger/10 p-3">
                       <div className="flex items-start gap-2">
-                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-700" aria-hidden="true" />
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-app-danger" aria-hidden="true" />
                         <div>
-                          <p className="text-xs font-black text-rose-800">حذف امن رسانه</p>
-                          <p className="mt-1 text-[11px] leading-5 text-rose-700">
+                          <p className="text-xs font-black text-app-danger">حذف امن رسانه</p>
+                          <p className="mt-1 text-[11px] leading-5 text-app-danger">
                             {selectedLinkedPost ? "این رسانه در یک پست استفاده شده است؛ حذف فقط بعد از تایید دوم انجام می‌شود." : "این رسانه استفاده فعالی ندارد و می‌تواند از کتابخانه حذف شود."}
                           </p>
                         </div>
@@ -1081,7 +1081,7 @@ export default function MediaPage() {
                               onDragLeave={() => setDropTargetPostId(null)}
                               onDrop={(event) => dropAssetOnPost(event, post.id)}
                               className={`app-interactive flex min-w-0 items-center justify-between gap-3 rounded-md px-3 py-2 text-right shadow-hairline disabled:cursor-not-allowed disabled:opacity-55 ${
-                                isDropTarget ? "bg-blue-50 ring-2 ring-app-primary" : "bg-white hover:bg-slate-50"
+                                isDropTarget ? "bg-app-primary/10 ring-2 ring-app-primary" : "bg-app-surface hover:bg-app-surfaceMuted"
                               }`}
                             >
                               <span className="min-w-0">
@@ -1102,7 +1102,7 @@ export default function MediaPage() {
                         <select
                           value={selectedAsset.post_id ? String(selectedAsset.post_id) : ""}
                           onChange={(event) => void attachToPost(selectedAsset.id, event.target.value)}
-                          className="mt-2 w-full rounded-md border border-app-border bg-white px-3 py-2 text-sm text-app-text outline-none focus:border-app-primary focus:ring-2 focus:ring-blue-100"
+                          className="mt-2 w-full rounded-md border border-app-border bg-app-surface px-3 py-2 text-sm text-app-text outline-none focus:border-app-focus focus:ring-2 focus:ring-app-focus/20"
                         >
                           <option value="">بدون اتصال</option>
                           {posts.map((post) => (
@@ -1121,4 +1121,3 @@ export default function MediaPage() {
     </AuthGate>
   );
 }
-

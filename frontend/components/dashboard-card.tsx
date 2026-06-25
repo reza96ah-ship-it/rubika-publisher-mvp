@@ -18,4 +18,3 @@ export function DashboardCard({ label, value, hint }: DashboardCardProps) {
     </div>
   );
 }
-

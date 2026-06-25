@@ -148,4 +148,3 @@ export function getJalaliMonthStartOffset(year: number, month: number) {
   const local = new Date(Date.UTC(firstDay.getUTCFullYear(), firstDay.getUTCMonth(), firstDay.getUTCDate()));
   return (local.getUTCDay() + 1) % 7;
 }
-

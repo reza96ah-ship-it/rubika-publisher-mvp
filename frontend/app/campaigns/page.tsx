@@ -202,21 +202,21 @@ function CampaignJalaliDateField({
       <button
         type="button"
         onClick={() => onOpenChange(!open)}
-        className={`app-row flex w-full items-center justify-between gap-3 rounded-md border bg-white p-3 text-right transition hover:bg-blue-50/40 ${
-          open ? "border-blue-200 ring-2 ring-blue-100" : "border-app-border"
+        className={`app-row flex w-full items-center justify-between gap-3 rounded-md border bg-app-surface p-3 text-right transition hover:bg-app-surfaceMuted ${
+          open ? "border-app-primary/40 ring-2 ring-app-primary/20" : "border-app-border"
         }`}
       >
         <span className="min-w-0">
           <span className="block text-xs font-black text-app-text">{label}</span>
           <span className="mt-1 block truncate text-[11px] font-bold text-app-muted">{formatJalaliSelection(value)}</span>
         </span>
-        <span className={`nashrino-control-radius inline-flex min-h-8 items-center px-3 text-[11px] font-black ${value ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-app-primary"}`}>
+        <span className={`nashrino-control-radius inline-flex min-h-8 items-center px-3 text-[11px] font-black ${value ? "bg-app-success/10 text-app-success" : "bg-app-primary/10 text-app-primary"}`}>
           {value ? "تغییر" : "انتخاب"}
         </span>
       </button>
 
       {open ? (
-        <div className="app-popover absolute bottom-full right-0 z-[70] mb-2 w-[244px] rounded-lg border border-app-border bg-white p-2.5 shadow-lift">
+        <div className="app-popover absolute bottom-full right-0 z-[70] mb-2 w-[244px] rounded-lg border border-app-border bg-app-surface p-2.5 shadow-lift">
           <div className="flex items-center justify-between gap-1.5">
             <Button type="button" variant="ghost" size="sm" onClick={() => moveMonth(-1)}>قبل</Button>
             <p className="min-w-20 text-center text-xs font-black text-app-primary">{jalaliMonthNames[draft.month - 1]} {draft.year}</p>
@@ -236,7 +236,7 @@ function CampaignJalaliDateField({
                   key={day}
                   type="button"
                   onClick={() => emit({ ...draft, day })}
-                  className={`h-7 rounded text-[11px] font-black transition ${selected ? "bg-app-primary text-white shadow-sm" : today ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-app-primary"}`}
+                  className={`h-7 rounded text-[11px] font-black transition ${selected ? "bg-app-primary text-white shadow-sm" : today ? "bg-app-success/10 text-app-success ring-1 ring-app-success/20" : "bg-app-surfaceMuted text-app-muted hover:bg-app-primary/10 hover:text-app-primary"}`}
                 >
                   {day}
                 </button>
@@ -247,13 +247,13 @@ function CampaignJalaliDateField({
           <div className="mt-2 grid grid-cols-2 gap-1.5">
             <label className="text-[10px] font-black text-app-muted">
               ساعت
-              <select value={draft.hour} onChange={(event) => changeTime("hour", event.target.value)} className="mt-1 h-8 w-full rounded-md border border-app-border bg-white px-2 text-xs font-bold text-app-text outline-none focus:ring-2 focus:ring-blue-100">
+              <select value={draft.hour} onChange={(event) => changeTime("hour", event.target.value)} className="mt-1 h-8 w-full rounded-md border border-app-border bg-app-surface px-2 text-xs font-bold text-app-text outline-none focus:ring-2 focus:ring-app-primary/20">
                 {Array.from({ length: 24 }, (_, hour) => <option key={hour} value={hour}>{pad(hour)}</option>)}
               </select>
             </label>
             <label className="text-[10px] font-black text-app-muted">
               دقیقه
-              <select value={draft.minute} onChange={(event) => changeTime("minute", event.target.value)} className="mt-1 h-8 w-full rounded-md border border-app-border bg-white px-2 text-xs font-bold text-app-text outline-none focus:ring-2 focus:ring-blue-100">
+              <select value={draft.minute} onChange={(event) => changeTime("minute", event.target.value)} className="mt-1 h-8 w-full rounded-md border border-app-border bg-app-surface px-2 text-xs font-bold text-app-text outline-none focus:ring-2 focus:ring-app-primary/20">
                 {Array.from({ length: 12 }, (_, index) => index * 5).map((minute) => <option key={minute} value={minute}>{pad(minute)}</option>)}
               </select>
             </label>
@@ -1407,8 +1407,8 @@ export default function CampaignsPage() {
                         return (
                           <DataRow key={post.id} gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_160px_150px]">
                             <div className="flex min-w-0 items-center gap-3">
-                              <div className="flex h-14 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
-                                {previewUrl ? <img src={previewUrl} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />}
+                              <div className="flex h-14 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-app-surfaceMuted ring-1 ring-app-border">
+                                {previewUrl ? <img src={previewUrl} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="h-4 w-4 text-app-muted" aria-hidden="true" />}
                               </div>
                               <div className="min-w-0">
                                 <p className="truncate text-sm font-black text-app-text">{post.title}</p>
@@ -1458,7 +1458,7 @@ export default function CampaignsPage() {
                         {selectedAssets.slice(0, 12).map((asset) => (
                           <Link key={asset.id} href={`/media?campaignId=${selectedRow.campaign.id}`} className="campaign-media-card app-interactive">
                             <div className="campaign-media-thumb">
-                              {mediaPreviewUrls[asset.id] ? <img src={mediaPreviewUrls[asset.id]} alt={asset.original_filename} className="h-full w-full object-cover" /> : <FileImage className="h-4 w-4 text-slate-400" aria-hidden="true" />}
+                              {mediaPreviewUrls[asset.id] ? <img src={mediaPreviewUrls[asset.id]} alt={asset.original_filename} className="h-full w-full object-cover" /> : <FileImage className="h-4 w-4 text-app-muted" aria-hidden="true" />}
                             </div>
                             <div className="min-w-0">
                               <p className="truncate text-xs font-black text-app-text">{asset.original_filename}</p>
@@ -1515,7 +1515,7 @@ export default function CampaignsPage() {
                       <div className="campaign-glass-card p-4">
                         <p className="text-sm font-black text-app-text">ریسک‌های گزارش</p>
                         {campaignInsights.riskPosts.length === 0 ? (
-                          <p className="mt-3 rounded-md bg-emerald-50 p-3 text-xs font-bold leading-5 text-emerald-800">کمپین برای گزارش مدیریتی آماده است.</p>
+                          <p className="mt-3 rounded-md bg-app-success/10 border border-app-success/20 p-3 text-xs font-bold leading-5 text-app-success">کمپین برای گزارش مدیریتی آماده است.</p>
                         ) : (
                           <div className="mt-3 grid gap-2">
                             {campaignInsights.riskPosts.slice(0, 4).map(({ post, score }) => (
@@ -1551,7 +1551,7 @@ export default function CampaignsPage() {
                           {assigningPosts ? "در حال اتصال" : "اتصال به کمپین"}
                         </Button>
                       </div>
-                      <div className="mt-3 max-h-[52vh] overflow-y-auto rounded-md border border-app-border bg-white">
+                      <div className="mt-3 max-h-[52vh] overflow-y-auto rounded-md border border-app-border bg-app-surface">
                         {assignablePosts.length === 0 ? (
                           <div className="p-4">
                             <EmptyState title="پست قابل اتصال پیدا نشد" description="همه پست‌های موجود به این کمپین وصل شده‌اند یا نتیجه‌ای برای جست‌وجو وجود ندارد." />
@@ -1566,13 +1566,13 @@ export default function CampaignsPage() {
                                   key={post.id}
                                   type="button"
                                   onClick={() => toggleAssignPost(post.id)}
-                                  className={`app-row flex w-full items-center gap-3 p-3 text-right transition ${checked ? "bg-blue-50/70" : "bg-white hover:bg-slate-50"}`}
+                                  className={`app-row flex w-full items-center gap-3 p-3 text-right transition ${checked ? "bg-app-primary/10" : "bg-app-surface hover:bg-app-surfaceMuted"}`}
                                 >
-                                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border text-white ${checked ? "border-app-primary bg-app-primary" : "border-app-border bg-white"}`}>
+                                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border text-white ${checked ? "border-app-primary bg-app-primary" : "border-app-border bg-app-surface"}`}>
                                     {checked ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : null}
                                   </span>
-                                  <span className="flex h-12 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
-                                    {previewUrl ? <img src={previewUrl} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />}
+                                  <span className="flex h-12 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-app-surfaceMuted ring-1 ring-app-border">
+                                    {previewUrl ? <img src={previewUrl} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="h-4 w-4 text-app-muted" aria-hidden="true" />}
                                   </span>
                                   <span className="min-w-0 flex-1">
                                     <span className="block truncate text-sm font-black text-app-text">{post.title}</span>
@@ -1605,4 +1605,3 @@ export default function CampaignsPage() {
     </AuthGate>
   );
 }
-

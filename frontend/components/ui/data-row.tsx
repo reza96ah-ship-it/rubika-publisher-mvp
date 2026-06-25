@@ -4,14 +4,12 @@ import { cn } from "@/lib/utils";
 export interface DataRowProps extends React.HTMLAttributes<HTMLDivElement> {
   selectable?: boolean;
   selected?: boolean;
-  gridClassName?: string;
   children: React.ReactNode;
 }
 
 export function DataRow({
   selectable = false,
   selected = false,
-  gridClassName,
   className,
   children,
   ...props
@@ -19,8 +17,7 @@ export function DataRow({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 px-3 py-3 rounded-md border transition-colors sm:px-4 lg:grid lg:items-start lg:gap-3",
-        gridClassName,
+        "flex items-center gap-3 px-3 py-2.5 rounded-md border transition-colors",
         selectable && "cursor-pointer",
         selected
           ? "bg-app-soft border-app-primary"
@@ -35,37 +32,17 @@ export function DataRow({
 }
 
 export interface DataTableProps extends React.HTMLAttributes<HTMLDivElement> {
-  columns?: string[];
-  gridClassName?: string;
-  empty?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function DataTable({
-  columns,
-  gridClassName,
-  empty,
-  className,
-  children,
-  ...props
-}: DataTableProps) {
+export function DataTable({ className, children, ...props }: DataTableProps) {
   return (
     <div
-      className={cn("space-y-1 mt-3 sm:mt-4", className)}
+      className={cn("space-y-1", className)}
       {...props}
     >
-      {columns && gridClassName && (
-        <div className={cn(
-          "sticky top-0 z-10 hidden gap-3 border-b border-app-border bg-app-surfaceMuted px-3 py-2.5 text-[10px] font-black uppercase text-app-muted lg:grid",
-          gridClassName
-        )}>
-          {columns.map((column) => <span key={column}>{column}</span>)}
-        </div>
-      )}
-      {empty ? empty : null}
-      <div className="divide-y divide-app-border">{children}</div>
+      {children}
     </div>
   );
 }
-
 

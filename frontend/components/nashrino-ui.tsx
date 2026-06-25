@@ -12,7 +12,6 @@ import type {
 } from "react";
 import { useMemo, useState } from "react";
 import { X, type LucideIcon } from "lucide-react";
-import { toPersianDigits } from "../lib/utils";
 
 type Tone = "neutral" | "primary" | "success" | "warning" | "alert" | "info";
 type ButtonVariant = "primary" | "secondary" | "quiet" | "danger";
@@ -198,7 +197,6 @@ type NMetricTileProps = {
   icon?: LucideIcon;
   tone?: Tone;
   href?: string;
-  bgImage?: string;
 };
 
 type NListItemProps = {
@@ -236,9 +234,9 @@ type NNoticeProps = {
 const toneSurfaceClasses: Record<Tone, string> = {
   neutral: "border-app-border bg-app-surfaceMuted text-app-muted",
   primary: "border-app-primary/20 bg-app-soft text-app-primary",
-  success: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  warning: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  alert: "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400",
+  success: "border-app-success/20 bg-app-success/10 text-app-success",
+  warning: "border-app-warning/20 bg-app-warning/10 text-app-warning",
+  alert: "border-app-danger/20 bg-app-danger/10 text-app-danger",
   info: "border-app-secondary/20 bg-app-secondarySoft text-app-secondary"
 };
 
@@ -246,7 +244,7 @@ const buttonVariantClasses: Record<ButtonVariant, string> = {
   primary: "nashrino-primary-cta",
   secondary: "border-app-border bg-app-surface text-app-text shadow-hairline hover:bg-app-surfaceMuted",
   quiet: "border-transparent bg-transparent text-app-muted hover:bg-app-surface hover:text-app-text",
-  danger: "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+  danger: "border-app-danger/20 bg-app-danger/10 text-app-danger hover:bg-app-danger/20"
 };
 
 const buttonSizeClasses: Record<ButtonSize, string> = {
@@ -277,8 +275,8 @@ const surfacePaddingClasses: Record<SurfacePadding, string> = {
 
 const fieldStateClasses: Record<FieldState, string> = {
   default: "border-app-border focus-within:border-app-focus focus-within:ring-app-focus/20",
-  success: "border-emerald-200 focus-within:border-emerald-500 focus-within:ring-emerald-100",
-  error: "border-rose-200 focus-within:border-rose-500 focus-within:ring-rose-100"
+  success: "border-app-success/30 focus-within:border-app-success focus-within:ring-app-success/20",
+  error: "border-app-danger/30 focus-within:border-app-danger focus-within:ring-app-danger/20"
 };
 
 const toneAccentTokens: Record<Tone, string> = {
@@ -324,7 +322,7 @@ export function NPageHeader({ title, description, eyebrow, meta, action, classNa
 export function NButton(props: NButtonProps) {
   const { children, className = "", variant = "primary", size = "md", icon: Icon, trailingIcon: TrailingIcon, loading = false } = props;
   const classes = [
-    "app-interactive nashrino-control-radius inline-flex items-center justify-center gap-2 whitespace-nowrap border font-bold leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60 transition-all duration-200 active:scale-95",
+    "app-interactive nashrino-control-radius inline-flex items-center justify-center gap-2 whitespace-nowrap border font-bold leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-focus/30 disabled:pointer-events-none disabled:opacity-60",
     buttonVariantClasses[variant],
     buttonSizeClasses[size],
     className
@@ -480,12 +478,12 @@ export function NSavedViewToolbar({
                 type="button"
                 onClick={() => onViewChange?.(view.value)}
                 className={`app-interactive inline-flex min-h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-black ${
-                  active ? "bg-white text-app-primary shadow-hairline" : "text-app-muted hover:bg-white/80 hover:text-app-text"
+                  active ? "bg-app-surface text-app-primary shadow-hairline" : "text-app-muted hover:bg-white/80 hover:text-app-text"
                 }`}
                 aria-pressed={active}
               >
                 {view.label}
-                {typeof view.count === "number" ? <span className="rounded bg-app-surfaceMuted px-1.5 py-0.5 text-[10px] text-app-muted">{toPersianDigits(view.count)}</span> : null}
+                {typeof view.count === "number" ? <span className="rounded bg-app-surfaceMuted px-1.5 py-0.5 text-[10px] text-app-muted">{view.count}</span> : null}
               </button>
             );
           })}
@@ -493,13 +491,13 @@ export function NSavedViewToolbar({
 
         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
           {typeof searchValue === "string" ? (
-            <label className="flex min-h-9 min-w-0 items-center rounded-md border border-app-border bg-white px-3 shadow-hairline sm:w-64">
+            <label className="flex min-h-9 min-w-0 items-center rounded-md border border-app-border bg-app-surface px-3 shadow-hairline sm:w-64">
               <span className="sr-only">{searchPlaceholder}</span>
               <input
                 value={searchValue}
                 onChange={(event) => onSearchChange?.(event.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                className="w-full bg-transparent text-sm outline-none placeholder:text-app-muted/70"
               />
             </label>
           ) : null}
@@ -522,7 +520,7 @@ export function NTabs({ tabs, activeTab, onTabChange, className = "" }: NTabsPro
         const content = (
           <>
             <span>{tab.label}</span>
-            {typeof tab.count === "number" ? <span className="rounded bg-app-surfaceMuted px-1.5 py-0.5 text-[10px] text-app-muted">{toPersianDigits(tab.count)}</span> : null}
+            {typeof tab.count === "number" ? <span className="rounded bg-app-surfaceMuted px-1.5 py-0.5 text-[10px] text-app-muted">{tab.count}</span> : null}
           </>
         );
 
@@ -583,7 +581,7 @@ export function NChannelRail({ channels, compact = false, className = "" }: NCha
       {channels.map((channel) => (
         <span
           key={`${channel.label}-${channel.state ?? "state"}`}
-          className={`inline-flex items-center gap-1.5 rounded-md border border-app-border bg-white font-black shadow-hairline ${
+          className={`inline-flex items-center gap-1.5 rounded-md border border-app-border bg-app-surface font-black shadow-hairline ${
             compact ? "min-h-6 px-1.5 text-[10px]" : "min-h-8 px-2 text-xs"
           } ${channel.muted ? "text-app-muted" : "text-app-text"}`}
         >
@@ -611,9 +609,9 @@ export function NInspectorDrawer({ open, title, description, children, footer, o
   const sideClass = side === "left" ? "left-0" : "right-0";
 
   return (
-    <div className="fixed inset-0 z-50 flex bg-slate-900/20 backdrop-blur-[1px] n-inspector-drawer-backdrop" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-50 flex bg-slate-900/40 backdrop-blur-[1px]" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" className="min-w-0 flex-1 cursor-default" onClick={onClose} aria-label="بستن بازرس" />
-      <aside className={`app-popover n-inspector-drawer-aside absolute bottom-0 top-0 ${sideClass} flex w-full max-w-md flex-col overflow-hidden border-app-border bg-white shadow-lift sm:w-[420px] ${side === "left" ? "border-r" : "border-l"}`}>
+      <aside className={`app-popover absolute bottom-0 top-0 ${sideClass} flex w-full max-w-md flex-col overflow-hidden border-app-border bg-app-surface shadow-lift sm:w-[420px] ${side === "left" ? "border-r" : "border-l"}`}>
         <header className="border-b border-app-border px-4 py-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -654,7 +652,7 @@ export function NActionTile({ label, value, detail, icon: Icon, tone = "primary"
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-bold text-app-muted">{label}</p>
-            <p className={`mt-2 font-black leading-6 text-app-text ${compact ? "line-clamp-1 text-sm" : "line-clamp-2 text-base"}`}>{typeof value === 'number' || typeof value === 'string' ? toPersianDigits(value) : value}</p>
+            <p className={`mt-2 font-black leading-6 text-app-text ${compact ? "line-clamp-1 text-sm" : "line-clamp-2 text-base"}`}>{value}</p>
           </div>
           <span className={`nashrino-token-icon flex ${compact ? "h-8 w-8" : "h-9 w-9"} shrink-0 items-center justify-center rounded-md border`}>
             <Icon className="h-4 w-4" aria-hidden="true" />
@@ -668,22 +666,17 @@ export function NActionTile({ label, value, detail, icon: Icon, tone = "primary"
   return href ? <Link href={href} className="app-interactive block rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-100">{content}</Link> : content;
 }
 
-export function NMetricTile({ label, value, detail, icon: Icon, tone = "primary", href, bgImage }: NMetricTileProps) {
+export function NMetricTile({ label, value, detail, icon: Icon, tone = "primary", href }: NMetricTileProps) {
   const content = (
-    <article className="app-row nashrino-metric-card min-h-[76px] rounded-lg p-2.5 sm:min-h-[88px] sm:p-3 relative overflow-hidden" style={toneVars(tone)}>
-      {bgImage && (
-        <div className="absolute top-1/2 -translate-y-1/2 left-[-15%] w-28 h-28 pointer-events-none z-0 opacity-25 mix-blend-multiply transition-transform duration-500 hover:scale-110">
-          <img src={bgImage} alt="" className="w-full h-full object-contain drop-shadow-xl" />
-        </div>
-      )}
-      <div className="flex h-full items-start justify-between gap-2 sm:gap-3 relative z-10">
+    <article className="app-row nashrino-metric-card min-h-[76px] rounded-lg p-2.5 sm:min-h-[88px] sm:p-3" style={toneVars(tone)}>
+      <div className="flex h-full items-start justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
-          <p className="line-clamp-1 text-[10px] font-semibold text-app-muted sm:text-xs">{label}</p>
-          <p className="dashboard-kpi-number mt-1 text-lg font-black text-app-text sm:text-xl">{typeof value === 'number' || typeof value === 'string' ? toPersianDigits(value) : value}</p>
-          {detail ? <p className="mt-1 hidden truncate text-[11px] font-bold text-app-muted sm:block">{toPersianDigits(detail)}</p> : null}
+          <p className="line-clamp-1 text-[10px] font-bold text-app-muted sm:text-xs">{label}</p>
+          <p className="dashboard-kpi-number mt-1 text-lg font-black text-app-text sm:text-xl">{value}</p>
+          {detail ? <p className="mt-1 hidden truncate text-[11px] font-bold text-app-muted sm:block">{detail}</p> : null}
         </div>
         {Icon ? (
-          <span className="nashrino-token-icon hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border sm:flex shadow-sm">
+          <span className="nashrino-token-icon hidden h-8 w-8 shrink-0 items-center justify-center rounded-md border sm:flex">
             <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
         ) : null}
@@ -691,7 +684,7 @@ export function NMetricTile({ label, value, detail, icon: Icon, tone = "primary"
     </article>
   );
 
-  return href ? <Link href={href} className="app-interactive block rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-100 transition-all duration-300 hover:-translate-y-1 group">{content}</Link> : <div className="transition-all duration-300 hover:-translate-y-1 group">{content}</div>;
+  return href ? <Link href={href} className="app-interactive block rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-100">{content}</Link> : content;
 }
 
 export function NListItem({ title, detail, icon: Icon, tone = "primary", href, meta }: NListItemProps) {
@@ -701,14 +694,14 @@ export function NListItem({ title, detail, icon: Icon, tone = "primary", href, m
         <Icon className="h-3.5 w-3.5" aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[11px] font-bold text-app-text">{title}</span>
+        <span className="block truncate text-[11px] font-black text-app-text">{title}</span>
         {detail ? <span className="mt-0.5 block truncate text-[10px] font-bold text-app-muted">{detail}</span> : null}
       </span>
       {meta ? <span className="max-w-[96px] shrink-0 truncate text-[10px]">{meta}</span> : null}
     </article>
   );
 
-  return href ? <Link href={href} className="block rounded-md focus:outline-none focus:ring-2 focus:ring-teal-100 transition-all duration-200 hover:-translate-y-[2px]">{content}</Link> : <div className="transition-all duration-200 hover:-translate-y-[2px]">{content}</div>;
+  return href ? <Link href={href} className="block rounded-md focus:outline-none focus:ring-2 focus:ring-teal-100">{content}</Link> : content;
 }
 
 export function NEmptyState({ title, detail, icon: Icon }: NEmptyStateProps) {
@@ -747,7 +740,7 @@ export function NDonutChart({ items, total, label = "کل" }: NDonutChartProps) 
     <div className="flex flex-col items-center justify-center gap-3">
       <div className="nashrino-donut-chart relative h-32 w-32 rounded-full shadow-hairline sm:h-40 sm:w-40" style={{ background: `conic-gradient(${background})` } as CSSProperties}>
         <div className="absolute inset-4 flex flex-col items-center justify-center rounded-full bg-app-surface shadow-inner sm:inset-5">
-          <span className="text-xl font-black text-app-text sm:text-2xl">{toPersianDigits(activeItem?.value ?? total)}</span>
+          <span className="text-xl font-black text-app-text sm:text-2xl">{activeItem?.value ?? total}</span>
           <span className="mt-1 max-w-20 truncate text-[10px] font-bold text-app-muted">{activeItem?.label ?? label}</span>
         </div>
       </div>
@@ -766,7 +759,7 @@ export function NDonutChart({ items, total, label = "کل" }: NDonutChartProps) 
               <span className="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-white" style={{ backgroundColor: item.color, opacity: item.value ? 1 : 0.48 }} />
               <span className="min-w-0 truncate">{item.label}</span>
             </span>
-            <span className="min-w-5 shrink-0 text-left font-black tabular-nums text-app-text">{toPersianDigits(item.value)}</span>
+            <span className="min-w-5 shrink-0 text-left font-black tabular-nums text-app-text">{item.value}</span>
           </button>
         ))}
       </div>
@@ -778,20 +771,17 @@ export function NTrendBars({ values, labels }: NTrendBarsProps) {
   const max = Math.max(...values, 1);
 
   return (
-    <div className="flex h-28 items-end justify-between gap-1.5 rounded-xl bg-transparent px-1 py-1">
+    <div className="flex h-28 items-end gap-1.5 rounded-lg bg-app-surfaceMuted px-3 py-3">
       {values.map((value, index) => (
-        <div key={index} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-2 h-full group cursor-pointer">
-          <div className="relative flex w-full max-w-[16px] flex-1 flex-col justify-end bg-app-surfaceMuted/50 rounded-full overflow-hidden border border-app-border/30">
-            <span
-              className="w-full rounded-full bg-gradient-to-t from-app-primary to-app-primary/40 transition-all duration-700 ease-out group-hover:opacity-80"
-              style={{ height: `${Math.max(12, (value / max) * 100)}%` }}
-              aria-label={`${toPersianDigits(value)} items`}
-            />
-          </div>
-          <span className="text-[10px] font-bold text-app-muted/80 whitespace-nowrap">{toPersianDigits(labels?.[index] || index + 1)}</span>
+        <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+          <span
+            className="nashrino-trend-bar w-full rounded-t-md transition-all"
+            style={{ height: `${Math.max(10, (value / max) * 88)}px` }}
+            aria-label={`${value} items`}
+          />
+          <span className="text-[9px] font-bold text-slate-400">{labels?.[index] || index + 1}</span>
         </div>
       ))}
     </div>
   );
 }
-

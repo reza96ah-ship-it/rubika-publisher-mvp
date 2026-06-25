@@ -234,8 +234,8 @@ export default function ChannelsPage() {
                       ].map((step) => {
                         const Icon = step.done ? BadgeCheck : step.icon;
                         return (
-                          <div key={step.label} className={`flex items-start gap-3 rounded-md border p-3 ${step.done ? "border-teal-100 bg-teal-50/60" : "border-app-border bg-white"}`}>
-                            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${step.done ? "bg-white text-teal-700" : "bg-slate-50 text-app-muted"}`}>
+                          <div key={step.label} className={`flex items-start gap-3 rounded-md border p-3 ${step.done ? "border-app-success/30 bg-app-success/10" : "border-app-border bg-app-surface"}`}>
+                            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${step.done ? "bg-app-surface text-app-success" : "bg-app-surfaceMuted text-app-muted"}`}>
                               <Icon className="h-4 w-4" aria-hidden="true" />
                             </span>
                             <div>
@@ -277,4 +277,3 @@ export default function ChannelsPage() {
     </AuthGate>
   );
 }
-

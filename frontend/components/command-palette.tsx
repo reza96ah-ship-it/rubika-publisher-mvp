@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, authHeaders, type Post } from "../lib/posts";
 import { Skeleton } from "./loading-skeleton";
-import { StatusBadge } from "./status-badge";
 
 type CommandPaletteProps = {
   open: boolean;
@@ -79,18 +78,18 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-slate-955/40 px-4 pt-[12vh] backdrop-blur-md" role="presentation" onMouseDown={onClose}>
-      <section className="app-popover app-studio-panel w-full max-w-2xl overflow-hidden rounded-lg shadow-2xl shadow-slate-950/30" role="dialog" aria-modal="true" aria-label="جست‌وجو و دسترسی سریع" onMouseDown={(event) => event.stopPropagation()}>
+    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-slate-900/20 px-4 pt-[12vh] backdrop-blur-sm" role="presentation" onMouseDown={onClose}>
+      <section className="app-popover app-studio-panel w-full max-w-2xl overflow-hidden rounded-lg shadow-2xl shadow-slate-900/15" role="dialog" aria-modal="true" aria-label="جست‌وجو و دسترسی سریع" onMouseDown={(event) => event.stopPropagation()}>
         <div className="flex items-center gap-3 border-b border-app-border px-4 py-3">
           <Search className="h-4 w-4 shrink-0 text-app-primary" aria-hidden="true" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             autoFocus
-            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-app-muted/60"
+            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
             placeholder="جست‌وجوی پست یا رفتن به یک بخش..."
           />
-          <button type="button" onClick={onClose} className="app-interactive nashrino-control-radius flex h-8 w-8 items-center justify-center text-app-muted hover:bg-app-surfaceMuted hover:text-app-text" aria-label="بستن جست‌وجو">
+          <button type="button" onClick={onClose} className="app-interactive nashrino-control-radius flex h-8 w-8 items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-700" aria-label="بستن جست‌وجو">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
@@ -103,7 +102,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 {filteredPrimaryCommands.map((command) => {
                   const Icon = command.icon;
                   return (
-                    <button key={command.href} type="button" onClick={() => navigate(command.href)} className="app-interactive flex items-center gap-3 rounded-md px-2.5 py-2.5 text-right hover:bg-app-soft/50 hover:text-app-primary">
+                    <button key={command.href} type="button" onClick={() => navigate(command.href)} className="app-interactive flex items-center gap-3 rounded-md px-2.5 py-2.5 text-right hover:bg-blue-50">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-soft text-app-primary">
                         <Icon className="h-4 w-4" aria-hidden="true" />
                       </span>
@@ -125,7 +124,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 {filteredSecondaryCommands.map((command) => {
                   const Icon = command.icon;
                   return (
-                    <button key={command.href} type="button" onClick={() => navigate(command.href)} className="app-interactive flex items-center gap-3 rounded-md px-2.5 py-2.5 text-right hover:bg-app-surfaceMuted hover:text-app-text">
+                    <button key={command.href} type="button" onClick={() => navigate(command.href)} className="app-interactive flex items-center gap-3 rounded-md px-2.5 py-2.5 text-right hover:bg-slate-50">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted text-app-muted">
                         <Icon className="h-4 w-4" aria-hidden="true" />
                       </span>
@@ -149,12 +148,12 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               </div>
             ) : null}
             {!loading && filteredPosts.map((post) => (
-              <button key={post.id} type="button" onClick={() => navigate(`/compose?postId=${post.id}`)} className="app-interactive flex w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-right hover:bg-app-surfaceMuted hover:text-app-text">
+              <button key={post.id} type="button" onClick={() => navigate(`/compose?postId=${post.id}`)} className="app-interactive flex w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-right hover:bg-slate-50">
                 <span className="min-w-0">
                   <span className="block truncate text-xs font-black text-app-text">{post.title}</span>
                   <span className="mt-0.5 block truncate text-[11px] text-app-muted">{post.caption || "بدون کپشن"}</span>
                 </span>
-                <StatusBadge status={post.status} />
+                <span className="shrink-0 rounded bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500">{post.status}</span>
               </button>
             ))}
             {!loading && filteredPosts.length === 0 ? <p className="px-2 py-3 text-xs text-app-muted">پستی با این عبارت پیدا نشد.</p> : null}
@@ -164,4 +163,3 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     </div>
   );
 }
-

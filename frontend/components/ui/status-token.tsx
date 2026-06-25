@@ -42,4 +42,3 @@ const StatusToken = React.forwardRef<HTMLDivElement, StatusTokenProps>(
 StatusToken.displayName = "StatusToken";
 
 export { StatusToken };
-

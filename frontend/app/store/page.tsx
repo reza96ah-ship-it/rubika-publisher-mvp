@@ -180,7 +180,7 @@ function ReadinessRow({ item }: { item: ReadinessItem }) {
   const Icon = item.done ? BadgeCheck : CalendarClock;
   return (
     <div className="flex items-start gap-3 border-b border-app-border py-3 first:pt-0 last:border-0 last:pb-0">
-      <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${item.done ? "text-emerald-700" : item.required ? "text-amber-700" : "text-slate-400"}`} aria-hidden="true" />
+      <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${item.done ? "text-app-success" : item.required ? "text-app-warning" : "text-app-muted"}`} aria-hidden="true" />
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm font-bold text-app-text">{item.label}</p>
@@ -218,14 +218,14 @@ function BrandAssetPicker({
   const selectedAsset = assets.find((asset) => asset.id === selectedId);
 
   return (
-    <div className="rounded-md border border-app-border bg-white p-3 shadow-hairline">
+    <div className="rounded-md border border-app-border bg-app-surface p-3 shadow-hairline">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-black text-app-text">{title}</p>
           <p className="mt-1 text-xs leading-5 text-app-muted">{description}</p>
         </div>
         {selectedId ? (
-          <button type="button" onClick={onClear} className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-50 hover:text-rose-600" aria-label={`حذف ${title}`}>
+          <button type="button" onClick={onClear} className="rounded-md p-1.5 text-app-muted transition hover:bg-app-surfaceMuted hover:text-app-danger" aria-label={`حذف ${title}`}>
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         ) : null}
@@ -236,12 +236,12 @@ function BrandAssetPicker({
           {previewUrl ? (
             <img src={previewUrl} alt={title} className="h-full w-full object-cover" />
           ) : (
-            <ImageIcon className="h-7 w-7 text-slate-400" aria-hidden="true" />
+            <ImageIcon className="h-7 w-7 text-app-muted" aria-hidden="true" />
           )}
         </div>
 
         <div className="min-w-0 space-y-2">
-          <label className="app-interactive flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted px-3 py-2 text-xs font-black text-app-text hover:border-blue-300 hover:bg-blue-50">
+          <label className="app-interactive flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted px-3 py-2 text-xs font-black text-app-text hover:border-app-primary/30 hover:bg-app-primary/10">
             <UploadCloud className="h-4 w-4" aria-hidden="true" />
             {uploading ? "در حال آپلود..." : "آپلود تصویر"}
             <input
@@ -259,7 +259,7 @@ function BrandAssetPicker({
           <select
             value={selectedId ?? ""}
             onChange={(event) => onSelect(event.target.value ? Number(event.target.value) : null)}
-            className="min-h-11 w-full rounded-md border border-app-border bg-white px-3 py-2 text-xs font-bold text-app-text outline-none transition focus:border-app-primary focus:ring-2 focus:ring-blue-100"
+            className="min-h-11 w-full rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-text outline-none transition focus:border-app-focus focus:ring-2 focus:ring-app-focus/20"
           >
             <option value="">انتخاب از کتابخانه رسانه</option>
             {assets.map((asset) => (
@@ -277,7 +277,7 @@ function BrandAssetPicker({
             <p className="text-[11px] leading-5 text-app-muted">{assets.length ? "یا یکی از تصاویر موجود را انتخاب کنید." : "هنوز تصویر آماده‌ای در کتابخانه نیست."}</p>
           )}
 
-          {selectedId && !previewUrls[selectedId] ? <p className="text-[11px] text-amber-700">پیش‌نمایش این دارایی در دسترس نیست.</p> : null}
+          {selectedId && !previewUrls[selectedId] ? <p className="text-[11px] text-app-warning">پیش‌نمایش این دارایی در دسترس نیست.</p> : null}
         </div>
       </div>
     </div>
@@ -494,16 +494,16 @@ export default function StorePage() {
             </div>
           </section>
 
-          <section className="grid overflow-hidden rounded-md border border-app-border bg-white sm:grid-cols-3">
+          <section className="grid overflow-hidden rounded-md border border-app-border bg-app-surface sm:grid-cols-3">
             {[
-              { label: "آمادگی پروفایل", value: `${score}%`, detail: "نام و منطقه زمانی پایه‌های ضروری‌اند", icon: StoreIcon, tone: requiredReady ? "text-emerald-700" : "text-amber-700" },
+              { label: "آمادگی پروفایل", value: `${score}%`, detail: "نام و منطقه زمانی پایه‌های ضروری‌اند", icon: StoreIcon, tone: requiredReady ? "text-app-success" : "text-app-warning" },
               { label: "کیت برند", value: `${defaultCount(form)}/8`, detail: "لوگو، آواتار، لحن، CTA و قوانین", icon: Palette, tone: "text-app-primary" },
-              { label: "وضعیت ویرایش", value: dirty ? "ذخیره نشده" : "به‌روز", detail: dirty ? "نسخه جدید را ثبت کنید" : "آخرین تغییرات ثبت شده است", icon: Save, tone: dirty ? "text-amber-700" : "text-emerald-700" }
+              { label: "وضعیت ویرایش", value: dirty ? "ذخیره نشده" : "به‌روز", detail: dirty ? "نسخه جدید را ثبت کنید" : "آخرین تغییرات ثبت شده است", icon: Save, tone: dirty ? "text-app-warning" : "text-app-success" }
             ].map((metric) => {
               const Icon = metric.icon;
               return (
                 <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 sm:border-b-0 sm:border-l sm:last:border-l-0">
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ${metric.tone}`}>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted ${metric.tone}`}>
                     <Icon className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
@@ -543,15 +543,15 @@ export default function StorePage() {
                       </Field>
                     </div>
 
-                    <div className="grid gap-3 border-t border-app-border bg-slate-50/70 p-3 sm:p-4 md:grid-cols-2">
+                    <div className="grid gap-3 border-t border-app-border bg-app-surfaceMuted/70 p-3 sm:p-4 md:grid-cols-2">
                       <Field label="شماره تماس" hint="در صورت نیاز برای CTA و اطلاعات تماس مشتری استفاده می‌شود.">
                         <Input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} placeholder="0912 000 0000" className="text-left" dir="ltr" inputMode="tel" />
                       </Field>
 
                       <Field label="منطقه زمانی" required hint="مبنای زمان‌بندی صف انتشار برای این workspace.">
                         <div className="relative">
-                          <Input value={form.timezone} readOnly className="bg-white pl-10 text-left text-slate-600" dir="ltr" required />
-                          <Clock3 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                          <Input value={form.timezone} readOnly className="bg-app-surface pl-10 text-left text-app-text" dir="ltr" required />
+                          <Clock3 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" aria-hidden="true" />
                         </div>
                       </Field>
                     </div>
@@ -687,7 +687,7 @@ export default function StorePage() {
                     </div>
                   </WorkspacePanel>
 
-                  <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-md border border-app-border bg-white/95 p-3 shadow-lg shadow-slate-200/60 backdrop-blur md:flex-row md:items-center md:justify-between">
+                  <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-md border border-app-border bg-app-surface/95 p-3 shadow-lg shadow-app-border/40 backdrop-blur md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="text-sm font-black text-app-text">{dirty ? "تغییرات آماده ذخیره است" : "پروفایل فروشگاه به‌روز است"}</p>
                       <p className="mt-1 text-xs text-app-muted">{dirty ? "برای استفاده در composer، نسخه جدید را ثبت کنید." : "هر تغییر جدید در این نوار مشخص می‌شود."}</p>
@@ -713,7 +713,7 @@ export default function StorePage() {
               </WorkspacePanel>
 
               <WorkspacePanel title="پیش‌نمایش کپشن پایه" description="خروجی پایه‌ای که در کپشن‌ها تکرار می‌شود.">
-                <div className="rounded-md border border-app-border bg-slate-50 p-4">
+                <div className="rounded-md border border-app-border bg-app-surfaceMuted p-4">
                   <div className="mb-4 flex items-center gap-3 border-b border-app-border pb-3">
                     <WorkspaceAvatar name={form.name || "نام فروشگاه"} color={form.brand_primary_color} imageUrl={avatarUrl || logoUrl} />
                     <div className="min-w-0">
@@ -724,9 +724,9 @@ export default function StorePage() {
                       </p>
                     </div>
                   </div>
-                  <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">{previewCaption(form)}</p>
+                  <p className="whitespace-pre-wrap text-sm leading-7 text-app-text">{previewCaption(form)}</p>
                   {logoUrl ? (
-                    <div className="mt-4 rounded-md border border-app-border bg-white p-3">
+                    <div className="mt-4 rounded-md border border-app-border bg-app-surface p-3">
                       <p className="mb-2 text-[11px] font-black text-app-muted">لوگوی ثبت‌شده</p>
                       <img src={logoUrl} alt="لوگوی برند" className="max-h-20 max-w-full rounded object-contain" />
                     </div>
@@ -764,4 +764,3 @@ export default function StorePage() {
     </AuthGate>
   );
 }
-

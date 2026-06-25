@@ -91,4 +91,3 @@ export function DataRow({ children, gridClassName, selected, className = "" }: D
     </article>
   );
 }
-

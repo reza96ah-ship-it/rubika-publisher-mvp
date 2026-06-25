@@ -22,4 +22,3 @@ export function WorkspaceEmptyState({ title, description, actionLabel, actionHre
     </div>
   );
 }
-

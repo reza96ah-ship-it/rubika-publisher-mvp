@@ -26,4 +26,3 @@ export function ChannelBadges({ platform, compact = false }: ChannelBadgesProps)
     </>
   );
 }
-

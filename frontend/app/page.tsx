@@ -18,21 +18,19 @@ import {
 } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { toPersianDigits } from "../lib/utils";
 import { AppShell } from "../components/app-shell";
 import { AuthGate } from "../components/auth-gate";
 import { WorkspaceAvatar } from "../components/brand-mark";
 import { Skeleton } from "../components/loading-skeleton";
-import { Button } from "@/components/ui/button";
-import { Panel } from "@/components/ui/panel";
-import { MetricTile } from "@/components/ui/metric-tile";
-import { Tag } from "@/components/ui/tag";
 import {
+  NButton,
   NEmptyState,
+  NMetricTile,
   NNotice,
   NPage,
   NRow,
   NSection,
+  NStatusPill,
   NTabs
 } from "../components/nashrino-ui";
 import { Campaign, loadCampaigns } from "../lib/campaigns";
@@ -113,12 +111,12 @@ function compactDateTime(value?: string | null) {
   if (!value) return "بدون زمان";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "بدون زمان";
-  return toPersianDigits(new Intl.DateTimeFormat("fa-IR", {
+  return new Intl.DateTimeFormat("fa-IR", {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
     month: "short"
-  }).format(date));
+  }).format(date);
 }
 
 export default function HomePage() {
@@ -206,19 +204,19 @@ export default function HomePage() {
   const nextAction = priorityAlerts[0]
     ? { label: priorityAlerts[0].action_label, href: priorityAlerts[0].action_href, detail: priorityAlerts[0].title }
     : queueCounts.failed
-      ? { label: "بازیابی صف انتشار", href: "/queue", detail: `${toPersianDigits(queueCounts.failed)} انتشار ناموفق منتظر بررسی است` }
+      ? { label: "بازیابی صف انتشار", href: "/queue", detail: `${queueCounts.failed} انتشار ناموفق منتظر بررسی است` }
       : pendingApprovalCount
-        ? { label: "بازبینی محتوا", href: "/content?approval=pending", detail: `${toPersianDigits(pendingApprovalCount)} محتوا پشت گیت تایید مانده است` }
+        ? { label: "بازبینی محتوا", href: "/content?approval=pending", detail: `${pendingApprovalCount} محتوا پشت گیت تایید مانده است` }
         : !workspaceReady
           ? { label: "تکمیل راه‌اندازی", href: "/onboarding", detail: "آماده‌سازی فقط تا زمان تکمیل مسیر نمایش داده می‌شود" }
           : nextPosts[0]
             ? { label: "بررسی انتشار بعدی", href: `/compose?postId=${nextPosts[0].id}`, detail: nextPosts[0].title }
             : draftCount
-              ? { label: "تکمیل پیش‌نویس‌ها", href: "/content?status=draft", detail: `${toPersianDigits(draftCount)} پیش‌نویس آماده تکمیل است` }
+              ? { label: "تکمیل پیش‌نویس‌ها", href: "/content?status=draft", detail: `${draftCount} پیش‌نویس آماده تکمیل است` }
               : { label: "ساخت پست تازه", href: "/compose", detail: "برنامه نزدیک هنوز محتوای کافی ندارد" };
 
   const briefing = priorityAlerts.length
-    ? `${toPersianDigits(priorityAlerts.length)} هشدار عملیاتی قبل از ادامه برنامه انتشار نیازمند رسیدگی است.`
+    ? `${priorityAlerts.length} هشدار عملیاتی قبل از ادامه برنامه انتشار نیازمند رسیدگی است.`
     : queueCounts.failed
       ? "صف انتشار خطای فعال دارد؛ اول بازیابی، بعد تولید محتوای جدید."
       : nextPosts.length
@@ -248,7 +246,6 @@ export default function HomePage() {
   ];
   const statusMixTotal = statusMixItems.reduce((sum, item) => sum + item.value, 0);
   const statusMixBackground = conicGradient(statusMixItems, statusMixTotal);
-  
   const topMetrics = [
     {
       label: "زمان‌بندی امروز",
@@ -314,10 +311,10 @@ export default function HomePage() {
     }));
   const riskQueueItems = [
     ...(queueCounts.failed
-      ? [{ id: "failed", icon: AlertTriangle, title: "انتشار ناموفق", detail: `${toPersianDigits(queueCounts.failed)} آیتم نیازمند بازیابی`, tone: "alert" as const, href: "/queue" }]
+      ? [{ id: "failed", icon: AlertTriangle, title: "انتشار ناموفق", detail: `${queueCounts.failed} آیتم نیازمند بازیابی`, tone: "alert" as const, href: "/queue" }]
       : []),
     ...(pendingApprovalCount
-      ? [{ id: "approval", icon: MessageSquare, title: "بازبینی مسدود", detail: `${toPersianDigits(pendingApprovalCount)} محتوا پشت تایید`, tone: "warning" as const, href: "/content?approval=pending" }]
+      ? [{ id: "approval", icon: MessageSquare, title: "بازبینی مسدود", detail: `${pendingApprovalCount} محتوا پشت تایید`, tone: "warning" as const, href: "/content?approval=pending" }]
       : []),
     ...(!rubikaReady
       ? [{ id: "rubika", icon: PlugZap, title: "اتصال کانال", detail: "روبیکا هنوز آماده انتشار نیست", tone: "warning" as const, href: "/channels" }]
@@ -350,15 +347,15 @@ export default function HomePage() {
   const publishMode = rubikaReady ? "API آماده" : "دستی/نیازمند اتصال";
   const publishState = queueCounts.publishing ? "در حال انتشار" : nextPosts[0] ? "زمان‌بندی شده" : queueCounts.ready ? "آماده صف" : "بدون برنامه نزدیک";
   const publishPulseSteps = [
-    { label: "محتوا", detail: contentPreviewItems.length ? `${toPersianDigits(contentPreviewItems.length)} آیتم نزدیک آماده بررسی است` : "هنوز محتوای نزدیک ندارید", ready: Boolean(contentPreviewItems.length), status: contentPreviewItems.length ? "آماده" : "بسازید", action: contentPreviewItems.length ? "بازبینی" : "ساخت پست", href: contentPreviewItems.length ? "/content" : "/compose" },
-    { label: "صف انتشار", detail: queueCounts.failed ? `${toPersianDigits(queueCounts.failed)} job ناموفق باید بازیابی شود` : queueTotal ? `${toPersianDigits(queueTotal)} job در چرخه انتشار است` : "صف هنوز خالی است", ready: queueTotal > 0 && !queueCounts.failed, status: queueCounts.failed ? "ریسک" : queueTotal ? "سالم" : "خالی", action: queueCounts.failed ? "بازیابی" : "دیدن صف", href: "/queue" },
+    { label: "محتوا", detail: contentPreviewItems.length ? `${contentPreviewItems.length} آیتم نزدیک آماده بررسی است` : "هنوز محتوای نزدیک ندارید", ready: Boolean(contentPreviewItems.length), status: contentPreviewItems.length ? "آماده" : "بسازید", action: contentPreviewItems.length ? "بازبینی" : "ساخت پست", href: contentPreviewItems.length ? "/content" : "/compose" },
+    { label: "صف انتشار", detail: queueCounts.failed ? `${queueCounts.failed} job ناموفق باید بازیابی شود` : queueTotal ? `${queueTotal} job در چرخه انتشار است` : "صف هنوز خالی است", ready: queueTotal > 0 && !queueCounts.failed, status: queueCounts.failed ? "ریسک" : queueTotal ? "سالم" : "خالی", action: queueCounts.failed ? "بازیابی" : "دیدن صف", href: "/queue" },
     { label: "کانال", detail: rubikaReady ? "اتصال انتشار آماده است" : "اتصال کانال نیازمند بررسی است", ready: rubikaReady, status: rubikaReady ? "متصل" : "بررسی", action: rubikaReady ? "مدیریت" : "اتصال", href: "/channels" },
     { label: "زمان انتشار", detail: nextPosts[0] ? compactDateTime(nextPosts[0].scheduled_at) : "برای انتشار خودکار زمان انتخاب نشده", ready: Boolean(nextPosts[0]), status: nextPosts[0] ? "زمان‌دار" : "بدون زمان", action: nextPosts[0] ? "تقویم" : "زمان‌بندی", href: nextPosts[0]?.scheduled_at ? `/calendar?date=${dayKey(new Date(nextPosts[0].scheduled_at))}` : "/compose" }
   ];
   const insightTone = failureRate ? "warning" as const : completionRate >= 60 ? "success" as const : "info" as const;
   const reportInsight = failureRate
-    ? { title: "ریسک انتشار بالاست", detail: `${toPersianDigits(failureRate)}٪ از صف فعال خطا دارد؛ بازیابی صف قبل از تولید تازه ارزشمندتر است.`, href: "/analytics?view=failures", tone: insightTone }
-    : { title: "ریتم انتشار قابل اتکاست", detail: `${toPersianDigits(completionRate)}٪ تکمیل در داده فعلی؛ برنامه نزدیک را با یک پست زمان‌بندی‌شده تقویت کنید.`, href: "/analytics", tone: insightTone };
+    ? { title: "ریسک انتشار بالاست", detail: `${failureRate}% از صف فعال خطا دارد؛ بازیابی صف قبل از تولید تازه ارزشمندتر است.`, href: "/analytics?view=failures", tone: insightTone }
+    : { title: "ریتم انتشار قابل اتکاست", detail: `${completionRate}% تکمیل در داده فعلی؛ برنامه نزدیک را با یک پست زمان‌بندی‌شده تقویت کنید.`, href: "/analytics", tone: insightTone };
   const campaignMomentumItems = activeCampaigns.length ? activeCampaigns : campaigns.slice(0, 3);
   const dashboardRecentItems = [...posts]
     .sort((first, second) => dateTime(second.updated_at || second.created_at) - dateTime(first.updated_at || first.created_at))
@@ -382,24 +379,24 @@ export default function HomePage() {
     { label: "کمپین", value: "campaigns", count: campaignMomentumItems.length }
   ];
   const publishPulsePanel: ReactNode = (
-    <NSection title="نبض انتشار" description="انتشار بعدی، وضعیت job و مسیر کانال در یک نمای عملیاتی." action={<Button href="/calendar" variant="secondary" size="sm">تقویم</Button>} className="dashboard-spec-card dashboard-publish-pulse">
+    <NSection title="نبض انتشار" description="انتشار بعدی، وضعیت job و مسیر کانال در یک نمای عملیاتی." action={<NButton href="/calendar" variant="secondary" size="sm">تقویم</NButton>} className="dashboard-spec-card dashboard-publish-pulse">
       <div className="grid gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-bold text-app-muted">انتشار بعدی</p>
-            <p className="dashboard-kpi-number mt-1 truncate text-2xl font-black text-app-text font-outfit">{compactDateTime(nextPosts[0]?.scheduled_at)}</p>
+            <p className="dashboard-kpi-number mt-1 truncate text-2xl font-black text-app-text">{compactDateTime(nextPosts[0]?.scheduled_at)}</p>
             <p className="mt-1 line-clamp-1 text-xs leading-5 text-app-muted">{nextPosts[0]?.title || "برای فعال شدن نبض، یک پست زمان‌بندی کنید."}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Tag tone={nextPosts[0] ? "warning" : "neutral"}>{publishState}</Tag>
-            <Tag tone={rubikaReady ? "success" : "warning"}>{publishMode}</Tag>
+            <NStatusPill tone={nextPosts[0] ? "warning" : "neutral"}>{publishState}</NStatusPill>
+            <NStatusPill tone={rubikaReady ? "success" : "warning"}>{publishMode}</NStatusPill>
           </div>
         </div>
         <div className="dashboard-publish-flow" aria-label="مسیر آمادگی انتشار">
           {publishPulseSteps.map((step, index) => (
             <Link key={step.label} href={step.href} className={`dashboard-publish-step app-interactive ${step.ready ? "dashboard-publish-step-ready" : "dashboard-publish-step-waiting"}`}>
               <span className="dashboard-publish-step-index" aria-hidden="true">
-                {step.ready ? <CheckCircle2 className="dashboard-publish-step-icon" /> : toPersianDigits(index + 1)}
+                {step.ready ? <CheckCircle2 className="dashboard-publish-step-icon" /> : index + 1}
               </span>
               <span className="dashboard-publish-step-copy min-w-0">
                 <span className="dashboard-publish-step-top">
@@ -419,12 +416,12 @@ export default function HomePage() {
     </NSection>
   );
   const plannerPanel: ReactNode = (
-    <NSection title="نمای برنامه" description="هفت روز آینده با تراکم محتوا و اشاره کمپین." action={<Button href="/calendar" variant="secondary" size="sm">تقویم کامل</Button>} className="dashboard-spec-card dashboard-planner-snapshot">
+    <NSection title="نمای برنامه" description="هفت روز آینده با تراکم محتوا و اشاره کمپین." action={<NButton href="/calendar" variant="secondary" size="sm">تقویم کامل</NButton>} className="dashboard-spec-card dashboard-planner-snapshot">
       <div className="grid grid-cols-7 gap-1.5">
         {plannerSnapshot.map((day) => (
           <Link key={day.key} href={day.href} className={`dashboard-day-cell app-interactive rounded-xl p-2 ${day.count ? "dashboard-day-cell-active" : ""}`}>
             <span className="block text-center text-[10px] font-black text-app-muted">{day.label}</span>
-            <span className="dashboard-kpi-number mt-2 block text-center text-lg font-black text-app-text font-outfit">{toPersianDigits(day.count)}</span>
+            <span className="dashboard-kpi-number mt-2 block text-center text-lg font-black text-app-text">{day.count}</span>
             <span className="mx-auto mt-2 block h-1.5 w-8 rounded-full bg-app-primary/20">
               <span className="block h-full rounded-full bg-app-primary" style={{ width: `${Math.min(100, Math.max(12, day.count * 30))}%` }} />
             </span>
@@ -435,24 +432,24 @@ export default function HomePage() {
     </NSection>
   );
   const riskPanel: ReactNode = (
-    <NSection title="صف ریسک" description="اگر چیزی مسدود باشد، اول همینجا دیده می‌شود." action={<Button href="/queue" variant="secondary" size="sm">بازیابی</Button>} className="dashboard-spec-card dashboard-risk-card">
+    <NSection title="صف ریسک" description="اگر چیزی مسدود باشد، اول همینجا دیده می‌شود." action={<NButton href="/queue" variant="secondary" size="sm">بازیابی</NButton>} className="dashboard-spec-card dashboard-risk-card">
       <div className="grid gap-2">
         {riskQueueItems.length ? riskQueueItems.slice(0, 4).map((item) => (
-          <NRow key={item.id} icon={item.icon} title={item.title} detail={item.detail} tone={item.tone} href={item.href} meta={<Tag tone={item.tone}>اقدام</Tag>} />
+          <NRow key={item.id} icon={item.icon} title={item.title} detail={item.detail} tone={item.tone} href={item.href} meta={<NStatusPill tone={item.tone}>اقدام</NStatusPill>} />
         )) : <NEmptyState icon={CheckCircle2} title="ریسک فوری وجود ندارد" detail="صف، تایید و اتصال در وضعیت قابل قبول هستند." />}
       </div>
     </NSection>
   );
   const inboxPanel: ReactNode = (
-    <NSection title="تریاژ پیام‌ها" description="تعهد پاسخ، پیام‌های عقب‌افتاده و کارهای من." action={<Button href="/inbox" variant="secondary" size="sm">Inbox</Button>} className="dashboard-spec-card dashboard-inbox-card">
+    <NSection title="تریاژ پیام‌ها" description="تعهد پاسخ، پیام‌های عقب‌افتاده و کارهای من." action={<NButton href="/inbox" variant="secondary" size="sm">Inbox</NButton>} className="dashboard-spec-card dashboard-inbox-card">
       <div className="grid gap-2">
-        <NRow icon={MessageSquare} title="پیام‌های نیازمند اقدام" detail={unreadAlerts ? `${toPersianDigits(unreadAlerts)} اعلان تازه` : "اعلان خوانده‌نشده عملیاتی نیست"} tone={unreadAlerts ? "warning" : "success"} href="/inbox" meta={<Tag tone={unreadAlerts ? "warning" : "success"}>{toPersianDigits(unreadAlerts)}</Tag>} />
+        <NRow icon={MessageSquare} title="پیام‌های نیازمند اقدام" detail={unreadAlerts ? `${unreadAlerts} اعلان تازه` : "اعلان خوانده‌نشده عملیاتی نیست"} tone={unreadAlerts ? "warning" : "success"} href="/inbox" meta={<NStatusPill tone={unreadAlerts ? "warning" : "success"}>{unreadAlerts}</NStatusPill>} />
         <NRow icon={Clock3} title="SLA امروز" detail={blockedWorkCount ? "اولویت با ریسک‌های فعال" : "زمان پاسخ در محدوده امن است"} tone={blockedWorkCount ? "warning" : "success"} href="/inbox" />
       </div>
     </NSection>
   );
   const campaignPanel: ReactNode = (
-    <NSection title="حرکت کمپین‌ها" description="ریل‌های باریک کمپین، مرحله‌ها و تحویل بعدی." action={<Button href="/campaigns" variant="secondary" size="sm">کمپین‌ها</Button>} className="dashboard-spec-card dashboard-campaign-momentum">
+    <NSection title="حرکت کمپین‌ها" description="ریل‌های باریک کمپین، مرحله‌ها و تحویل بعدی." action={<NButton href="/campaigns" variant="secondary" size="sm">کمپین‌ها</NButton>} className="dashboard-spec-card dashboard-campaign-momentum">
       <div className="grid gap-2 md:grid-cols-3">
         {campaignMomentumItems.length ? campaignMomentumItems.slice(0, 3).map((campaign, index) => (
           <Link key={campaign.id} href={`/campaigns?campaignId=${campaign.id}`} className="dashboard-campaign-rail app-interactive rounded-xl p-3" style={{ "--campaign-accent": index === 0 ? "var(--n-chart-ready)" : index === 1 ? "var(--n-chart-scheduled)" : "var(--n-chart-draft)" } as CSSProperties}>
@@ -468,7 +465,7 @@ export default function HomePage() {
     </NSection>
   );
   const insightPanel: ReactNode = (
-    <NSection title="بینش امروز" description="یک پاسخ کوتاه، نه انبار آمار." action={<Button href={reportInsight.href} variant="secondary" size="sm">گزارش</Button>} className="dashboard-spec-card dashboard-insight-card">
+    <NSection title="بینش امروز" description="یک پاسخ کوتاه، نه انبار آمار." action={<NButton href={reportInsight.href} variant="secondary" size="sm">گزارش</NButton>} className="dashboard-spec-card dashboard-insight-card">
       <div className="grid gap-3">
         <div className="flex items-start gap-3">
           <span className="nashrino-token-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
@@ -480,8 +477,8 @@ export default function HomePage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Tag tone={reportInsight.tone}>{toPersianDigits(completionRate)}٪ تکمیل</Tag>
-          <Tag tone={failureRate ? "warning" : "success"}>{toPersianDigits(failureRate)}٪ خطا</Tag>
+          <NStatusPill tone={reportInsight.tone}>{completionRate}% تکمیل</NStatusPill>
+          <NStatusPill tone={failureRate ? "warning" : "success"}>{failureRate}% خطا</NStatusPill>
         </div>
       </div>
     </NSection>
@@ -497,160 +494,147 @@ export default function HomePage() {
     <AuthGate>
       <AppShell>
         <NPage className="dashboard-spec-page pb-5">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <Panel variant="glass" className="col-span-1 md:col-span-12 lg:col-span-8 dashboard-command-brief relative overflow-hidden p-5 animate-fade-in">
-              <div className={`absolute -top-12 -left-12 w-64 h-64 rounded-full blur-3xl pointer-events-none z-0 animate-pulse ${healthTone === 'success' ? 'bg-app-success/15' : healthTone === 'warning' ? 'bg-app-warning/15' : 'bg-app-alert/15'}`} />
-              <div className="absolute top-8 left-8 flex items-center justify-center pointer-events-none z-0">
-                <div className={`absolute w-5 h-5 rounded-full animate-ping opacity-75 ${healthTone === 'success' ? 'bg-app-success' : healthTone === 'warning' ? 'bg-app-warning' : 'bg-app-alert'}`} />
-                <div className={`relative w-2.5 h-2.5 rounded-full shadow-lg ${healthTone === 'success' ? 'bg-app-success' : healthTone === 'warning' ? 'bg-app-warning' : 'bg-app-alert'}`} />
-              </div>
-              <div className="flex min-w-0 items-start gap-4 relative z-10">
+          <section className="dashboard-command-brief">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+              <div className="flex min-w-0 items-start gap-3">
                 <WorkspaceAvatar name={store?.name || productName} size="lg" color={brandColor} imageUrl={brandImageUrl} />
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="app-section-kicker text-[10px] font-bold">داشبورد</p>
-                    <Tag tone={healthTone}>{healthTone === "success" ? "فضای کاری پایدار" : healthTone === "warning" ? "نیازمند تکمیل" : "نیازمند رسیدگی"}</Tag>
-                    {lastUpdatedAt ? <Tag tone="neutral" className="font-outfit">{toPersianDigits(lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }))}</Tag> : null}
+                    <p className="app-section-kicker text-[10px] font-black">داشبورد</p>
+                    <NStatusPill tone={healthTone}>{healthTone === "success" ? "فضای کاری پایدار" : healthTone === "warning" ? "نیازمند تکمیل" : "نیازمند رسیدگی"}</NStatusPill>
+                    {lastUpdatedAt ? <NStatusPill tone="neutral">{lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</NStatusPill> : null}
                   </div>
-                  <h1 className="mt-2 text-[22px] font-bold leading-8 text-app-text sm:text-2xl">داشبورد امروز</h1>
+                  <h1 className="mt-2 text-[22px] font-black leading-8 text-app-text sm:text-2xl">داشبورد امروز</h1>
                   <p className="mt-1 max-w-4xl text-sm leading-7 text-app-muted">{briefing}</p>
                 </div>
               </div>
-            </Panel>
 
-            <Panel variant="glass" className="col-span-1 md:col-span-12 lg:col-span-4 dashboard-next-action flex flex-col justify-between p-5">
-              <div className="flex min-w-0 items-start gap-3">
-                <span className="nashrino-live-signal mt-1 h-3 w-3 shrink-0 rounded-full bg-app-primary animate-pulse" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold text-app-primary">اقدام بعدی</p>
-                  <h2 className="mt-1 line-clamp-1 text-base font-bold text-app-text">{nextAction.label}</h2>
-                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
+              <div className="dashboard-next-action min-w-0 rounded-xl p-3 lg:w-[360px]">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="nashrino-live-signal mt-1 h-3 w-3 shrink-0 rounded-full bg-app-primary" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-black text-app-primary">اقدام بعدی</p>
+                    <h2 className="mt-1 line-clamp-1 text-base font-black text-app-text">{nextAction.label}</h2>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <NButton href={nextAction.href} trailingIcon={ArrowUpLeft}>ادامه</NButton>
+                  <NButton type="button" variant="secondary" size="sm" icon={RefreshCw} loading={refreshing} onClick={() => loadDashboard(true)}>
+                    تازه‌سازی
+                  </NButton>
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button href={nextAction.href}>
-                  <span>ادامه</span>
-                  <ArrowUpLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => loadDashboard(true)} disabled={refreshing}>
-                  <RefreshCw className={`h-4 w-4 shrink-0 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
-                  <span>تازه‌سازی</span>
-                </Button>
-              </div>
-            </Panel>
+            </div>
+          </section>
 
-            {(error || loading) && (
-              <div className="col-span-1 md:col-span-12">
-                {error ? <NNotice tone="alert">{error}</NNotice> : null}
-                {loading ? <Skeleton className="h-4 w-44" /> : null}
-              </div>
-            )}
+          {error ? <NNotice tone="alert">{error}</NNotice> : null}
+          {loading ? <Skeleton className="h-4 w-44" /> : null}
 
+          <section className="dashboard-kpi-strip grid grid-cols-2 gap-3 lg:grid-cols-4">
             {topMetrics.map((metric) => (
-              <div key={metric.label} className="col-span-1 sm:col-span-6 lg:col-span-3">
-                <MetricTile {...metric} />
-              </div>
+              <NMetricTile key={metric.label} {...metric} />
             ))}
+          </section>
 
-            <Panel variant="glass" className="col-span-1 sm:col-span-6 lg:col-span-4 dashboard-visual-card relative overflow-hidden p-5 group">
-              <div className="flex min-w-0 items-center gap-3 relative z-10">
-                <div className="dashboard-donut shrink-0 h-14 w-14 rounded-full flex items-center justify-center font-outfit font-black text-lg shadow-md ring-1 ring-app-border/50 transition-transform duration-300 group-hover:scale-105" style={{ background: statusMixBackground }}>
-                  <span className="bg-app-surface h-10 w-10 rounded-full flex items-center justify-center shadow-inner ring-1 ring-app-border/10 font-outfit font-black">{toPersianDigits(statusMixTotal)}</span>
+          <section className="dashboard-visual-strip grid gap-3 lg:grid-cols-[0.9fr_0.9fr_1.2fr]" aria-label="نمای تصویری داشبورد">
+            <article className="dashboard-visual-card">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="dashboard-donut" style={{ background: statusMixBackground }}>
+                  <span>{statusMixTotal}</span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold text-app-primary">ترکیب محتوا</p>
-                  <h2 className="mt-1 text-sm font-bold text-app-text">وضعیت کل محتوا</h2>
+                  <p className="text-[10px] font-black text-app-primary">ترکیب محتوا</p>
+                  <h2 className="mt-1 text-sm font-black text-app-text">وضعیت کل محتوا</h2>
                   <div className="mt-2 grid grid-cols-2 gap-1.5">
                     {statusMixItems.map((item) => (
-                      <span key={item.label} className="flex min-w-0 items-center gap-1.5 text-[10px] font-bold text-app-muted">
+                      <span key={item.label} className="flex min-w-0 items-center gap-1.5 text-[10px] font-black text-app-muted">
                         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
                         <span className="truncate">{item.label}</span>
-                        <span className="mr-auto font-outfit font-bold text-app-text">{toPersianDigits(item.value)}</span>
+                        <span className="mr-auto text-app-text">{item.value}</span>
                       </span>
                     ))}
                   </div>
                 </div>
               </div>
-            </Panel>
+            </article>
 
-            <Panel variant="glass" className="col-span-1 sm:col-span-6 lg:col-span-4 dashboard-visual-card p-5">
-              <div className="flex flex-col justify-between h-full gap-3">
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold text-app-primary">سلامت عملیات</p>
-                  <h2 className="mt-1 text-sm font-bold text-app-text font-outfit flex items-center gap-1">{toPersianDigits(operationsHealth)}٪ <span className="font-vazirmatn text-xs">آماده</span></h2>
-                  <p className="mt-1 line-clamp-1 text-xs text-app-muted">{blockedWorkCount ? `${toPersianDigits(blockedWorkCount)} مورد نیازمند توجه` : "مسیر انتشار آرام است"}</p>
-                </div>
-                <div className="w-full h-2 bg-app-surfaceMuted rounded-full overflow-hidden mt-auto">
-                  <div className="h-full bg-app-success transition-all duration-500 ease-out" style={{ width: `${operationsHealth}%` }} />
-                </div>
-              </div>
-            </Panel>
-
-            <Panel variant="glass" className="col-span-1 md:col-span-12 lg:col-span-4 dashboard-visual-card p-5">
+            <article className="dashboard-visual-card">
               <div className="flex min-w-0 items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold text-app-primary">ریتم هفته</p>
-                  <h2 className="mt-1 text-sm font-bold text-app-text">تراکم فعالیت</h2>
+                  <p className="text-[10px] font-black text-app-primary">سلامت عملیات</p>
+                  <h2 className="mt-1 text-sm font-black text-app-text">{operationsHealth}% آماده</h2>
+                  <p className="mt-1 line-clamp-1 text-xs text-app-muted">{blockedWorkCount ? `${blockedWorkCount} مورد نیازمند توجه` : "مسیر انتشار آرام است"}</p>
                 </div>
-                <Tag tone={weeklyActivity.some(Boolean) ? "primary" : "neutral"} className="font-outfit">{toPersianDigits(weeklyActivity.reduce((sum, value) => sum + value, 0))} <span className="font-vazirmatn px-1">رویداد</span></Tag>
+                <div className="dashboard-gauge" style={{ "--gauge-value": `${operationsHealth}%` } as CSSProperties}>
+                  <span>{operationsHealth}</span>
+                </div>
               </div>
-              <div className="mt-3 flex h-24 items-end justify-between gap-1.5">
+            </article>
+
+            <article className="dashboard-visual-card">
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black text-app-primary">ریتم هفته</p>
+                  <h2 className="mt-1 text-sm font-black text-app-text">تراکم فعالیت</h2>
+                </div>
+                <NStatusPill tone={weeklyActivity.some(Boolean) ? "primary" : "neutral"}>{weeklyActivity.reduce((sum, value) => sum + value, 0)} رویداد</NStatusPill>
+              </div>
+              <div className="mt-3 flex h-16 items-end gap-1.5">
                 {weeklyActivity.map((value, index) => (
-                  <div key={weekKeys[index]} className="flex flex-1 flex-col items-center justify-end gap-2 h-full group">
-                    <div className="relative flex w-full max-w-[14px] flex-1 flex-col justify-end bg-app-surfaceMuted/50 rounded-full overflow-hidden border border-app-border/30 shadow-inner">
-                      <span className="w-full rounded-full bg-gradient-to-t from-app-primary to-app-primary/40 transition-all duration-700 ease-out group-hover:opacity-80" style={{ height: `${Math.max(12, (value / maxWeeklyActivity) * 100)}%` }} />
-                    </div>
-                    <span className="text-[10px] font-bold text-app-muted/80">{weeklyLabels[index]}</span>
+                  <div key={weekKeys[index]} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+                    <span className="dashboard-rhythm-bar" style={{ height: `${Math.max(8, (value / maxWeeklyActivity) * 48)}px` }} />
+                    <span className="text-[9px] font-bold text-app-muted">{weeklyLabels[index]}</span>
                   </div>
                 ))}
               </div>
-            </Panel>
+            </article>
+          </section>
 
-            <Panel variant="glass" className="col-span-1 md:col-span-12 lg:col-span-8 dashboard-focus-shell p-5">
-              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div className="min-w-0 px-1">
-                  <p className="text-[10px] font-bold text-app-primary">نمای متمرکز</p>
-                  <h2 className="mt-1 text-sm font-bold text-app-text">هر بار فقط یک مسیر تصمیم‌گیری</h2>
-                </div>
-                <NTabs tabs={dashboardFocusTabs} activeTab={dashboardView} onTabChange={setDashboardView} className="w-full sm:w-auto" />
+          <section className="dashboard-focus-shell rounded-2xl p-2.5 sm:p-3">
+            <div className="flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
+              <div className="min-w-0 px-1">
+                <p className="text-[10px] font-black text-app-primary">نمای متمرکز</p>
+                <h2 className="mt-1 text-sm font-black text-app-text">هر بار فقط یک مسیر تصمیم‌گیری</h2>
               </div>
-              <div className="mt-5 dashboard-focus-panel">
-                {dashboardFocusLayouts[dashboardView] ?? dashboardFocusLayouts.overview}
-              </div>
-            </Panel>
+              <NTabs tabs={dashboardFocusTabs} activeTab={dashboardView} onTabChange={setDashboardView} className="w-full lg:w-auto" />
+            </div>
+            <div className="mt-3 dashboard-focus-panel">
+              {dashboardFocusLayouts[dashboardView] ?? dashboardFocusLayouts.overview}
+            </div>
+          </section>
 
-            <Panel variant="glass" className="col-span-1 md:col-span-12 lg:col-span-4 dashboard-recent-content flex flex-col p-5">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h2 className="text-sm font-bold text-app-text">آخرین محتوا</h2>
-                  <p className="text-xs text-app-muted mt-1">میانبر به پست‌های اخیر</p>
-                </div>
-                <Button href="/content" variant="secondary" size="sm">کتابخانه</Button>
+          <NSection
+            title="آخرین محتوا"
+            description="یک نگاه کوتاه به آیتم‌هایی که احتمالاً امروز دوباره باز می‌کنید."
+            action={<NButton href="/content" variant="secondary" size="sm">کتابخانه محتوا</NButton>}
+            className="dashboard-spec-card dashboard-recent-content"
+          >
+            {dashboardRecentItems.length ? (
+              <div className="dashboard-recent-content-grid" aria-label="آخرین محتوای داشبورد">
+                {dashboardRecentItems.map((item) => (
+                  <Link key={item.id} href={item.href} className="dashboard-recent-content-item app-interactive">
+                    <span className="dashboard-recent-content-main min-w-0">
+                      <span className="dashboard-recent-content-title truncate">{item.title}</span>
+                      <span className="dashboard-recent-content-meta truncate">{item.channel} · {item.publishTime}</span>
+                    </span>
+                    <span className="dashboard-recent-content-state">
+                      <NStatusPill tone={item.statusTone}>{item.status}</NStatusPill>
+                      <NStatusPill tone={item.approvalTone}>{item.approval}</NStatusPill>
+                    </span>
+                    <span className="dashboard-recent-content-score" aria-label={`آمادگی ${item.score} درصد`}>
+                      <span className="dashboard-kpi-number">{item.score}%</span>
+                    </span>
+                    <ArrowUpLeft className="dashboard-recent-content-icon" aria-hidden="true" />
+                  </Link>
+                ))}
               </div>
-              
-              {dashboardRecentItems.length ? (
-                <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-1">
-                  {dashboardRecentItems.map((item) => (
-                    <Link key={item.id} href={item.href} className="group flex items-center justify-between p-3 rounded-xl border border-app-border bg-app-surface/50 hover:bg-app-surface transition-colors">
-                      <div className="min-w-0 flex-1">
-                        <span className="block truncate text-xs font-bold text-app-text group-hover:text-app-primary transition-colors">{item.title}</span>
-                        <span className="block truncate text-[10px] text-app-muted mt-0.5">{item.channel} · <span className="font-outfit">{item.publishTime}</span></span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0 mr-3">
-                        <Tag tone={item.statusTone}>{item.status}</Tag>
-                        <span className="font-outfit font-black text-xs text-app-muted bg-app-canvas px-1.5 py-0.5 rounded">{toPersianDigits(item.score)}٪</span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <NEmptyState icon={FileText} title="محتوایی نیست" detail="اولین پست را بسازید" />
-              )}
-            </Panel>
-          </div>
+            ) : (
+              <NEmptyState icon={FileText} title="هنوز محتوایی برای نمایش نیست" detail="بعد از ساخت اولین پست، این بخش به میانبر آخرین محتوا تبدیل می‌شود." />
+            )}
+          </NSection>
         </NPage>
       </AppShell>
     </AuthGate>
   );
 }
-

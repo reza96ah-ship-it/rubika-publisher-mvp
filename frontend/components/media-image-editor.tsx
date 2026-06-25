@@ -2762,4 +2762,3 @@ export function MediaImageEditor({ imageUrl, filename, saving = false, onClose, 
     </div>
   ), document.body);
 }
-
