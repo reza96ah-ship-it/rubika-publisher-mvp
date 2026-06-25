@@ -1,1 +1,0 @@
-Trigger Dashboard visual diagnostics after browser-side instrumentation.
