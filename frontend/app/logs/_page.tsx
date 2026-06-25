@@ -323,238 +323,238 @@ export default function LogsPage() {
   ];
 
   return (
-<WorkspacePage>
-          <section className="app-studio-panel rounded-lg px-4 py-3">
-            <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
-              <div>
-                <p className="text-[10px] font-black text-app-primary">سلامت انتشار</p>
-                <h1 className="mt-1 text-xl font-black text-app-text">پایش تلاش‌های انتشار</h1>
-                <p className="mt-1 text-xs leading-5 text-app-muted">خطاها، مراحل ارسال و payloadهای فنی را در یک مسیر متمرکز بررسی کنید.</p>
+    <WorkspacePage>
+      <section className="app-studio-panel rounded-lg px-4 py-3">
+        <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+          <div>
+            <p className="text-[10px] font-black text-app-primary">سلامت انتشار</p>
+            <h1 className="mt-1 text-xl font-black text-app-text">پایش تلاش‌های انتشار</h1>
+            <p className="mt-1 text-xs leading-5 text-app-muted">خطاها، مراحل ارسال و payloadهای فنی را در یک مسیر متمرکز بررسی کنید.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusToken tone={summary.failed ? "alert" : "success"}>{summary.failed ? `${summary.failed} خطای فعال` : "انتشار پایدار"}</StatusToken>
+            <StatusToken tone="success">{successRate}% موفقیت</StatusToken>
+            <StatusToken tone="neutral">{summary.media} رسانه‌ای</StatusToken>
+            {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
+            <Button type="button" variant="secondary" size="sm" disabled={refreshing} onClick={() => loadAttempts(true)}>
+              <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
+              به‌روزرسانی
+            </Button>
+            <Button href="/queue" variant="secondary" size="sm">بازگشت به صف</Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid overflow-hidden rounded-md border border-app-border bg-app-surface sm:grid-cols-2 xl:grid-cols-4">
+        {healthSummary.map((item) => {
+          const Icon = item.icon;
+          const active = status === item.value;
+          return (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => applyStatus(item.value)}
+              className={`flex min-w-0 items-start gap-3 border-b border-app-border p-3 text-right transition hover:bg-app-surfaceMuted sm:border-l sm:last:border-l-0 xl:border-b-0 ${
+                active ? "bg-app-primary/10 ring-1 ring-inset ring-app-primary/20" : ""
+              }`}
+            >
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted ${item.tone}`}>
+                <Icon className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <span className="flex items-baseline gap-2">
+                  <span className={`text-lg font-black ${item.tone}`}>{item.count}</span>
+                  <span className="truncate text-xs font-bold text-app-text">{item.label}</span>
+                </span>
+                <span className="mt-1 block truncate text-[11px] text-app-muted">{item.detail}</span>
+              </span>
+            </button>
+          );
+        })}
+      </section>
+
+      {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
+      {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
+
+      <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0">
+          <WorkspacePanel title="تلاش‌های انتشار" description="آخرین تلاش‌ها را اسکن کنید و جزئیات فنی را در بازرس کناری ببینید." bodyClassName="p-3 sm:p-4">
+            <DataToolbar
+              meta={(
+                <>
+                  <StatusToken tone="neutral">{visibleAttempts.length} نتیجه</StatusToken>
+                  <StatusToken tone="neutral">{summary.total} کل تلاش</StatusToken>
+                </>
+              )}
+            >
+              <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+                <DataSearchField
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="جست‌وجوی عنوان، خطا، payload، file_id یا نوع تلاش"
+                />
+                <div className="flex flex-wrap gap-2">
+                  {modeFilters.map((filter) => (
+                    <FilterChip
+                      key={filter.value}
+                      active={modeFilter === filter.value}
+                      count={filter.value === "all" ? preparedAttempts.length : preparedAttempts.filter((item) => item.mode === filter.value).length}
+                      onClick={() => setModeFilter(filter.value)}
+                    >
+                      {filter.label}
+                    </FilterChip>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusToken tone={summary.failed ? "alert" : "success"}>{summary.failed ? `${summary.failed} خطای فعال` : "انتشار پایدار"}</StatusToken>
-                <StatusToken tone="success">{successRate}% موفقیت</StatusToken>
-                <StatusToken tone="neutral">{summary.media} رسانه‌ای</StatusToken>
-                {lastUpdatedAt ? <StatusToken tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</StatusToken> : null}
-                <Button type="button" variant="secondary" size="sm" disabled={refreshing} onClick={() => loadAttempts(true)}>
-                  <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
-                  به‌روزرسانی
-                </Button>
-                <Button href="/queue" variant="secondary" size="sm">بازگشت به صف</Button>
-              </div>
-            </div>
-          </section>
-
-          <section className="grid overflow-hidden rounded-md border border-app-border bg-app-surface sm:grid-cols-2 xl:grid-cols-4">
-            {healthSummary.map((item) => {
-              const Icon = item.icon;
-              const active = status === item.value;
-              return (
-                <button
-                  key={item.value}
-                  type="button"
-                  onClick={() => applyStatus(item.value)}
-                  className={`flex min-w-0 items-start gap-3 border-b border-app-border p-3 text-right transition hover:bg-app-surfaceMuted sm:border-l sm:last:border-l-0 xl:border-b-0 ${
-                    active ? "bg-app-primary/10 ring-1 ring-inset ring-app-primary/20" : ""
-                  }`}
-                >
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted ${item.tone}`}>
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="flex items-baseline gap-2">
-                      <span className={`text-lg font-black ${item.tone}`}>{item.count}</span>
-                      <span className="truncate text-xs font-bold text-app-text">{item.label}</span>
-                    </span>
-                    <span className="mt-1 block truncate text-[11px] text-app-muted">{item.detail}</span>
-                  </span>
-                </button>
-              );
-            })}
-          </section>
-
-          {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
-          {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
-
-          <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="min-w-0">
-              <WorkspacePanel title="تلاش‌های انتشار" description="آخرین تلاش‌ها را اسکن کنید و جزئیات فنی را در بازرس کناری ببینید." bodyClassName="p-3 sm:p-4">
-                <DataToolbar
-                  meta={(
-                    <>
-                      <StatusToken tone="neutral">{visibleAttempts.length} نتیجه</StatusToken>
-                      <StatusToken tone="neutral">{summary.total} کل تلاش</StatusToken>
-                    </>
-                  )}
-                >
-                  <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-                    <DataSearchField
-                      value={searchTerm}
-                      onChange={(event) => setSearchTerm(event.target.value)}
-                      placeholder="جست‌وجوی عنوان، خطا، payload، file_id یا نوع تلاش"
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      {modeFilters.map((filter) => (
-                        <FilterChip
-                          key={filter.value}
-                          active={modeFilter === filter.value}
-                          count={filter.value === "all" ? preparedAttempts.length : preparedAttempts.filter((item) => item.mode === filter.value).length}
-                          onClick={() => setModeFilter(filter.value)}
-                        >
-                          {filter.label}
-                        </FilterChip>
-                      ))}
-                    </div>
-                  </div>
-                </DataToolbar>
-                <DataTable
-                  columns={["تلاش", "وضعیت", "زمان", "عملیات"]}
-                  gridClassName={logsHeaderGrid}
-                  loading={loading}
-                  empty={visibleAttempts.length === 0 ? (
-                    <div className="p-4">
-                      <EmptyState
-                        icon={<Search className="h-5 w-5" aria-hidden="true" />}
-                        title="برای این فیلتر لاگی ثبت نشده است"
-                        description="فیلتر وضعیت، نوع تلاش یا عبارت جست‌وجو را تغییر دهید."
-                      />
-                    </div>
-                  ) : null}
-                >
-                  {visibleAttempts.map(({ attempt, mode }) => {
-                    const selected = selectedAttempt?.attempt.id === attempt.id;
-                    return (
-                      <DataRow key={attempt.id} gridClassName={logsRowGrid} selected={selected}>
-                        <div className="min-w-0">
-                          <h2 className="truncate text-sm font-black text-app-text sm:text-base">{attempt.post_title}</h2>
-                          <p className="mt-1 text-xs text-app-muted">Post #{attempt.post_id} · Attempt #{attempt.id}</p>
-                          {attempt.error ? <p className="mt-2 line-clamp-2 rounded bg-rose-50 p-2 text-xs leading-5 text-rose-700">{attempt.error}</p> : null}
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
-                          <StatusBadge status={attemptTone(attempt.status)} />
-                          <ChannelBadges platform={attempt.channel} compact />
-                          <StatusToken tone={mode === "media" ? "primary" : "neutral"} className="gap-1">
-                            {mode === "media" ? (
-                              <FileUp className="h-3.5 w-3.5" aria-hidden="true" />
-                            ) : (
-                              <MessageSquareText className="h-3.5 w-3.5" aria-hidden="true" />
-                            )}
-                            {modeLabel(mode)}
-                          </StatusToken>
-                          <StatusToken tone="neutral">{actionLabel(attempt.action)}</StatusToken>
-                        </div>
-
-                        <div className="text-xs leading-6 text-app-muted">
-                          <p>شروع: {formatDateTime(attempt.started_at || attempt.created_at)}</p>
-                          <p>پایان: {formatDateTime(attempt.finished_at)}</p>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2 lg:justify-end">
-                          <Button type="button" variant={selected ? "primary" : "secondary"} size="sm" onClick={() => setSelectedAttemptId(attempt.id)}>بازبینی</Button>
-                        </div>
-                      </DataRow>
-                    );
-                  })}
-                </DataTable>
-              </WorkspacePanel>
-            </div>
-
-            <aside className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
-              <WorkspacePanel
-                title="بازرس تلاش"
-                description="Timeline، payload و مسیر بازیابی تلاش انتخاب‌شده."
-                action={selectedAttempt ? <StatusBadge status={attemptTone(selectedAttempt.attempt.status)} /> : null}
-                bodyClassName="max-h-[70vh] overflow-y-auto p-3 sm:p-4 lg:max-h-none"
-              >
-                {selectedAttempt ? (
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={attemptTone(selectedAttempt.attempt.status)} />
-                        <ChannelBadges platform={selectedAttempt.attempt.channel} compact />
-                        <StatusToken tone={selectedAttempt.mode === "media" ? "primary" : "neutral"}>{modeLabel(selectedAttempt.mode)}</StatusToken>
-                        <StatusToken tone="neutral">{actionLabel(selectedAttempt.attempt.action)}</StatusToken>
-                      </div>
-                      <h3 className="mt-3 text-lg font-black text-app-text">{selectedAttempt.attempt.post_title}</h3>
-                      <p className="mt-2 text-xs leading-6 text-app-muted">Post #{selectedAttempt.attempt.post_id} · Attempt #{selectedAttempt.attempt.id}</p>
-                    </div>
-
-                    <DetailGrid
-                      items={[
-                        { label: "شروع", value: formatDateTime(selectedAttempt.attempt.started_at || selectedAttempt.attempt.created_at), hint: "زمان ثبت تلاش" },
-                        { label: "پایان", value: formatDateTime(selectedAttempt.attempt.finished_at), hint: "زمان پایان تلاش" },
-                        { label: "نوع", value: modeLabel(selectedAttempt.mode), hint: "متنی یا رسانه‌ای" },
-                        { label: "عملیات", value: actionLabel(selectedAttempt.attempt.action), hint: "منبع اجرای تلاش" }
-                      ]}
-                    />
-
-                    <div>
-                      <p className="mb-3 text-xs font-black text-app-text">مسیر اجرای worker</p>
-                      <Timeline items={selectedAttempt.timeline.map((stage) => ({
-                        title: stage.label,
-                        description: stage.detail,
-                        tone: timelineTone(stage.state)
-                      }))} />
-                    </div>
-
-                    {selectedAttempt.mode === "media" ? (
-                      <DetailGrid
-                        items={[
-                          { label: "رسانه", value: payloadText(selectedAttempt.requestPayload, "filename") || "—", hint: "نام فایل" },
-                          { label: "نوع فایل", value: payloadText(selectedAttempt.requestPayload, "file_type") || payloadText(selectedAttempt.requestPayload, "content_type") || "—", hint: "فرمت ارسال" },
-                          { label: "حجم", value: formatBytes(payloadNumber(selectedAttempt.requestPayload, "size_bytes")), hint: "اندازه فایل" },
-                          { label: "file_id", value: payloadText(selectedAttempt.responsePayload, "file_id") || "—", hint: "شناسه کانال" }
-                        ]}
-                      />
-                    ) : null}
-
-                    {selectedAttempt.attempt.error ? (
-                      <div className="space-y-3">
-                        <NoticeBanner tone="alert" title="خطای ثبت‌شده">
-                          {selectedAttempt.attempt.error}
-                        </NoticeBanner>
-                        <NoticeBanner tone="info" title="پیشنهاد بازیابی">
-                          {recoveryGuidance(selectedAttempt.attempt.error)}
-                        </NoticeBanner>
-                      </div>
-                    ) : null}
-
-                    <details className="rounded-md border border-app-border bg-app-surfaceMuted p-3 text-xs text-app-muted">
-                      <summary className="cursor-pointer font-black text-app-text">
-                        <UploadCloud className="ml-1.5 inline h-4 w-4 align-middle" aria-hidden="true" />
-                        Payload کامل
-                      </summary>
-                      <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words leading-6">Request: {prettyPayload(selectedAttempt.attempt.request_payload)}{"\n\n"}Response: {prettyPayload(selectedAttempt.attempt.response_payload)}</pre>
-                    </details>
-
-                    <div className="grid gap-2">
-                      {selectedAttempt.attempt.status === "failed" ? (
-                        <Button
-                          type="button"
-                          disabled={retryingPostId === selectedAttempt.attempt.post_id}
-                          onClick={() => retryPost(selectedAttempt.attempt.post_id, selectedAttempt.attempt.post_title)}
-                        >
-                          <RotateCcw className={`ml-2 h-4 w-4 ${retryingPostId === selectedAttempt.attempt.post_id ? "animate-spin" : ""}`} aria-hidden="true" />
-                          {retryingPostId === selectedAttempt.attempt.post_id ? "در حال ورود به صف" : "تلاش مجدد انتشار"}
-                        </Button>
-                      ) : null}
-                      <Button href={`/compose?postId=${selectedAttempt.attempt.post_id}`} variant="secondary">باز کردن پست</Button>
-                      <Button href="/queue" variant="secondary">صف انتشار</Button>
-                      <Button href="/channels" variant="secondary">بررسی مرکز کانال‌ها</Button>
-                    </div>
-                  </div>
-                ) : (
+            </DataToolbar>
+            <DataTable
+              columns={["تلاش", "وضعیت", "زمان", "عملیات"]}
+              gridClassName={logsHeaderGrid}
+              loading={loading}
+              empty={visibleAttempts.length === 0 ? (
+                <div className="p-4">
                   <EmptyState
-                    icon={<ListChecks className="h-5 w-5" aria-hidden="true" />}
-                    title="تلاشی انتخاب نشده"
-                    description="برای مشاهده timeline و payload، یک تلاش را از لیست انتخاب کنید."
+                    icon={<Search className="h-5 w-5" aria-hidden="true" />}
+                    title="برای این فیلتر لاگی ثبت نشده است"
+                    description="فیلتر وضعیت، نوع تلاش یا عبارت جست‌وجو را تغییر دهید."
                   />
-                )}
-              </WorkspacePanel>
+                </div>
+              ) : null}
+            >
+              {visibleAttempts.map(({ attempt, mode }) => {
+                const selected = selectedAttempt?.attempt.id === attempt.id;
+                return (
+                  <DataRow key={attempt.id} gridClassName={logsRowGrid} selected={selected}>
+                    <div className="min-w-0">
+                      <h2 className="truncate text-sm font-black text-app-text sm:text-base">{attempt.post_title}</h2>
+                      <p className="mt-1 text-xs text-app-muted">Post #{attempt.post_id} · Attempt #{attempt.id}</p>
+                      {attempt.error ? <p className="mt-2 line-clamp-2 rounded bg-rose-50 p-2 text-xs leading-5 text-rose-700">{attempt.error}</p> : null}
+                    </div>
 
-            </aside>
-          </section>
-        </WorkspacePage>
-);
+                    <div className="flex flex-wrap items-center gap-2 lg:block lg:space-y-2">
+                      <StatusBadge status={attemptTone(attempt.status)} />
+                      <ChannelBadges platform={attempt.channel} compact />
+                      <StatusToken tone={mode === "media" ? "primary" : "neutral"} className="gap-1">
+                        {mode === "media" ? (
+                          <FileUp className="h-3.5 w-3.5" aria-hidden="true" />
+                        ) : (
+                          <MessageSquareText className="h-3.5 w-3.5" aria-hidden="true" />
+                        )}
+                        {modeLabel(mode)}
+                      </StatusToken>
+                      <StatusToken tone="neutral">{actionLabel(attempt.action)}</StatusToken>
+                    </div>
+
+                    <div className="text-xs leading-6 text-app-muted">
+                      <p>شروع: {formatDateTime(attempt.started_at || attempt.created_at)}</p>
+                      <p>پایان: {formatDateTime(attempt.finished_at)}</p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 lg:justify-end">
+                      <Button type="button" variant={selected ? "primary" : "secondary"} size="sm" onClick={() => setSelectedAttemptId(attempt.id)}>بازبینی</Button>
+                    </div>
+                  </DataRow>
+                );
+              })}
+            </DataTable>
+          </WorkspacePanel>
+        </div>
+
+        <aside className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
+          <WorkspacePanel
+            title="بازرس تلاش"
+            description="Timeline، payload و مسیر بازیابی تلاش انتخاب‌شده."
+            action={selectedAttempt ? <StatusBadge status={attemptTone(selectedAttempt.attempt.status)} /> : null}
+            bodyClassName="max-h-[70vh] overflow-y-auto p-3 sm:p-4 lg:max-h-none"
+          >
+            {selectedAttempt ? (
+              <div className="space-y-3">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge status={attemptTone(selectedAttempt.attempt.status)} />
+                    <ChannelBadges platform={selectedAttempt.attempt.channel} compact />
+                    <StatusToken tone={selectedAttempt.mode === "media" ? "primary" : "neutral"}>{modeLabel(selectedAttempt.mode)}</StatusToken>
+                    <StatusToken tone="neutral">{actionLabel(selectedAttempt.attempt.action)}</StatusToken>
+                  </div>
+                  <h3 className="mt-3 text-lg font-black text-app-text">{selectedAttempt.attempt.post_title}</h3>
+                  <p className="mt-2 text-xs leading-6 text-app-muted">Post #{selectedAttempt.attempt.post_id} · Attempt #{selectedAttempt.attempt.id}</p>
+                </div>
+
+                <DetailGrid
+                  items={[
+                    { label: "شروع", value: formatDateTime(selectedAttempt.attempt.started_at || selectedAttempt.attempt.created_at), hint: "زمان ثبت تلاش" },
+                    { label: "پایان", value: formatDateTime(selectedAttempt.attempt.finished_at), hint: "زمان پایان تلاش" },
+                    { label: "نوع", value: modeLabel(selectedAttempt.mode), hint: "متنی یا رسانه‌ای" },
+                    { label: "عملیات", value: actionLabel(selectedAttempt.attempt.action), hint: "منبع اجرای تلاش" }
+                  ]}
+                />
+
+                <div>
+                  <p className="mb-3 text-xs font-black text-app-text">مسیر اجرای worker</p>
+                  <Timeline items={selectedAttempt.timeline.map((stage) => ({
+                    title: stage.label,
+                    description: stage.detail,
+                    tone: timelineTone(stage.state)
+                  }))} />
+                </div>
+
+                {selectedAttempt.mode === "media" ? (
+                  <DetailGrid
+                    items={[
+                      { label: "رسانه", value: payloadText(selectedAttempt.requestPayload, "filename") || "—", hint: "نام فایل" },
+                      { label: "نوع فایل", value: payloadText(selectedAttempt.requestPayload, "file_type") || payloadText(selectedAttempt.requestPayload, "content_type") || "—", hint: "فرمت ارسال" },
+                      { label: "حجم", value: formatBytes(payloadNumber(selectedAttempt.requestPayload, "size_bytes")), hint: "اندازه فایل" },
+                      { label: "file_id", value: payloadText(selectedAttempt.responsePayload, "file_id") || "—", hint: "شناسه کانال" }
+                    ]}
+                  />
+                ) : null}
+
+                {selectedAttempt.attempt.error ? (
+                  <div className="space-y-3">
+                    <NoticeBanner tone="alert" title="خطای ثبت‌شده">
+                      {selectedAttempt.attempt.error}
+                    </NoticeBanner>
+                    <NoticeBanner tone="info" title="پیشنهاد بازیابی">
+                      {recoveryGuidance(selectedAttempt.attempt.error)}
+                    </NoticeBanner>
+                  </div>
+                ) : null}
+
+                <details className="rounded-md border border-app-border bg-app-surfaceMuted p-3 text-xs text-app-muted">
+                  <summary className="cursor-pointer font-black text-app-text">
+                    <UploadCloud className="ml-1.5 inline h-4 w-4 align-middle" aria-hidden="true" />
+                    Payload کامل
+                  </summary>
+                  <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words leading-6">Request: {prettyPayload(selectedAttempt.attempt.request_payload)}{"\n\n"}Response: {prettyPayload(selectedAttempt.attempt.response_payload)}</pre>
+                </details>
+
+                <div className="grid gap-2">
+                  {selectedAttempt.attempt.status === "failed" ? (
+                    <Button
+                      type="button"
+                      disabled={retryingPostId === selectedAttempt.attempt.post_id}
+                      onClick={() => retryPost(selectedAttempt.attempt.post_id, selectedAttempt.attempt.post_title)}
+                    >
+                      <RotateCcw className={`ml-2 h-4 w-4 ${retryingPostId === selectedAttempt.attempt.post_id ? "animate-spin" : ""}`} aria-hidden="true" />
+                      {retryingPostId === selectedAttempt.attempt.post_id ? "در حال ورود به صف" : "تلاش مجدد انتشار"}
+                    </Button>
+                  ) : null}
+                  <Button href={`/compose?postId=${selectedAttempt.attempt.post_id}`} variant="secondary">باز کردن پست</Button>
+                  <Button href="/queue" variant="secondary">صف انتشار</Button>
+                  <Button href="/channels" variant="secondary">بررسی مرکز کانال‌ها</Button>
+                </div>
+              </div>
+            ) : (
+              <EmptyState
+                icon={<ListChecks className="h-5 w-5" aria-hidden="true" />}
+                title="تلاشی انتخاب نشده"
+                description="برای مشاهده timeline و payload، یک تلاش را از لیست انتخاب کنید."
+              />
+            )}
+          </WorkspacePanel>
+
+        </aside>
+      </section>
+    </WorkspacePage>
+  );
 }

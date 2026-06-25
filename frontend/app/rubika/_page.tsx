@@ -246,193 +246,193 @@ export default function RubikaPage() {
   }, [dirty]);
 
   return (
-<WorkspacePage className="space-y-4">
-          <section className="app-studio-panel rounded-lg px-4 py-3">
-            <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
-              <div>
-                <p className="text-[10px] font-black text-app-primary">تنظیمات کانال</p>
-                <h1 className="mt-1 text-xl font-black text-app-text">اتصال روبیکا</h1>
-                <p className="mt-1 text-xs leading-5 text-app-muted">اعتبارنامه، مقصد و تست عملیاتی انتشار را از یک صفحه کنترل کنید.</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <StatusToken tone={statusTone(status, dirty, testFresh)}>{saving ? "در حال ذخیره تنظیمات" : testing ? "در حال تست اتصال" : statusLabel(status, dirty, testFresh)}</StatusToken>
-                <StatusToken tone={readyCount === 3 ? "success" : "warning"}>{readyCount}/3 آماده</StatusToken>
-                {botName ? <StatusToken tone="primary">{botName}</StatusToken> : null}
+    <WorkspacePage className="space-y-4">
+      <section className="app-studio-panel rounded-lg px-4 py-3">
+        <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+          <div>
+            <p className="text-[10px] font-black text-app-primary">تنظیمات کانال</p>
+            <h1 className="mt-1 text-xl font-black text-app-text">اتصال روبیکا</h1>
+            <p className="mt-1 text-xs leading-5 text-app-muted">اعتبارنامه، مقصد و تست عملیاتی انتشار را از یک صفحه کنترل کنید.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <StatusToken tone={statusTone(status, dirty, testFresh)}>{saving ? "در حال ذخیره تنظیمات" : testing ? "در حال تست اتصال" : statusLabel(status, dirty, testFresh)}</StatusToken>
+            <StatusToken tone={readyCount === 3 ? "success" : "warning"}>{readyCount}/3 آماده</StatusToken>
+            {botName ? <StatusToken tone="primary">{botName}</StatusToken> : null}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid overflow-hidden rounded-md border border-app-border bg-app-surface sm:grid-cols-3">
+        {[
+          { label: "وضعیت اتصال", value: statusLabel(status, dirty, testFresh), detail: dirty ? "بعد از ذخیره دوباره تست کنید" : testFresh ? "آخرین نتیجه تست عملیاتی معتبر است" : "برای زمان‌بندی، تست تازه لازم است", icon: PlugZap, tone: connectionReady ? "text-app-success" : status === "failed" ? "text-app-danger" : "text-app-warning" },
+          { label: "تشخیص آماده‌سازی", value: `${readyCount}/3`, detail: "توکن، مقصد و تست اتصال", icon: ShieldCheck, tone: readyCount === 3 ? "text-app-success" : "text-app-warning" },
+          { label: "آخرین تست", value: formatLastTest(lastTestAt), detail: testFresh ? "معتبر تا 24 ساعت پس از تست" : "تست مجدد برای باز شدن زمان‌بندی لازم است", icon: Clock3, tone: testFresh ? "text-app-success" : "text-app-warning" }
+        ].map((metric) => {
+          const Icon = metric.icon;
+          return (
+            <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 sm:border-b-0 sm:border-l sm:last:border-l-0">
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted ${metric.tone}`}>
+                <Icon className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-black text-app-muted">{metric.label}</p>
+                <p className="mt-0.5 truncate text-base font-black text-app-text">{metric.value}</p>
+                <p className="truncate text-[11px] text-app-muted">{metric.detail}</p>
               </div>
             </div>
-          </section>
+          );
+        })}
+      </section>
 
-          <section className="grid overflow-hidden rounded-md border border-app-border bg-app-surface sm:grid-cols-3">
-            {[
-              { label: "وضعیت اتصال", value: statusLabel(status, dirty, testFresh), detail: dirty ? "بعد از ذخیره دوباره تست کنید" : testFresh ? "آخرین نتیجه تست عملیاتی معتبر است" : "برای زمان‌بندی، تست تازه لازم است", icon: PlugZap, tone: connectionReady ? "text-app-success" : status === "failed" ? "text-app-danger" : "text-app-warning" },
-              { label: "تشخیص آماده‌سازی", value: `${readyCount}/3`, detail: "توکن، مقصد و تست اتصال", icon: ShieldCheck, tone: readyCount === 3 ? "text-app-success" : "text-app-warning" },
-              { label: "آخرین تست", value: formatLastTest(lastTestAt), detail: testFresh ? "معتبر تا 24 ساعت پس از تست" : "تست مجدد برای باز شدن زمان‌بندی لازم است", icon: Clock3, tone: testFresh ? "text-app-success" : "text-app-warning" }
-            ].map((metric) => {
-              const Icon = metric.icon;
-              return (
-                <div key={metric.label} className="flex min-w-0 items-start gap-3 border-b border-app-border p-3 sm:border-b-0 sm:border-l sm:last:border-l-0">
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-surfaceMuted ${metric.tone}`}>
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-black text-app-muted">{metric.label}</p>
-                    <p className="mt-0.5 truncate text-base font-black text-app-text">{metric.value}</p>
-                    <p className="truncate text-[11px] text-app-muted">{metric.detail}</p>
+      <section className="overflow-hidden rounded-md border border-app-border bg-app-surface">
+        <div className="flex flex-col justify-between gap-3 border-b border-app-border px-4 py-3 lg:flex-row lg:items-center">
+          <div>
+            <div className="flex items-center gap-2">
+              <Route className="h-4 w-4 text-app-primary" aria-hidden="true" />
+              <h2 className="text-sm font-black text-app-text">مسیر آماده‌سازی انتشار</h2>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-app-muted">زمان‌بندی فقط پس از ذخیره تنظیمات و تایید تست اتصال تازه باز می‌شود.</p>
+          </div>
+          <StatusToken tone={connectionReady ? "success" : "warning"}>{connectionReady ? "زمان‌بندی باز است" : "زمان‌بندی قفل است"}</StatusToken>
+        </div>
+        <div className="grid divide-y divide-app-border md:grid-cols-3 md:divide-x md:divide-x-reverse md:divide-y-0">
+          {journeySteps.map((step, index) => {
+            const Icon = step.icon;
+            const active = !step.done && journeySteps.slice(0, index).every((item) => item.done);
+            return (
+              <div key={step.label} className={`flex min-h-[96px] gap-3 p-3 ${step.done ? "bg-app-success/10" : active ? "bg-app-primary/10" : "bg-app-surface"}`}>
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${step.done ? "border-app-success/30 bg-app-surface text-app-success" : active ? "border-app-primary/30 bg-app-surface text-app-primary" : "border-app-border bg-app-surfaceMuted text-app-muted"}`}>
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-black text-app-text">{step.label}</p>
+                    {step.done ? <CheckCircle2 className="h-4 w-4 shrink-0 text-app-success" aria-hidden="true" /> : <Circle className={`h-4 w-4 shrink-0 ${active ? "text-app-primary" : "text-app-border"}`} aria-hidden="true" />}
                   </div>
+                  <p className="mt-1 text-xs leading-5 text-app-muted">{step.detail}</p>
                 </div>
-              );
-            })}
-          </section>
-
-          <section className="overflow-hidden rounded-md border border-app-border bg-app-surface">
-            <div className="flex flex-col justify-between gap-3 border-b border-app-border px-4 py-3 lg:flex-row lg:items-center">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Route className="h-4 w-4 text-app-primary" aria-hidden="true" />
-                  <h2 className="text-sm font-black text-app-text">مسیر آماده‌سازی انتشار</h2>
-                </div>
-                <p className="mt-1 text-xs leading-5 text-app-muted">زمان‌بندی فقط پس از ذخیره تنظیمات و تایید تست اتصال تازه باز می‌شود.</p>
               </div>
-              <StatusToken tone={connectionReady ? "success" : "warning"}>{connectionReady ? "زمان‌بندی باز است" : "زمان‌بندی قفل است"}</StatusToken>
-            </div>
-            <div className="grid divide-y divide-app-border md:grid-cols-3 md:divide-x md:divide-x-reverse md:divide-y-0">
-              {journeySteps.map((step, index) => {
-                const Icon = step.icon;
-                const active = !step.done && journeySteps.slice(0, index).every((item) => item.done);
-                return (
-                  <div key={step.label} className={`flex min-h-[96px] gap-3 p-3 ${step.done ? "bg-app-success/10" : active ? "bg-app-primary/10" : "bg-app-surface"}`}>
-                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${step.done ? "border-app-success/30 bg-app-surface text-app-success" : active ? "border-app-primary/30 bg-app-surface text-app-primary" : "border-app-border bg-app-surfaceMuted text-app-muted"}`}>
-                      <Icon className="h-4 w-4" aria-hidden="true" />
-                    </span>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-black text-app-text">{step.label}</p>
-                        {step.done ? <CheckCircle2 className="h-4 w-4 shrink-0 text-app-success" aria-hidden="true" /> : <Circle className={`h-4 w-4 shrink-0 ${active ? "text-app-primary" : "text-app-border"}`} aria-hidden="true" />}
-                      </div>
-                      <p className="mt-1 text-xs leading-5 text-app-muted">{step.detail}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+            );
+          })}
+        </div>
+      </section>
 
-          {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
-          {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
-          {!dirty && status === "connected" && !testFresh ? (
-            <NoticeBanner tone="warning" title="تست اتصال نیازمند تمدید است">
-              برای ایمنی انتشار، تست موفق اتصال فقط 24 ساعت معتبر است. تست را دوباره اجرا کنید تا زمان‌بندی پست‌ها باز شود.
-            </NoticeBanner>
-          ) : null}
+      {message ? <NoticeBanner tone="success">{message}</NoticeBanner> : null}
+      {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
+      {!dirty && status === "connected" && !testFresh ? (
+        <NoticeBanner tone="warning" title="تست اتصال نیازمند تمدید است">
+          برای ایمنی انتشار، تست موفق اتصال فقط 24 ساعت معتبر است. تست را دوباره اجرا کنید تا زمان‌بندی پست‌ها باز شود.
+        </NoticeBanner>
+      ) : null}
 
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-            <WorkspacePanel title="اعتبارنامه و مقصد انتشار" description="توکن فقط هنگام جایگزینی لازم است. برای حفظ توکن ذخیره‌شده، فیلد آن را خالی بگذارید.">
-              {loading ? (
-                <LoadingPanel />
-              ) : (
-                <form onSubmit={saveSettings} className="space-y-5">
-                  <Field
-                    label="توکن ربات روبیکا"
-                    required={!hasSavedToken}
-                    hint={hasSavedToken ? "برای حفظ توکن فعلی این فیلد را خالی بگذارید؛ برای جایگزینی، توکن جدید را وارد کنید." : "توکن ربات برای انتشار خودکار ضروری است."}
-                  >
-                    <Input
-                      value={botToken}
-                      onChange={(event) => setBotToken(event.target.value)}
-                      className="text-left"
-                      dir="ltr"
-                      placeholder={maskedToken || "توکن ربات را وارد کنید"}
-                      required={!hasSavedToken}
-                    />
-                  </Field>
-
-                  <Field label="Chat ID / Channel ID" required hint="شناسه کانال یا گفت‌وگوی مقصد که پست‌ها در آن منتشر می‌شوند.">
-                    <Input
-                      value={chatId}
-                      onChange={(event) => setChatId(event.target.value)}
-                      className="text-left"
-                      dir="ltr"
-                      required
-                    />
-                  </Field>
-
-                  <div className="grid gap-3 rounded-md border border-app-border bg-app-surfaceMuted p-4 text-sm text-app-muted md:grid-cols-2">
-                    <div>
-                      <p className="font-bold text-app-text">توکن ذخیره‌شده</p>
-                      <p className="mt-1 break-all text-left font-mono text-xs" dir="ltr">{maskedToken || "هنوز ذخیره نشده"}</p>
-                    </div>
-                    <div>
-                      <p className="font-bold text-app-text">رفتار ذخیره</p>
-                      <p className="mt-1 text-xs leading-6">{botToken.trim() ? "توکن جدید جایگزین می‌شود." : hasSavedToken ? "توکن قبلی حفظ می‌شود." : "توکن لازم است."}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3 rounded-md border border-app-border bg-app-surface p-3 shadow-sm md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="text-sm font-black text-app-text">{dirty ? "تغییرات آماده ذخیره است" : "تنظیمات اتصال به‌روز است"}</p>
-                      <p className="mt-1 text-xs text-app-muted">{dirty ? "ذخیره کنید تا تست اتصال برای نسخه جدید فعال شود." : "برای اطمینان از سلامت کانال، تست عملیاتی را اجرا کنید."}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="button" variant="secondary" onClick={resetChanges} disabled={!dirty || saving}>
-                        <Undo2 className="ml-2 h-4 w-4" aria-hidden="true" />
-                        بازگردانی
-                      </Button>
-                      <Button type="submit" disabled={saving || !canSave || !dirty}>
-                        <Save className="ml-2 h-4 w-4" aria-hidden="true" />
-                        {saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
-                      </Button>
-                    </div>
-                  </div>
-                </form>
-              )}
-            </WorkspacePanel>
-
-            <aside className="space-y-4">
-              <WorkspacePanel title="وضعیت عملیاتی" description="قبل از زمان‌بندی جدی، تست اتصال باید موفق باشد.">
-                <div className="space-y-0">
-                  {diagnostics.map((item) => <DiagnosticRow key={item.label} item={item} />)}
-                </div>
-                {lastError ? (
-                  <div className="mt-4">
-                    <NoticeBanner tone="alert" title="آخرین خطا">
-                      {lastError}
-                    </NoticeBanner>
-                  </div>
-                ) : null}
-              </WorkspacePanel>
-
-              <WorkspacePanel title="تست عملیاتی" description="این تست با تنظیمات ذخیره‌شده، دسترسی ربات روبیکا را بررسی می‌کند و زمان‌بندی را برای 24 ساعت باز می‌کند.">
-                <Button type="button" className="w-full" onClick={testConnection} disabled={!canTest}>
-                  <RefreshCw className={`ml-2 h-4 w-4 ${testing ? "animate-spin" : ""}`} aria-hidden="true" />
-                  {testing ? "در حال بررسی اتصال..." : "اجرای تست اتصال"}
-                </Button>
-                {dirty ? <p className="mt-3 text-xs leading-6 text-app-warning">برای اجرای تست، ابتدا تغییرات را ذخیره کنید.</p> : null}
-              </WorkspacePanel>
-
-              <WorkspacePanel title="جزئیات کانال" description="خلاصه‌ای از تنظیمات ذخیره‌شده و آخرین بررسی.">
-                <DetailGrid
-                  items={[
-                    { label: "توکن", value: <span className="block break-all text-left font-mono text-xs" dir="ltr">{maskedToken || "ثبت نشده"}</span> },
-                    { label: "مقصد ذخیره‌شده", value: <span className="block break-all text-left font-mono text-xs" dir="ltr">{savedChatId || "ثبت نشده"}</span> },
-                    { label: "نام ربات", value: botName || "نامشخص" },
-                    { label: "آخرین تست", value: formatLastTest(lastTestAt) }
-                  ]}
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <WorkspacePanel title="اعتبارنامه و مقصد انتشار" description="توکن فقط هنگام جایگزینی لازم است. برای حفظ توکن ذخیره‌شده، فیلد آن را خالی بگذارید.">
+          {loading ? (
+            <LoadingPanel />
+          ) : (
+            <form onSubmit={saveSettings} className="space-y-5">
+              <Field
+                label="توکن ربات روبیکا"
+                required={!hasSavedToken}
+                hint={hasSavedToken ? "برای حفظ توکن فعلی این فیلد را خالی بگذارید؛ برای جایگزینی، توکن جدید را وارد کنید." : "توکن ربات برای انتشار خودکار ضروری است."}
+              >
+                <Input
+                  value={botToken}
+                  onChange={(event) => setBotToken(event.target.value)}
+                  className="text-left"
+                  dir="ltr"
+                  placeholder={maskedToken || "توکن ربات را وارد کنید"}
+                  required={!hasSavedToken}
                 />
-              </WorkspacePanel>
+              </Field>
 
-              <WorkspacePanel title="مسیر بعدی" description="بعد از تست موفق، انتشار دستی یا زمان‌بندی را شروع کنید.">
-                <div className="grid gap-2">
-                  <Button href="/compose">
-                    <Send className="ml-2 h-4 w-4" aria-hidden="true" />
-                    ایجاد پست
-                  </Button>
-                  <Button href="/queue" variant="secondary">بررسی صف انتشار</Button>
-                  <Button href="/logs" variant="secondary">مشاهده لاگ اتصال و انتشار</Button>
+              <Field label="Chat ID / Channel ID" required hint="شناسه کانال یا گفت‌وگوی مقصد که پست‌ها در آن منتشر می‌شوند.">
+                <Input
+                  value={chatId}
+                  onChange={(event) => setChatId(event.target.value)}
+                  className="text-left"
+                  dir="ltr"
+                  required
+                />
+              </Field>
+
+              <div className="grid gap-3 rounded-md border border-app-border bg-app-surfaceMuted p-4 text-sm text-app-muted md:grid-cols-2">
+                <div>
+                  <p className="font-bold text-app-text">توکن ذخیره‌شده</p>
+                  <p className="mt-1 break-all text-left font-mono text-xs" dir="ltr">{maskedToken || "هنوز ذخیره نشده"}</p>
                 </div>
-              </WorkspacePanel>
-            </aside>
-          </section>
-        </WorkspacePage>
-);
+                <div>
+                  <p className="font-bold text-app-text">رفتار ذخیره</p>
+                  <p className="mt-1 text-xs leading-6">{botToken.trim() ? "توکن جدید جایگزین می‌شود." : hasSavedToken ? "توکن قبلی حفظ می‌شود." : "توکن لازم است."}</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 rounded-md border border-app-border bg-app-surface p-3 shadow-sm md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm font-black text-app-text">{dirty ? "تغییرات آماده ذخیره است" : "تنظیمات اتصال به‌روز است"}</p>
+                  <p className="mt-1 text-xs text-app-muted">{dirty ? "ذخیره کنید تا تست اتصال برای نسخه جدید فعال شود." : "برای اطمینان از سلامت کانال، تست عملیاتی را اجرا کنید."}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="secondary" onClick={resetChanges} disabled={!dirty || saving}>
+                    <Undo2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                    بازگردانی
+                  </Button>
+                  <Button type="submit" disabled={saving || !canSave || !dirty}>
+                    <Save className="ml-2 h-4 w-4" aria-hidden="true" />
+                    {saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          )}
+        </WorkspacePanel>
+
+        <aside className="space-y-4">
+          <WorkspacePanel title="وضعیت عملیاتی" description="قبل از زمان‌بندی جدی، تست اتصال باید موفق باشد.">
+            <div className="space-y-0">
+              {diagnostics.map((item) => <DiagnosticRow key={item.label} item={item} />)}
+            </div>
+            {lastError ? (
+              <div className="mt-4">
+                <NoticeBanner tone="alert" title="آخرین خطا">
+                  {lastError}
+                </NoticeBanner>
+              </div>
+            ) : null}
+          </WorkspacePanel>
+
+          <WorkspacePanel title="تست عملیاتی" description="این تست با تنظیمات ذخیره‌شده، دسترسی ربات روبیکا را بررسی می‌کند و زمان‌بندی را برای 24 ساعت باز می‌کند.">
+            <Button type="button" className="w-full" onClick={testConnection} disabled={!canTest}>
+              <RefreshCw className={`ml-2 h-4 w-4 ${testing ? "animate-spin" : ""}`} aria-hidden="true" />
+              {testing ? "در حال بررسی اتصال..." : "اجرای تست اتصال"}
+            </Button>
+            {dirty ? <p className="mt-3 text-xs leading-6 text-app-warning">برای اجرای تست، ابتدا تغییرات را ذخیره کنید.</p> : null}
+          </WorkspacePanel>
+
+          <WorkspacePanel title="جزئیات کانال" description="خلاصه‌ای از تنظیمات ذخیره‌شده و آخرین بررسی.">
+            <DetailGrid
+              items={[
+                { label: "توکن", value: <span className="block break-all text-left font-mono text-xs" dir="ltr">{maskedToken || "ثبت نشده"}</span> },
+                { label: "مقصد ذخیره‌شده", value: <span className="block break-all text-left font-mono text-xs" dir="ltr">{savedChatId || "ثبت نشده"}</span> },
+                { label: "نام ربات", value: botName || "نامشخص" },
+                { label: "آخرین تست", value: formatLastTest(lastTestAt) }
+              ]}
+            />
+          </WorkspacePanel>
+
+          <WorkspacePanel title="مسیر بعدی" description="بعد از تست موفق، انتشار دستی یا زمان‌بندی را شروع کنید.">
+            <div className="grid gap-2">
+              <Button href="/compose">
+                <Send className="ml-2 h-4 w-4" aria-hidden="true" />
+                ایجاد پست
+              </Button>
+              <Button href="/queue" variant="secondary">بررسی صف انتشار</Button>
+              <Button href="/logs" variant="secondary">مشاهده لاگ اتصال و انتشار</Button>
+            </div>
+          </WorkspacePanel>
+        </aside>
+      </section>
+    </WorkspacePage>
+  );
 }
 

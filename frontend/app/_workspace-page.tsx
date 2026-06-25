@@ -489,146 +489,146 @@ export default function HomePage() {
   };
 
   return (
-<NPage className="dashboard-spec-page pb-5">
-          <section className="dashboard-command-brief">
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-              <div className="flex min-w-0 items-start gap-3">
-                <WorkspaceAvatar name={store?.name || productName} size="lg" color={brandColor} imageUrl={brandImageUrl} />
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="app-section-kicker text-[10px] font-black">داشبورد</p>
-                    <NStatusPill tone={healthTone}>{healthTone === "success" ? "فضای کاری پایدار" : healthTone === "warning" ? "نیازمند تکمیل" : "نیازمند رسیدگی"}</NStatusPill>
-                    {lastUpdatedAt ? <NStatusPill tone="neutral">{lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</NStatusPill> : null}
-                  </div>
-                  <h1 className="mt-2 text-[22px] font-black leading-8 text-app-text sm:text-2xl">داشبورد امروز</h1>
-                  <p className="mt-1 max-w-4xl text-sm leading-7 text-app-muted">{briefing}</p>
-                </div>
+    <NPage className="dashboard-spec-page pb-5">
+      <section className="dashboard-command-brief">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="flex min-w-0 items-start gap-3">
+            <WorkspaceAvatar name={store?.name || productName} size="lg" color={brandColor} imageUrl={brandImageUrl} />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="app-section-kicker text-[10px] font-black">داشبورد</p>
+                <NStatusPill tone={healthTone}>{healthTone === "success" ? "فضای کاری پایدار" : healthTone === "warning" ? "نیازمند تکمیل" : "نیازمند رسیدگی"}</NStatusPill>
+                {lastUpdatedAt ? <NStatusPill tone="neutral">{lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</NStatusPill> : null}
               </div>
+              <h1 className="mt-2 text-[22px] font-black leading-8 text-app-text sm:text-2xl">داشبورد امروز</h1>
+              <p className="mt-1 max-w-4xl text-sm leading-7 text-app-muted">{briefing}</p>
+            </div>
+          </div>
 
-              <div className="dashboard-next-action min-w-0 rounded-xl p-3 lg:w-[360px]">
-                <div className="flex min-w-0 items-start gap-3">
-                  <span className="nashrino-live-signal mt-1 h-3 w-3 shrink-0 rounded-full bg-app-primary" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-black text-app-primary">اقدام بعدی</p>
-                    <h2 className="mt-1 line-clamp-1 text-base font-black text-app-text">{nextAction.label}</h2>
-                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <NButton href={nextAction.href} trailingIcon={ArrowUpLeft}>ادامه</NButton>
-                  <NButton type="button" variant="secondary" size="sm" icon={RefreshCw} loading={refreshing} onClick={() => loadDashboard(true)}>
-                    تازه‌سازی
-                  </NButton>
-                </div>
+          <div className="dashboard-next-action min-w-0 rounded-xl p-3 lg:w-[360px]">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="nashrino-live-signal mt-1 h-3 w-3 shrink-0 rounded-full bg-app-primary" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-black text-app-primary">اقدام بعدی</p>
+                <h2 className="mt-1 line-clamp-1 text-base font-black text-app-text">{nextAction.label}</h2>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-app-muted">{nextAction.detail}</p>
               </div>
             </div>
-          </section>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <NButton href={nextAction.href} trailingIcon={ArrowUpLeft}>ادامه</NButton>
+              <NButton type="button" variant="secondary" size="sm" icon={RefreshCw} loading={refreshing} onClick={() => loadDashboard(true)}>
+                تازه‌سازی
+              </NButton>
+            </div>
+          </div>
+        </div>
+      </section>
 
-          {error ? <NNotice tone="alert">{error}</NNotice> : null}
-          {loading ? <Skeleton className="h-4 w-44" /> : null}
+      {error ? <NNotice tone="alert">{error}</NNotice> : null}
+      {loading ? <Skeleton className="h-4 w-44" /> : null}
 
-          <section className="dashboard-kpi-strip grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {topMetrics.map((metric) => (
-              <NMetricTile key={metric.label} {...metric} />
+      <section className="dashboard-kpi-strip grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {topMetrics.map((metric) => (
+          <NMetricTile key={metric.label} {...metric} />
+        ))}
+      </section>
+
+      <section className="dashboard-visual-strip grid gap-3 lg:grid-cols-[0.9fr_0.9fr_1.2fr]" aria-label="نمای تصویری داشبورد">
+        <article className="dashboard-visual-card">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="dashboard-donut" style={{ background: statusMixBackground }}>
+              <span>{statusMixTotal}</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-black text-app-primary">ترکیب محتوا</p>
+              <h2 className="mt-1 text-sm font-black text-app-text">وضعیت کل محتوا</h2>
+              <div className="mt-2 grid grid-cols-2 gap-1.5">
+                {statusMixItems.map((item) => (
+                  <span key={item.label} className="flex min-w-0 items-center gap-1.5 text-[10px] font-black text-app-muted">
+                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="truncate">{item.label}</span>
+                    <span className="mr-auto text-app-text">{item.value}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article className="dashboard-visual-card">
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black text-app-primary">سلامت عملیات</p>
+              <h2 className="mt-1 text-sm font-black text-app-text">{operationsHealth}% آماده</h2>
+              <p className="mt-1 line-clamp-1 text-xs text-app-muted">{blockedWorkCount ? `${blockedWorkCount} مورد نیازمند توجه` : "مسیر انتشار آرام است"}</p>
+            </div>
+            <div className="dashboard-gauge" style={{ "--gauge-value": `${operationsHealth}%` } as CSSProperties}>
+              <span>{operationsHealth}</span>
+            </div>
+          </div>
+        </article>
+
+        <article className="dashboard-visual-card">
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black text-app-primary">ریتم هفته</p>
+              <h2 className="mt-1 text-sm font-black text-app-text">تراکم فعالیت</h2>
+            </div>
+            <NStatusPill tone={weeklyActivity.some(Boolean) ? "primary" : "neutral"}>{weeklyActivity.reduce((sum, value) => sum + value, 0)} رویداد</NStatusPill>
+          </div>
+          <div className="mt-3 flex h-16 items-end gap-1.5">
+            {weeklyActivity.map((value, index) => (
+              <div key={weekKeys[index]} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+                <span className="dashboard-rhythm-bar" style={{ height: `${Math.max(8, (value / maxWeeklyActivity) * 48)}px` }} />
+                <span className="text-[9px] font-bold text-app-muted">{weeklyLabels[index]}</span>
+              </div>
             ))}
-          </section>
+          </div>
+        </article>
+      </section>
 
-          <section className="dashboard-visual-strip grid gap-3 lg:grid-cols-[0.9fr_0.9fr_1.2fr]" aria-label="نمای تصویری داشبورد">
-            <article className="dashboard-visual-card">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="dashboard-donut" style={{ background: statusMixBackground }}>
-                  <span>{statusMixTotal}</span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-black text-app-primary">ترکیب محتوا</p>
-                  <h2 className="mt-1 text-sm font-black text-app-text">وضعیت کل محتوا</h2>
-                  <div className="mt-2 grid grid-cols-2 gap-1.5">
-                    {statusMixItems.map((item) => (
-                      <span key={item.label} className="flex min-w-0 items-center gap-1.5 text-[10px] font-black text-app-muted">
-                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="truncate">{item.label}</span>
-                        <span className="mr-auto text-app-text">{item.value}</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </article>
+      <section className="dashboard-focus-shell rounded-2xl p-2.5 sm:p-3">
+        <div className="flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
+          <div className="min-w-0 px-1">
+            <p className="text-[10px] font-black text-app-primary">نمای متمرکز</p>
+            <h2 className="mt-1 text-sm font-black text-app-text">هر بار فقط یک مسیر تصمیم‌گیری</h2>
+          </div>
+          <NTabs tabs={dashboardFocusTabs} activeTab={dashboardView} onTabChange={setDashboardView} className="w-full lg:w-auto" />
+        </div>
+        <div className="mt-3 dashboard-focus-panel">
+          {dashboardFocusLayouts[dashboardView] ?? dashboardFocusLayouts.overview}
+        </div>
+      </section>
 
-            <article className="dashboard-visual-card">
-              <div className="flex min-w-0 items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[10px] font-black text-app-primary">سلامت عملیات</p>
-                  <h2 className="mt-1 text-sm font-black text-app-text">{operationsHealth}% آماده</h2>
-                  <p className="mt-1 line-clamp-1 text-xs text-app-muted">{blockedWorkCount ? `${blockedWorkCount} مورد نیازمند توجه` : "مسیر انتشار آرام است"}</p>
-                </div>
-                <div className="dashboard-gauge" style={{ "--gauge-value": `${operationsHealth}%` } as CSSProperties}>
-                  <span>{operationsHealth}</span>
-                </div>
-              </div>
-            </article>
-
-            <article className="dashboard-visual-card">
-              <div className="flex min-w-0 items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[10px] font-black text-app-primary">ریتم هفته</p>
-                  <h2 className="mt-1 text-sm font-black text-app-text">تراکم فعالیت</h2>
-                </div>
-                <NStatusPill tone={weeklyActivity.some(Boolean) ? "primary" : "neutral"}>{weeklyActivity.reduce((sum, value) => sum + value, 0)} رویداد</NStatusPill>
-              </div>
-              <div className="mt-3 flex h-16 items-end gap-1.5">
-                {weeklyActivity.map((value, index) => (
-                  <div key={weekKeys[index]} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-                    <span className="dashboard-rhythm-bar" style={{ height: `${Math.max(8, (value / maxWeeklyActivity) * 48)}px` }} />
-                    <span className="text-[9px] font-bold text-app-muted">{weeklyLabels[index]}</span>
-                  </div>
-                ))}
-              </div>
-            </article>
-          </section>
-
-          <section className="dashboard-focus-shell rounded-2xl p-2.5 sm:p-3">
-            <div className="flex flex-col justify-between gap-2 lg:flex-row lg:items-center">
-              <div className="min-w-0 px-1">
-                <p className="text-[10px] font-black text-app-primary">نمای متمرکز</p>
-                <h2 className="mt-1 text-sm font-black text-app-text">هر بار فقط یک مسیر تصمیم‌گیری</h2>
-              </div>
-              <NTabs tabs={dashboardFocusTabs} activeTab={dashboardView} onTabChange={setDashboardView} className="w-full lg:w-auto" />
-            </div>
-            <div className="mt-3 dashboard-focus-panel">
-              {dashboardFocusLayouts[dashboardView] ?? dashboardFocusLayouts.overview}
-            </div>
-          </section>
-
-          <NSection
-            title="آخرین محتوا"
-            description="یک نگاه کوتاه به آیتم‌هایی که احتمالاً امروز دوباره باز می‌کنید."
-            action={<NButton href="/content" variant="secondary" size="sm">کتابخانه محتوا</NButton>}
-            className="dashboard-spec-card dashboard-recent-content"
-          >
-            {dashboardRecentItems.length ? (
-              <div className="dashboard-recent-content-grid" aria-label="آخرین محتوای داشبورد">
-                {dashboardRecentItems.map((item) => (
-                  <Link key={item.id} href={item.href} className="dashboard-recent-content-item app-interactive">
-                    <span className="dashboard-recent-content-main min-w-0">
-                      <span className="dashboard-recent-content-title truncate">{item.title}</span>
-                      <span className="dashboard-recent-content-meta truncate">{item.channel} · {item.publishTime}</span>
-                    </span>
-                    <span className="dashboard-recent-content-state">
-                      <NStatusPill tone={item.statusTone}>{item.status}</NStatusPill>
-                      <NStatusPill tone={item.approvalTone}>{item.approval}</NStatusPill>
-                    </span>
-                    <span className="dashboard-recent-content-score" aria-label={`آمادگی ${item.score} درصد`}>
-                      <span className="dashboard-kpi-number">{item.score}%</span>
-                    </span>
-                    <ArrowUpLeft className="dashboard-recent-content-icon" aria-hidden="true" />
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <NEmptyState icon={FileText} title="هنوز محتوایی برای نمایش نیست" detail="بعد از ساخت اولین پست، این بخش به میانبر آخرین محتوا تبدیل می‌شود." />
-            )}
-          </NSection>
-        </NPage>
-);
+      <NSection
+        title="آخرین محتوا"
+        description="یک نگاه کوتاه به آیتم‌هایی که احتمالاً امروز دوباره باز می‌کنید."
+        action={<NButton href="/content" variant="secondary" size="sm">کتابخانه محتوا</NButton>}
+        className="dashboard-spec-card dashboard-recent-content"
+      >
+        {dashboardRecentItems.length ? (
+          <div className="dashboard-recent-content-grid" aria-label="آخرین محتوای داشبورد">
+            {dashboardRecentItems.map((item) => (
+              <Link key={item.id} href={item.href} className="dashboard-recent-content-item app-interactive">
+                <span className="dashboard-recent-content-main min-w-0">
+                  <span className="dashboard-recent-content-title truncate">{item.title}</span>
+                  <span className="dashboard-recent-content-meta truncate">{item.channel} · {item.publishTime}</span>
+                </span>
+                <span className="dashboard-recent-content-state">
+                  <NStatusPill tone={item.statusTone}>{item.status}</NStatusPill>
+                  <NStatusPill tone={item.approvalTone}>{item.approval}</NStatusPill>
+                </span>
+                <span className="dashboard-recent-content-score" aria-label={`آمادگی ${item.score} درصد`}>
+                  <span className="dashboard-kpi-number">{item.score}%</span>
+                </span>
+                <ArrowUpLeft className="dashboard-recent-content-icon" aria-hidden="true" />
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <NEmptyState icon={FileText} title="هنوز محتوایی برای نمایش نیست" detail="بعد از ساخت اولین پست، این بخش به میانبر آخرین محتوا تبدیل می‌شود." />
+        )}
+      </NSection>
+    </NPage>
+  );
 }

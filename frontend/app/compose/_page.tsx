@@ -749,452 +749,452 @@ function ComposePageContent() {
   }
 
   return (
-<WorkspacePage className="space-y-3 sm:space-y-4">
-          {editingImageSource ? (
-            <MediaImageEditor
-              imageUrl={editingImageSource.imageUrl}
-              filename={editingImageSource.filename}
-              saving={savingEditedImage}
-              onClose={() => setEditingImageSource(null)}
-              onSave={saveEditedComposerImage}
-            />
-          ) : null}
-          <section className="nashrino-card relative overflow-hidden rounded-lg px-3 py-2.5 sm:px-4 sm:py-3">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(20,184,166,0.12),transparent_30%),radial-gradient(circle_at_78%_10%,rgba(59,130,246,0.10),transparent_28%)]" aria-hidden="true" />
-            <div className="relative">
-            <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+    <WorkspacePage className="space-y-3 sm:space-y-4">
+      {editingImageSource ? (
+        <MediaImageEditor
+          imageUrl={editingImageSource.imageUrl}
+          filename={editingImageSource.filename}
+          saving={savingEditedImage}
+          onClose={() => setEditingImageSource(null)}
+          onSave={saveEditedComposerImage}
+        />
+      ) : null}
+      <section className="nashrino-card relative overflow-hidden rounded-lg px-3 py-2.5 sm:px-4 sm:py-3">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(20,184,166,0.12),transparent_30%),radial-gradient(circle_at_78%_10%,rgba(59,130,246,0.10),transparent_28%)]" aria-hidden="true" />
+        <div className="relative">
+        <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+          <div>
+            <p className="text-[10px] font-black text-app-primary">ساخت محتوا</p>
+            <h1 className="mt-1 text-xl font-black text-app-text">{isEditing ? "ویرایش پست" : "پست جدید"}</h1>
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-app-muted">یک مسیر حرفه‌ای برای ساخت، پیش‌نمایش، زمان‌بندی و انتشار چندکاناله؛ هر کنترل فقط در مرحله مرتبط دیده می‌شود.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusToken tone={publishTone} className="gap-1">
+              <Send className="h-3.5 w-3.5" aria-hidden="true" />
+              {publishStateLabel}
+            </StatusToken>
+            <ChannelBadges platform={form.platform} compact />
+            <StatusToken tone={hasReadyPublishingChannel ? "success" : "warning"}>{hasReadyPublishingChannel ? `${selectedReadyChannels.length} کانال آماده` : "تکمیل کانال لازم است"}</StatusToken>
+            {!isEditing ? <StatusToken tone={autosaveState === "dirty" ? "warning" : "neutral"}><Cloud className="h-3.5 w-3.5" aria-hidden="true" />{autosaveLabel}</StatusToken> : null}
+            {editingPost?.status ? <StatusBadge status={editingPost.status} /> : null}
+            {editingPost ? <ApprovalBadge status={editingPost.approval_status} compact /> : null}
+            <Button type="button" variant="secondary" size="sm" onClick={startWithUpload}>
+              <ImagePlus className="ml-1.5 h-4 w-4" aria-hidden="true" />
+              آپلود رسانه
+            </Button>
+            <Button type="button" variant="secondary" size="sm" onClick={startWithDefaults}>
+              <WandSparkles className="ml-1.5 h-4 w-4" aria-hidden="true" />
+              پیش‌فرض برند
+            </Button>
+            <Button href="/calendar" variant="secondary" size="sm">بازگشت به پلنر</Button>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <form onSubmit={saveDraft} className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <section className="grid min-w-0 gap-3 xl:col-span-2 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <ComposerStepRail steps={composerSteps} />
+
+          <section className="app-studio-panel rounded-lg p-3">
+            <div className="flex items-center justify-between gap-2">
               <div>
-                <p className="text-[10px] font-black text-app-primary">ساخت محتوا</p>
-                <h1 className="mt-1 text-xl font-black text-app-text">{isEditing ? "ویرایش پست" : "پست جدید"}</h1>
-                <p className="mt-1 max-w-2xl text-xs leading-5 text-app-muted">یک مسیر حرفه‌ای برای ساخت، پیش‌نمایش، زمان‌بندی و انتشار چندکاناله؛ هر کنترل فقط در مرحله مرتبط دیده می‌شود.</p>
+                <p className="text-sm font-black text-app-text">نقشه انتشار</p>
+                <p className="mt-1 text-xs leading-5 text-app-muted">وضعیت‌های مهم بدون باز کردن فرم‌های اضافه.</p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusToken tone={publishTone} className="gap-1">
-                  <Send className="h-3.5 w-3.5" aria-hidden="true" />
-                  {publishStateLabel}
-                </StatusToken>
-                <ChannelBadges platform={form.platform} compact />
-                <StatusToken tone={hasReadyPublishingChannel ? "success" : "warning"}>{hasReadyPublishingChannel ? `${selectedReadyChannels.length} کانال آماده` : "تکمیل کانال لازم است"}</StatusToken>
-                {!isEditing ? <StatusToken tone={autosaveState === "dirty" ? "warning" : "neutral"}><Cloud className="h-3.5 w-3.5" aria-hidden="true" />{autosaveLabel}</StatusToken> : null}
-                {editingPost?.status ? <StatusBadge status={editingPost.status} /> : null}
-                {editingPost ? <ApprovalBadge status={editingPost.approval_status} compact /> : null}
-                <Button type="button" variant="secondary" size="sm" onClick={startWithUpload}>
-                  <ImagePlus className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                  آپلود رسانه
-                </Button>
-                <Button type="button" variant="secondary" size="sm" onClick={startWithDefaults}>
-                  <WandSparkles className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                  پیش‌فرض برند
-                </Button>
-                <Button href="/calendar" variant="secondary" size="sm">بازگشت به پلنر</Button>
-              </div>
+              <StatusToken tone={publishTone}>{readinessScore}%</StatusToken>
             </div>
+            <div className="mt-3 grid gap-2">
+              {workflowCards.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <button
+                    key={card.label}
+                    type="button"
+                    onClick={() => setWorkspaceMode("workflow")}
+                    className="app-interactive group flex items-center gap-3 rounded-md border border-app-border bg-app-surface/72 p-2.5 text-right shadow-hairline backdrop-blur transition hover:border-app-primary/25 hover:bg-app-surface hover:shadow-soft"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-app-soft text-app-primary transition group-hover:bg-app-primary group-hover:text-white">
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[11px] font-black text-app-muted">{card.label}</span>
+                      <span className="mt-0.5 block truncate text-sm font-black text-app-text">{card.value}</span>
+                      <span className="mt-0.5 block truncate text-[11px] text-app-muted">{card.detail}</span>
+                    </span>
+                    <StatusToken tone={card.tone} size="sm">{card.tone === "success" ? "آماده" : card.tone === "primary" ? "متصل" : "باز"}</StatusToken>
+                  </button>
+                );
+              })}
             </div>
           </section>
+        </section>
 
-          <form onSubmit={saveDraft} className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_380px]">
-            <section className="grid min-w-0 gap-3 xl:col-span-2 xl:grid-cols-[minmax(0,1fr)_340px]">
-              <ComposerStepRail steps={composerSteps} />
+        <section id="composer-workspace" className="min-w-0 space-y-3">
+          <WorkspacePanel
+            title="بوم تولید"
+            description="متن، رسانه و مسیر انتشار در یک فضای متمرکز؛ بدون کارت‌های تکراری و فرم‌های مزاحم."
+            action={(
+              <div className="flex flex-wrap items-center gap-2">
+                <ChannelBadges platform={form.platform} compact />
+                {hasSchedule ? <Tag tone="success">زمان‌بندی شده</Tag> : null}
+              </div>
+            )}
+            bodyClassName="p-0"
+          >
+            <div className="grid grid-cols-3 gap-1 border-b border-app-border bg-app-surfaceMuted/80 p-1.5">
+              {workspaceModes.map((mode) => {
+                const Icon = mode.icon;
+                const active = workspaceMode === mode.value;
+                return (
+                  <button
+                    key={mode.value}
+                    type="button"
+                    onClick={() => setWorkspaceMode(mode.value)}
+                    className={`app-interactive flex min-w-0 items-center gap-2 rounded-md px-2.5 py-2 text-right transition ${
+                      active ? "bg-app-surface text-app-primary shadow-soft" : "text-app-muted hover:bg-app-surface/75 hover:text-app-text"
+                    }`}
+                  >
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${active ? "bg-app-soft text-app-primary" : "bg-app-surface text-app-muted shadow-hairline"}`}>
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-1 text-xs font-black">
+                        {mode.done ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" /> : null}
+                        <span className="truncate">{mode.label}</span>
+                      </span>
+                      <span className="mt-0.5 block truncate text-[10px] text-app-muted">{mode.detail}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
 
-              <section className="app-studio-panel rounded-lg p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-black text-app-text">نقشه انتشار</p>
-                    <p className="mt-1 text-xs leading-5 text-app-muted">وضعیت‌های مهم بدون باز کردن فرم‌های اضافه.</p>
-                  </div>
-                  <StatusToken tone={publishTone}>{readinessScore}%</StatusToken>
-                </div>
-                <div className="mt-3 grid gap-2">
-                  {workflowCards.map((card) => {
-                    const Icon = card.icon;
-                    return (
-                      <button
-                        key={card.label}
-                        type="button"
-                        onClick={() => setWorkspaceMode("workflow")}
-                        className="app-interactive group flex items-center gap-3 rounded-md border border-app-border bg-app-surface/72 p-2.5 text-right shadow-hairline backdrop-blur transition hover:border-app-primary/25 hover:bg-app-surface hover:shadow-soft"
-                      >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-app-soft text-app-primary transition group-hover:bg-app-primary group-hover:text-white">
-                          <Icon className="h-4 w-4" aria-hidden="true" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-[11px] font-black text-app-muted">{card.label}</span>
-                          <span className="mt-0.5 block truncate text-sm font-black text-app-text">{card.value}</span>
-                          <span className="mt-0.5 block truncate text-[11px] text-app-muted">{card.detail}</span>
-                        </span>
-                        <StatusToken tone={card.tone} size="sm">{card.tone === "success" ? "آماده" : card.tone === "primary" ? "متصل" : "باز"}</StatusToken>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            </section>
-
-            <section id="composer-workspace" className="min-w-0 space-y-3">
-              <WorkspacePanel
-                title="بوم تولید"
-                description="متن، رسانه و مسیر انتشار در یک فضای متمرکز؛ بدون کارت‌های تکراری و فرم‌های مزاحم."
-                action={(
-                  <div className="flex flex-wrap items-center gap-2">
-                    <ChannelBadges platform={form.platform} compact />
-                    {hasSchedule ? <Tag tone="success">زمان‌بندی شده</Tag> : null}
-                  </div>
-                )}
-                bodyClassName="p-0"
-              >
-                <div className="grid grid-cols-3 gap-1 border-b border-app-border bg-app-surfaceMuted/80 p-1.5">
-                  {workspaceModes.map((mode) => {
-                    const Icon = mode.icon;
-                    const active = workspaceMode === mode.value;
-                    return (
-                      <button
-                        key={mode.value}
-                        type="button"
-                        onClick={() => setWorkspaceMode(mode.value)}
-                        className={`app-interactive flex min-w-0 items-center gap-2 rounded-md px-2.5 py-2 text-right transition ${
-                          active ? "bg-app-surface text-app-primary shadow-soft" : "text-app-muted hover:bg-app-surface/75 hover:text-app-text"
-                        }`}
-                      >
-                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${active ? "bg-app-soft text-app-primary" : "bg-app-surface text-app-muted shadow-hairline"}`}>
-                          <Icon className="h-4 w-4" aria-hidden="true" />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="flex items-center gap-1 text-xs font-black">
-                            {mode.done ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" /> : null}
-                            <span className="truncate">{mode.label}</span>
-                          </span>
-                          <span className="mt-0.5 block truncate text-[10px] text-app-muted">{mode.detail}</span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="p-3 sm:p-4">
-                  {workspaceMode === "content" ? (
-                    <div id="composer-content" className="grid gap-3">
-                      <div className="rounded-md border border-app-border/70 bg-app-surface/75 p-3 shadow-hairline backdrop-blur-xl">
-                        <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-                          <div>
-                            <p className="text-sm font-black text-app-text">متن اصلی پست</p>
-                            <p className="mt-1 text-xs leading-5 text-app-muted">عنوان برای تیم است؛ کپشن و هشتگ‌ها وارد خروجی مخاطب می‌شوند.</p>
-                          </div>
-                          <Button type="button" variant="secondary" size="sm" onClick={applyDefaults}>
-                            <WandSparkles className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                            پیش‌فرض برند
-                          </Button>
-                        </div>
-
-                        <div className="grid gap-3">
-                          <Field label="عنوان داخلی پست" required hint="فقط برای مدیریت محتوا و صف انتشار؛ مخاطب این عنوان را نمی‌بیند.">
-                            <Input
-                              value={form.title}
-                              onChange={(event) => updateField("title", event.target.value)}
-                              placeholder="مثلاً معرفی محصول جدید"
-                              required
-                            />
-                          </Field>
-
-                          <Field label="کپشن" hint={`${captionLength} کاراکتر`}>
-                            <Textarea
-                              value={form.caption}
-                              onChange={(event) => updateField("caption", event.target.value)}
-                              className="min-h-[260px] resize-y border-0 bg-app-canvas/95 px-4 py-3 text-[15px] leading-8 shadow-hairline lg:min-h-[340px]"
-                              placeholder="متن پست شبکه‌های اجتماعی را وارد کنید..."
-                            />
-                          </Field>
-
-                          <Field label="هشتگ‌ها" hint={`${hashtagCount} هشتگ شناسایی شد`}>
-                            <Input
-                              value={form.hashtags}
-                              onChange={(event) => updateField("hashtags", event.target.value)}
-                              placeholder="#فروشگاه #محصول #پیشنهاد"
-                            />
-                          </Field>
-                        </div>
+            <div className="p-3 sm:p-4">
+              {workspaceMode === "content" ? (
+                <div id="composer-content" className="grid gap-3">
+                  <div className="rounded-md border border-app-border/70 bg-app-surface/75 p-3 shadow-hairline backdrop-blur-xl">
+                    <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                      <div>
+                        <p className="text-sm font-black text-app-text">متن اصلی پست</p>
+                        <p className="mt-1 text-xs leading-5 text-app-muted">عنوان برای تیم است؛ کپشن و هشتگ‌ها وارد خروجی مخاطب می‌شوند.</p>
                       </div>
-
-                      <div className="grid gap-2 sm:grid-cols-3">
-                        <button type="button" onClick={() => setWorkspaceMode("media")} className="app-interactive rounded-md border border-app-border bg-app-surface/70 p-3 text-right shadow-hairline hover:bg-app-surface">
-                          <Images className="mb-2 h-4 w-4 text-app-primary" aria-hidden="true" />
-                          <span className="block text-xs font-black text-app-text">افزودن رسانه</span>
-                          <span className="mt-1 block text-[11px] leading-5 text-app-muted">{previewImageUrl ? "تصویر انتخاب شده است." : "از کتابخانه یا آپلود جدید."}</span>
-                        </button>
-                        <button type="button" onClick={() => setWorkspaceMode("workflow")} className="app-interactive rounded-md border border-app-border bg-app-surface/70 p-3 text-right shadow-hairline hover:bg-app-surface">
-                          <Megaphone className="mb-2 h-4 w-4 text-app-primary" aria-hidden="true" />
-                          <span className="block text-xs font-black text-app-text">کمپین و کانال</span>
-                          <span className="mt-1 block text-[11px] leading-5 text-app-muted">{campaignLabel}</span>
-                        </button>
-                        <button type="button" onClick={() => setStudioPanel("schedule")} className="app-interactive rounded-md border border-app-border bg-app-surface/70 p-3 text-right shadow-hairline hover:bg-app-surface">
-                          <CalendarClock className="mb-2 h-4 w-4 text-app-primary" aria-hidden="true" />
-                          <span className="block text-xs font-black text-app-text">زمان انتشار</span>
-                          <span className="mt-1 block text-[11px] leading-5 text-app-muted">{scheduleLabel}</span>
-                        </button>
-                      </div>
+                      <Button type="button" variant="secondary" size="sm" onClick={applyDefaults}>
+                        <WandSparkles className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                        پیش‌فرض برند
+                      </Button>
                     </div>
-                  ) : null}
 
-                  {workspaceMode === "media" ? (
-                    <div id="composer-media" className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
-                      <div className="space-y-3">
-                        <label className="app-interactive block cursor-pointer rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted p-3 hover:border-app-primary hover:bg-app-soft">
-                          <input
-                            ref={uploadInputRef}
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            onChange={(event) => {
-                              setSelectedFile(event.target.files?.[0] ?? null);
-                              if (event.target.files?.[0]) setSelectedMediaId("");
-                              if (message) setMessage("");
-                            }}
-                            className="sr-only"
-                          />
-                          <span className="flex items-center gap-2 text-sm font-black text-app-text">
-                            <ImagePlus className="h-4 w-4" aria-hidden="true" />
-                            آپلود تصویر
-                          </span>
-                          <span className="mt-1 block text-xs leading-5 text-app-muted">JPEG، PNG یا WEBP</span>
-                        </label>
+                    <div className="grid gap-3">
+                      <Field label="عنوان داخلی پست" required hint="فقط برای مدیریت محتوا و صف انتشار؛ مخاطب این عنوان را نمی‌بیند.">
+                        <Input
+                          value={form.title}
+                          onChange={(event) => updateField("title", event.target.value)}
+                          placeholder="مثلاً معرفی محصول جدید"
+                          required
+                        />
+                      </Field>
 
-                        {previewImageUrl ? (
-                          <div className="rounded-md border border-app-border bg-app-surface p-2 shadow-hairline">
-                            <img src={previewImageUrl} alt="پیش‌نمایش رسانه انتخاب‌شده" className="aspect-video w-full rounded-md object-cover" />
-                            <Button type="button" variant="secondary" size="sm" className="mt-2 w-full" onClick={openImageEditor}>
-                              <PencilLine className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                              ویرایش تصویر
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="rounded-md bg-app-surfaceMuted p-3 text-xs leading-5 text-app-muted shadow-hairline">
-                            تصویر اختیاری است، اما برای خروجی حرفه‌ای بهتر است یک رسانه انتخاب شود.
-                          </div>
-                        )}
-                      </div>
+                      <Field label="کپشن" hint={`${captionLength} کاراکتر`}>
+                        <Textarea
+                          value={form.caption}
+                          onChange={(event) => updateField("caption", event.target.value)}
+                          className="min-h-[260px] resize-y border-0 bg-app-canvas/95 px-4 py-3 text-[15px] leading-8 shadow-hairline lg:min-h-[340px]"
+                          placeholder="متن پست شبکه‌های اجتماعی را وارد کنید..."
+                        />
+                      </Field>
 
-                      <MediaGalleryPicker
-                        assets={mediaAssets}
-                        campaigns={campaigns}
-                        posts={posts}
-                        previewUrls={mediaPreviewUrls}
-                        selectedMediaId={selectedMediaId}
-                        activeCampaignId={form.campaign_id}
-                        loading={loading}
-                        onSelect={(assetId) => {
-                          setSelectedMediaId(assetId);
-                          setSelectedFile(null);
+                      <Field label="هشتگ‌ها" hint={`${hashtagCount} هشتگ شناسایی شد`}>
+                        <Input
+                          value={form.hashtags}
+                          onChange={(event) => updateField("hashtags", event.target.value)}
+                          placeholder="#فروشگاه #محصول #پیشنهاد"
+                        />
+                      </Field>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <button type="button" onClick={() => setWorkspaceMode("media")} className="app-interactive rounded-md border border-app-border bg-app-surface/70 p-3 text-right shadow-hairline hover:bg-app-surface">
+                      <Images className="mb-2 h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <span className="block text-xs font-black text-app-text">افزودن رسانه</span>
+                      <span className="mt-1 block text-[11px] leading-5 text-app-muted">{previewImageUrl ? "تصویر انتخاب شده است." : "از کتابخانه یا آپلود جدید."}</span>
+                    </button>
+                    <button type="button" onClick={() => setWorkspaceMode("workflow")} className="app-interactive rounded-md border border-app-border bg-app-surface/70 p-3 text-right shadow-hairline hover:bg-app-surface">
+                      <Megaphone className="mb-2 h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <span className="block text-xs font-black text-app-text">کمپین و کانال</span>
+                      <span className="mt-1 block text-[11px] leading-5 text-app-muted">{campaignLabel}</span>
+                    </button>
+                    <button type="button" onClick={() => setStudioPanel("schedule")} className="app-interactive rounded-md border border-app-border bg-app-surface/70 p-3 text-right shadow-hairline hover:bg-app-surface">
+                      <CalendarClock className="mb-2 h-4 w-4 text-app-primary" aria-hidden="true" />
+                      <span className="block text-xs font-black text-app-text">زمان انتشار</span>
+                      <span className="mt-1 block text-[11px] leading-5 text-app-muted">{scheduleLabel}</span>
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {workspaceMode === "media" ? (
+                <div id="composer-media" className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
+                  <div className="space-y-3">
+                    <label className="app-interactive block cursor-pointer rounded-md border border-dashed border-app-borderStrong bg-app-surfaceMuted p-3 hover:border-app-primary hover:bg-app-soft">
+                      <input
+                        ref={uploadInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(event) => {
+                          setSelectedFile(event.target.files?.[0] ?? null);
+                          if (event.target.files?.[0]) setSelectedMediaId("");
                           if (message) setMessage("");
                         }}
+                        className="sr-only"
                       />
-                    </div>
-                  ) : null}
+                      <span className="flex items-center gap-2 text-sm font-black text-app-text">
+                        <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                        آپلود تصویر
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-app-muted">JPEG، PNG یا WEBP</span>
+                    </label>
 
-                  {workspaceMode === "workflow" ? (
-                    <div className="grid gap-3">
-                      <section className="rounded-md border border-app-border bg-app-surface/72 p-3 shadow-hairline backdrop-blur">
-                        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                          <div>
-                            <p className="text-sm font-black text-app-text">کانال انتشار</p>
-                            <p className="mt-1 text-xs leading-5 text-app-muted">برای هر کانال، محدودیت انتشار و آمادگی را قبل از زمان‌بندی ببینید.</p>
-                          </div>
-                          <ChannelBadges platform={form.platform} />
-                        </div>
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                          {channelOptions.map((option) => {
-                            const Icon = option.icon;
-                            const active = selectedChannels.includes(option.value);
-                            return (
-                              <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => toggleChannel(option.value)}
-                                className={`app-interactive rounded-md border px-3 py-3 text-right ${
-                                  active ? "border-app-primary/30 bg-app-surface text-app-primary shadow-soft" : "border-app-border bg-app-surface/70 text-app-text hover:bg-app-surface"
-                                }`}
-                                aria-pressed={active}
-                              >
-                                <span className="flex items-center gap-2 text-sm font-black">
-                                  <Icon className="h-4 w-4" aria-hidden="true" />
-                                  {option.label}
-                                </span>
-                                <span className="mt-1 block text-xs leading-5 text-app-muted">{option.description}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {channelNotes.length ? (
-                          <div className="mt-3 space-y-1.5">
-                            {channelNotes.map((note) => <p key={note} className="text-xs leading-5 text-app-muted">{note}</p>)}
-                          </div>
-                        ) : null}
-                      </section>
+                    {previewImageUrl ? (
+                      <div className="rounded-md border border-app-border bg-app-surface p-2 shadow-hairline">
+                        <img src={previewImageUrl} alt="پیش‌نمایش رسانه انتخاب‌شده" className="aspect-video w-full rounded-md object-cover" />
+                        <Button type="button" variant="secondary" size="sm" className="mt-2 w-full" onClick={openImageEditor}>
+                          <PencilLine className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                          ویرایش تصویر
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="rounded-md bg-app-surfaceMuted p-3 text-xs leading-5 text-app-muted shadow-hairline">
+                        تصویر اختیاری است، اما برای خروجی حرفه‌ای بهتر است یک رسانه انتخاب شود.
+                      </div>
+                    )}
+                  </div>
 
-                      <section className="rounded-md border border-app-border bg-app-surface/72 p-3 shadow-hairline backdrop-blur">
-                        <div className="mb-3 flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-black text-app-text">کمپین و یادداشت</p>
-                            <p className="mt-1 text-xs leading-5 text-app-muted">کمپین فقط برای دسته‌بندی، گزارش و برنامه‌ریزی است؛ فرم بزرگ جداگانه ندارد.</p>
-                          </div>
-                          {selectedCampaign ? (
-                            <span className="mt-0.5 h-4 w-4 shrink-0 rounded shadow-hairline" style={{ backgroundColor: selectedCampaign.color }} aria-hidden="true" />
-                          ) : null}
-                        </div>
-
-                        <div className="grid gap-3 lg:grid-cols-2">
-                          <div className="grid gap-2">
-                            <Select value={form.campaign_id ?? ""} onChange={(event) => selectCampaign(event.target.value)}>
-                              <option value="">بدون کمپین</option>
-                              {campaigns.map((campaign) => (
-                                <option key={campaign.id} value={campaign.id}>
-                                  {campaign.name} · {campaign.post_count} پست
-                                </option>
-                              ))}
-                            </Select>
-
-                            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                              <Input value={quickCampaignName} onChange={(event) => setQuickCampaignName(event.target.value)} placeholder="نام کمپین جدید، مثلاً لانچ خرداد" />
-                              <Button type="button" variant="secondary" size="sm" onClick={quickCreateCampaign} disabled={creatingCampaign}>
-                                <Plus className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                                {creatingCampaign ? "در حال ساخت" : "ساخت"}
-                              </Button>
-                            </div>
-                            {selectedCampaign ? (
-                              <p className="line-clamp-2 text-xs leading-5 text-app-muted">{selectedCampaign.goal || selectedCampaign.notes || "هدف کمپین هنوز تعریف نشده است."}</p>
-                            ) : null}
-                          </div>
-
-                          <div className="rounded-md bg-app-surfaceMuted/85 p-2.5 shadow-hairline">
-                            <button
-                              type="button"
-                              onClick={() => setShowOptionalDetails((current) => !current)}
-                              className="flex w-full items-center justify-between gap-3 text-right"
-                              aria-expanded={showOptionalDetails}
-                            >
-                              <span className="flex min-w-0 items-center gap-2">
-                                <SlidersHorizontal className="h-4 w-4 shrink-0 text-app-primary" aria-hidden="true" />
-                                <span>
-                                  <span className="block text-sm font-black text-app-text">یادداشت داخلی</span>
-                                  <span className="mt-1 block text-xs text-app-muted">{form.internal_note ? "یادداشت ثبت شده است." : "برای تیم و تاییدها اختیاری است."}</span>
-                                </span>
-                              </span>
-                              <ChevronDown className={`h-4 w-4 text-app-muted transition ${showOptionalDetails ? "rotate-180" : ""}`} aria-hidden="true" />
-                            </button>
-                            {showOptionalDetails ? (
-                              <Textarea
-                                value={form.internal_note}
-                                onChange={(event) => updateField("internal_note", event.target.value)}
-                                className="mt-3 min-h-24"
-                                placeholder="نکته برای تیم، تایید مدیر یا دلیل زمان‌بندی..."
-                              />
-                            ) : null}
-                          </div>
-                        </div>
-                      </section>
-                    </div>
-                  ) : null}
+                  <MediaGalleryPicker
+                    assets={mediaAssets}
+                    campaigns={campaigns}
+                    posts={posts}
+                    previewUrls={mediaPreviewUrls}
+                    selectedMediaId={selectedMediaId}
+                    activeCampaignId={form.campaign_id}
+                    loading={loading}
+                    onSelect={(assetId) => {
+                      setSelectedMediaId(assetId);
+                      setSelectedFile(null);
+                      if (message) setMessage("");
+                    }}
+                  />
                 </div>
-              </WorkspacePanel>
+              ) : null}
 
-              {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
-              {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
-            </section>
-
-            <aside className="min-w-0 space-y-3 xl:sticky xl:top-24 xl:self-start">
-              <WorkspacePanel
-                title="بازرس انتشار"
-                description="پیش‌نمایش، زمان‌بندی و کنترل نهایی در یک پنل ثابت."
-                action={<StatusToken tone={publishTone}>{publishStateLabel}</StatusToken>}
-                bodyClassName="p-0"
-              >
-                <div className="grid grid-cols-3 border-b border-app-border bg-app-surfaceMuted p-1">
-                  {studioPanels.map((panel) => {
-                    const Icon = panel.icon;
-                    const active = studioPanel === panel.value;
-                    return (
-                      <button
-                        key={panel.value}
-                        type="button"
-                        onClick={() => setStudioPanel(panel.value)}
-                        className={`app-interactive relative flex min-w-0 flex-col items-center gap-1 rounded-md px-2 py-2 text-[11px] font-black ${
-                          active ? "bg-app-surface text-app-primary shadow-sm" : "text-app-muted hover:text-app-text"
-                        }`}
-                      >
-                        <Icon className="h-4 w-4" aria-hidden="true" />
-                        <span className="truncate">{panel.label}</span>
-                        <span className={`absolute left-2 top-2 h-1.5 w-1.5 rounded-full ${panel.ready ? "bg-emerald-500" : "bg-app-border"}`} />
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="p-3">
-                  {studioPanel === "preview" ? (
-                    <div>
-                      <div className="mb-3 flex items-center justify-between gap-2">
-                        <p className="text-xs font-black text-app-text">خروجی مخاطب</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          <ChannelBadges platform={form.platform} compact />
-                        </div>
+              {workspaceMode === "workflow" ? (
+                <div className="grid gap-3">
+                  <section className="rounded-md border border-app-border bg-app-surface/72 p-3 shadow-hairline backdrop-blur">
+                    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                      <div>
+                        <p className="text-sm font-black text-app-text">کانال انتشار</p>
+                        <p className="mt-1 text-xs leading-5 text-app-muted">برای هر کانال، محدودیت انتشار و آمادگی را قبل از زمان‌بندی ببینید.</p>
                       </div>
-                      <RubikaPostPreview imageUrl={previewImageUrl} caption={finalPreview} destination={store?.name || "کانال روبیکا"} brandColor={store?.brand_primary_color} avatarUrl={brandAvatarUrl} />
-                      <div className="mt-3 grid grid-cols-3 divide-x divide-x-reverse divide-app-border overflow-hidden rounded-md bg-app-surfaceMuted text-center shadow-hairline">
-                        <div className="p-2"><p className="text-sm font-black text-app-text">{captionLength}</p><p className="mt-1 text-[10px] text-app-muted">کاراکتر</p></div>
-                        <div className="p-2"><p className="text-sm font-black text-app-text">{hashtagCount}</p><p className="mt-1 text-[10px] text-app-muted">هشتگ</p></div>
-                        <div className="p-2"><p className="text-sm font-black text-app-text">{previewImageUrl ? "1" : "0"}</p><p className="mt-1 text-[10px] text-app-muted">رسانه</p></div>
-                      </div>
+                      <ChannelBadges platform={form.platform} />
                     </div>
-                  ) : null}
-
-                  {studioPanel === "schedule" ? (
-                    <ComposerSchedulePanel
-                      scheduledAt={form.scheduled_at}
-                      timezone={timezone}
-                      onChange={(value) => updateField("scheduled_at", value)}
-                    />
-                  ) : null}
-
-                  {studioPanel === "review" ? (
-                    <div>
-                      <div className="mb-3 flex items-center justify-between gap-2">
-                        <p className="text-xs font-black text-app-text">کنترل پیش از انتشار</p>
-                        <StatusToken tone={canSchedule ? "success" : "warning"}>{canSchedule ? "آماده صف" : "نیازمند تکمیل"}</StatusToken>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {channelOptions.map((option) => {
+                        const Icon = option.icon;
+                        const active = selectedChannels.includes(option.value);
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => toggleChannel(option.value)}
+                            className={`app-interactive rounded-md border px-3 py-3 text-right ${
+                              active ? "border-app-primary/30 bg-app-surface text-app-primary shadow-soft" : "border-app-border bg-app-surface/70 text-app-text hover:bg-app-surface"
+                            }`}
+                            aria-pressed={active}
+                          >
+                            <span className="flex items-center gap-2 text-sm font-black">
+                              <Icon className="h-4 w-4" aria-hidden="true" />
+                              {option.label}
+                            </span>
+                            <span className="mt-1 block text-xs leading-5 text-app-muted">{option.description}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {channelNotes.length ? (
+                      <div className="mt-3 space-y-1.5">
+                        {channelNotes.map((note) => <p key={note} className="text-xs leading-5 text-app-muted">{note}</p>)}
                       </div>
-                      {editingPost ? (
-                        <div className="mb-3 rounded-md border border-app-border bg-app-surfaceMuted/70 p-3">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <ApprovalBadge status={editingPost.approval_status} />
-                            {editingPost.reviewed_by ? <StatusToken tone="neutral">{editingPost.reviewed_by}</StatusToken> : null}
-                          </div>
-                          <p className="mt-2 text-xs leading-5 text-app-muted">{approvalConfig(editingPost.approval_status).description}</p>
-                          {editingPost.approval_note ? <p className="mt-2 rounded bg-app-surfaceMuted px-3 py-2 text-xs leading-5 text-app-muted shadow-hairline">{editingPost.approval_note}</p> : null}
-                        </div>
+                    ) : null}
+                  </section>
+
+                  <section className="rounded-md border border-app-border bg-app-surface/72 p-3 shadow-hairline backdrop-blur">
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-black text-app-text">کمپین و یادداشت</p>
+                        <p className="mt-1 text-xs leading-5 text-app-muted">کمپین فقط برای دسته‌بندی، گزارش و برنامه‌ریزی است؛ فرم بزرگ جداگانه ندارد.</p>
+                      </div>
+                      {selectedCampaign ? (
+                        <span className="mt-0.5 h-4 w-4 shrink-0 rounded shadow-hairline" style={{ backgroundColor: selectedCampaign.color }} aria-hidden="true" />
                       ) : null}
-                      <ComposerReadinessChecks items={readinessItems} />
-                      <Button href="/media" variant="secondary" className="mt-4 w-full">کتابخانه رسانه</Button>
+                    </div>
+
+                    <div className="grid gap-3 lg:grid-cols-2">
+                      <div className="grid gap-2">
+                        <Select value={form.campaign_id ?? ""} onChange={(event) => selectCampaign(event.target.value)}>
+                          <option value="">بدون کمپین</option>
+                          {campaigns.map((campaign) => (
+                            <option key={campaign.id} value={campaign.id}>
+                              {campaign.name} · {campaign.post_count} پست
+                            </option>
+                          ))}
+                        </Select>
+
+                        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                          <Input value={quickCampaignName} onChange={(event) => setQuickCampaignName(event.target.value)} placeholder="نام کمپین جدید، مثلاً لانچ خرداد" />
+                          <Button type="button" variant="secondary" size="sm" onClick={quickCreateCampaign} disabled={creatingCampaign}>
+                            <Plus className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                            {creatingCampaign ? "در حال ساخت" : "ساخت"}
+                          </Button>
+                        </div>
+                        {selectedCampaign ? (
+                          <p className="line-clamp-2 text-xs leading-5 text-app-muted">{selectedCampaign.goal || selectedCampaign.notes || "هدف کمپین هنوز تعریف نشده است."}</p>
+                        ) : null}
+                      </div>
+
+                      <div className="rounded-md bg-app-surfaceMuted/85 p-2.5 shadow-hairline">
+                        <button
+                          type="button"
+                          onClick={() => setShowOptionalDetails((current) => !current)}
+                          className="flex w-full items-center justify-between gap-3 text-right"
+                          aria-expanded={showOptionalDetails}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            <SlidersHorizontal className="h-4 w-4 shrink-0 text-app-primary" aria-hidden="true" />
+                            <span>
+                              <span className="block text-sm font-black text-app-text">یادداشت داخلی</span>
+                              <span className="mt-1 block text-xs text-app-muted">{form.internal_note ? "یادداشت ثبت شده است." : "برای تیم و تاییدها اختیاری است."}</span>
+                            </span>
+                          </span>
+                          <ChevronDown className={`h-4 w-4 text-app-muted transition ${showOptionalDetails ? "rotate-180" : ""}`} aria-hidden="true" />
+                        </button>
+                        {showOptionalDetails ? (
+                          <Textarea
+                            value={form.internal_note}
+                            onChange={(event) => updateField("internal_note", event.target.value)}
+                            className="mt-3 min-h-24"
+                            placeholder="نکته برای تیم، تایید مدیر یا دلیل زمان‌بندی..."
+                          />
+                        ) : null}
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              ) : null}
+            </div>
+          </WorkspacePanel>
+
+          {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
+          {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
+        </section>
+
+        <aside className="min-w-0 space-y-3 xl:sticky xl:top-24 xl:self-start">
+          <WorkspacePanel
+            title="بازرس انتشار"
+            description="پیش‌نمایش، زمان‌بندی و کنترل نهایی در یک پنل ثابت."
+            action={<StatusToken tone={publishTone}>{publishStateLabel}</StatusToken>}
+            bodyClassName="p-0"
+          >
+            <div className="grid grid-cols-3 border-b border-app-border bg-app-surfaceMuted p-1">
+              {studioPanels.map((panel) => {
+                const Icon = panel.icon;
+                const active = studioPanel === panel.value;
+                return (
+                  <button
+                    key={panel.value}
+                    type="button"
+                    onClick={() => setStudioPanel(panel.value)}
+                    className={`app-interactive relative flex min-w-0 flex-col items-center gap-1 rounded-md px-2 py-2 text-[11px] font-black ${
+                      active ? "bg-app-surface text-app-primary shadow-sm" : "text-app-muted hover:text-app-text"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    <span className="truncate">{panel.label}</span>
+                    <span className={`absolute left-2 top-2 h-1.5 w-1.5 rounded-full ${panel.ready ? "bg-emerald-500" : "bg-app-border"}`} />
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="p-3">
+              {studioPanel === "preview" ? (
+                <div>
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <p className="text-xs font-black text-app-text">خروجی مخاطب</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      <ChannelBadges platform={form.platform} compact />
+                    </div>
+                  </div>
+                  <RubikaPostPreview imageUrl={previewImageUrl} caption={finalPreview} destination={store?.name || "کانال روبیکا"} brandColor={store?.brand_primary_color} avatarUrl={brandAvatarUrl} />
+                  <div className="mt-3 grid grid-cols-3 divide-x divide-x-reverse divide-app-border overflow-hidden rounded-md bg-app-surfaceMuted text-center shadow-hairline">
+                    <div className="p-2"><p className="text-sm font-black text-app-text">{captionLength}</p><p className="mt-1 text-[10px] text-app-muted">کاراکتر</p></div>
+                    <div className="p-2"><p className="text-sm font-black text-app-text">{hashtagCount}</p><p className="mt-1 text-[10px] text-app-muted">هشتگ</p></div>
+                    <div className="p-2"><p className="text-sm font-black text-app-text">{previewImageUrl ? "1" : "0"}</p><p className="mt-1 text-[10px] text-app-muted">رسانه</p></div>
+                  </div>
+                </div>
+              ) : null}
+
+              {studioPanel === "schedule" ? (
+                <ComposerSchedulePanel
+                  scheduledAt={form.scheduled_at}
+                  timezone={timezone}
+                  onChange={(value) => updateField("scheduled_at", value)}
+                />
+              ) : null}
+
+              {studioPanel === "review" ? (
+                <div>
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <p className="text-xs font-black text-app-text">کنترل پیش از انتشار</p>
+                    <StatusToken tone={canSchedule ? "success" : "warning"}>{canSchedule ? "آماده صف" : "نیازمند تکمیل"}</StatusToken>
+                  </div>
+                  {editingPost ? (
+                    <div className="mb-3 rounded-md border border-app-border bg-app-surfaceMuted/70 p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <ApprovalBadge status={editingPost.approval_status} />
+                        {editingPost.reviewed_by ? <StatusToken tone="neutral">{editingPost.reviewed_by}</StatusToken> : null}
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-app-muted">{approvalConfig(editingPost.approval_status).description}</p>
+                      {editingPost.approval_note ? <p className="mt-2 rounded bg-app-surfaceMuted px-3 py-2 text-xs leading-5 text-app-muted shadow-hairline">{editingPost.approval_note}</p> : null}
                     </div>
                   ) : null}
+                  <ComposerReadinessChecks items={readinessItems} />
+                  <Button href="/media" variant="secondary" className="mt-4 w-full">کتابخانه رسانه</Button>
                 </div>
-              </WorkspacePanel>
-            </aside>
-
-            <div className="xl:col-span-2">
-              <ComposerActionFooter
-                savingAction={savingAction}
-                canSaveDraft={canSaveDraft}
-                canMarkReady={canMarkReady}
-                canSchedule={canSchedule}
-                hasSchedule={hasSchedule}
-                isEditing={isEditing}
-                onUseDefaults={applyDefaults}
-                onCancel={resetComposer}
-                autosaveLabel={!isEditing ? autosaveLabel : undefined}
-                onSaveDraft={() => persistPost("draft")}
-                onMarkReady={() => persistPost("ready")}
-                onSchedule={() => persistPost("schedule")}
-              />
+              ) : null}
             </div>
-          </form>
-        </WorkspacePage>
-);
+          </WorkspacePanel>
+        </aside>
+
+        <div className="xl:col-span-2">
+          <ComposerActionFooter
+            savingAction={savingAction}
+            canSaveDraft={canSaveDraft}
+            canMarkReady={canMarkReady}
+            canSchedule={canSchedule}
+            hasSchedule={hasSchedule}
+            isEditing={isEditing}
+            onUseDefaults={applyDefaults}
+            onCancel={resetComposer}
+            autosaveLabel={!isEditing ? autosaveLabel : undefined}
+            onSaveDraft={() => persistPost("draft")}
+            onMarkReady={() => persistPost("ready")}
+            onSchedule={() => persistPost("schedule")}
+          />
+        </div>
+      </form>
+    </WorkspacePage>
+  );
 }
 
 export default function ComposePage() {

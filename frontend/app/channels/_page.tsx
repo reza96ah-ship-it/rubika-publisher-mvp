@@ -138,136 +138,136 @@ export default function ChannelsPage() {
   ], [instagram, instagramIsReady, rubika, rubikaReady]);
 
   return (
-<WorkspacePage className="space-y-4">
-          <section className="app-studio-panel rounded-lg px-4 py-4">
-            <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
-              <div>
-                <p className="text-[10px] font-black text-app-primary">Channels Hub</p>
-                <h1 className="mt-1 text-2xl font-black text-app-text">مرکز کانال‌های انتشار</h1>
-                <p className="mt-2 max-w-3xl text-sm leading-7 text-app-muted">
-                  روبیکا و اینستاگرام از اینجا به عنوان کانال‌های مستقل مدیریت می‌شوند؛ هر کانال وضعیت، قابلیت، محدودیت و مسیر بازیابی خودش را دارد.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <StatusToken tone={readyCount ? "success" : "warning"}>{readyCount}/2 کانال آماده</StatusToken>
-                <StatusToken tone="neutral">Rubika + Instagram</StatusToken>
-                <Button href="/compose" size="sm">ساخت محتوای چندکاناله</Button>
-              </div>
-            </div>
-          </section>
+    <WorkspacePage className="space-y-4">
+      <section className="app-studio-panel rounded-lg px-4 py-4">
+        <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+          <div>
+            <p className="text-[10px] font-black text-app-primary">Channels Hub</p>
+            <h1 className="mt-1 text-2xl font-black text-app-text">مرکز کانال‌های انتشار</h1>
+            <p className="mt-2 max-w-3xl text-sm leading-7 text-app-muted">
+              روبیکا و اینستاگرام از اینجا به عنوان کانال‌های مستقل مدیریت می‌شوند؛ هر کانال وضعیت، قابلیت، محدودیت و مسیر بازیابی خودش را دارد.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <StatusToken tone={readyCount ? "success" : "warning"}>{readyCount}/2 کانال آماده</StatusToken>
+            <StatusToken tone="neutral">Rubika + Instagram</StatusToken>
+            <Button href="/compose" size="sm">ساخت محتوای چندکاناله</Button>
+          </div>
+        </div>
+      </section>
 
-          {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
-          {loading ? <LoadingPanel /> : null}
+      {error ? <NoticeBanner tone="alert">{error}</NoticeBanner> : null}
+      {loading ? <LoadingPanel /> : null}
 
-          {!loading ? (
-            <>
-              <section className="grid gap-4 lg:grid-cols-2">
-                {channelCards.map((channel) => {
-                  const Icon = channel.icon;
-                  return (
-                    <WorkspacePanel
-                      key={channel.key}
-                      title={channel.title}
-                      description={channel.description}
-                      action={<StatusToken tone={channel.tone}>{channel.status}</StatusToken>}
-                      bodyClassName="p-4"
-                    >
-                      <div className="flex items-start gap-3">
-                        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${channel.tone === "success" ? "bg-teal-50 text-teal-700" : "bg-amber-50 text-amber-700"}`}>
-                          <Icon className="h-5 w-5" aria-hidden="true" />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <StatusToken tone="neutral">{channel.mode}</StatusToken>
-                            {channel.tone === "success" ? <StatusToken tone="success">قابل استفاده</StatusToken> : <StatusToken tone="warning">نیازمند اقدام</StatusToken>}
-                          </div>
-                          <div className="mt-4">
-                            <DetailGrid items={channel.facts} />
-                          </div>
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <Button href={channel.href}>{channel.primaryAction}</Button>
-                            <Button href="/queue" variant="secondary">صف انتشار</Button>
-                          </div>
-                        </div>
+      {!loading ? (
+        <>
+          <section className="grid gap-4 lg:grid-cols-2">
+            {channelCards.map((channel) => {
+              const Icon = channel.icon;
+              return (
+                <WorkspacePanel
+                  key={channel.key}
+                  title={channel.title}
+                  description={channel.description}
+                  action={<StatusToken tone={channel.tone}>{channel.status}</StatusToken>}
+                  bodyClassName="p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${channel.tone === "success" ? "bg-teal-50 text-teal-700" : "bg-amber-50 text-amber-700"}`}>
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusToken tone="neutral">{channel.mode}</StatusToken>
+                        {channel.tone === "success" ? <StatusToken tone="success">قابل استفاده</StatusToken> : <StatusToken tone="warning">نیازمند اقدام</StatusToken>}
                       </div>
-                    </WorkspacePanel>
-                  );
-                })}
-              </section>
-
-              <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-                <WorkspacePanel title="ماتریس قابلیت کانال‌ها" description="این جدول نشان می‌دهد هر کانال در وضعیت فعلی چه کاری را پشتیبانی می‌کند." bodyClassName="p-0">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-right text-sm">
-                      <thead className="bg-app-surfaceMuted text-[11px] font-black text-app-muted">
-                        <tr>
-                          <th className="px-4 py-3">قابلیت</th>
-                          <th className="px-4 py-3">روبیکا</th>
-                          <th className="px-4 py-3">اینستاگرام</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-app-border">
-                        {capabilities.map((capability) => (
-                          <tr key={capability.label}>
-                            <td className="px-4 py-3 font-bold text-app-text">{capability.label}</td>
-                            <td className="px-4 py-3">{capabilityToken(capability.rubika)}</td>
-                            <td className="px-4 py-3">{capabilityToken(capability.instagram)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                      <div className="mt-4">
+                        <DetailGrid items={channel.facts} />
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Button href={channel.href}>{channel.primaryAction}</Button>
+                        <Button href="/queue" variant="secondary">صف انتشار</Button>
+                      </div>
+                    </div>
                   </div>
                 </WorkspacePanel>
+              );
+            })}
+          </section>
 
-                <aside className="space-y-4">
-                  <WorkspacePanel title="مسیر آماده‌سازی کانال‌ها" description="گام‌های لازم برای خروج از حالت MVP و ورود به مدیریت چندکاناله." bodyClassName="p-4">
-                    <div className="space-y-3">
-                      {[
-                        { label: "روبیکا خودکار", detail: rubikaReady ? "تست اتصال معتبر است." : "توکن، مقصد و تست تازه لازم است.", done: rubikaReady, icon: RadioTower },
-                        { label: "اینستاگرام دستی", detail: instagram?.mode === "instagram_personal_manual" && instagramIsReady ? "یادآوری دستی فعال است." : "برای اکانت معمولی حالت Manual reminder را فعال کنید.", done: instagram?.mode === "instagram_personal_manual" && instagramIsReady, icon: Clock3 },
-                        { label: "مدل ChannelAccount", detail: "روبیکا و اینستاگرام از API مشترک کانال‌ها خوانده می‌شوند.", done: true, icon: Network },
-                        { label: "انتشار قابل حسابرسی", detail: "هر کانال باید job، attempt و recovery مستقل داشته باشد.", done: false, icon: ShieldCheck }
-                      ].map((step) => {
-                        const Icon = step.done ? BadgeCheck : step.icon;
-                        return (
-                          <div key={step.label} className={`flex items-start gap-3 rounded-md border p-3 ${step.done ? "border-app-success/30 bg-app-success/10" : "border-app-border bg-app-surface"}`}>
-                            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${step.done ? "bg-app-surface text-app-success" : "bg-app-surfaceMuted text-app-muted"}`}>
-                              <Icon className="h-4 w-4" aria-hidden="true" />
-                            </span>
-                            <div>
-                              <p className="text-sm font-black text-app-text">{step.label}</p>
-                              <p className="mt-1 text-xs leading-5 text-app-muted">{step.detail}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </WorkspacePanel>
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+            <WorkspacePanel title="ماتریس قابلیت کانال‌ها" description="این جدول نشان می‌دهد هر کانال در وضعیت فعلی چه کاری را پشتیبانی می‌کند." bodyClassName="p-0">
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-right text-sm">
+                  <thead className="bg-app-surfaceMuted text-[11px] font-black text-app-muted">
+                    <tr>
+                      <th className="px-4 py-3">قابلیت</th>
+                      <th className="px-4 py-3">روبیکا</th>
+                      <th className="px-4 py-3">اینستاگرام</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-app-border">
+                    {capabilities.map((capability) => (
+                      <tr key={capability.label}>
+                        <td className="px-4 py-3 font-bold text-app-text">{capability.label}</td>
+                        <td className="px-4 py-3">{capabilityToken(capability.rubika)}</td>
+                        <td className="px-4 py-3">{capabilityToken(capability.instagram)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </WorkspacePanel>
 
-                  <NoticeBanner tone={instagram?.mode === "instagram_personal_manual" ? "info" : "warning"} title="اصل مهم اینستاگرام">
-                    اکانت معمولی اینستاگرام نباید به عنوان انتشار خودکار معرفی شود. در این محصول، اکانت معمولی مسیر دستی/یادآوری دارد و انتشار API فقط برای حساب‌های واجد شرایط Meta در فاز OAuth فعال می‌شود.
-                  </NoticeBanner>
+            <aside className="space-y-4">
+              <WorkspacePanel title="مسیر آماده‌سازی کانال‌ها" description="گام‌های لازم برای خروج از حالت MVP و ورود به مدیریت چندکاناله." bodyClassName="p-4">
+                <div className="space-y-3">
+                  {[
+                    { label: "روبیکا خودکار", detail: rubikaReady ? "تست اتصال معتبر است." : "توکن، مقصد و تست تازه لازم است.", done: rubikaReady, icon: RadioTower },
+                    { label: "اینستاگرام دستی", detail: instagram?.mode === "instagram_personal_manual" && instagramIsReady ? "یادآوری دستی فعال است." : "برای اکانت معمولی حالت Manual reminder را فعال کنید.", done: instagram?.mode === "instagram_personal_manual" && instagramIsReady, icon: Clock3 },
+                    { label: "مدل ChannelAccount", detail: "روبیکا و اینستاگرام از API مشترک کانال‌ها خوانده می‌شوند.", done: true, icon: Network },
+                    { label: "انتشار قابل حسابرسی", detail: "هر کانال باید job، attempt و recovery مستقل داشته باشد.", done: false, icon: ShieldCheck }
+                  ].map((step) => {
+                    const Icon = step.done ? BadgeCheck : step.icon;
+                    return (
+                      <div key={step.label} className={`flex items-start gap-3 rounded-md border p-3 ${step.done ? "border-app-success/30 bg-app-success/10" : "border-app-border bg-app-surface"}`}>
+                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${step.done ? "bg-app-surface text-app-success" : "bg-app-surfaceMuted text-app-muted"}`}>
+                          <Icon className="h-4 w-4" aria-hidden="true" />
+                        </span>
+                        <div>
+                          <p className="text-sm font-black text-app-text">{step.label}</p>
+                          <p className="mt-1 text-xs leading-5 text-app-muted">{step.detail}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </WorkspacePanel>
 
-                  <WorkspacePanel title="اقدام بعدی پیشنهادی" description="بعد از مدل مشترک کانال، باید قابلیت‌ها وارد composer، queue و analytics شوند.">
-                    <div className="grid gap-2">
-                      <Button href="/rubika" variant="secondary">
-                        <Send className="ml-2 h-4 w-4" aria-hidden="true" />
-                        تنظیم روبیکا
-                      </Button>
-                      <Button href="/instagram" variant="secondary">
-                        <Instagram className="ml-2 h-4 w-4" aria-hidden="true" />
-                        تنظیم اینستاگرام
-                      </Button>
-                      <Button href="/queue" variant="secondary">
-                        <AlertTriangle className="ml-2 h-4 w-4" aria-hidden="true" />
-                        بررسی صف و وظایف دستی
-                      </Button>
-                    </div>
-                  </WorkspacePanel>
-                </aside>
-              </section>
-            </>
-          ) : null}
-        </WorkspacePage>
-);
+              <NoticeBanner tone={instagram?.mode === "instagram_personal_manual" ? "info" : "warning"} title="اصل مهم اینستاگرام">
+                اکانت معمولی اینستاگرام نباید به عنوان انتشار خودکار معرفی شود. در این محصول، اکانت معمولی مسیر دستی/یادآوری دارد و انتشار API فقط برای حساب‌های واجد شرایط Meta در فاز OAuth فعال می‌شود.
+              </NoticeBanner>
+
+              <WorkspacePanel title="اقدام بعدی پیشنهادی" description="بعد از مدل مشترک کانال، باید قابلیت‌ها وارد composer، queue و analytics شوند.">
+                <div className="grid gap-2">
+                  <Button href="/rubika" variant="secondary">
+                    <Send className="ml-2 h-4 w-4" aria-hidden="true" />
+                    تنظیم روبیکا
+                  </Button>
+                  <Button href="/instagram" variant="secondary">
+                    <Instagram className="ml-2 h-4 w-4" aria-hidden="true" />
+                    تنظیم اینستاگرام
+                  </Button>
+                  <Button href="/queue" variant="secondary">
+                    <AlertTriangle className="ml-2 h-4 w-4" aria-hidden="true" />
+                    بررسی صف و وظایف دستی
+                  </Button>
+                </div>
+              </WorkspacePanel>
+            </aside>
+          </section>
+        </>
+      ) : null}
+    </WorkspacePage>
+  );
 }

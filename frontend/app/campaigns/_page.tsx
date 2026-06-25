@@ -930,672 +930,672 @@ export default function CampaignsPage() {
   }
 
   return (
-<WorkspacePage className="campaigns-pro-page">
-          <PublishingWorkspaceHeader
-            activeTab="campaigns"
-            title="مرکز کمپین‌ها"
-            description="سلامت، برنامه انتشار، پست‌ها و دارایی‌های هر کمپین را در یک نمای عملیاتی مدیریت کنید."
-            counts={{ campaigns: campaigns.length, content: posts.length, queue: posts.filter(isQueued).length }}
+    <WorkspacePage className="campaigns-pro-page">
+      <PublishingWorkspaceHeader
+        activeTab="campaigns"
+        title="مرکز کمپین‌ها"
+        description="سلامت، برنامه انتشار، پست‌ها و دارایی‌های هر کمپین را در یک نمای عملیاتی مدیریت کنید."
+        counts={{ campaigns: campaigns.length, content: posts.length, queue: posts.filter(isQueued).length }}
+        meta={(
+          <>
+            <StatusToken tone="primary">{activeCount} کمپین فعال</StatusToken>
+            <StatusToken tone="neutral">{campaigns.length} کل کمپین</StatusToken>
+            <StatusToken tone={posts.some((post) => post.status === "failed") ? "alert" : "success"}>
+              {posts.filter((post) => post.status === "failed").length || "بدون"} خطای انتشار
+            </StatusToken>
+          </>
+        )}
+        action={(
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="secondary" size="sm" disabled={refreshing} onClick={() => loadWorkspace(true)}>
+              <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
+              به‌روزرسانی
+            </Button>
+            <Button type="button" variant="secondary" size="sm" onClick={startNewCampaign}>
+              <Target className="ml-2 h-4 w-4" aria-hidden="true" />
+              کمپین جدید
+            </Button>
+            <Button href="/compose" size="sm">
+              <Plus className="ml-2 h-4 w-4" aria-hidden="true" />
+              پست جدید
+            </Button>
+          </div>
+        )}
+      />
+
+      {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
+      {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
+
+      {selectedRow ? (
+        <>
+          <section className="campaign-command-strip" style={{ "--campaign-accent": selectedRow.campaign.color } as CSSProperties}>
+            <div className="campaign-command-copy">
+              <p className="app-section-kicker text-[10px] font-black">اتاق فرمان کمپین</p>
+              <h2>{selectedRow.campaign.name}</h2>
+              <p>{selectedRow.campaign.goal || selectedRow.campaign.notes || "هدف کمپین را کامل کنید تا برنامه انتشار دقیق‌تر شود."}</p>
+            </div>
+            <div className="campaign-command-actions">
+              <Button href={`/calendar?campaignId=${selectedRow.campaign.id}`} size="sm">
+                <CalendarDays className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                تقویم کمپین
+              </Button>
+              <Button href={`/compose?campaignId=${selectedRow.campaign.id}`} variant="secondary" size="sm">
+                <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                پست برای کمپین
+              </Button>
+              <Button href={`/media?campaignId=${selectedRow.campaign.id}`} variant="ghost" size="sm">
+                رسانه‌ها
+              </Button>
+            </div>
+          </section>
+          <section className="dashboard-kpi-strip campaign-command-metrics grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="خلاصه کمپین انتخاب‌شده">
+            <NMetricTile label="پست‌ها" value={selectedRow.stats.total} detail="محتوای متصل به کمپین" icon={Target} tone="primary" />
+            <NMetricTile label="سلامت" value={`${selectedRow.stats.health}%`} detail="کیفیت عملیاتی کمپین" icon={CheckCircle2} tone={healthTone} />
+            <NMetricTile label="در جریان" value={queuedCount} detail="آماده، زمان‌بندی یا انتشار" icon={TimerReset} tone="info" />
+            <NMetricTile label="ریسک" value={failedCount} detail="خطا یا نیازمند بررسی" icon={AlertTriangle} tone={failedCount ? "alert" : "success"} />
+          </section>
+        </>
+      ) : null}
+
+      <section className="campaign-manager-shell">
+        <WorkspacePanel
+          title="پورتفولیوی کمپین"
+          description="کمپین‌ها را بر اساس وضعیت، سلامت و حجم محتوای متصل بررسی کنید."
+          action={<StatusToken tone="neutral">{campaignRows.length} نتیجه</StatusToken>}
+          className="campaign-portfolio-panel"
+        >
+          <DataToolbar
             meta={(
               <>
-                <StatusToken tone="primary">{activeCount} کمپین فعال</StatusToken>
-                <StatusToken tone="neutral">{campaigns.length} کل کمپین</StatusToken>
-                <StatusToken tone={posts.some((post) => post.status === "failed") ? "alert" : "success"}>
-                  {posts.filter((post) => post.status === "failed").length || "بدون"} خطای انتشار
-                </StatusToken>
+                <StatusToken tone="neutral">{campaigns.length} کمپین</StatusToken>
+                <StatusToken tone="neutral">{posts.filter((post) => post.campaign_id).length} پست متصل</StatusToken>
               </>
             )}
-            action={(
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="secondary" size="sm" disabled={refreshing} onClick={() => loadWorkspace(true)}>
-                  <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
-                  به‌روزرسانی
-                </Button>
-                <Button type="button" variant="secondary" size="sm" onClick={startNewCampaign}>
-                  <Target className="ml-2 h-4 w-4" aria-hidden="true" />
-                  کمپین جدید
-                </Button>
-                <Button href="/compose" size="sm">
-                  <Plus className="ml-2 h-4 w-4" aria-hidden="true" />
-                  پست جدید
-                </Button>
-              </div>
-            )}
-          />
+          >
+            <DataSearchField value={search} onChange={(event) => setSearch(event.target.value)} placeholder="جست‌وجوی نام، هدف، مالک یا یادداشت کمپین" />
+          </DataToolbar>
 
-          {error ? <NoticeBanner tone="alert" title="نیاز به بررسی">{error}</NoticeBanner> : null}
-          {message ? <NoticeBanner tone="success" title="انجام شد">{message}</NoticeBanner> : null}
+          {loading ? <LoadingRows rows={5} /> : null}
 
-          {selectedRow ? (
-            <>
-              <section className="campaign-command-strip" style={{ "--campaign-accent": selectedRow.campaign.color } as CSSProperties}>
-                <div className="campaign-command-copy">
-                  <p className="app-section-kicker text-[10px] font-black">اتاق فرمان کمپین</p>
-                  <h2>{selectedRow.campaign.name}</h2>
-                  <p>{selectedRow.campaign.goal || selectedRow.campaign.notes || "هدف کمپین را کامل کنید تا برنامه انتشار دقیق‌تر شود."}</p>
-                </div>
-                <div className="campaign-command-actions">
-                  <Button href={`/calendar?campaignId=${selectedRow.campaign.id}`} size="sm">
-                    <CalendarDays className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                    تقویم کمپین
-                  </Button>
-                  <Button href={`/compose?campaignId=${selectedRow.campaign.id}`} variant="secondary" size="sm">
-                    <Plus className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                    پست برای کمپین
-                  </Button>
-                  <Button href={`/media?campaignId=${selectedRow.campaign.id}`} variant="ghost" size="sm">
-                    رسانه‌ها
-                  </Button>
-                </div>
-              </section>
-              <section className="dashboard-kpi-strip campaign-command-metrics grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="خلاصه کمپین انتخاب‌شده">
-                <NMetricTile label="پست‌ها" value={selectedRow.stats.total} detail="محتوای متصل به کمپین" icon={Target} tone="primary" />
-                <NMetricTile label="سلامت" value={`${selectedRow.stats.health}%`} detail="کیفیت عملیاتی کمپین" icon={CheckCircle2} tone={healthTone} />
-                <NMetricTile label="در جریان" value={queuedCount} detail="آماده، زمان‌بندی یا انتشار" icon={TimerReset} tone="info" />
-                <NMetricTile label="ریسک" value={failedCount} detail="خطا یا نیازمند بررسی" icon={AlertTriangle} tone={failedCount ? "alert" : "success"} />
-              </section>
-            </>
+          {!loading && campaignRows.length === 0 ? (
+            <div className="mt-4">
+              <EmptyState
+                icon={<Target className="h-5 w-5" aria-hidden="true" />}
+                title="هنوز کمپین قابل نمایش وجود ندارد"
+                description="از استودیو تولید محتوا یک کمپین سریع بسازید یا پست‌ها را به کمپین‌های موجود وصل کنید."
+                action={<Button type="button" onClick={startNewCampaign}>ساخت کمپین</Button>}
+              />
+            </div>
           ) : null}
 
-          <section className="campaign-manager-shell">
-            <WorkspacePanel
-              title="پورتفولیوی کمپین"
-              description="کمپین‌ها را بر اساس وضعیت، سلامت و حجم محتوای متصل بررسی کنید."
-              action={<StatusToken tone="neutral">{campaignRows.length} نتیجه</StatusToken>}
-              className="campaign-portfolio-panel"
-            >
-              <DataToolbar
-                meta={(
-                  <>
-                    <StatusToken tone="neutral">{campaigns.length} کمپین</StatusToken>
-                    <StatusToken tone="neutral">{posts.filter((post) => post.campaign_id).length} پست متصل</StatusToken>
-                  </>
-                )}
-              >
-                <DataSearchField value={search} onChange={(event) => setSearch(event.target.value)} placeholder="جست‌وجوی نام، هدف، مالک یا یادداشت کمپین" />
-              </DataToolbar>
+          <div className="campaign-card-list mt-3">
+            {campaignRows.map((row) => {
+              const selected = selectedRow?.campaign.id === row.campaign.id;
+              return (
+                <button
+                  key={row.campaign.id}
+                  type="button"
+                  onClick={() => selectCampaign(row.campaign)}
+                  className={`campaign-card-row app-interactive ${selected ? "campaign-card-row-active" : ""}`}
+                  style={{ "--campaign-accent": row.campaign.color } as CSSProperties}
+                >
+                  <span className="campaign-card-main">
+                    <span className="campaign-card-mark" />
+                    <span className="campaign-card-copy">
+                      <span className="campaign-card-title-row">
+                        <span className="campaign-card-title">{row.campaign.name}</span>
+                        <StatusToken tone={campaignStatusTone(row.campaign.status)}>{statusLabels[row.campaign.status] ?? row.campaign.status}</StatusToken>
+                      </span>
+                      <span className="campaign-card-goal">{row.campaign.goal || row.campaign.notes || "هدف کمپین هنوز تعریف نشده است."}</span>
+                    </span>
+                  </span>
+                  <span className="campaign-card-stats">
+                    <span><strong>{row.stats.total}</strong> پست</span>
+                    <span><strong>{row.stats.published}</strong> منتشر</span>
+                    <span><strong className={row.stats.failed ? "text-rose-700" : ""}>{row.stats.failed}</strong> خطا</span>
+                  </span>
+                  <span className="campaign-card-health">
+                    <span>
+                      <span>سلامت</span>
+                      <strong>{row.stats.health}%</strong>
+                    </span>
+                    <span className="campaign-health-track">
+                      <span style={{ width: `${row.stats.health}%`, backgroundColor: row.stats.health >= 76 ? "#059669" : row.stats.health >= 50 ? "#D97706" : "#E11D48" }} />
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </WorkspacePanel>
 
-              {loading ? <LoadingRows rows={5} /> : null}
-
-              {!loading && campaignRows.length === 0 ? (
-                <div className="mt-4">
-                  <EmptyState
-                    icon={<Target className="h-5 w-5" aria-hidden="true" />}
-                    title="هنوز کمپین قابل نمایش وجود ندارد"
-                    description="از استودیو تولید محتوا یک کمپین سریع بسازید یا پست‌ها را به کمپین‌های موجود وصل کنید."
-                    action={<Button type="button" onClick={startNewCampaign}>ساخت کمپین</Button>}
-                  />
+        <aside className="campaign-management-stack">
+          <WorkspacePanel
+            title="جزئیات کمپین"
+            description="سلامت، زمان‌بندی و ریسک‌های کمپین انتخاب‌شده."
+            bodyClassName="p-3 sm:p-4"
+            action={selectedRow ? <Button type="button" variant="secondary" size="sm" onClick={() => openEditCampaign(selectedRow.campaign)}>ویرایش</Button> : null}
+          >
+            {selectedRow ? (
+              <div className="campaign-selected-inspector">
+                <div className="campaign-detail-hero-card" style={{ "--campaign-accent": selectedRow.campaign.color } as CSSProperties}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-black text-app-muted">کمپین انتخاب‌شده</p>
+                      <h2 className="mt-1 truncate text-lg font-black text-app-text">{selectedRow.campaign.name}</h2>
+                    </div>
+                    <span className="campaign-detail-swatch" />
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-app-muted">{selectedRow.campaign.goal || selectedRow.campaign.notes || "هدف و یادداشت کمپین هنوز تکمیل نشده است."}</p>
                 </div>
-              ) : null}
 
-              <div className="campaign-card-list mt-3">
-                {campaignRows.map((row) => {
-                  const selected = selectedRow?.campaign.id === row.campaign.id;
-                  return (
-                    <button
-                      key={row.campaign.id}
-                      type="button"
-                      onClick={() => selectCampaign(row.campaign)}
-                      className={`campaign-card-row app-interactive ${selected ? "campaign-card-row-active" : ""}`}
-                      style={{ "--campaign-accent": row.campaign.color } as CSSProperties}
-                    >
-                      <span className="campaign-card-main">
-                        <span className="campaign-card-mark" />
-                        <span className="campaign-card-copy">
-                          <span className="campaign-card-title-row">
-                            <span className="campaign-card-title">{row.campaign.name}</span>
-                            <StatusToken tone={campaignStatusTone(row.campaign.status)}>{statusLabels[row.campaign.status] ?? row.campaign.status}</StatusToken>
-                          </span>
-                          <span className="campaign-card-goal">{row.campaign.goal || row.campaign.notes || "هدف کمپین هنوز تعریف نشده است."}</span>
-                        </span>
-                      </span>
-                      <span className="campaign-card-stats">
-                        <span><strong>{row.stats.total}</strong> پست</span>
-                        <span><strong>{row.stats.published}</strong> منتشر</span>
-                        <span><strong className={row.stats.failed ? "text-rose-700" : ""}>{row.stats.failed}</strong> خطا</span>
-                      </span>
-                      <span className="campaign-card-health">
-                        <span>
-                          <span>سلامت</span>
-                          <strong>{row.stats.health}%</strong>
-                        </span>
-                        <span className="campaign-health-track">
-                          <span style={{ width: `${row.stats.health}%`, backgroundColor: row.stats.health >= 76 ? "#059669" : row.stats.health >= 50 ? "#D97706" : "#E11D48" }} />
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </WorkspacePanel>
+                <div className="campaign-selected-facts">
+                  <span>
+                    <small>سلامت</small>
+                    <strong><StatusToken tone={healthTone}>{selectedRow.stats.health}%</StatusToken></strong>
+                  </span>
+                  <span>
+                    <small>وضعیت</small>
+                    <strong>{statusLabels[selectedRow.campaign.status] ?? selectedRow.campaign.status}</strong>
+                  </span>
+                  <span>
+                    <small>مالک</small>
+                    <strong>{selectedRow.campaign.owner || "تعریف نشده"}</strong>
+                  </span>
+                  <span>
+                    <small>بازه</small>
+                    <strong>{formatDateTime(selectedRow.campaign.starts_at)} تا {formatDateTime(selectedRow.campaign.ends_at)}</strong>
+                  </span>
+                </div>
 
-            <aside className="campaign-management-stack">
-              <WorkspacePanel
-                title="جزئیات کمپین"
-                description="سلامت، زمان‌بندی و ریسک‌های کمپین انتخاب‌شده."
-                bodyClassName="p-3 sm:p-4"
-                action={selectedRow ? <Button type="button" variant="secondary" size="sm" onClick={() => openEditCampaign(selectedRow.campaign)}>ویرایش</Button> : null}
-              >
-                {selectedRow ? (
-                  <div className="campaign-selected-inspector">
-                    <div className="campaign-detail-hero-card" style={{ "--campaign-accent": selectedRow.campaign.color } as CSSProperties}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-[11px] font-black text-app-muted">کمپین انتخاب‌شده</p>
-                          <h2 className="mt-1 truncate text-lg font-black text-app-text">{selectedRow.campaign.name}</h2>
+                <div className="campaign-progress-stack">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-xs font-black text-app-text">مسیر اجرای کمپین</p>
+                    <StatusToken tone="neutral">{selectedRow.stats.total} پست</StatusToken>
+                  </div>
+                  {[
+                    { label: "پوشش رسانه", value: selectedRow.stats.media, total: selectedRow.stats.total, color: "rgb(var(--n-color-info))" },
+                    { label: "در جریان انتشار", value: queuedCount, total: selectedRow.stats.total, color: "rgb(var(--n-color-primary))" },
+                    { label: "انتشار موفق", value: selectedRow.stats.published, total: selectedRow.stats.total, color: "rgb(var(--n-color-success))" },
+                    { label: "ریسک خطا", value: failedCount, total: selectedRow.stats.total, color: "rgb(var(--n-color-alert))" }
+                  ].map((item) => {
+                    const ratio = percent(item.value, item.total);
+                    return (
+                      <div key={item.label} className="campaign-progress-row">
+                        <div className="flex items-center justify-between gap-2">
+                          <span>{item.label}</span>
+                          <strong>{ratio}%</strong>
                         </div>
-                        <span className="campaign-detail-swatch" />
+                        <div className="campaign-funnel-track">
+                          <div style={{ width: `${ratio}%`, background: item.color }} />
+                        </div>
                       </div>
-                      <p className="mt-3 text-sm leading-6 text-app-muted">{selectedRow.campaign.goal || selectedRow.campaign.notes || "هدف و یادداشت کمپین هنوز تکمیل نشده است."}</p>
-                    </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <EmptyState title="کمپینی انتخاب نشده است" description="از لیست کمپین‌ها یک مورد را انتخاب کنید." />
+            )}
+          </WorkspacePanel>
 
-                    <div className="campaign-selected-facts">
-                      <span>
-                        <small>سلامت</small>
-                        <strong><StatusToken tone={healthTone}>{selectedRow.stats.health}%</StatusToken></strong>
-                      </span>
-                      <span>
-                        <small>وضعیت</small>
-                        <strong>{statusLabels[selectedRow.campaign.status] ?? selectedRow.campaign.status}</strong>
-                      </span>
-                      <span>
-                        <small>مالک</small>
-                        <strong>{selectedRow.campaign.owner || "تعریف نشده"}</strong>
-                      </span>
-                      <span>
-                        <small>بازه</small>
-                        <strong>{formatDateTime(selectedRow.campaign.starts_at)} تا {formatDateTime(selectedRow.campaign.ends_at)}</strong>
-                      </span>
-                    </div>
+          {editorOpen ? (
+            <div className="campaign-modal-backdrop" role="dialog" aria-modal="true" aria-label={editorMode === "create" ? "ساخت کمپین" : "ویرایش کمپین"} onClick={closeCampaignEditor}>
+              <div className="campaign-modal-panel campaign-editor-panel" onClick={(event) => event.stopPropagation()}>
+                <WorkspacePanel
+                  title={editorMode === "create" ? "ساخت کمپین" : "ویرایش کمپین"}
+                  description={editorMode === "create" ? "کمپین جدید را با هدف، رنگ و مالک مشخص بسازید." : "مشخصات عملیاتی کمپین انتخاب‌شده را به‌روزرسانی کنید."}
+                  bodyClassName="p-3 sm:p-4"
+                  className="scroll-mt-24"
+                  action={editorMode === "create" ? <StatusToken tone="primary">جدید</StatusToken> : selectedRow ? <StatusToken tone={campaignStatusTone(selectedRow.campaign.status)}>{statusLabels[selectedRow.campaign.status] ?? selectedRow.campaign.status}</StatusToken> : null}
+                >
+                  <form id="campaign-editor" onSubmit={saveCampaign} className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_86px]">
+                <Field label="نام کمپین" required>
+                  <Input id="campaign-name-input" value={campaignForm.name} onChange={(event) => updateCampaignField("name", event.target.value)} placeholder="مثلاً لانچ تابستان" required />
+                </Field>
+                <Field label="رنگ">
+                  <Input
+                    value={campaignColorDraft}
+                    onInput={(event) => setCampaignColorDraft(event.currentTarget.value)}
+                    onChange={(event) => setCampaignColorDraft(event.target.value)}
+                    onBlur={(event) => commitCampaignColor(event.currentTarget.value)}
+                    type="color"
+                    className="h-[42px] p-1"
+                    aria-label="رنگ کمپین"
+                  />
+                </Field>
+              </div>
 
-                    <div className="campaign-progress-stack">
-                      <div className="mb-2 flex items-center justify-between gap-3">
-                        <p className="text-xs font-black text-app-text">مسیر اجرای کمپین</p>
-                        <StatusToken tone="neutral">{selectedRow.stats.total} پست</StatusToken>
+              <Field label="هدف کمپین" hint="یک جمله واضح برای خروجی و سنجش کمپین.">
+                <Textarea value={campaignForm.goal} onChange={(event) => updateCampaignField("goal", event.target.value)} className="min-h-20" placeholder="افزایش فروش محصول، معرفی مجموعه جدید یا اطلاع‌رسانی رویداد..." />
+              </Field>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="وضعیت">
+                  <Select value={campaignForm.status} onChange={(event) => updateCampaignField("status", event.target.value as CampaignStatus)}>
+                    {campaignStatusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </Select>
+                </Field>
+                <Field label="مالک">
+                  <Input value={campaignForm.owner} onChange={(event) => updateCampaignField("owner", event.target.value)} placeholder="نام مسئول کمپین" />
+                </Field>
+              </div>
+
+              <div className="grid gap-3">
+                <CampaignJalaliDateField
+                  label="شروع کمپین"
+                  value={campaignForm.starts_at}
+                  open={openCampaignCalendar === "starts_at"}
+                  onOpenChange={(nextOpen) => setOpenCampaignCalendar(nextOpen ? "starts_at" : null)}
+                  onChange={(value) => updateCampaignField("starts_at", value)}
+                />
+                <CampaignJalaliDateField
+                  label="پایان کمپین"
+                  value={campaignForm.ends_at}
+                  open={openCampaignCalendar === "ends_at"}
+                  onOpenChange={(nextOpen) => setOpenCampaignCalendar(nextOpen ? "ends_at" : null)}
+                  onChange={(value) => updateCampaignField("ends_at", value)}
+                />
+              </div>
+
+              <Field label="یادداشت">
+                <Textarea value={campaignForm.notes} onChange={(event) => updateCampaignField("notes", event.target.value)} className="min-h-24" placeholder="بودجه، فرضیه، نکته اجرایی یا تصمیم‌های تیم..." />
+              </Field>
+
+              <div className="flex flex-wrap gap-2 border-t border-app-border pt-3">
+                <Button type="submit" disabled={savingCampaign}>
+                  {savingCampaign ? "در حال ذخیره" : editorMode === "create" ? "ساخت کمپین" : "ذخیره تغییرات"}
+                </Button>
+                {editorMode === "create" && selectedRow ? (
+                  <Button type="button" variant="ghost" onClick={closeCampaignEditor} disabled={savingCampaign}>لغو</Button>
+                ) : (
+                  <Button type="button" variant="ghost" onClick={closeCampaignEditor} disabled={savingCampaign}>بستن</Button>
+                )}
+              </div>
+                  </form>
+                </WorkspacePanel>
+              </div>
+            </div>
+          ) : null}
+        </aside>
+      </section>
+
+      {selectedRow ? (
+        <section className="campaign-workbench-shell" aria-label="فضای کاری کمپین">
+          <div className="campaign-tabbar" role="tablist" aria-label="بخش‌های کمپین">
+            {campaignWorkbenchTabs.map((tab) => {
+              const active = activeCampaignTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setActiveCampaignTab(tab.id)}
+                  className={`campaign-tab-button app-interactive ${active ? "campaign-tab-button-active" : ""}`}
+                >
+                  <span>{tab.label}</span>
+                  <small>{tab.helper}</small>
+                </button>
+              );
+            })}
+          </div>
+
+          {activeCampaignTab === "overview" ? (
+            <section className="campaign-insight-section" role="tabpanel">
+              <WorkspacePanel
+                title="تحلیل کمپین"
+                description="خلاصه عملکرد، پوشش رسانه، روند فعالیت و ریسک‌های عملیاتی کمپین انتخاب‌شده."
+                action={<StatusToken tone={campaignInsights.recentFailed ? "alert" : "success"}>{campaignInsights.recentPublished} انتشار در ۷ روز</StatusToken>}
+                bodyClassName="p-4"
+              >
+                <div className="dashboard-kpi-strip grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <NMetricTile label="نرخ تحویل" value={`${campaignInsights.deliveryRate}%`} detail={`${campaignInsights.published} منتشر، ${campaignInsights.failed} نیازمند بررسی`} icon={CheckCircle2} tone="success" />
+                  <NMetricTile label="پوشش رسانه" value={`${campaignInsights.mediaCoverage}%`} detail={`${campaignInsights.withMedia} پست دارای رسانه`} icon={FileImage} tone="info" />
+                  <NMetricTile label="موفقیت تلاش‌ها" value={`${campaignInsights.attemptSuccessRate}%`} detail={`${selectedAttempts.length} تلاش ثبت‌شده`} icon={Zap} tone="primary" />
+                  <NMetricTile label="ریسک هفته" value={campaignInsights.recentFailed} detail="خطاهای جدید یا آخرین خطا" icon={AlertTriangle} tone={campaignInsights.recentFailed ? "alert" : "success"} />
+                </div>
+
+                <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+                  <div className="campaign-glass-card p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="flex items-center gap-2 text-sm font-black text-app-text">
+                          <BarChart3 className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                          روند فعالیت ۱۰ روزه
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-app-muted">بر اساس انتشار، زمان‌بندی، خطا و آخرین تغییر پست‌های همین کمپین.</p>
                       </div>
-                      {[
-                        { label: "پوشش رسانه", value: selectedRow.stats.media, total: selectedRow.stats.total, color: "rgb(var(--n-color-info))" },
-                        { label: "در جریان انتشار", value: queuedCount, total: selectedRow.stats.total, color: "rgb(var(--n-color-primary))" },
-                        { label: "انتشار موفق", value: selectedRow.stats.published, total: selectedRow.stats.total, color: "rgb(var(--n-color-success))" },
-                        { label: "ریسک خطا", value: failedCount, total: selectedRow.stats.total, color: "rgb(var(--n-color-alert))" }
-                      ].map((item) => {
-                        const ratio = percent(item.value, item.total);
+                      <StatusToken tone="neutral">{campaignInsights.queued} در جریان</StatusToken>
+                    </div>
+                    <div className="mt-5 flex h-44 items-end gap-2 border-b border-app-border px-1 pb-2">
+                      {campaignInsights.trend.map((point) => {
+                        const height = Math.max(10, Math.round((point.activity / campaignInsights.maxActivity) * 100));
                         return (
-                          <div key={item.label} className="campaign-progress-row">
-                            <div className="flex items-center justify-between gap-2">
-                              <span>{item.label}</span>
-                              <strong>{ratio}%</strong>
+                          <div key={point.key} className="group flex min-w-0 flex-1 flex-col items-center justify-end gap-2">
+                            <div className="flex h-32 w-full items-end justify-center">
+                              <div
+                                className={`relative w-full max-w-8 rounded-t-md transition group-hover:opacity-85 ${point.failed ? "bg-rose-500" : point.published ? "bg-emerald-500" : point.activity ? "bg-app-primary" : "bg-slate-200"}`}
+                                style={{ height: `${height}%` }}
+                              >
+                                <span className="absolute -top-2 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full border border-white bg-current shadow-sm" />
+                              </div>
                             </div>
-                            <div className="campaign-funnel-track">
-                              <div style={{ width: `${ratio}%`, background: item.color }} />
-                            </div>
+                            <span className="truncate text-[10px] font-bold text-app-muted">{point.label}</span>
                           </div>
                         );
                       })}
                     </div>
+                    <div className="mt-3 flex flex-wrap gap-3 text-[11px] font-bold text-app-muted">
+                      <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" /> انتشار</span>
+                      <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-app-primary" /> فعالیت</span>
+                      <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-rose-500" /> خطا</span>
+                    </div>
                   </div>
+
+                  <div className="space-y-4">
+                    <div className="campaign-glass-card p-4">
+                      <p className="flex items-center gap-2 text-sm font-black text-app-text">
+                        <PieChart className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                        ترکیب وضعیت
+                      </p>
+                      <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
+                        <div className="flex h-full">
+                          {campaignInsights.statusMix.map((item) => (
+                            <span key={item.label} style={{ width: `${percent(item.value, selectedPosts.length)}%`, backgroundColor: item.color }} />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {campaignInsights.statusMix.map((item) => (
+                          <div key={item.label} className="rounded-md bg-app-surfaceMuted p-2">
+                            <p className="flex items-center gap-1.5 text-[11px] font-black text-app-muted">
+                              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
+                              {item.label}
+                            </p>
+                            <p className="mt-1 text-sm font-black text-app-text">{item.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="campaign-glass-card p-4">
+                      <p className="flex items-center gap-2 text-sm font-black text-app-text">
+                        <TrendingUp className="h-4 w-4 text-app-primary" aria-hidden="true" />
+                        اولویت‌های رسیدگی
+                      </p>
+                      {campaignInsights.riskPosts.length === 0 ? (
+                        <p className="mt-3 rounded-md bg-emerald-50 p-3 text-xs font-bold leading-5 text-emerald-800">ریسک فعالی برای پست‌های این کمپین دیده نمی‌شود.</p>
+                      ) : (
+                        <div className="mt-3 space-y-2">
+                          {campaignInsights.riskPosts.map(({ post, score }) => (
+                            <Link key={post.id} href={`/compose?postId=${post.id}`} className="app-row flex items-center justify-between gap-3 rounded-md border border-app-border bg-app-surfaceMuted p-2 hover:bg-blue-50/60">
+                              <span className="min-w-0">
+                                <span className="block truncate text-xs font-black text-app-text">{post.title}</span>
+                                <span className="mt-1 block truncate text-[11px] text-app-muted">{post.last_error || `${post.attempt_count} تلاش ثبت‌شده`}</span>
+                              </span>
+                              <StatusToken tone={score >= 60 ? "alert" : "warning"}>{score}%</StatusToken>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </WorkspacePanel>
+            </section>
+          ) : null}
+
+          {activeCampaignTab === "calendar" ? (
+            <section role="tabpanel">
+              <WorkspacePanel
+                title="تقویم کمپین"
+                description="برنامه انتشار همین کمپین بدون باز کردن صفحه کامل تقویم."
+                action={<Button href={`/calendar?campaignId=${selectedRow.campaign.id}`} variant="secondary" size="sm">نمای کامل تقویم</Button>}
+                bodyClassName="p-4"
+              >
+                <div className="dashboard-kpi-strip grid gap-3 md:grid-cols-3">
+                  <NMetricTile label="زمان‌بندی‌شده" value={selectedRow.stats.scheduled} detail="پست دارای تاریخ انتشار" icon={CalendarDays} tone="primary" />
+                  <NMetricTile label="در صف" value={queuedCount} detail="آماده، زمان‌بندی یا انتشار" icon={TimerReset} tone="info" />
+                  <NMetricTile label="خلأ رسانه" value={Math.max(0, selectedPosts.length - campaignInsights.withMedia)} detail="پست بدون رسانه متصل" icon={FileImage} tone={selectedPosts.length - campaignInsights.withMedia ? "warning" : "success"} />
+                </div>
+                <div className="mt-4 grid gap-2">
+                  {selectedTimelinePosts.length === 0 ? (
+                    <EmptyState title="برنامه‌ای برای نمایش نیست" description="پست زمان‌بندی‌شده یا منتشرشده‌ای برای این کمپین پیدا نشد." action={<Button href={`/compose?campaignId=${selectedRow.campaign.id}`} variant="secondary">ساخت پست کمپین</Button>} />
+                  ) : selectedTimelinePosts.map((post) => (
+                    <Link key={post.id} href={`/compose?postId=${post.id}`} className="campaign-timeline-row app-interactive">
+                      <span className="min-w-0">
+                        <strong>{post.title}</strong>
+                        <small>{formatDateTime(post.scheduled_at || post.published_at || post.updated_at)}</small>
+                      </span>
+                      <StatusBadge status={post.status} />
+                    </Link>
+                  ))}
+                </div>
+              </WorkspacePanel>
+            </section>
+          ) : null}
+
+          {activeCampaignTab === "posts" ? (
+            <section role="tabpanel">
+              <WorkspacePanel
+                title="پست‌های متصل"
+                description="محتوای مرتبط با کمپین انتخاب‌شده و آخرین وضعیت عملیاتی هر پست."
+                action={(
+                  <div className="flex flex-wrap gap-2">
+                    <StatusToken tone="neutral">{selectedPosts.length} پست</StatusToken>
+                    <Button type="button" size="sm" onClick={openPostAssignment}>
+                      <CheckSquare2 className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                      افزودن محتوا
+                    </Button>
+                  </div>
+                )}
+                bodyClassName="p-3"
+              >
+                <DataTable
+                  columns={["پست", "وضعیت", "زمان", "اقدام"]}
+                  gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_160px_150px]"
+                  empty={selectedPosts.length === 0 ? <EmptyState title="هنوز پستی به این کمپین وصل نیست" description="از دکمه افزودن محتوا، پست‌های آماده را به این کمپین وصل کنید." action={<Button type="button" variant="secondary" onClick={openPostAssignment}>افزودن محتوا</Button>} /> : null}
+                >
+                  {selectedPosts.map((post) => {
+                    const previewUrl = previewUrlForPost(post);
+                    return (
+                      <DataRow key={post.id} gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_160px_150px]">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-14 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-app-surfaceMuted ring-1 ring-app-border">
+                            {previewUrl ? <img src={previewUrl} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="h-4 w-4 text-app-muted" aria-hidden="true" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-black text-app-text">{post.title}</p>
+                            <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-app-muted">
+                              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
+                              {campaignLabelForPost(post, campaigns)}
+                            </p>
+                          </div>
+                        </div>
+                        <div><StatusBadge status={post.status} /></div>
+                        <div className="text-xs leading-6 text-app-muted">
+                          <p>{formatDateTime(post.scheduled_at || post.published_at || post.updated_at)}</p>
+                          <p>{post.attempt_count} تلاش</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن</Button>
+                          <Button type="button" variant="ghost" size="sm" disabled={assigningPosts} onClick={() => removePostFromCampaign(post)}>
+                            <XCircle className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                            جدا کردن
+                          </Button>
+                        </div>
+                      </DataRow>
+                    );
+                  })}
+                </DataTable>
+              </WorkspacePanel>
+            </section>
+          ) : null}
+
+          {activeCampaignTab === "media" ? (
+            <section role="tabpanel">
+              <WorkspacePanel
+                title="دارایی‌های متصل"
+                description="رسانه‌هایی که در پست‌های این کمپین استفاده شده‌اند."
+                action={(
+                  <div className="flex flex-wrap gap-2">
+                    <StatusToken tone="neutral">{selectedAssets.length} فایل</StatusToken>
+                    <Button href={`/media?campaignId=${selectedRow.campaign.id}`} variant="secondary" size="sm">نمای رسانه‌ها</Button>
+                  </div>
+                )}
+                bodyClassName="p-3"
+              >
+                {selectedAssets.length === 0 ? (
+                  <EmptyState icon={<FileImage className="h-5 w-5" aria-hidden="true" />} title="دارایی رسانه‌ای متصل نیست" description="برای حرفه‌ای‌تر شدن کمپین، رسانه‌های مرتبط را به پست‌ها وصل کنید." action={<Button href={`/media?campaignId=${selectedRow.campaign.id}`} variant="secondary">رفتن به رسانه‌ها</Button>} />
                 ) : (
-                  <EmptyState title="کمپینی انتخاب نشده است" description="از لیست کمپین‌ها یک مورد را انتخاب کنید." />
+                  <div className="campaign-media-grid">
+                    {selectedAssets.slice(0, 12).map((asset) => (
+                      <Link key={asset.id} href={`/media?campaignId=${selectedRow.campaign.id}`} className="campaign-media-card app-interactive">
+                        <div className="campaign-media-thumb">
+                          {mediaPreviewUrls[asset.id] ? <img src={mediaPreviewUrls[asset.id]} alt={asset.original_filename} className="h-full w-full object-cover" /> : <FileImage className="h-4 w-4 text-app-muted" aria-hidden="true" />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-black text-app-text">{asset.original_filename}</p>
+                          <p className="mt-1 text-[11px] text-app-muted">{formatBytes(asset.size_bytes)} · {asset.folder || "بدون پوشه"}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 )}
               </WorkspacePanel>
+            </section>
+          ) : null}
 
-              {editorOpen ? (
-                <div className="campaign-modal-backdrop" role="dialog" aria-modal="true" aria-label={editorMode === "create" ? "ساخت کمپین" : "ویرایش کمپین"} onClick={closeCampaignEditor}>
-                  <div className="campaign-modal-panel campaign-editor-panel" onClick={(event) => event.stopPropagation()}>
-                    <WorkspacePanel
-                      title={editorMode === "create" ? "ساخت کمپین" : "ویرایش کمپین"}
-                      description={editorMode === "create" ? "کمپین جدید را با هدف، رنگ و مالک مشخص بسازید." : "مشخصات عملیاتی کمپین انتخاب‌شده را به‌روزرسانی کنید."}
-                      bodyClassName="p-3 sm:p-4"
-                      className="scroll-mt-24"
-                      action={editorMode === "create" ? <StatusToken tone="primary">جدید</StatusToken> : selectedRow ? <StatusToken tone={campaignStatusTone(selectedRow.campaign.status)}>{statusLabels[selectedRow.campaign.status] ?? selectedRow.campaign.status}</StatusToken> : null}
-                    >
-                      <form id="campaign-editor" onSubmit={saveCampaign} className="space-y-4">
-                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_86px]">
-                    <Field label="نام کمپین" required>
-                      <Input id="campaign-name-input" value={campaignForm.name} onChange={(event) => updateCampaignField("name", event.target.value)} placeholder="مثلاً لانچ تابستان" required />
-                    </Field>
-                    <Field label="رنگ">
-                      <Input
-                        value={campaignColorDraft}
-                        onInput={(event) => setCampaignColorDraft(event.currentTarget.value)}
-                        onChange={(event) => setCampaignColorDraft(event.target.value)}
-                        onBlur={(event) => commitCampaignColor(event.currentTarget.value)}
-                        type="color"
-                        className="h-[42px] p-1"
-                        aria-label="رنگ کمپین"
-                      />
-                    </Field>
-                  </div>
-
-                  <Field label="هدف کمپین" hint="یک جمله واضح برای خروجی و سنجش کمپین.">
-                    <Textarea value={campaignForm.goal} onChange={(event) => updateCampaignField("goal", event.target.value)} className="min-h-20" placeholder="افزایش فروش محصول، معرفی مجموعه جدید یا اطلاع‌رسانی رویداد..." />
-                  </Field>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="وضعیت">
-                      <Select value={campaignForm.status} onChange={(event) => updateCampaignField("status", event.target.value as CampaignStatus)}>
-                        {campaignStatusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                      </Select>
-                    </Field>
-                    <Field label="مالک">
-                      <Input value={campaignForm.owner} onChange={(event) => updateCampaignField("owner", event.target.value)} placeholder="نام مسئول کمپین" />
-                    </Field>
-                  </div>
-
-                  <div className="grid gap-3">
-                    <CampaignJalaliDateField
-                      label="شروع کمپین"
-                      value={campaignForm.starts_at}
-                      open={openCampaignCalendar === "starts_at"}
-                      onOpenChange={(nextOpen) => setOpenCampaignCalendar(nextOpen ? "starts_at" : null)}
-                      onChange={(value) => updateCampaignField("starts_at", value)}
-                    />
-                    <CampaignJalaliDateField
-                      label="پایان کمپین"
-                      value={campaignForm.ends_at}
-                      open={openCampaignCalendar === "ends_at"}
-                      onOpenChange={(nextOpen) => setOpenCampaignCalendar(nextOpen ? "ends_at" : null)}
-                      onChange={(value) => updateCampaignField("ends_at", value)}
-                    />
-                  </div>
-
-                  <Field label="یادداشت">
-                    <Textarea value={campaignForm.notes} onChange={(event) => updateCampaignField("notes", event.target.value)} className="min-h-24" placeholder="بودجه، فرضیه، نکته اجرایی یا تصمیم‌های تیم..." />
-                  </Field>
-
-                  <div className="flex flex-wrap gap-2 border-t border-app-border pt-3">
-                    <Button type="submit" disabled={savingCampaign}>
-                      {savingCampaign ? "در حال ذخیره" : editorMode === "create" ? "ساخت کمپین" : "ذخیره تغییرات"}
+          {activeCampaignTab === "reports" ? (
+            <section role="tabpanel">
+              <WorkspacePanel
+                title="گزارش کمپین"
+                description="خروجی مدیریتی، وضعیت ریسک و ترکیب کمپین برای ارسال یا بررسی تیم."
+                action={(
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="secondary" size="sm" onClick={exportCampaignCsv}>
+                      <Download className="ml-2 h-4 w-4" aria-hidden="true" />
+                      CSV
                     </Button>
-                    {editorMode === "create" && selectedRow ? (
-                      <Button type="button" variant="ghost" onClick={closeCampaignEditor} disabled={savingCampaign}>لغو</Button>
-                    ) : (
-                      <Button type="button" variant="ghost" onClick={closeCampaignEditor} disabled={savingCampaign}>بستن</Button>
-                    )}
+                    <Button type="button" variant="secondary" size="sm" onClick={exportCampaignHtml}>
+                      <Printer className="ml-2 h-4 w-4" aria-hidden="true" />
+                      گزارش
+                    </Button>
                   </div>
-                      </form>
-                    </WorkspacePanel>
-                  </div>
+                )}
+                bodyClassName="p-4"
+              >
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <NMetricTile label="سلامت" value={`${selectedRow.stats.health}%`} detail="کیفیت عملیاتی کمپین" icon={Target} tone={healthTone} />
+                  <NMetricTile label="تحویل" value={`${campaignInsights.deliveryRate}%`} detail="منتشر در برابر خطا" icon={CheckCircle2} tone="success" />
+                  <NMetricTile label="رسانه" value={`${campaignInsights.mediaCoverage}%`} detail="پوشش فایل و تصویر" icon={FileImage} tone="info" />
+                  <NMetricTile label="ریسک" value={campaignInsights.failed + campaignInsights.recentFailed} detail="خطا و هشدار فعال" icon={AlertTriangle} tone={campaignInsights.failed ? "alert" : "success"} />
                 </div>
-              ) : null}
-            </aside>
-          </section>
-
-          {selectedRow ? (
-            <section className="campaign-workbench-shell" aria-label="فضای کاری کمپین">
-              <div className="campaign-tabbar" role="tablist" aria-label="بخش‌های کمپین">
-                {campaignWorkbenchTabs.map((tab) => {
-                  const active = activeCampaignTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={active}
-                      onClick={() => setActiveCampaignTab(tab.id)}
-                      className={`campaign-tab-button app-interactive ${active ? "campaign-tab-button-active" : ""}`}
-                    >
-                      <span>{tab.label}</span>
-                      <small>{tab.helper}</small>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {activeCampaignTab === "overview" ? (
-                <section className="campaign-insight-section" role="tabpanel">
-                  <WorkspacePanel
-                    title="تحلیل کمپین"
-                    description="خلاصه عملکرد، پوشش رسانه، روند فعالیت و ریسک‌های عملیاتی کمپین انتخاب‌شده."
-                    action={<StatusToken tone={campaignInsights.recentFailed ? "alert" : "success"}>{campaignInsights.recentPublished} انتشار در ۷ روز</StatusToken>}
-                    bodyClassName="p-4"
-                  >
-                    <div className="dashboard-kpi-strip grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                      <NMetricTile label="نرخ تحویل" value={`${campaignInsights.deliveryRate}%`} detail={`${campaignInsights.published} منتشر، ${campaignInsights.failed} نیازمند بررسی`} icon={CheckCircle2} tone="success" />
-                      <NMetricTile label="پوشش رسانه" value={`${campaignInsights.mediaCoverage}%`} detail={`${campaignInsights.withMedia} پست دارای رسانه`} icon={FileImage} tone="info" />
-                      <NMetricTile label="موفقیت تلاش‌ها" value={`${campaignInsights.attemptSuccessRate}%`} detail={`${selectedAttempts.length} تلاش ثبت‌شده`} icon={Zap} tone="primary" />
-                      <NMetricTile label="ریسک هفته" value={campaignInsights.recentFailed} detail="خطاهای جدید یا آخرین خطا" icon={AlertTriangle} tone={campaignInsights.recentFailed ? "alert" : "success"} />
-                    </div>
-
-                    <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-                      <div className="campaign-glass-card p-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <p className="flex items-center gap-2 text-sm font-black text-app-text">
-                              <BarChart3 className="h-4 w-4 text-app-primary" aria-hidden="true" />
-                              روند فعالیت ۱۰ روزه
-                            </p>
-                            <p className="mt-1 text-xs leading-5 text-app-muted">بر اساس انتشار، زمان‌بندی، خطا و آخرین تغییر پست‌های همین کمپین.</p>
-                          </div>
-                          <StatusToken tone="neutral">{campaignInsights.queued} در جریان</StatusToken>
-                        </div>
-                        <div className="mt-5 flex h-44 items-end gap-2 border-b border-app-border px-1 pb-2">
-                          {campaignInsights.trend.map((point) => {
-                            const height = Math.max(10, Math.round((point.activity / campaignInsights.maxActivity) * 100));
-                            return (
-                              <div key={point.key} className="group flex min-w-0 flex-1 flex-col items-center justify-end gap-2">
-                                <div className="flex h-32 w-full items-end justify-center">
-                                  <div
-                                    className={`relative w-full max-w-8 rounded-t-md transition group-hover:opacity-85 ${point.failed ? "bg-rose-500" : point.published ? "bg-emerald-500" : point.activity ? "bg-app-primary" : "bg-slate-200"}`}
-                                    style={{ height: `${height}%` }}
-                                  >
-                                    <span className="absolute -top-2 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full border border-white bg-current shadow-sm" />
-                                  </div>
-                                </div>
-                                <span className="truncate text-[10px] font-bold text-app-muted">{point.label}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-3 text-[11px] font-bold text-app-muted">
-                          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" /> انتشار</span>
-                          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-app-primary" /> فعالیت</span>
-                          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-rose-500" /> خطا</span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="campaign-glass-card p-4">
-                          <p className="flex items-center gap-2 text-sm font-black text-app-text">
-                            <PieChart className="h-4 w-4 text-app-primary" aria-hidden="true" />
-                            ترکیب وضعیت
+                <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                  <div className="campaign-glass-card p-4">
+                    <p className="text-sm font-black text-app-text">ترکیب وضعیت</p>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {campaignInsights.statusMix.map((item) => (
+                        <div key={item.label} className="rounded-md bg-app-surfaceMuted p-2">
+                          <p className="flex items-center gap-1.5 text-[11px] font-black text-app-muted">
+                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
+                            {item.label}
                           </p>
-                          <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
-                            <div className="flex h-full">
-                              {campaignInsights.statusMix.map((item) => (
-                                <span key={item.label} style={{ width: `${percent(item.value, selectedPosts.length)}%`, backgroundColor: item.color }} />
-                              ))}
-                            </div>
-                          </div>
-                          <div className="mt-3 grid grid-cols-2 gap-2">
-                            {campaignInsights.statusMix.map((item) => (
-                              <div key={item.label} className="rounded-md bg-app-surfaceMuted p-2">
-                                <p className="flex items-center gap-1.5 text-[11px] font-black text-app-muted">
-                                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
-                                  {item.label}
-                                </p>
-                                <p className="mt-1 text-sm font-black text-app-text">{item.value}</p>
-                              </div>
-                            ))}
-                          </div>
+                          <p className="mt-1 text-sm font-black text-app-text">{item.value}</p>
                         </div>
-
-                        <div className="campaign-glass-card p-4">
-                          <p className="flex items-center gap-2 text-sm font-black text-app-text">
-                            <TrendingUp className="h-4 w-4 text-app-primary" aria-hidden="true" />
-                            اولویت‌های رسیدگی
-                          </p>
-                          {campaignInsights.riskPosts.length === 0 ? (
-                            <p className="mt-3 rounded-md bg-emerald-50 p-3 text-xs font-bold leading-5 text-emerald-800">ریسک فعالی برای پست‌های این کمپین دیده نمی‌شود.</p>
-                          ) : (
-                            <div className="mt-3 space-y-2">
-                              {campaignInsights.riskPosts.map(({ post, score }) => (
-                                <Link key={post.id} href={`/compose?postId=${post.id}`} className="app-row flex items-center justify-between gap-3 rounded-md border border-app-border bg-app-surfaceMuted p-2 hover:bg-blue-50/60">
-                                  <span className="min-w-0">
-                                    <span className="block truncate text-xs font-black text-app-text">{post.title}</span>
-                                    <span className="mt-1 block truncate text-[11px] text-app-muted">{post.last_error || `${post.attempt_count} تلاش ثبت‌شده`}</span>
-                                  </span>
-                                  <StatusToken tone={score >= 60 ? "alert" : "warning"}>{score}%</StatusToken>
-                                </Link>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </WorkspacePanel>
-                </section>
-              ) : null}
-
-              {activeCampaignTab === "calendar" ? (
-                <section role="tabpanel">
-                  <WorkspacePanel
-                    title="تقویم کمپین"
-                    description="برنامه انتشار همین کمپین بدون باز کردن صفحه کامل تقویم."
-                    action={<Button href={`/calendar?campaignId=${selectedRow.campaign.id}`} variant="secondary" size="sm">نمای کامل تقویم</Button>}
-                    bodyClassName="p-4"
-                  >
-                    <div className="dashboard-kpi-strip grid gap-3 md:grid-cols-3">
-                      <NMetricTile label="زمان‌بندی‌شده" value={selectedRow.stats.scheduled} detail="پست دارای تاریخ انتشار" icon={CalendarDays} tone="primary" />
-                      <NMetricTile label="در صف" value={queuedCount} detail="آماده، زمان‌بندی یا انتشار" icon={TimerReset} tone="info" />
-                      <NMetricTile label="خلأ رسانه" value={Math.max(0, selectedPosts.length - campaignInsights.withMedia)} detail="پست بدون رسانه متصل" icon={FileImage} tone={selectedPosts.length - campaignInsights.withMedia ? "warning" : "success"} />
-                    </div>
-                    <div className="mt-4 grid gap-2">
-                      {selectedTimelinePosts.length === 0 ? (
-                        <EmptyState title="برنامه‌ای برای نمایش نیست" description="پست زمان‌بندی‌شده یا منتشرشده‌ای برای این کمپین پیدا نشد." action={<Button href={`/compose?campaignId=${selectedRow.campaign.id}`} variant="secondary">ساخت پست کمپین</Button>} />
-                      ) : selectedTimelinePosts.map((post) => (
-                        <Link key={post.id} href={`/compose?postId=${post.id}`} className="campaign-timeline-row app-interactive">
-                          <span className="min-w-0">
-                            <strong>{post.title}</strong>
-                            <small>{formatDateTime(post.scheduled_at || post.published_at || post.updated_at)}</small>
-                          </span>
-                          <StatusBadge status={post.status} />
-                        </Link>
                       ))}
                     </div>
-                  </WorkspacePanel>
-                </section>
-              ) : null}
-
-              {activeCampaignTab === "posts" ? (
-                <section role="tabpanel">
-                  <WorkspacePanel
-                    title="پست‌های متصل"
-                    description="محتوای مرتبط با کمپین انتخاب‌شده و آخرین وضعیت عملیاتی هر پست."
-                    action={(
-                      <div className="flex flex-wrap gap-2">
-                        <StatusToken tone="neutral">{selectedPosts.length} پست</StatusToken>
-                        <Button type="button" size="sm" onClick={openPostAssignment}>
-                          <CheckSquare2 className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                          افزودن محتوا
-                        </Button>
-                      </div>
-                    )}
-                    bodyClassName="p-3"
-                  >
-                    <DataTable
-                      columns={["پست", "وضعیت", "زمان", "اقدام"]}
-                      gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_160px_150px]"
-                      empty={selectedPosts.length === 0 ? <EmptyState title="هنوز پستی به این کمپین وصل نیست" description="از دکمه افزودن محتوا، پست‌های آماده را به این کمپین وصل کنید." action={<Button type="button" variant="secondary" onClick={openPostAssignment}>افزودن محتوا</Button>} /> : null}
-                    >
-                      {selectedPosts.map((post) => {
-                        const previewUrl = previewUrlForPost(post);
-                        return (
-                          <DataRow key={post.id} gridClassName="lg:grid-cols-[minmax(0,1fr)_120px_160px_150px]">
-                            <div className="flex min-w-0 items-center gap-3">
-                              <div className="flex h-14 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-app-surfaceMuted ring-1 ring-app-border">
-                                {previewUrl ? <img src={previewUrl} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="h-4 w-4 text-app-muted" aria-hidden="true" />}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-black text-app-text">{post.title}</p>
-                                <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-app-muted">
-                                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: campaignColorForPost(post, campaigns) }} />
-                                  {campaignLabelForPost(post, campaigns)}
-                                </p>
-                              </div>
-                            </div>
-                            <div><StatusBadge status={post.status} /></div>
-                            <div className="text-xs leading-6 text-app-muted">
-                              <p>{formatDateTime(post.scheduled_at || post.published_at || post.updated_at)}</p>
-                              <p>{post.attempt_count} تلاش</p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <Button href={`/compose?postId=${post.id}`} variant="secondary" size="sm">باز کردن</Button>
-                              <Button type="button" variant="ghost" size="sm" disabled={assigningPosts} onClick={() => removePostFromCampaign(post)}>
-                                <XCircle className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                                جدا کردن
-                              </Button>
-                            </div>
-                          </DataRow>
-                        );
-                      })}
-                    </DataTable>
-                  </WorkspacePanel>
-                </section>
-              ) : null}
-
-              {activeCampaignTab === "media" ? (
-                <section role="tabpanel">
-                  <WorkspacePanel
-                    title="دارایی‌های متصل"
-                    description="رسانه‌هایی که در پست‌های این کمپین استفاده شده‌اند."
-                    action={(
-                      <div className="flex flex-wrap gap-2">
-                        <StatusToken tone="neutral">{selectedAssets.length} فایل</StatusToken>
-                        <Button href={`/media?campaignId=${selectedRow.campaign.id}`} variant="secondary" size="sm">نمای رسانه‌ها</Button>
-                      </div>
-                    )}
-                    bodyClassName="p-3"
-                  >
-                    {selectedAssets.length === 0 ? (
-                      <EmptyState icon={<FileImage className="h-5 w-5" aria-hidden="true" />} title="دارایی رسانه‌ای متصل نیست" description="برای حرفه‌ای‌تر شدن کمپین، رسانه‌های مرتبط را به پست‌ها وصل کنید." action={<Button href={`/media?campaignId=${selectedRow.campaign.id}`} variant="secondary">رفتن به رسانه‌ها</Button>} />
+                  </div>
+                  <div className="campaign-glass-card p-4">
+                    <p className="text-sm font-black text-app-text">ریسک‌های گزارش</p>
+                    {campaignInsights.riskPosts.length === 0 ? (
+                      <p className="mt-3 rounded-md bg-app-success/10 border border-app-success/20 p-3 text-xs font-bold leading-5 text-app-success">کمپین برای گزارش مدیریتی آماده است.</p>
                     ) : (
-                      <div className="campaign-media-grid">
-                        {selectedAssets.slice(0, 12).map((asset) => (
-                          <Link key={asset.id} href={`/media?campaignId=${selectedRow.campaign.id}`} className="campaign-media-card app-interactive">
-                            <div className="campaign-media-thumb">
-                              {mediaPreviewUrls[asset.id] ? <img src={mediaPreviewUrls[asset.id]} alt={asset.original_filename} className="h-full w-full object-cover" /> : <FileImage className="h-4 w-4 text-app-muted" aria-hidden="true" />}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-xs font-black text-app-text">{asset.original_filename}</p>
-                              <p className="mt-1 text-[11px] text-app-muted">{formatBytes(asset.size_bytes)} · {asset.folder || "بدون پوشه"}</p>
-                            </div>
+                      <div className="mt-3 grid gap-2">
+                        {campaignInsights.riskPosts.slice(0, 4).map(({ post, score }) => (
+                          <Link key={post.id} href={`/compose?postId=${post.id}`} className="app-row flex items-center justify-between gap-3 rounded-md border border-app-border bg-app-surfaceMuted p-2">
+                            <span className="min-w-0 truncate text-xs font-black text-app-text">{post.title}</span>
+                            <StatusToken tone={score >= 60 ? "alert" : "warning"}>{score}%</StatusToken>
                           </Link>
                         ))}
                       </div>
                     )}
-                  </WorkspacePanel>
-                </section>
-              ) : null}
-
-              {activeCampaignTab === "reports" ? (
-                <section role="tabpanel">
-                  <WorkspacePanel
-                    title="گزارش کمپین"
-                    description="خروجی مدیریتی، وضعیت ریسک و ترکیب کمپین برای ارسال یا بررسی تیم."
-                    action={(
-                      <div className="flex flex-wrap gap-2">
-                        <Button type="button" variant="secondary" size="sm" onClick={exportCampaignCsv}>
-                          <Download className="ml-2 h-4 w-4" aria-hidden="true" />
-                          CSV
-                        </Button>
-                        <Button type="button" variant="secondary" size="sm" onClick={exportCampaignHtml}>
-                          <Printer className="ml-2 h-4 w-4" aria-hidden="true" />
-                          گزارش
-                        </Button>
-                      </div>
-                    )}
-                    bodyClassName="p-4"
-                  >
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                      <NMetricTile label="سلامت" value={`${selectedRow.stats.health}%`} detail="کیفیت عملیاتی کمپین" icon={Target} tone={healthTone} />
-                      <NMetricTile label="تحویل" value={`${campaignInsights.deliveryRate}%`} detail="منتشر در برابر خطا" icon={CheckCircle2} tone="success" />
-                      <NMetricTile label="رسانه" value={`${campaignInsights.mediaCoverage}%`} detail="پوشش فایل و تصویر" icon={FileImage} tone="info" />
-                      <NMetricTile label="ریسک" value={campaignInsights.failed + campaignInsights.recentFailed} detail="خطا و هشدار فعال" icon={AlertTriangle} tone={campaignInsights.failed ? "alert" : "success"} />
-                    </div>
-                    <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                      <div className="campaign-glass-card p-4">
-                        <p className="text-sm font-black text-app-text">ترکیب وضعیت</p>
-                        <div className="mt-3 grid grid-cols-2 gap-2">
-                          {campaignInsights.statusMix.map((item) => (
-                            <div key={item.label} className="rounded-md bg-app-surfaceMuted p-2">
-                              <p className="flex items-center gap-1.5 text-[11px] font-black text-app-muted">
-                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
-                                {item.label}
-                              </p>
-                              <p className="mt-1 text-sm font-black text-app-text">{item.value}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="campaign-glass-card p-4">
-                        <p className="text-sm font-black text-app-text">ریسک‌های گزارش</p>
-                        {campaignInsights.riskPosts.length === 0 ? (
-                          <p className="mt-3 rounded-md bg-app-success/10 border border-app-success/20 p-3 text-xs font-bold leading-5 text-app-success">کمپین برای گزارش مدیریتی آماده است.</p>
-                        ) : (
-                          <div className="mt-3 grid gap-2">
-                            {campaignInsights.riskPosts.slice(0, 4).map(({ post, score }) => (
-                              <Link key={post.id} href={`/compose?postId=${post.id}`} className="app-row flex items-center justify-between gap-3 rounded-md border border-app-border bg-app-surfaceMuted p-2">
-                                <span className="min-w-0 truncate text-xs font-black text-app-text">{post.title}</span>
-                                <StatusToken tone={score >= 60 ? "alert" : "warning"}>{score}%</StatusToken>
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </WorkspacePanel>
-                </section>
-              ) : null}
-
-              {assignmentOpen ? (
-                <div className="campaign-modal-backdrop" role="dialog" aria-modal="true" aria-label="افزودن محتوا به کمپین" onClick={() => setAssignmentOpen(false)}>
-                  <div className="campaign-modal-panel campaign-assignment-panel" onClick={(event) => event.stopPropagation()}>
-                    <WorkspacePanel
-                      title="افزودن محتوا به کمپین"
-                      description="پست‌های بدون این کمپین را انتخاب کنید و گروهی به کمپین فعلی وصل کنید."
-                      action={<StatusToken tone={selectedAssignIds.size ? "primary" : "neutral"}>{selectedAssignIds.size} انتخاب</StatusToken>}
-                      bodyClassName="p-3"
-                    >
-                      <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
-                        <DataSearchField value={assignmentSearch} onChange={(event) => setAssignmentSearch(event.target.value)} placeholder="جست‌وجوی پست برای اتصال" />
-                        <Button type="button" variant="secondary" size="sm" onClick={toggleAllAssignable} disabled={assignablePosts.length === 0 || assigningPosts}>
-                          <CheckSquare2 className="ml-2 h-4 w-4" aria-hidden="true" />
-                          انتخاب همه
-                        </Button>
-                        <Button type="button" size="sm" onClick={assignSelectedPosts} disabled={selectedAssignIds.size === 0 || assigningPosts}>
-                          {assigningPosts ? "در حال اتصال" : "اتصال به کمپین"}
-                        </Button>
-                      </div>
-                      <div className="mt-3 max-h-[52vh] overflow-y-auto rounded-md border border-app-border bg-app-surface">
-                        {assignablePosts.length === 0 ? (
-                          <div className="p-4">
-                            <EmptyState title="پست قابل اتصال پیدا نشد" description="همه پست‌های موجود به این کمپین وصل شده‌اند یا نتیجه‌ای برای جست‌وجو وجود ندارد." />
-                          </div>
-                        ) : (
-                          <div className="divide-y divide-app-border">
-                            {assignablePosts.map((post) => {
-                              const checked = selectedAssignIds.has(post.id);
-                              const previewUrl = previewUrlForPost(post);
-                              return (
-                                <button
-                                  key={post.id}
-                                  type="button"
-                                  onClick={() => toggleAssignPost(post.id)}
-                                  className={`app-row flex w-full items-center gap-3 p-3 text-right transition ${checked ? "bg-app-primary/10" : "bg-app-surface hover:bg-app-surfaceMuted"}`}
-                                >
-                                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border text-white ${checked ? "border-app-primary bg-app-primary" : "border-app-border bg-app-surface"}`}>
-                                    {checked ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : null}
-                                  </span>
-                                  <span className="flex h-12 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-app-surfaceMuted ring-1 ring-app-border">
-                                    {previewUrl ? <img src={previewUrl} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="h-4 w-4 text-app-muted" aria-hidden="true" />}
-                                  </span>
-                                  <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-sm font-black text-app-text">{post.title}</span>
-                                    <span className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-bold text-app-muted">
-                                      <StatusBadge status={post.status} />
-                                      <span>{campaignLabelForPost(post, campaigns)}</span>
-                                    </span>
-                                  </span>
-                                  <span className="hidden text-[11px] font-bold text-app-muted sm:block">{formatDateTime(post.scheduled_at || post.published_at || post.updated_at)}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                      <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-app-border pt-3">
-                        <Button type="button" variant="ghost" onClick={() => setAssignmentOpen(false)}>بستن</Button>
-                        <Button type="button" onClick={assignSelectedPosts} disabled={selectedAssignIds.size === 0 || assigningPosts}>
-                          {assigningPosts ? "در حال اتصال" : "اتصال انتخاب‌ها"}
-                        </Button>
-                      </div>
-                    </WorkspacePanel>
                   </div>
                 </div>
-              ) : null}
+              </WorkspacePanel>
             </section>
           ) : null}
-        </WorkspacePage>
-);
+
+          {assignmentOpen ? (
+            <div className="campaign-modal-backdrop" role="dialog" aria-modal="true" aria-label="افزودن محتوا به کمپین" onClick={() => setAssignmentOpen(false)}>
+              <div className="campaign-modal-panel campaign-assignment-panel" onClick={(event) => event.stopPropagation()}>
+                <WorkspacePanel
+                  title="افزودن محتوا به کمپین"
+                  description="پست‌های بدون این کمپین را انتخاب کنید و گروهی به کمپین فعلی وصل کنید."
+                  action={<StatusToken tone={selectedAssignIds.size ? "primary" : "neutral"}>{selectedAssignIds.size} انتخاب</StatusToken>}
+                  bodyClassName="p-3"
+                >
+                  <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
+                    <DataSearchField value={assignmentSearch} onChange={(event) => setAssignmentSearch(event.target.value)} placeholder="جست‌وجوی پست برای اتصال" />
+                    <Button type="button" variant="secondary" size="sm" onClick={toggleAllAssignable} disabled={assignablePosts.length === 0 || assigningPosts}>
+                      <CheckSquare2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                      انتخاب همه
+                    </Button>
+                    <Button type="button" size="sm" onClick={assignSelectedPosts} disabled={selectedAssignIds.size === 0 || assigningPosts}>
+                      {assigningPosts ? "در حال اتصال" : "اتصال به کمپین"}
+                    </Button>
+                  </div>
+                  <div className="mt-3 max-h-[52vh] overflow-y-auto rounded-md border border-app-border bg-app-surface">
+                    {assignablePosts.length === 0 ? (
+                      <div className="p-4">
+                        <EmptyState title="پست قابل اتصال پیدا نشد" description="همه پست‌های موجود به این کمپین وصل شده‌اند یا نتیجه‌ای برای جست‌وجو وجود ندارد." />
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-app-border">
+                        {assignablePosts.map((post) => {
+                          const checked = selectedAssignIds.has(post.id);
+                          const previewUrl = previewUrlForPost(post);
+                          return (
+                            <button
+                              key={post.id}
+                              type="button"
+                              onClick={() => toggleAssignPost(post.id)}
+                              className={`app-row flex w-full items-center gap-3 p-3 text-right transition ${checked ? "bg-app-primary/10" : "bg-app-surface hover:bg-app-surfaceMuted"}`}
+                            >
+                              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border text-white ${checked ? "border-app-primary bg-app-primary" : "border-app-border bg-app-surface"}`}>
+                                {checked ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+                              </span>
+                              <span className="flex h-12 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-app-surfaceMuted ring-1 ring-app-border">
+                                {previewUrl ? <img src={previewUrl} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="h-4 w-4 text-app-muted" aria-hidden="true" />}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-black text-app-text">{post.title}</span>
+                                <span className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-bold text-app-muted">
+                                  <StatusBadge status={post.status} />
+                                  <span>{campaignLabelForPost(post, campaigns)}</span>
+                                </span>
+                              </span>
+                              <span className="hidden text-[11px] font-bold text-app-muted sm:block">{formatDateTime(post.scheduled_at || post.published_at || post.updated_at)}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-app-border pt-3">
+                    <Button type="button" variant="ghost" onClick={() => setAssignmentOpen(false)}>بستن</Button>
+                    <Button type="button" onClick={assignSelectedPosts} disabled={selectedAssignIds.size === 0 || assigningPosts}>
+                      {assigningPosts ? "در حال اتصال" : "اتصال انتخاب‌ها"}
+                    </Button>
+                  </div>
+                </WorkspacePanel>
+              </div>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+    </WorkspacePage>
+  );
 }

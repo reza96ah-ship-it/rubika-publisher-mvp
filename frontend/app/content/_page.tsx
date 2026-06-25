@@ -458,327 +458,327 @@ export default function ContentWorkspacePage() {
   }
 
   return (
-<NPage className="content-ops-page pb-5">
-          <NPageHeader
-            eyebrow="Content Ops"
-            title="میز عملیات محتوا"
-            description="یک نمای سبک برای بررسی، اولویت‌بندی و آماده‌سازی محتوای همه کانال‌ها بدون فیلترهای تکراری و پنل‌های همیشه باز."
+    <NPage className="content-ops-page pb-5">
+      <NPageHeader
+        eyebrow="Content Ops"
+        title="میز عملیات محتوا"
+        description="یک نمای سبک برای بررسی، اولویت‌بندی و آماده‌سازی محتوای همه کانال‌ها بدون فیلترهای تکراری و پنل‌های همیشه باز."
+        meta={(
+          <>
+            <NStatusPill tone="neutral">{draftCount} پیش‌نویس</NStatusPill>
+            <NStatusPill tone="success">{publishedCount} منتشرشده</NStatusPill>
+            <NStatusPill tone={failedCount ? "alert" : "success"}>{failedCount ? `${failedCount} نیازمند رسیدگی` : "بدون خطای فعال"}</NStatusPill>
+            <NStatusPill tone="warning">{scheduledCount} زمان‌بندی‌شده</NStatusPill>
+            {lastUpdatedAt ? <NStatusPill tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</NStatusPill> : null}
+          </>
+        )}
+        action={(
+          <Button type="button" variant="secondary" size="sm" disabled={refreshing} onClick={() => loadPosts(true)}>
+            <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
+            به‌روزرسانی
+          </Button>
+        )}
+      />
+
+      <section className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map((metric) => (
+          <NMetricTile
+            key={metric.label}
+            detail={metric.hint}
+            icon={metric.icon}
+            label={metric.label}
+            tone={metric.tone}
+            value={metric.value}
+          />
+        ))}
+      </section>
+
+      {message ? <NNotice tone="success" title="انجام شد">{message}</NNotice> : null}
+      {error ? <NNotice tone="alert" title="نیاز به بررسی">{error}</NNotice> : null}
+
+      <NSection
+        title="نمای عملیاتی محتوا"
+        description="نماهای ذخیره‌شده برای کار روزانه در اولویت هستند؛ فیلترهای جزئی فقط برای محدود کردن همان نما استفاده می‌شوند."
+        bodyClassName="mt-3"
+          action={
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="secondary" size="sm" onClick={toggleAllVisible}>
+                <CheckSquare2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                {allVisibleSelected ? "لغو انتخاب نما" : "انتخاب همه نما"}
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>پاک کردن فیلتر</Button>
+            </div>
+          }
+        >
+          <NSavedViewToolbar
+            views={savedViews}
+            activeView={activeView}
+            onViewChange={(value) => {
+              setActiveView(value as ContentSavedView);
+              setActiveStatus("all");
+            }}
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="جست‌وجوی عنوان، کپشن، هشتگ، کمپین یا یادداشت"
             meta={(
               <>
-                <NStatusPill tone="neutral">{draftCount} پیش‌نویس</NStatusPill>
-                <NStatusPill tone="success">{publishedCount} منتشرشده</NStatusPill>
-                <NStatusPill tone={failedCount ? "alert" : "success"}>{failedCount ? `${failedCount} نیازمند رسیدگی` : "بدون خطای فعال"}</NStatusPill>
-                <NStatusPill tone="warning">{scheduledCount} زمان‌بندی‌شده</NStatusPill>
-                {lastUpdatedAt ? <NStatusPill tone="neutral">به‌روزرسانی {lastUpdatedAt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</NStatusPill> : null}
+                <NStatusPill tone="neutral">{filteredPosts.length} نتیجه</NStatusPill>
+                <NStatusPill tone="neutral">{posts.length} کل پست</NStatusPill>
               </>
             )}
-            action={(
-              <Button type="button" variant="secondary" size="sm" disabled={refreshing} onClick={() => loadPosts(true)}>
-                <RefreshCw className={`ml-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
-                به‌روزرسانی
-              </Button>
+            filters={(
+              <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
+                <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <select value={activeStatus} onChange={(event) => setActiveStatus(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                  {workflowTabs.map((tab) => <option key={tab.value} value={tab.value}>{tab.label} · {statusCount(posts, tab.value)}</option>)}
+                </select>
+              </label>
+              <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
+                <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                  <option value="all">همه کمپین‌ها</option>
+                  {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
+                </select>
+              </label>
+              <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
+                <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <select value={approvalFilter} onChange={(event) => setApprovalFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                  {approvalTabs.map((tab) => <option key={tab.value} value={tab.value}>{tab.label}</option>)}
+                </select>
+              </label>
+              <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
+                <ArrowDownUp className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
+                  <option value="priority">اولویت عملیاتی</option>
+                  <option value="updated">آخرین تغییر</option>
+                  <option value="schedule">زمان انتشار</option>
+                  <option value="title">عنوان</option>
+                </select>
+              </label>
+            </div>
             )}
           />
 
-          <section className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            {metrics.map((metric) => (
-              <NMetricTile
-                key={metric.label}
-                detail={metric.hint}
-                icon={metric.icon}
-                label={metric.label}
-                tone={metric.tone}
-                value={metric.value}
-              />
-            ))}
-          </section>
-
-          {message ? <NNotice tone="success" title="انجام شد">{message}</NNotice> : null}
-          {error ? <NNotice tone="alert" title="نیاز به بررسی">{error}</NNotice> : null}
-
-          <NSection
-            title="نمای عملیاتی محتوا"
-            description="نماهای ذخیره‌شده برای کار روزانه در اولویت هستند؛ فیلترهای جزئی فقط برای محدود کردن همان نما استفاده می‌شوند."
-            bodyClassName="mt-3"
-              action={
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="secondary" size="sm" onClick={toggleAllVisible}>
-                    <CheckSquare2 className="ml-2 h-4 w-4" aria-hidden="true" />
-                    {allVisibleSelected ? "لغو انتخاب نما" : "انتخاب همه نما"}
-                  </Button>
-                  <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>پاک کردن فیلتر</Button>
-                </div>
-              }
-            >
-              <NSavedViewToolbar
-                views={savedViews}
-                activeView={activeView}
-                onViewChange={(value) => {
-                  setActiveView(value as ContentSavedView);
-                  setActiveStatus("all");
-                }}
-                searchValue={search}
-                onSearchChange={setSearch}
-                searchPlaceholder="جست‌وجوی عنوان، کپشن، هشتگ، کمپین یا یادداشت"
-                meta={(
-                  <>
-                    <NStatusPill tone="neutral">{filteredPosts.length} نتیجه</NStatusPill>
-                    <NStatusPill tone="neutral">{posts.length} کل پست</NStatusPill>
-                  </>
-                )}
-                filters={(
-                  <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
-                    <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    <select value={activeStatus} onChange={(event) => setActiveStatus(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
-                      {workflowTabs.map((tab) => <option key={tab.value} value={tab.value}>{tab.label} · {statusCount(posts, tab.value)}</option>)}
-                    </select>
-                  </label>
-                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
-                    <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
-                      <option value="all">همه کمپین‌ها</option>
-                      {campaignOptions.map((campaign) => <option key={campaign.value} value={campaign.value}>{campaign.label} · {campaign.count}</option>)}
-                    </select>
-                  </label>
-                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
-                    <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    <select value={approvalFilter} onChange={(event) => setApprovalFilter(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
-                      {approvalTabs.map((tab) => <option key={tab.value} value={tab.value}>{tab.label}</option>)}
-                    </select>
-                  </label>
-                  <label className="flex items-center gap-2 rounded-md border border-app-border bg-app-surface px-3 py-2 text-xs font-bold text-app-muted">
-                    <ArrowDownUp className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    <select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-app-text outline-none">
-                      <option value="priority">اولویت عملیاتی</option>
-                      <option value="updated">آخرین تغییر</option>
-                      <option value="schedule">زمان انتشار</option>
-                      <option value="title">عنوان</option>
-                    </select>
-                  </label>
-                </div>
-                )}
-              />
-
-              {selectedIds.size ? (
-                <div className="mt-4 flex flex-col justify-between gap-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-3 sm:flex-row sm:items-center">
-                  <div>
-                    <p className="text-sm font-black text-app-text">{selectedIds.size} پست انتخاب شده است</p>
-                    <p className="mt-1 text-xs leading-5 text-app-muted">عملیات گروهی فقط روی وضعیت‌های مجاز اجرا می‌شود و موارد ناسازگار بدون تغییر باقی می‌مانند.</p>
-                  </div>
-                  <div className="flex shrink-0 flex-wrap gap-2">
-                    <Button type="button" size="sm" disabled={bulkUpdating} onClick={() => bulkChangeStatus("ready")}>
-                      <CheckCircle2 className="ml-2 h-4 w-4" aria-hidden="true" />
-                      آماده‌سازی گروهی
-                    </Button>
-                    <Button type="button" variant="danger" size="sm" disabled={bulkUpdating} onClick={() => bulkChangeStatus("cancelled")}>
-                      <XCircle className="ml-2 h-4 w-4" aria-hidden="true" />
-                      لغو گروهی
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" disabled={bulkUpdating} onClick={() => setSelectedIds(new Set())}>پاک کردن انتخاب</Button>
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="mt-3 rounded-lg bg-app-surfaceMuted/50 p-2 shadow-inner sm:mt-4">
-                {loading ? <LoadingRows /> : null}
-                {!loading && filteredPosts.length === 0 ? (
-                  <EmptyState
-                    icon={<FileText className="h-5 w-5" aria-hidden="true" />}
-                    title="هیچ پستی با این فیلتر پیدا نشد"
-                    description="جست‌وجو یا وضعیت انتخاب‌شده را تغییر دهید."
-                    action={<Button href="/compose">ایجاد پست جدید</Button>}
-                  />
-                ) : null}
-                {!loading && filteredPosts.length > 0 ? (
-                  <div className="grid gap-2.5">
-                    {filteredPosts.map((post) => {
-                      const selected = selectedPost?.id === post.id;
-                      const previewUrl = previewUrlForPost(post);
-                      const media = primaryMediaForPost(post);
-                      const campaignKey = campaignKeyForPost(post);
-                      return (
-                        <ContentOperationCard
-                          key={post.id}
-                          action={(
-                            <Button type="button" variant={selected ? "primary" : "secondary"} size="sm" onClick={() => selectPost(post)}>
-                              بازبینی
-                            </Button>
-                          )}
-                          approval={<ApprovalBadge status={post.approval_status} compact />}
-                          campaignColor={campaignColorForPost(post, campaigns)}
-                          campaignLabel={campaignKey !== "none" ? campaignLabelForPost(post, campaigns) : "بدون کمپین"}
-                          caption={post.caption || "بدون کپشن"}
-                          checked={selectedIds.has(post.id)}
-                          error={post.last_error}
-                          lifecycle={(
-                            <>
-                              <StatusBadge status={post.status} />
-                              <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
-                            </>
-                          )}
-                          mediaLabel={media ? "رسانه آماده" : "بدون رسانه"}
-                          meta={(
-                            <>
-                              <p className="flex items-center gap-2">
-                                <Clock3 className="h-4 w-4" aria-hidden="true" />
-                                {formatDateTime(post.scheduled_at)}
-                              </p>
-                              <p>تلاش انتشار: {post.attempt_count}</p>
-                              <p>به‌روزرسانی: {formatDateTime(post.updated_at)}</p>
-                            </>
-                          )}
-                          onCheckedChange={() => toggleSelected(post.id)}
-                          onSelect={() => selectPost(post)}
-                          platform={post.platform}
-                          previewAlt={media?.original_filename ?? post.title}
-                          previewUrl={previewUrl}
-                          selected={selected}
-                          title={post.title}
-                        >
-                          {post.hashtags ? <StatusToken tone="primary" className="max-w-full truncate">{post.hashtags}</StatusToken> : null}
-                        </ContentOperationCard>
-                      );
-                    })}
-                  </div>
-                ) : null}
+          {selectedIds.size ? (
+            <div className="mt-4 flex flex-col justify-between gap-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-3 sm:flex-row sm:items-center">
+              <div>
+                <p className="text-sm font-black text-app-text">{selectedIds.size} پست انتخاب شده است</p>
+                <p className="mt-1 text-xs leading-5 text-app-muted">عملیات گروهی فقط روی وضعیت‌های مجاز اجرا می‌شود و موارد ناسازگار بدون تغییر باقی می‌مانند.</p>
               </div>
-          </NSection>
-
-          <NInspectorDrawer
-            open={Boolean(selectedPost && inspectorOpen)}
-            side="left"
-            title="بازبین پست"
-            description="جزئیات، متن نهایی، گردش کار بازبینی و اقدام‌های انتشار."
-            onClose={() => setInspectorOpen(false)}
-            footer={selectedPost ? <ApprovalBadge status={selectedPost.approval_status} compact /> : null}
-          >
-            {selectedPost ? (
-              <div className="space-y-4">
-                <div className="overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
-                  {previewUrlForPost(selectedPost) ? (
-                    <img src={previewUrlForPost(selectedPost)} alt={primaryMediaForPost(selectedPost)?.original_filename ?? selectedPost.title} className="aspect-video w-full object-cover" />
-                  ) : (
-                    <div className="flex aspect-video flex-col items-center justify-center gap-2 text-xs text-app-muted">
-                      <ImageIcon className="h-6 w-6 text-slate-400" aria-hidden="true" />
-                      رسانه‌ای برای این پست متصل نشده است
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge status={selectedPost.status} />
-                    <ChannelBadges platform={selectedPost.platform} compact />
-                    <ApprovalBadge status={selectedPost.approval_status} />
-                    <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
-                    {primaryMediaForPost(selectedPost) ? <StatusToken tone="success">رسانه آماده</StatusToken> : <StatusToken tone="warning">نیازمند رسانه</StatusToken>}
-                  </div>
-                  <h3 className="mt-3 text-lg font-black text-app-text">{selectedPost.title}</h3>
-                  <p className="mt-2 text-xs leading-6 text-app-muted">شناسه پست #{selectedPost.id}</p>
-                </div>
-
-                <div className="max-h-72 overflow-auto whitespace-pre-wrap rounded-md border border-app-border bg-slate-50 p-4 text-sm leading-7 text-slate-700">
-                  {postFinalText(selectedPost) || "متن نهایی برای این پست هنوز کامل نشده است."}
-                </div>
-
-                <DetailGrid
-                  items={[
-                    { label: "زمان‌بندی", value: formatDateTime(selectedPost.scheduled_at), hint: "زمان برنامه‌ریزی انتشار" },
-                    { label: "کمپین", value: campaignLabelForPost(selectedPost, campaigns), hint: "برچسب عملیاتی محتوا" },
-                    { label: "بازبینی", value: approvalConfig(selectedPost.approval_status).label, hint: approvalConfig(selectedPost.approval_status).description },
-                    { label: "بازبین", value: selectedPost.reviewed_by || "ثبت نشده", hint: selectedPost.reviewed_at ? formatDateTime(selectedPost.reviewed_at) : "هنوز تصمیم نهایی ثبت نشده" },
-                    { label: "تلاش انتشار", value: selectedPost.attempt_count, hint: "تعداد تلاش‌های ثبت‌شده" },
-                    { label: "به‌روزرسانی", value: formatDateTime(selectedPost.updated_at), hint: "آخرین تغییر پست" }
-                  ]}
-                />
-
-                <section className="rounded-md border border-app-border bg-app-surfaceMuted/70 p-3">
-                  <div className="flex items-start gap-2">
-                    <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0 text-app-primary" aria-hidden="true" />
-                    <div>
-                      <p className="text-sm font-black text-app-text">گردش کار بازبینی</p>
-                      <p className="mt-1 text-xs leading-5 text-app-muted">{approvalConfig(selectedPost.approval_status).description}</p>
-                    </div>
-                  </div>
-                  {selectedPost.submitted_at ? <p className="mt-3 text-xs text-app-muted">ارسال برای بازبینی: {formatDateTime(selectedPost.submitted_at)}</p> : null}
-                  <textarea
-                    value={reviewNote}
-                    onChange={(event) => setReviewNote(event.target.value)}
-                    className="mt-3 min-h-20 w-full resize-y rounded-md border border-app-border bg-app-surface px-3 py-2 text-sm leading-6 text-app-text outline-none transition focus:border-app-focus focus:ring-2 focus:ring-app-focus/20"
-                    placeholder="یادداشت بازبین، دلیل رد یا اصلاح مورد نیاز..."
-                  />
-                  <div className="mt-3 grid gap-2">
-                    {canSubmitForReview(selectedPost) ? (
-                      <Button type="button" variant="secondary" disabled={Boolean(reviewingAction)} onClick={() => reviewPost(selectedPost, "submit-review")}>
-                        <ShieldCheck className="ml-2 h-4 w-4" aria-hidden="true" />
-                        {reviewingAction === "submit-review" ? "در حال ارسال" : "ارسال برای بازبینی"}
-                      </Button>
-                    ) : null}
-                    {canReviewDecision(selectedPost) ? (
-                      <div className="grid gap-2 sm:grid-cols-3">
-                        <Button type="button" size="sm" disabled={Boolean(reviewingAction)} onClick={() => reviewPost(selectedPost, "approve")}>
-                          <ThumbsUp className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                          تایید
-                        </Button>
-                        <Button type="button" variant="secondary" size="sm" disabled={Boolean(reviewingAction)} onClick={() => reviewPost(selectedPost, "request-changes")}>
-                          <MessageSquareText className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                          اصلاح
-                        </Button>
-                        <Button type="button" variant="danger" size="sm" disabled={Boolean(reviewingAction)} onClick={() => reviewPost(selectedPost, "reject")}>
-                          <ThumbsDown className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                          رد
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                </section>
-
-                {selectedPost.internal_note ? (
-                  <div className="rounded-md border border-app-border bg-slate-50 p-3 text-xs leading-6 text-app-muted">
-                    <p className="font-black text-app-text">یادداشت داخلی</p>
-                    <p className="mt-1">{selectedPost.internal_note}</p>
-                  </div>
-                ) : null}
-
-                {selectedPost.last_error ? (
-                  <NNotice tone="alert" title="آخرین خطا">
-                    {selectedPost.last_error}
-                  </NNotice>
-                ) : null}
-
-                <div className="grid gap-2">
-                  <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary">
-                    <Pencil className="ml-2 h-4 w-4" aria-hidden="true" />
-                    ویرایش در کمپوزر
-                  </Button>
-                  {(selectedPost.status === "draft" || selectedPost.status === "failed" || selectedPost.status === "cancelled") ? (
-                    <Button type="button" variant="secondary" onClick={() => changeStatus(selectedPost, "ready")}>
-                      <CheckCircle2 className="ml-2 h-4 w-4" aria-hidden="true" />
-                      علامت‌گذاری به عنوان آماده
-                    </Button>
-                  ) : null}
-                  {selectedPost.status === "failed" ? (
-                    <Button type="button" onClick={() => retryPost(selectedPost)}>
-                      <RotateCcw className="ml-2 h-4 w-4" aria-hidden="true" />
-                      تلاش مجدد انتشار
-                    </Button>
-                  ) : null}
-                  {selectedPost.status !== "cancelled" && selectedPost.status !== "published" ? (
-                    <Button type="button" variant="ghost" onClick={() => changeStatus(selectedPost, "cancelled")}>
-                      <XCircle className="ml-2 h-4 w-4" aria-hidden="true" />
-                      لغو پست
-                    </Button>
-                  ) : null}
-                </div>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <Button type="button" size="sm" disabled={bulkUpdating} onClick={() => bulkChangeStatus("ready")}>
+                  <CheckCircle2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                  آماده‌سازی گروهی
+                </Button>
+                <Button type="button" variant="danger" size="sm" disabled={bulkUpdating} onClick={() => bulkChangeStatus("cancelled")}>
+                  <XCircle className="ml-2 h-4 w-4" aria-hidden="true" />
+                  لغو گروهی
+                </Button>
+                <Button type="button" variant="ghost" size="sm" disabled={bulkUpdating} onClick={() => setSelectedIds(new Set())}>پاک کردن انتخاب</Button>
               </div>
-            ) : (
+            </div>
+          ) : null}
+
+          <div className="mt-3 rounded-lg bg-app-surfaceMuted/50 p-2 shadow-inner sm:mt-4">
+            {loading ? <LoadingRows /> : null}
+            {!loading && filteredPosts.length === 0 ? (
               <EmptyState
                 icon={<FileText className="h-5 w-5" aria-hidden="true" />}
-                title="پستی انتخاب نشده"
-                description="برای مشاهده جزئیات، یک پست را از لیست انتخاب کنید."
+                title="هیچ پستی با این فیلتر پیدا نشد"
+                description="جست‌وجو یا وضعیت انتخاب‌شده را تغییر دهید."
+                action={<Button href="/compose">ایجاد پست جدید</Button>}
               />
-            )}
-          </NInspectorDrawer>
-        </NPage>
-);
+            ) : null}
+            {!loading && filteredPosts.length > 0 ? (
+              <div className="grid gap-2.5">
+                {filteredPosts.map((post) => {
+                  const selected = selectedPost?.id === post.id;
+                  const previewUrl = previewUrlForPost(post);
+                  const media = primaryMediaForPost(post);
+                  const campaignKey = campaignKeyForPost(post);
+                  return (
+                    <ContentOperationCard
+                      key={post.id}
+                      action={(
+                        <Button type="button" variant={selected ? "primary" : "secondary"} size="sm" onClick={() => selectPost(post)}>
+                          بازبینی
+                        </Button>
+                      )}
+                      approval={<ApprovalBadge status={post.approval_status} compact />}
+                      campaignColor={campaignColorForPost(post, campaigns)}
+                      campaignLabel={campaignKey !== "none" ? campaignLabelForPost(post, campaigns) : "بدون کمپین"}
+                      caption={post.caption || "بدون کپشن"}
+                      checked={selectedIds.has(post.id)}
+                      error={post.last_error}
+                      lifecycle={(
+                        <>
+                          <StatusBadge status={post.status} />
+                          <CountdownBadge status={post.status} scheduledAt={post.scheduled_at} />
+                        </>
+                      )}
+                      mediaLabel={media ? "رسانه آماده" : "بدون رسانه"}
+                      meta={(
+                        <>
+                          <p className="flex items-center gap-2">
+                            <Clock3 className="h-4 w-4" aria-hidden="true" />
+                            {formatDateTime(post.scheduled_at)}
+                          </p>
+                          <p>تلاش انتشار: {post.attempt_count}</p>
+                          <p>به‌روزرسانی: {formatDateTime(post.updated_at)}</p>
+                        </>
+                      )}
+                      onCheckedChange={() => toggleSelected(post.id)}
+                      onSelect={() => selectPost(post)}
+                      platform={post.platform}
+                      previewAlt={media?.original_filename ?? post.title}
+                      previewUrl={previewUrl}
+                      selected={selected}
+                      title={post.title}
+                    >
+                      {post.hashtags ? <StatusToken tone="primary" className="max-w-full truncate">{post.hashtags}</StatusToken> : null}
+                    </ContentOperationCard>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+      </NSection>
+
+      <NInspectorDrawer
+        open={Boolean(selectedPost && inspectorOpen)}
+        side="left"
+        title="بازبین پست"
+        description="جزئیات، متن نهایی، گردش کار بازبینی و اقدام‌های انتشار."
+        onClose={() => setInspectorOpen(false)}
+        footer={selectedPost ? <ApprovalBadge status={selectedPost.approval_status} compact /> : null}
+      >
+        {selectedPost ? (
+          <div className="space-y-4">
+            <div className="overflow-hidden rounded-md bg-slate-50 ring-1 ring-app-border">
+              {previewUrlForPost(selectedPost) ? (
+                <img src={previewUrlForPost(selectedPost)} alt={primaryMediaForPost(selectedPost)?.original_filename ?? selectedPost.title} className="aspect-video w-full object-cover" />
+              ) : (
+                <div className="flex aspect-video flex-col items-center justify-center gap-2 text-xs text-app-muted">
+                  <ImageIcon className="h-6 w-6 text-slate-400" aria-hidden="true" />
+                  رسانه‌ای برای این پست متصل نشده است
+                </div>
+              )}
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge status={selectedPost.status} />
+                <ChannelBadges platform={selectedPost.platform} compact />
+                <ApprovalBadge status={selectedPost.approval_status} />
+                <CountdownBadge status={selectedPost.status} scheduledAt={selectedPost.scheduled_at} />
+                {primaryMediaForPost(selectedPost) ? <StatusToken tone="success">رسانه آماده</StatusToken> : <StatusToken tone="warning">نیازمند رسانه</StatusToken>}
+              </div>
+              <h3 className="mt-3 text-lg font-black text-app-text">{selectedPost.title}</h3>
+              <p className="mt-2 text-xs leading-6 text-app-muted">شناسه پست #{selectedPost.id}</p>
+            </div>
+
+            <div className="max-h-72 overflow-auto whitespace-pre-wrap rounded-md border border-app-border bg-slate-50 p-4 text-sm leading-7 text-slate-700">
+              {postFinalText(selectedPost) || "متن نهایی برای این پست هنوز کامل نشده است."}
+            </div>
+
+            <DetailGrid
+              items={[
+                { label: "زمان‌بندی", value: formatDateTime(selectedPost.scheduled_at), hint: "زمان برنامه‌ریزی انتشار" },
+                { label: "کمپین", value: campaignLabelForPost(selectedPost, campaigns), hint: "برچسب عملیاتی محتوا" },
+                { label: "بازبینی", value: approvalConfig(selectedPost.approval_status).label, hint: approvalConfig(selectedPost.approval_status).description },
+                { label: "بازبین", value: selectedPost.reviewed_by || "ثبت نشده", hint: selectedPost.reviewed_at ? formatDateTime(selectedPost.reviewed_at) : "هنوز تصمیم نهایی ثبت نشده" },
+                { label: "تلاش انتشار", value: selectedPost.attempt_count, hint: "تعداد تلاش‌های ثبت‌شده" },
+                { label: "به‌روزرسانی", value: formatDateTime(selectedPost.updated_at), hint: "آخرین تغییر پست" }
+              ]}
+            />
+
+            <section className="rounded-md border border-app-border bg-app-surfaceMuted/70 p-3">
+              <div className="flex items-start gap-2">
+                <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0 text-app-primary" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-black text-app-text">گردش کار بازبینی</p>
+                  <p className="mt-1 text-xs leading-5 text-app-muted">{approvalConfig(selectedPost.approval_status).description}</p>
+                </div>
+              </div>
+              {selectedPost.submitted_at ? <p className="mt-3 text-xs text-app-muted">ارسال برای بازبینی: {formatDateTime(selectedPost.submitted_at)}</p> : null}
+              <textarea
+                value={reviewNote}
+                onChange={(event) => setReviewNote(event.target.value)}
+                className="mt-3 min-h-20 w-full resize-y rounded-md border border-app-border bg-app-surface px-3 py-2 text-sm leading-6 text-app-text outline-none transition focus:border-app-focus focus:ring-2 focus:ring-app-focus/20"
+                placeholder="یادداشت بازبین، دلیل رد یا اصلاح مورد نیاز..."
+              />
+              <div className="mt-3 grid gap-2">
+                {canSubmitForReview(selectedPost) ? (
+                  <Button type="button" variant="secondary" disabled={Boolean(reviewingAction)} onClick={() => reviewPost(selectedPost, "submit-review")}>
+                    <ShieldCheck className="ml-2 h-4 w-4" aria-hidden="true" />
+                    {reviewingAction === "submit-review" ? "در حال ارسال" : "ارسال برای بازبینی"}
+                  </Button>
+                ) : null}
+                {canReviewDecision(selectedPost) ? (
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <Button type="button" size="sm" disabled={Boolean(reviewingAction)} onClick={() => reviewPost(selectedPost, "approve")}>
+                      <ThumbsUp className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                      تایید
+                    </Button>
+                    <Button type="button" variant="secondary" size="sm" disabled={Boolean(reviewingAction)} onClick={() => reviewPost(selectedPost, "request-changes")}>
+                      <MessageSquareText className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                      اصلاح
+                    </Button>
+                    <Button type="button" variant="danger" size="sm" disabled={Boolean(reviewingAction)} onClick={() => reviewPost(selectedPost, "reject")}>
+                      <ThumbsDown className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                      رد
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
+            {selectedPost.internal_note ? (
+              <div className="rounded-md border border-app-border bg-slate-50 p-3 text-xs leading-6 text-app-muted">
+                <p className="font-black text-app-text">یادداشت داخلی</p>
+                <p className="mt-1">{selectedPost.internal_note}</p>
+              </div>
+            ) : null}
+
+            {selectedPost.last_error ? (
+              <NNotice tone="alert" title="آخرین خطا">
+                {selectedPost.last_error}
+              </NNotice>
+            ) : null}
+
+            <div className="grid gap-2">
+              <Button href={`/compose?postId=${selectedPost.id}`} variant="secondary">
+                <Pencil className="ml-2 h-4 w-4" aria-hidden="true" />
+                ویرایش در کمپوزر
+              </Button>
+              {(selectedPost.status === "draft" || selectedPost.status === "failed" || selectedPost.status === "cancelled") ? (
+                <Button type="button" variant="secondary" onClick={() => changeStatus(selectedPost, "ready")}>
+                  <CheckCircle2 className="ml-2 h-4 w-4" aria-hidden="true" />
+                  علامت‌گذاری به عنوان آماده
+                </Button>
+              ) : null}
+              {selectedPost.status === "failed" ? (
+                <Button type="button" onClick={() => retryPost(selectedPost)}>
+                  <RotateCcw className="ml-2 h-4 w-4" aria-hidden="true" />
+                  تلاش مجدد انتشار
+                </Button>
+              ) : null}
+              {selectedPost.status !== "cancelled" && selectedPost.status !== "published" ? (
+                <Button type="button" variant="ghost" onClick={() => changeStatus(selectedPost, "cancelled")}>
+                  <XCircle className="ml-2 h-4 w-4" aria-hidden="true" />
+                  لغو پست
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        ) : (
+          <EmptyState
+            icon={<FileText className="h-5 w-5" aria-hidden="true" />}
+            title="پستی انتخاب نشده"
+            description="برای مشاهده جزئیات، یک پست را از لیست انتخاب کنید."
+          />
+        )}
+      </NInspectorDrawer>
+    </NPage>
+  );
 }
