@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
-type ButtonSize = "sm" | "md" | "lg";
+export type ButtonVariant = "primary" | "secondary" | "tertiary" | "destructive" | "danger" | "ghost";
+export type ButtonSize = "sm" | "md" | "lg" | "icon" | "icon-sm";
 
 type SharedButtonProps = {
   variant?: ButtonVariant;
@@ -20,29 +21,34 @@ type ButtonAsLinkProps = SharedButtonProps & Omit<AnchorHTMLAttributes<HTMLAncho
   disabled?: boolean;
 };
 
-type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
+export type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
+type NativeButtonType = NonNullable<ButtonHTMLAttributes<HTMLButtonElement>["type"]>;
 
-const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-app-primary text-white shadow-sm hover:bg-app-primaryHover",
-  secondary: "border border-app-border bg-white text-slate-700 hover:bg-slate-50",
-  ghost: "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-app-text",
-  danger: "bg-rose-50 text-rose-700 hover:bg-rose-100"
+const variantStyles: Record<ButtonVariant, string> = {
+  primary: "nashrino-primary-cta border border-app-primary text-white shadow-accent hover:border-app-primaryHover hover:bg-app-primaryHover active:bg-app-primaryActive",
+  secondary: "border border-app-border bg-app-surface/88 text-app-text shadow-hairline backdrop-blur-md hover:border-app-primary/24 hover:bg-app-soft hover:text-app-primary",
+  tertiary: "border border-transparent bg-transparent text-app-primary hover:bg-app-soft active:bg-white/60",
+  destructive: "border border-rose-200 bg-rose-50/88 text-rose-700 shadow-hairline hover:bg-rose-100 active:bg-rose-200",
+  danger: "border border-rose-200 bg-rose-50/88 text-rose-700 shadow-hairline hover:bg-rose-100 active:bg-rose-200",
+  ghost: "border border-transparent bg-transparent text-app-muted hover:bg-app-surface/82 hover:text-app-primary"
 };
 
-const sizeClasses: Record<ButtonSize, string> = {
-  sm: "px-3 py-2 text-xs",
-  md: "px-4 py-2.5 text-sm",
-  lg: "px-5 py-3 text-sm"
+const sizeStyles: Record<ButtonSize, string> = {
+  sm: "min-h-9 px-3 text-xs",
+  md: "min-h-10 px-3.5 text-sm",
+  lg: "min-h-11 px-4 text-sm",
+  icon: "h-10 w-10 p-0",
+  "icon-sm": "h-8 w-8 p-0"
 };
 
 export function Button(props: ButtonProps) {
   const { variant = "primary", size = "md", className = "", children } = props;
-  const classes = [
-    "inline-flex items-center justify-center rounded-xl font-semibold transition disabled:pointer-events-none disabled:opacity-60",
-    variantClasses[variant],
-    sizeClasses[size],
+  const classes = cn(
+    "app-interactive nashrino-control-radius inline-flex items-center justify-center gap-2 whitespace-nowrap font-bold leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-primary/30 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60",
+    variantStyles[variant],
+    sizeStyles[size],
     className
-  ].join(" ");
+  );
 
   if ("href" in props && props.href) {
     const { href, disabled, variant: _variant, size: _size, className: _className, children: _children, ...linkProps } = props;
@@ -60,7 +66,8 @@ export function Button(props: ButtonProps) {
     );
   }
 
-  const { variant: _variant, size: _size, className: _className, children: _children, type = "button", ...buttonProps } = props;
+  const { variant: _variant, size: _size, className: _className, children: _children, type: buttonType, ...buttonProps } = props as ButtonAsButtonProps;
+  const type: NativeButtonType = buttonType ?? "button";
 
   return (
     <button type={type} className={classes} {...buttonProps}>

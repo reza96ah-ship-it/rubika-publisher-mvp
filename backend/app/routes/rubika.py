@@ -22,6 +22,7 @@ def account_response(account: RubikaAccount) -> RubikaAccountResponse:
         bot_name=account.bot_name,
         status=account.status,
         last_error=account.last_error,
+        last_test_at=account.last_test_at,
         is_active=account.is_active,
     )
 
@@ -45,7 +46,9 @@ def save_settings(payload: RubikaSettingsRequest, current_user: User = Depends(g
         account = RubikaAccount()
         db.add(account)
 
-    account.bot_token = payload.bot_token.strip()
+    next_token = payload.bot_token.strip()
+    if next_token:
+        account.bot_token = next_token
     account.chat_id = payload.chat_id.strip()
     account.status = "not_tested"
     account.last_error = ""
@@ -61,6 +64,12 @@ async def test_connection(current_user: User = Depends(get_current_user), db: Se
     account = get_account(db)
     if account is None or not account.bot_token.strip():
         return RubikaTestResponse(ok=False, status="missing_settings", error="Rubika token is missing")
+    if not account.chat_id.strip():
+        account.status = "missing_settings"
+        account.last_error = "Rubika destination is missing"
+        account.last_test_at = datetime.utcnow()
+        db.commit()
+        return RubikaTestResponse(ok=False, status="missing_settings", error=account.last_error, last_test_at=account.last_test_at)
 
     try:
         client = RubikaClient(account.bot_token)
@@ -71,10 +80,10 @@ async def test_connection(current_user: User = Depends(get_current_user), db: Se
         account.last_error = ""
         account.last_test_at = datetime.utcnow()
         db.commit()
-        return RubikaTestResponse(ok=True, status="connected", bot_name=bot_name)
+        return RubikaTestResponse(ok=True, status="connected", bot_name=bot_name, last_test_at=account.last_test_at)
     except httpx.HTTPError as exc:
         account.status = "failed"
         account.last_error = str(exc)
         account.last_test_at = datetime.utcnow()
         db.commit()
-        return RubikaTestResponse(ok=False, status="failed", error=str(exc))
+        return RubikaTestResponse(ok=False, status="failed", error=str(exc), last_test_at=account.last_test_at)

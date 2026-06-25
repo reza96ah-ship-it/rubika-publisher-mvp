@@ -19,10 +19,19 @@ function safeDate(value?: string | null) {
   return Number.isNaN(date.getTime()) ? new Date() : date;
 }
 
-function jalaliOnlyParts(date: Date) {
+function normalizedHour(value: number) {
+  return value === 24 ? 0 : value;
+}
+
+function roundToFiveMinutes(value: number) {
+  return Math.min(55, Math.max(0, Math.round(value / 5) * 5));
+}
+
+function jalaliOnlyParts(date: Date, timeZone = "UTC") {
   const parts = new Intl.DateTimeFormat("en-US-u-ca-persian-nu-latn", {
     calendar: "persian",
     numberingSystem: "latn",
+    timeZone,
     year: "numeric",
     month: "numeric",
     day: "numeric"
@@ -35,11 +44,12 @@ function jalaliOnlyParts(date: Date) {
   };
 }
 
-export function getJalaliPickerParts(value?: string | null): JalaliPickerParts {
+export function getJalaliPickerParts(value?: string | null, timeZone = "Asia/Tehran"): JalaliPickerParts {
   const date = safeDate(value);
   const parts = new Intl.DateTimeFormat("en-US-u-ca-persian-nu-latn", {
     calendar: "persian",
     numberingSystem: "latn",
+    timeZone,
     year: "numeric",
     month: "numeric",
     day: "numeric",
@@ -52,8 +62,8 @@ export function getJalaliPickerParts(value?: string | null): JalaliPickerParts {
     year: numberPart(parts, "year"),
     month: numberPart(parts, "month"),
     day: numberPart(parts, "day"),
-    hour: numberPart(parts, "hour"),
-    minute: numberPart(parts, "minute")
+    hour: normalizedHour(numberPart(parts, "hour")),
+    minute: value ? numberPart(parts, "minute") : roundToFiveMinutes(numberPart(parts, "minute"))
   };
 }
 
@@ -62,26 +72,67 @@ function jalaliDateToGregorianUtc(year: number, month: number, day: number) {
 
   for (let offset = -20; offset <= 380; offset += 1) {
     const candidate = new Date(searchStart.getTime() + offset * 86400000);
-    const parts = jalaliOnlyParts(candidate);
+    const parts = jalaliOnlyParts(candidate, "UTC");
     if (parts.year === year && parts.month === month && parts.day === day) return candidate;
   }
 
   return null;
 }
 
-export function jalaliPickerPartsToIso(parts: JalaliPickerParts) {
+function gregorianPartsInTimeZone(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-US-u-ca-gregory-nu-latn", {
+    calendar: "gregory",
+    numberingSystem: "latn",
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).formatToParts(date);
+
+  return {
+    year: numberPart(parts, "year"),
+    month: numberPart(parts, "month"),
+    day: numberPart(parts, "day"),
+    hour: normalizedHour(numberPart(parts, "hour")),
+    minute: numberPart(parts, "minute"),
+    second: numberPart(parts, "second")
+  };
+}
+
+function timeZoneOffsetMs(date: Date, timeZone: string) {
+  const parts = gregorianPartsInTimeZone(date, timeZone);
+  const asUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+  return asUtc - date.getTime();
+}
+
+function zonedWallTimeToIso(year: number, month: number, day: number, hour: number, minute: number, timeZone: string) {
+  let utcMs = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
+  utcMs -= timeZoneOffsetMs(new Date(utcMs), timeZone);
+  utcMs = Date.UTC(year, month - 1, day, hour, minute, 0, 0) - timeZoneOffsetMs(new Date(utcMs), timeZone);
+  return new Date(utcMs).toISOString();
+}
+
+export function jalaliPickerPartsToIso(parts: JalaliPickerParts, timeZone = "Asia/Tehran") {
   const gregorian = jalaliDateToGregorianUtc(parts.year, parts.month, parts.day);
   if (!gregorian) return null;
 
-  return new Date(
+  return zonedWallTimeToIso(
     gregorian.getUTCFullYear(),
-    gregorian.getUTCMonth(),
+    gregorian.getUTCMonth() + 1,
     gregorian.getUTCDate(),
     parts.hour,
     parts.minute,
-    0,
-    0
-  ).toISOString();
+    timeZone
+  );
+}
+
+export function jalaliDateToIsoAtTime(value: string, hour: number, minute: number, timeZone = "Asia/Tehran") {
+  const parts = getJalaliPickerParts(value, timeZone);
+  return jalaliPickerPartsToIso({ ...parts, hour, minute }, timeZone);
 }
 
 export function getJalaliMonthLength(year: number, month: number) {
@@ -94,6 +145,6 @@ export function getJalaliMonthLength(year: number, month: number) {
 export function getJalaliMonthStartOffset(year: number, month: number) {
   const firstDay = jalaliDateToGregorianUtc(year, month, 1);
   if (!firstDay) return 0;
-  const local = new Date(firstDay.getUTCFullYear(), firstDay.getUTCMonth(), firstDay.getUTCDate());
-  return (local.getDay() + 1) % 7;
+  const local = new Date(Date.UTC(firstDay.getUTCFullYear(), firstDay.getUTCMonth(), firstDay.getUTCDate()));
+  return (local.getUTCDay() + 1) % 7;
 }

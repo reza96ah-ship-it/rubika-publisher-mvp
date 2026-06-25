@@ -1,19 +1,34 @@
-# Rubika Publisher MVP
+# Nashrino SocialOps Studio
 
-یک وب‌اپ فارسی و راست‌به‌چپ برای مدیریت، آماده‌سازی، زمان‌بندی و انتشار خودکار پست در روبیکا.
+Persian-first, RTL-native, Jalali-native social operations platform for planning, creating, scheduling, publishing, monitoring, and reporting content across Rubika, Instagram, and future channels.
 
-## هدف MVP
+The project started as a Rubika publisher MVP, but the product direction is now a multi-channel SocialOps web app inspired by the workflow maturity of Buffer, Hootsuite, Sprout Social, and Later, while staying focused on Persian commerce and content teams.
 
-در نسخه MVP، سیستم باید بتواند:
+## Current Product Scope
 
-- ورود ادمین داشته باشد.
-- اطلاعات فروشگاه را نگه دارد.
-- اتصال ربات روبیکا را تست کند.
-- پست متنی و تصویری بسازد.
-- رسانه را آپلود و به پست متصل کند.
-- پست را زمان‌بندی کند.
-- در زمان مقرر، محتوا را از طریق Rubika API منتشر کند.
-- وضعیت انتشار، خطاها و `message_id` روبیکا را ذخیره کند.
+- Admin authentication and workspace/store profile.
+- Rubika publishing setup, health checks, worker delivery, retries, and publish attempts.
+- Instagram channel foundation with professional-account API path and personal-account reminder/manual mode.
+- Instagram automation roadmap for compliant comment-to-DM/private-reply workflows on professional accounts.
+- Multi-channel composer with campaign, schedule, readiness, media, and preview flows.
+- Jalali planner/calendar.
+- Campaign command center with portfolio, overview, calendar, posts, media, and report views.
+- Content library, media library, Persian-first image editor, queue, logs, inbox, notifications, and analytics foundations.
+
+## Canonical Product Plan
+
+The PRD, RFP, roadmap, design direction, backlog, architecture notes, and phase plan live in one source of truth:
+
+[docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md)
+
+The Instagram comment-to-DM automation feature has a dedicated product spec:
+
+[docs/INSTAGRAM_COMMENT_TO_DM_AUTOMATION_PRD.md](docs/INSTAGRAM_COMMENT_TO_DM_AUTOMATION_PRD.md)
+
+The active UI modernization plan and regression checklist are documented here:
+
+- [UI foundation implementation plan](docs/UI_FOUNDATION_IMPLEMENTATION_PLAN.md)
+- [UI regression baseline](docs/UI_REGRESSION_BASELINE.md)
 
 ## Stack
 
@@ -24,9 +39,12 @@
 - Worker: Celery
 - Local runtime: Docker Compose on Windows WSL2 Ubuntu
 
-## اجرای لوکال
+## Run Locally
+
+From WSL Ubuntu:
 
 ```bash
+cd /home/reza/projects/rubika-publisher-mvp
 cp .env.example .env
 docker compose up -d --build
 ```
@@ -34,49 +52,57 @@ docker compose up -d --build
 Frontend:
 
 ```text
-http://localhost:3000
+http://localhost:3100
 ```
+
+The frontend container listens on `3000` internally, but Docker Compose exposes it on host port `3100` by default through `FRONTEND_PORT=3100`, so it does not conflict with local tools that use port `3000`.
 
 Backend:
 
 ```text
 http://localhost:8000/health
-```
-
-Database health:
-
-```text
 http://localhost:8000/health/db
 ```
 
-## فاز فعلی
+## Useful Commands
 
-Phase 3 — Composer-Centric Creation and Post Management
+```bash
+docker compose ps
+docker compose logs --tail=120 frontend
+docker compose logs --tail=120 backend
+docker compose exec backend python -m compileall app
+docker compose exec frontend npm run check
+```
 
-در این فاز تمرکز روی جدا کردن جریان ساخت پست از صفحه مدیریت پست‌ها است. ایجاد پست جدید از مسیر `/compose` انجام می‌شود و صفحه `/posts` فقط برای مشاهده و مدیریت پست‌های موجود استفاده می‌شود.
+## Canonical Navigation Structure
 
-### انجام‌شده تا این فاز
+The navigation follows the single-source-of-truth design documented in [docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md](docs/NAHRINO_2026_MASTER_RFP_ROADMAP_BACKLOG.md).
 
-- ساختار اولیه پروژه، Docker Compose، فرانت‌اند و بک‌اند.
-- احراز هویت ادمین و seed کاربر اولیه.
-- پروفایل فروشگاه و تنظیمات پایه کپشن/هشتگ.
-- تنظیمات ربات روبیکا و تست اتصال.
-- CRUD پیش‌نویس پست‌ها.
-- آپلود رسانه تصویری و اتصال رسانه به پست.
-- سیستم طراحی پایه برای دکمه‌ها، فرم‌ها، کارت‌ها و وضعیت‌ها.
-- صفحه composer برای ساخت پست، انتخاب/آپلود تصویر، پیش‌نمایش روبیکا و ذخیره پیش‌نویس.
-- صفحه مدیریت پست‌ها برای فهرست، وضعیت، تصویر بندانگشتی و حذف پیش‌نویس‌ها.
+### Target Primary Navigation
 
-### هنوز انجام نشده
+1. **داشبورد** (`/`) - Dashboard overview
+2. **ساخت** (`/compose`) - Content creation studio
+3. **برنامه‌ریزی** (`/calendar`) - Jalali calendar planner
+4. **کمپین‌ها** (`/campaigns`) - Campaign management
+5. **محتوا** (`/content`) - Content library
+6. **رسانه** (`/media`) - Media library & editor
+7. **پیام‌ها** (`/inbox`) - Notifications, comments, DMs, and automation events
+8. **گزارش‌ها** (`/analytics`) - Performance and operations reports
+9. **کانال‌ها** (`/channels`) - Channel management hub
+10. **تنظیمات** (`/store`) - Workspace settings
 
-- زمان‌بندی واقعی پست‌ها.
-- انتشار واقعی از طریق worker و Rubika API.
-- ذخیره `message_id` روبیکا بعد از انتشار.
-- ثبت خطاهای انتشار و تلاش مجدد.
-- صفحه ویرایش کامل پست بعد از ساخت پیش‌نویس.
+Operational routes such as `/queue` and `/logs` still exist, but the target product model treats them as secondary views inside Planner/Reports rather than permanent primary navigation items.
 
-## فاز بعدی پیشنهادی
+### Navigation Consolidation Status
 
-Phase 4 — Scheduling and Publish Pipeline
+- Quick Create FAB removed to eliminate the fourth redundant entry point.
+- Queue and Logs remain reachable as operational routes.
+- Channel pages show breadcrumbs.
+- One primary entry point exists for every major feature.
+- Mobile-first responsive navigation is available.
 
-در فاز بعدی باید مدل داده پست با فیلدهای زمان‌بندی و نتیجه انتشار کامل شود، worker/Celery به جریان انتشار متصل شود، و وضعیت‌های `scheduled`، `publishing`، `published` و `failed` به صورت واقعی مدیریت شوند.
+## Current Phase
+
+The product backend and publishing foundations remain active while the frontend enters the shared **Liquid Glass UI foundation** phase tracked in issue #7.
+
+The first three UI pull requests stabilize the repository, bridge the design tokens, and replace the repeated page-level shell with one accessible protected workspace layout. Backend schemas, publishing workers, adapters, automation processing, and API contracts remain unchanged during this foundation work.

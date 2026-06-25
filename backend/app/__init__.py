@@ -1,1 +1,1 @@
-"""Rubika Publisher backend package."""
+"""SocialOps Studio backend package."""

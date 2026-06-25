@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import httpx
 
 from app.config import get_settings
@@ -25,6 +27,30 @@ class RubikaClient:
                 self._url("sendMessage"),
                 json={"chat_id": chat_id, "text": text},
             )
+            response.raise_for_status()
+            return response.json()
+
+    async def request_send_file(self, file_type: str) -> dict:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(self._url("requestSendFile"), json={"type": file_type})
+            response.raise_for_status()
+            return response.json()
+
+    async def upload_file(self, upload_url: str, file_path: str, content_type: str, filename: str) -> dict:
+        path = Path(file_path)
+        with path.open("rb") as file:
+            files = {"file": (filename or path.name, file, content_type or "application/octet-stream")}
+            async with httpx.AsyncClient(timeout=120) as client:
+                response = await client.post(upload_url, files=files)
+                response.raise_for_status()
+                return response.json()
+
+    async def send_file(self, chat_id: str, file_id: str, text: str = "") -> dict:
+        payload = {"chat_id": chat_id, "file_id": file_id}
+        if text:
+            payload["text"] = text
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(self._url("sendFile"), json=payload)
             response.raise_for_status()
             return response.json()
 
