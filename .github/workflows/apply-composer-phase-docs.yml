@@ -1,0 +1,35 @@
+name: Apply Composer phase docs
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'feat/composer-v2'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Composer branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/composer-v2
+          fetch-depth: 0
+
+      - name: Update continuity documents
+        run: python tools/update_composer_phase_docs.py
+
+      - name: Commit Composer phase transition
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/CURRENT_STATUS.md docs/IMPLEMENTATION_ROADMAP.md
+          if git diff --cached --quiet; then
+            echo "Composer phase documents are already current."
+            exit 0
+          fi
+          git commit -m "docs: mark Composer V2 in progress"
+          git push origin HEAD:feat/composer-v2
